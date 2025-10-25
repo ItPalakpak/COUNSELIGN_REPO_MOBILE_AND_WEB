@@ -1,0 +1,767 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'state/counselor_dashboard_viewmodel.dart';
+import 'widgets/counselor_screen_wrapper.dart';
+import '../routes.dart';
+
+class CounselorDashboardScreen extends StatefulWidget {
+  const CounselorDashboardScreen({super.key});
+
+  @override
+  State<CounselorDashboardScreen> createState() =>
+      _CounselorDashboardScreenState();
+}
+
+class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
+  late CounselorDashboardViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = CounselorDashboardViewModel();
+    _viewModel.initialize();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _viewModel,
+      child: CounselorScreenWrapper(
+        currentBottomNavIndex: 0, // Dashboard is Home button (index 0)
+        child: _buildMainContent(context),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile
+            ? 16
+            : isTablet
+            ? 20
+            : 24,
+        vertical: isMobile ? 20 : 24,
+      ),
+      child: Column(
+        children: [
+          _buildProfileSection(context),
+          SizedBox(height: isMobile ? 20 : 30),
+          _buildContentPanel(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return Consumer<CounselorDashboardViewModel>(
+      builder: (context, viewModel, child) {
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isMobile ? 20 : 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha((0.05 * 255).round()),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Profile Avatar
+              GestureDetector(
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.counselorProfile),
+                child: Container(
+                  width: isMobile ? 70 : 90,
+                  height: isMobile ? 70 : 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: viewModel.isLoadingProfile
+                      ? const CircularProgressIndicator()
+                      : ClipOval(
+                          child: Image.network(
+                            viewModel.profileImageUrl,
+                            width: isMobile ? 70 : 90,
+                            height: isMobile ? 70 : 90,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return SizedBox(
+                                width: isMobile ? 70 : 90,
+                                height: isMobile ? 70 : 90,
+                                child: CircularProgressIndicator(
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint(
+                                '🖼️ Dashboard Screen: Image.network error: $error',
+                              );
+                              debugPrint(
+                                '🖼️ Dashboard Screen: Image URL: ${viewModel.profileImageUrl}',
+                              );
+                              return Image.asset(
+                                'Photos/profile.png',
+                                width: isMobile ? 70 : 90,
+                                height: isMobile ? 70 : 90,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  debugPrint(
+                                    '🖼️ Dashboard Screen: Image.asset error: $error',
+                                  );
+                                  return Container(
+                                    width: isMobile ? 70 : 90,
+                                    height: isMobile ? 70 : 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.person,
+                                      size: isMobile ? 35 : 45,
+                                      color: Colors.grey[600],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ),
+
+              SizedBox(width: isMobile ? 15 : 20),
+
+              // Profile Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hi! ${viewModel.displayName}',
+                      style: TextStyle(
+                        fontSize: isMobile ? 14 : 22,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF003366),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Last login: ${viewModel.formattedLastLogin}',
+                      style: TextStyle(
+                        fontSize: isMobile ? 10 : 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Notifications Icon
+              Stack(
+                children: [
+                  IconButton(
+                    onPressed: viewModel.toggleNotifications,
+                    icon: Icon(
+                      Icons.notifications,
+                      color: viewModel.isNotificationsOpen
+                          ? Colors.blue
+                          : const Color(0xFF003366),
+                      size: 24,
+                    ),
+                    tooltip: 'Notifications',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      shadowColor: Colors.black.withAlpha((0.1 * 255).round()),
+                      elevation: 2,
+                    ),
+                  ),
+                  if (viewModel.unreadNotificationsCount > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          viewModel.unreadNotificationsCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContentPanel(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 20 : 30),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFE0F0FF), Color(0xFFD6E9FF)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF191970).withAlpha((0.08 * 255).round()),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Consumer<CounselorDashboardViewModel>(
+        builder: (context, viewModel, child) {
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  // Main heading
+                  Text(
+                    'Welcome to Your Workspace, Counselor!',
+                    style: TextStyle(
+                      fontSize: isMobile ? 24 : 32,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF191970),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Dashboard cards row
+                  _buildDashboardCards(context, isMobile),
+                ],
+              ),
+              // Notifications Dropdown
+              if (viewModel.isNotificationsOpen)
+                _buildNotificationsDropdown(context, viewModel, isMobile),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDashboardCards(BuildContext context, bool isMobile) {
+    return Consumer<CounselorDashboardViewModel>(
+      builder: (context, viewModel, child) {
+        return Column(
+          children: [
+            // Messages Card - First Row
+            _buildMessagesCard(context, viewModel, isMobile),
+            const SizedBox(height: 20),
+            // Appointments Card - Second Row
+            _buildAppointmentsCard(context, viewModel, isMobile),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMessagesCard(
+    BuildContext context,
+    CounselorDashboardViewModel viewModel,
+    bool isMobile,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to messages page
+        Navigator.pushNamed(context, AppRoutes.counselorMessages);
+      },
+      child: Container(
+        height: 250,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF191970).withAlpha((0.05 * 255).round()),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.message, color: const Color(0xFF191970), size: 24),
+                const SizedBox(width: 8),
+                const Text(
+                  'Messages',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF191970),
+                  ),
+                ),
+                const Spacer(),
+                if (viewModel.unreadMessagesCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${viewModel.unreadMessagesCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: viewModel.messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.message_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No recent messages',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: viewModel.messages.take(2).length,
+                      itemBuilder: (context, index) {
+                        final message = viewModel.messages[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Student: ${message.senderName}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF191970),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                message.messageText,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF191970),
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Received on: ${_formatDate(message.createdAt.toIso8601String())}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppointmentsCard(
+    BuildContext context,
+    CounselorDashboardViewModel viewModel,
+    bool isMobile,
+  ) {
+    return Container(
+      height: 250,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF191970).withAlpha((0.05 * 255).round()),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: const Color(0xFF191970),
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Appointments',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF191970),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: viewModel.recentAppointments.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No pending appointments',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: viewModel.recentAppointments.take(2).length,
+                    itemBuilder: (context, index) {
+                      final appointment = viewModel.recentAppointments[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.grey[200]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Student: ${appointment['username'] ?? appointment['student_id'] ?? 'Unknown'}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF191970),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Date: ${_formatDate(appointment['preferred_date'])}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              'Time: ${appointment['preferred_time'] ?? 'N/A'}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.counselorReports);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF191970),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  icon: const Icon(Icons.list_alt, size: 16),
+                  label: const Text('Reports'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.counselorAppointments,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  icon: const Icon(Icons.settings, size: 16),
+                  label: const Text('Manage'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'Unknown date';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  Widget _buildNotificationsDropdown(
+    BuildContext context,
+    CounselorDashboardViewModel viewModel,
+    bool isMobile,
+  ) {
+    return Positioned(
+      top: 100, // Position below the header
+      right: 20,
+      child: Container(
+        width: 300,
+        constraints: const BoxConstraints(maxHeight: 400),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((0.1 * 255).round()),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFF191970),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    'Notifications',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: viewModel.closeNotifications,
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Notifications List
+            Expanded(
+              child: viewModel.notifications.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                          'No notifications',
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: viewModel.notifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = viewModel.notifications[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: notification.isRead
+                                ? Colors.grey[50]
+                                : Colors.blue[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: notification.isRead
+                                  ? Colors.grey[200]!
+                                  : Colors.blue[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                notification.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: notification.isRead
+                                      ? Colors.grey[700]
+                                      : const Color(0xFF191970),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                notification.message,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: notification.isRead
+                                      ? Colors.grey[600]
+                                      : Colors.grey[700],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatDate(
+                                  notification.createdAt.toIso8601String(),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
