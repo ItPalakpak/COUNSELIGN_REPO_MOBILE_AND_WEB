@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 use App\Models\AppointmentModel;
 use App\Models\FollowUpAppointmentModel;

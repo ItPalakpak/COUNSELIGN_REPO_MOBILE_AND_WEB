@@ -212,6 +212,7 @@
     <script src="<?= base_url('js/admin/counselor_info.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/admin/counselor_info_mobile.js') . '?v=' . @filemtime(FCPATH . 'js/admin/counselor_info_mobile.js') ?>"></script>
 </body>
 

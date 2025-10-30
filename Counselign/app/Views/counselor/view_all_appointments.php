@@ -459,6 +459,7 @@
     </script>
     <script src="<?= base_url('js/counselor/view_all_appointments.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 </body>
 
 </html>

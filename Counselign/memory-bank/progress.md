@@ -1,3 +1,52 @@
+- 2025-10-29: Fixed password reset code persistence when input is email
+  - Updated `App\Controllers\ForgotPassword::sendCode` to resolve `user_id` from email and save into `password_resets`
+  - Added alias endpoint `forgot-password/resend-code` routed to `ForgotPassword::resendCode` (delegates to `sendCode`)
+  - Deletes existing tokens for the same `user_id` before inserting a new one
+  - Prevents DB error: `Data too long for column 'user_id'` and false "Invalid or expired code" during verification
+  - No linter errors introduced
+- Done (Oct 29, 2025): Counselor signup flow
+  - Added Counselor Info modal in `app/Views/landing.php`
+  - Updated `public/js/landing.js` to branch counselor vs student signup
+  - Added AJAX submission to `counselor/save-basic-info` and improved unverified-login UX
+  - Route present in `app/Config/Routes.php`
+
+- **COMPLETED**: Comprehensive Last Activity Tracking Implementation
+  - **Feature**: Implemented comprehensive last_activity tracking across all student and counselor activities
+  - **Functionality**: Centralized UserActivityHelper class for consistent activity tracking
+  - **User Experience**: All user activities now properly update last_activity timestamp for accurate tracking
+  - **Type Safety**: Clean, descriptive code with comprehensive error handling and logging
+  - **Activity Coverage**: Authentication, messaging, appointments, follow-ups, profiles, PDS, notifications
+  - **Role-based Tracking**: Separate methods for students, counselors, and admins with appropriate activity types
+  - **Error Handling**: Comprehensive error handling with proper logging and fallback mechanisms
+  - **Files Modified**:
+    - `app/Helpers/UserActivityHelper.php` - New centralized helper class
+    - `app/Controllers/Auth.php` - Login and verification tracking
+    - `app/Controllers/Logout.php` - Logout tracking
+    - `app/Controllers/UpdatePassword.php` - Password change tracking
+    - `app/Controllers/ForgotPassword.php` - Password reset tracking
+    - `app/Controllers/Student/Message.php` - Student messaging tracking
+    - `app/Controllers/Counselor/Message.php` - Counselor messaging tracking
+    - `app/Controllers/Student/Appointment.php` - Student appointment tracking
+    - `app/Controllers/Admin/Appointments.php` - Admin appointment management tracking
+    - `app/Controllers/Counselor/Appointments.php` - Counselor appointment tracking
+    - `app/Controllers/Counselor/FollowUp.php` - Follow-up appointment tracking
+    - `app/Controllers/Student/Profile.php` - Student profile tracking
+    - `app/Controllers/Counselor/Profile.php` - Counselor profile tracking
+    - `app/Controllers/Admin/AdminProfileApi.php` - Admin profile tracking
+    - `app/Controllers/Student/PDS.php` - PDS save tracking
+    - `app/Controllers/Student/Notifications.php` - Student notification tracking
+    - `app/Controllers/Counselor/Notifications.php` - Counselor notification tracking
+  - **Key Features**:
+    - Centralized UserActivityHelper class with type-safe methods
+    - Role-specific activity tracking (student, counselor, admin)
+    - Comprehensive activity types for different user actions
+    - Batch update capabilities for multiple users
+    - Activity validation and user existence checking
+    - Comprehensive error handling and logging
+    - Type-safe coding with clear variable names and proper error handling
+    - No ambiguous or spaghetti code patterns
+    - Maintains existing functionality while adding comprehensive tracking
+
 - **COMPLETED**: Counselor Personal Info Default Values and INSERT Function
   - **Feature**: Fixed counselor personal info default values and INSERT functionality for first-time users
   - **Functionality**: Set default "N/A" values for personal info inputs on first-time adding

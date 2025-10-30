@@ -310,8 +310,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _showChangePasswordDialog(viewModel),
-              icon: const Icon(Icons.key, size: 18),
-              label: const Text('Change Password'),
+              icon: const Icon(Icons.edit, size: 18),
+              label: const Text('Password'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,

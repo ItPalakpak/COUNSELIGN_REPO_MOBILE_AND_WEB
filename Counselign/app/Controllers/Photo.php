@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\HTTP\Response;
 
 class Photo extends BaseController

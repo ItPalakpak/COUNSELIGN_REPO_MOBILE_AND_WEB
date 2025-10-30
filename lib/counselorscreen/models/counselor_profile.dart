@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../utils/user_display_helper.dart';
 
 class CounselorProfile {
   final int id;
@@ -11,7 +12,9 @@ class CounselorProfile {
   final CounselorDetails? counselor;
 
   // Backward compatibility fields for dashboard
-  String get name => counselor?.name ?? username;
+  String get name => counselor?.displayName ?? username;
+  String get displayName => counselor?.displayName ?? username;
+  bool get hasName => counselor?.hasName ?? false;
   String get profileImageUrl => buildImageUrl('');
 
   CounselorProfile({
@@ -110,6 +113,9 @@ class CounselorDetails {
   final String? civilStatus;
   final String? sex;
   final String? birthdate;
+  final String? firstName;
+  final String? lastName;
+  final String? fullName;
 
   CounselorDetails({
     this.counselorId,
@@ -122,12 +128,33 @@ class CounselorDetails {
     this.civilStatus,
     this.sex,
     this.birthdate,
+    this.firstName,
+    this.lastName,
+    this.fullName,
   });
 
   factory CounselorDetails.fromJson(Map<String, dynamic> json) {
-    return CounselorDetails(
+    debugPrint('🔍 CounselorDetails.fromJson - Raw JSON: $json');
+
+    // For counselors, the 'name' field contains the full name
+    // We'll try to split it into first and last name if possible
+    final fullName = json['name']?.toString();
+    String? firstName;
+    String? lastName;
+
+    if (fullName != null && fullName.isNotEmpty) {
+      final nameParts = fullName.trim().split(' ');
+      if (nameParts.length >= 2) {
+        firstName = nameParts[0];
+        lastName = nameParts.sublist(1).join(' ');
+      } else if (nameParts.length == 1) {
+        firstName = nameParts[0];
+      }
+    }
+
+    final details = CounselorDetails(
       counselorId: json['counselor_id']?.toString(),
-      name: json['name']?.toString(),
+      name: fullName,
       degree: json['degree']?.toString(),
       email: json['email']?.toString(),
       contactNumber: json['contact_number']?.toString(),
@@ -136,7 +163,17 @@ class CounselorDetails {
       civilStatus: json['civil_status']?.toString(),
       sex: json['sex']?.toString(),
       birthdate: json['birthdate']?.toString(),
+      firstName: firstName,
+      lastName: lastName,
+      fullName: fullName,
     );
+    debugPrint(
+      '🔍 CounselorDetails parsed - name: ${details.name}, firstName: ${details.firstName}, lastName: ${details.lastName}, fullName: ${details.fullName}',
+    );
+    debugPrint(
+      '🔍 CounselorDetails displayName: ${details.displayName}, hasName: ${details.hasName}',
+    );
+    return details;
   }
 
   Map<String, dynamic> toJson() {
@@ -151,6 +188,25 @@ class CounselorDetails {
       'civil_status': civilStatus,
       'sex': sex,
       'birthdate': birthdate,
+      'first_name': firstName,
+      'last_name': lastName,
+      'full_name': fullName,
     };
   }
+
+  /// Get display name using UserDisplayHelper logic
+  String get displayName => UserDisplayHelper.getDisplayName(
+    userId: counselorId ?? '',
+    firstName: firstName,
+    lastName: lastName,
+    fullName: fullName,
+  );
+
+  /// Check if counselor has a proper name (not just user_id)
+  bool get hasName => UserDisplayHelper.hasName(
+    userId: counselorId ?? '',
+    firstName: firstName,
+    lastName: lastName,
+    fullName: fullName,
+  );
 }

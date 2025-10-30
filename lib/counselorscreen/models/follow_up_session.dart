@@ -66,4 +66,37 @@ class FollowUpSession {
     if (value is String) return int.tryParse(value) ?? 0;
     return 0;
   }
+
+  String get formattedDate {
+    if (preferredDate.isEmpty) return '';
+    try {
+      final date = DateTime.parse(preferredDate);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return preferredDate;
+    }
+  }
+
+  String get statusDisplay {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'approved':
+        return 'Approved';
+      case 'rejected':
+        return 'Rejected';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  }
+
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isRejected => status.toLowerCase() == 'rejected';
+  bool get isCompleted => status.toLowerCase() == 'completed';
+  bool get isCancelled => status.toLowerCase() == 'cancelled';
 }

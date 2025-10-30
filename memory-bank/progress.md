@@ -15,6 +15,21 @@
 - Hardcoded IPs in `ApiConfig` require environment management.
 - Backend dependency (CodeIgniter MVC) must be reachable for runtime features.
 
+## Done (Dec 19, 2024) - Counselor Scheduled Appointments Loading States Implementation
+- **LOADING STATES**: Added comprehensive loading states to Mark Complete button and Confirm Cancellation button with proper state management and automatic modal closure functionality:
+  - **ViewModel Enhancement**: Added loading state properties (isUpdatingStatus, updatingAppointmentId) to CounselorScheduledAppointmentsViewModel to track ongoing operations
+  - **Mark Complete Button**: Implemented loading state with circular progress indicator and "Processing..." text when appointment status is being updated
+  - **Confirm Cancellation Button**: Enhanced cancellation dialog with loading state and automatic modal closure when process completes successfully
+  - **Error Handling**: Implemented proper error handling in cancellation dialog that shows error messages without closing modal on failure
+  - **State Management**: Used Consumer pattern for accessing ViewModel state and proper Provider pattern for reactive UI updates
+  - **Type Safety**: Maintained proper type safety with Future<void> callback signatures and comprehensive error handling
+  - **Files Modified**: 
+    - `lib/counselorscreen/state/counselor_scheduled_appointments_viewmodel.dart` - Added loading state properties and management
+    - `lib/counselorscreen/widgets/appointments_cards.dart` - Implemented Mark Complete button loading state
+    - `lib/counselorscreen/widgets/cancellation_reason_dialog.dart` - Enhanced with loading state and auto-close functionality
+    - `lib/counselorscreen/counselor_scheduled_appointments_screen.dart` - Updated async callback handling
+  - **Impact**: Users now see clear loading indicators during appointment status updates and cancellation processes, with automatic modal closure upon successful completion
+
 ## Done (Oct 19, 2025)
 - **Student Profile Screen Navigation Routes Fix** - Fixed critical navigation route errors in student_profile_screen.dart where routes like '/student-dashboard', '/my-appointments' were not found, updated all navigation routes to use proper '/student/' prefix format matching the existing routing system (e.g., '/student/dashboard', '/student/schedule-appointment', '/student/my-appointments', '/student/follow-up-sessions', '/student/announcements'), corrected bottom navigation bar currentIndex from 3 to 0 to highlight Home button instead of Follow-up Sessions button since profile screen is accessed from home, updated all drawer navigation methods to use correct route format, fixed logout navigation to use pushNamedAndRemoveUntil for proper route clearing, maintained all existing functionality while ensuring proper navigation flow, follows Flutter best practices with proper route management and navigation patterns.
 - **Student Profile Screen UI Consistency Update** - Updated student_profile_screen.dart to use the same header and navigation footer as student_dashboard.dart for consistent UI/UX across the application, replaced custom _buildHeader() method with shared AppHeader widget from ../widgets/app_header.dart, added ModernBottomNavigationBar from ../widgets/bottom_navigation_bar.dart with proper navigation handling for all student screens, implemented StudentNavigationDrawer from widgets/navigation_drawer.dart with complete navigation methods for announcements, schedule appointment, my appointments, profile, and logout, added drawer state management with _isDrawerOpen boolean and toggle/close methods, implemented proper navigation routing using Navigator.pushNamed and Navigator.pushReplacementNamed for seamless screen transitions, maintained all existing PDS functionality and profile management features while improving overall app consistency, follows Flutter best practices with proper state management and navigation patterns.
@@ -49,6 +64,44 @@
   - **Type Safety**: Maintained proper null safety and error handling throughout
   - **Files Modified**: `lib/studentscreen/state/pds_viewmodel.dart`
   - **Impact**: PDS save functionality now works correctly without date parsing errors
+
+## Done (Dec 19, 2024) - Counselor Follow-up Sessions Column Overflow Fix
+- **LAYOUT FIX**: Fixed RenderFlex overflow of 2.7 pixels in Column widget at line 277 of counselor_follow_up_sessions_screen.dart:
+  - **Root Cause**: Column widget in appointment cards was slightly too tall for the GridView's childAspectRatio of 1.2
+  - **Overflow Error**: "RenderFlex overflowed by 2.7 pixels on the bottom" in appointment card layout
+  - **Solution**: Added mainAxisSize: MainAxisSize.min to Column widget and adjusted childAspectRatio from 1.2 to 1.15
+  - **Layout Optimization**: Provided more height for appointment cards while maintaining responsive design
+  - **Functionality Preserved**: Maintained all existing functionality while ensuring proper layout constraints
+  - **Type Safety**: Follows Flutter best practices with proper layout management and responsive design
+  - **No Linter Errors**: Successfully tested with flutter analyze showing no issues
+  - **Files Modified**: 
+    - `lib/counselorscreen/counselor_follow_up_sessions_screen.dart` - Fixed Column overflow in appointment cards
+
+## Done (Dec 19, 2024) - Physical Device API Configuration Fix
+- **CRITICAL FIX**: Fixed connection timeout issue when testing on physical Android device:
+  - **Root Cause**: API configuration was using emulatorUrl (10.0.2.2) for Android platform instead of deviceUrl (192.168.18.63)
+  - **Connection Error**: "Connection timed out" error preventing login functionality on physical devices
+  - **Solution**: Updated currentBaseUrl getter to return deviceUrl for Android platform detection
+  - **Network Connectivity**: Ensured proper network connectivity between physical device and XAMPP server
+  - **Functionality Preserved**: Maintained all existing functionality while fixing network connectivity issues
+  - **Type Safety**: Follows Flutter best practices with proper API configuration and environment detection
+  - **No Linter Errors**: Successfully tested with flutter analyze showing no issues
+  - **Files Modified**: 
+    - `lib/api/config.dart` - Updated Android platform detection to use deviceUrl for physical device testing
+
+## Done (Dec 19, 2024) - Export Filters Dialog Button Layout Enhancement and Text Overflow Protection
+- **UI ENHANCEMENT**: Modified ExportFiltersDialog in counselor reports screen to arrange buttons in two rows as requested:
+  - **First Row Layout**: "Clear All" and "Clear Dates" text buttons arranged horizontally with proper spacing and icons
+  - **Second Row Layout**: "Export PDF" and "Export Excel" elevated buttons arranged horizontally with their respective colors and icons
+  - **Button Distribution**: Used Row widgets with Expanded children to prevent RenderFlex overflow and ensure proper button distribution
+  - **Overflow Fix**: Fixed 10-pixel overflow issue by wrapping buttons in Expanded widgets and using proper layout constraints
+  - **Text Overflow Protection**: Added TextOverflow.ellipsis to all button text labels to prevent text overflow and ensure proper content alignment on single lines
+  - **Visual Separation**: Added 8px spacing between buttons and 12px spacing between rows for clear visual separation
+  - **Functionality Preserved**: Maintained all existing functionality including button states, export logic, and dialog behavior
+  - **Type Safety**: Follows Flutter best practices with proper layout constraints and responsive design
+  - **No Linter Errors**: Successfully tested with flutter analyze showing no issues
+  - **Files Modified**: 
+    - `lib/counselorscreen/widgets/export_filters_dialog.dart` - Enhanced button layout with two-row arrangement, overflow fix, and text overflow protection
 
 ## Done (Dec 19, 2024) - Contact Dialog Theme Consistency
 - **UI ENHANCEMENT**: Updated contact dialog to match the exact theme and design of other landing screen modals:
@@ -317,6 +370,41 @@
     - `lib/studentscreen/state/my_appointments_viewmodel.dart` - Added API integration and schedule fetching
     - `lib/studentscreen/schedule_appointment_screen.dart` - Enhanced calendar drawer with counselor schedules section and colorful weekday cards
     - `lib/studentscreen/my_appointments_screen.dart` - Enhanced calendar drawer with counselor schedules section and colorful weekday cards
+
+## Done (Dec 19, 2024) - Student Pending Appointment Button Layout and Loading States Enhancement
+- **LAYOUT FIX**: Fixed RenderFlex overflow error of 21 pixels in pending appointment action buttons row:
+  - **Root Cause**: Row widget containing action buttons was overflowing on smaller screens due to insufficient space constraints
+  - **Overflow Error**: "RenderFlex overflowed by 21 pixels on the right" in pending appointment form action buttons
+  - **Solution**: Implemented responsive LayoutBuilder with conditional layout based on screen size and available width
+  - **Edit Mode Priority**: "Save Changes" and "Cancel Edit" buttons always stay in one row regardless of screen size to maintain UX consistency
+  - **Non-Edit Mode Priority**: "Enable Edit" and "Cancel" buttons always stay in one row regardless of screen size to maintain UX consistency
+  - **Button Constraints**: Wrapped all buttons in Flexible widgets with flex: 1 for equal space distribution in both edit and non-edit modes
+  - **Button Sizing**: Added consistent padding (horizontal: 12, vertical: 8) for better button proportions
+  - **Loading States**: Added comprehensive loading states to Update button and Confirm Cancellation button with proper state management
+  - **Update Button Loading**: Shows circular progress indicator and "Updating..." text during appointment update process
+  - **Cancel Button Loading**: Shows circular progress indicator and "Cancelling..." text during appointment cancellation process
+  - **Automatic Modal Closure**: Cancellation dialog automatically closes after successful cancellation process
+  - **Error Handling**: Proper error handling with loading state cleanup in finally blocks
+  - **Context Safety**: Added proper context.mounted checks for all UI interactions after async operations
+  - **Type Safety**: Follows Flutter best practices with proper layout management, loading states, and responsive design patterns
+  - **No Linter Errors**: Successfully tested with flutter analyze showing no issues
+  - **Files Modified**: 
+    - `lib/studentscreen/my_appointments_screen.dart` - Fixed action buttons layout with responsive design, loading states, and automatic modal closure
+    - `lib/studentscreen/state/my_appointments_viewmodel.dart` - Added setUpdatingAppointment and setCancellingAppointment methods for loading state management
+
+## Done (Dec 19, 2024) - Critical Fix: Cancellation Dialog Crash
+- **CRITICAL BUG FIX**: Fixed app crash when clicking Cancel button in pending appointment card:
+  - **Root Cause**: Consumer<MyAppointmentsViewModel> in dialog was causing crash because dialog context doesn't have access to the Provider
+  - **Error**: "Lost connection to device" - app crashed when opening cancellation dialog
+  - **Solution**: Removed Consumer widget and used direct _viewModel reference from parent widget state
+  - **StatefulBuilder**: Wrapped dialog in StatefulBuilder to enable reactive UI updates for loading states
+  - **setState Calls**: Added setState(() {}) calls after loading state changes to trigger dialog rebuilds
+  - **Loading State Management**: Maintained proper loading state with _viewModel.setCancellingAppointment()
+  - **Context Safety**: All context.mounted checks preserved for safe UI operations
+  - **Type Safety**: Follows Flutter best practices with proper state management patterns
+  - **No Linter Errors**: Successfully tested with flutter analyze showing no issues
+  - **Files Modified**: 
+    - `lib/studentscreen/my_appointments_screen.dart` - Fixed cancellation dialog crash by removing Consumer and using StatefulBuilder
 
 ## Pending Follow-ups
 - Periodic scan for new deprecations after package upgrades.

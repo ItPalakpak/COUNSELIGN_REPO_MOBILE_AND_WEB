@@ -2,6 +2,8 @@
 namespace App\Controllers;
 use CodeIgniter\Controller;
 use PHPMailer\PHPMailer\PHPMailer;
+use App\Helpers\UserActivityHelper;
+use App\Helpers\SecureLogHelper;
 
 class ForgotPassword extends Controller
 {
@@ -45,24 +47,44 @@ class ForgotPassword extends Controller
         }
         $db = \Config\Database::connect();
         $email = '';
+        $resolvedUserId = '';
+
         if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
-            $email = $input;
+            // Lookup by email, resolve user_id for DB insert
+            $user = $db->table('users')->where('email', $input)->get()->getRow();
+            if ($user && isset($user->user_id) && isset($user->email)) {
+                $resolvedUserId = $user->user_id;
+                $email = $user->email; // destination is the provided email
+            }
         } else {
+            // Lookup by user_id, resolve email for delivery
             $user = $db->table('users')->where('user_id', $input)->get()->getRow();
-            if ($user && $user->email) $email = $user->email;
+            if ($user && isset($user->user_id) && isset($user->email)) {
+                $resolvedUserId = $user->user_id;
+                $email = $user->email;
+            }
         }
-        if (!$email) return $this->response->setJSON(['status'=>'error','message'=>'User not found.']);
+
+        if (!$email || !$resolvedUserId) {
+            return $this->response->setJSON(['status'=>'error','message'=>'User not found.']);
+        }
         date_default_timezone_set('Asia/Manila');
         $code = rand(100000,999999);
         $createdAt = date('Y-m-d H:i:s');
         $expiry = date('Y-m-d H:i:s', strtotime($createdAt . ' +5 minutes')); // Set expiry to 5 minutes
+        // Optional: ensure only one active reset per user_id
+        $db->table('password_resets')->where('user_id', $resolvedUserId)->delete();
+
         $db->table('password_resets')->insert([
-            'user_id' => $input,
+            'user_id' => $resolvedUserId,
             'reset_code' => $code,
             'reset_expires_at' => $expiry,
             'created_at' => $createdAt
         ]);
-        log_message('debug', 'SQL Insert to password_resets (sendCode): ' . $db->getLastQuery());
+        SecureLogHelper::info('Password reset code sent', [
+            'user_input' => substr((string)$input, 0, 3) . '***',
+            'resolved_user_id' => substr((string)$resolvedUserId, 0, 3) . '***'
+        ]);
         
         // Send email via PHPMailer (setup required)
         $mail = new PHPMailer(true); // Create the object first
@@ -78,9 +100,15 @@ class ForgotPassword extends Controller
 
         $mail->addAddress($email);
         $mail->Subject = 'Password Reset Code';
-        $mail->Body = "Hello,\n\nWe received a request to reset your password for your University Guidance Counseling System account.\n\nYour password reset code is: $code\n\nPlease enter this code in the password reset form. This code will expire in 5 minutes.\n\nIf you did not request a password reset, please ignore this email or contact support.\n\nThank you,\nUniversity Guidance Counseling System Team";
+        $mail->Body = "Hello,\n\nWe received a request to reset your password for your Counselign System account.\n\nYour password reset code is: $code\n\nPlease enter this code in the password reset form. This code will expire in 5 minutes.\n\nIf you did not request a password reset, please ignore this email or contact support.\n\nThank you,\nCounselign Team";
         $mail->send();
         return $this->response->setJSON(['status'=>'success']);
+    }
+
+    public function resendCode()
+    {
+        // Reuse the same logic as sendCode to maintain a single source of truth
+        return $this->sendCode();
     }
 
     public function verifyCode()
@@ -88,7 +116,7 @@ class ForgotPassword extends Controller
         $code = $this->request->getJSON()->code ?? '';
         $db = \Config\Database::connect();
         $row = $db->table('password_resets')->where('reset_code', $code)->get()->getRow();
-        log_message('debug', 'SQL Select from password_resets (verifyCode): ' . $db->getLastQuery());
+        SecureLogHelper::debug('Password reset code verification attempt');
 
         if ($row) {
             // Check if the code has expired
@@ -132,11 +160,15 @@ class ForgotPassword extends Controller
         $db = \Config\Database::connect();
         $db->table('users')->where('user_id', $user_id)
             ->update(['password' => password_hash($password, PASSWORD_DEFAULT)]);
-        log_message('debug', 'SQL Update users password (setPassword): ' . $db->getLastQuery());
+        SecureLogHelper::logUserAction('Password updated via reset', $user_id);
+
+        // Update last_activity for password reset
+        $activityHelper = new UserActivityHelper();
+        $activityHelper->updateLastActivity($user_id, 'password_reset');
 
         // Clear the reset token from the password_resets table after successful password update
         $db->table('password_resets')->where('user_id', $user_id)->delete();
-        log_message('debug', 'SQL Delete reset token (setPassword): ' . $db->getLastQuery());
+        SecureLogHelper::info('Password reset completed successfully');
 
         session()->remove('reset_user_id');
         return $this->response->setJSON(['status'=>'success']);

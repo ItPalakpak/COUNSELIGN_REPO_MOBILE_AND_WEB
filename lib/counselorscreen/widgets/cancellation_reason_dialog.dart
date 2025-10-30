@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CancellationReasonDialog extends StatefulWidget {
   final String appointmentId;
   final String studentName;
-  final Function(String reason) onConfirm;
+  final Future<void> Function(String reason) onConfirm;
 
   const CancellationReasonDialog({
     super.key,
@@ -108,7 +108,7 @@ class _CancellationReasonDialogState extends State<CancellationReasonDialog> {
     );
   }
 
-  void _handleConfirm() {
+  Future<void> _handleConfirm() async {
     final reason = _reasonController.text.trim();
 
     if (reason.isEmpty) {
@@ -125,6 +125,28 @@ class _CancellationReasonDialogState extends State<CancellationReasonDialog> {
       _isLoading = true;
     });
 
-    widget.onConfirm(reason);
+    try {
+      await widget.onConfirm(reason);
+      // Close the dialog automatically when the process is finished
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // Handle error if needed, but don't close dialog on error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel appointment: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Controllers\Counselor;
 
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use App\Models\AppointmentModel;
 use App\Models\FollowUpAppointmentModel;
 use App\Models\CounselorAvailabilityModel;
@@ -79,7 +81,7 @@ class FollowUp extends BaseController
                 ->orderBy('appointments.preferred_time', 'DESC')
                 ->findAll();
 
-            log_message('info', 'Counselor FollowUp::getCompletedAppointments - Found ' . count($completedAppointments) . ' completed appointments' . (!empty($searchTerm) ? ' for search: ' . $searchTerm : ''));
+            SecureLogHelper::info('Completed appointments retrieved', ['count' => count($completedAppointments)]);
 
             return $this->respond([
                 'status' => 'success',
@@ -88,7 +90,7 @@ class FollowUp extends BaseController
             ]);
 
         } catch (\Exception $e) {
-            log_message('error', 'Error getting completed appointments: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            SecureLogHelper::error('Error getting completed appointments', ['error' => $e->getMessage()]);
             return $this->fail('Failed to retrieve completed appointments: ' . $e->getMessage());
         }
     }
@@ -178,14 +180,12 @@ class FollowUp extends BaseController
      */
     public function createFollowUp()
     {
-        // Log the request method and headers for debugging
-        log_message('debug', 'FollowUp::createFollowUp - Request method: ' . $this->request->getMethod());
-        log_message('debug', 'FollowUp::createFollowUp - Request headers: ' . json_encode($this->request->getHeaders()));
-        log_message('debug', 'FollowUp::createFollowUp - Raw input: ' . $this->request->getBody());
+        // Log the request for debugging
+        SecureLogHelper::debug('Creating follow-up appointment');
         
         // Check if user is logged in and is counselor
         if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
-            log_message('error', 'FollowUp::createFollowUp - Authentication failed: logged_in=' . (session()->get('logged_in') ? 'true' : 'false') . ', role=' . session()->get('role'));
+            SecureLogHelper::error('Follow-up creation failed - authentication failed');
             return $this->failUnauthorized('User not logged in or not authorized');
         }
 
@@ -193,7 +193,7 @@ class FollowUp extends BaseController
             $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
             
             if (!$counselorId) {
-                log_message('error', 'FollowUp::createFollowUp - Invalid session data: counselorId is null');
+                SecureLogHelper::error('Follow-up creation failed - invalid session data');
                 return $this->fail('Invalid session data');
             }
 
@@ -243,6 +243,9 @@ class FollowUp extends BaseController
             // Get next sequence number for this parent appointment
             $nextSequence = $followUpModel->getNextSequence($parentAppointmentId);
 
+            // Set Manila timezone for database operations
+            $originalTimezone = $this->setManilaTimezone();
+            
             // Prepare data for insertion
             $followUpData = [
                 'counselor_id' => $counselorId,
@@ -264,6 +267,20 @@ class FollowUp extends BaseController
                 $insertId = $followUpModel->getInsertID();
                 log_message('info', 'FollowUp::createFollowUp - Successfully created follow-up appointment with ID: ' . $insertId);
                 
+                // Get the created follow-up data for email notification
+                $createdFollowUp = $followUpModel->find($insertId);
+                
+                // Send email notification to student
+                $this->sendFollowUpNotificationToStudent($createdFollowUp, 'created');
+                
+                // Update last_activity for creating follow-up appointment
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateCounselorActivity($counselorId, 'create_follow_up');
+                $activityHelper->updateStudentActivity($studentId, 'follow_up_created');
+                
+                // Restore original timezone
+                $this->restoreTimezone($originalTimezone);
+                
                 return $this->respond([
                     'status' => 'success',
                     'message' => 'Follow-up appointment created successfully',
@@ -272,11 +289,21 @@ class FollowUp extends BaseController
             } else {
                 $errors = $followUpModel->errors();
                 log_message('error', 'FollowUp::createFollowUp - Model validation failed: ' . json_encode($errors));
+                
+                // Restore original timezone
+                $this->restoreTimezone($originalTimezone);
+                
                 return $this->fail('Validation failed: ' . implode(', ', $errors));
             }
 
         } catch (\Exception $e) {
             log_message('error', 'FollowUp::createFollowUp - Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            
+            // Restore original timezone in case of exception
+            if (isset($originalTimezone)) {
+                $this->restoreTimezone($originalTimezone);
+            }
+            
             return $this->fail('Failed to create follow-up appointment: ' . $e->getMessage());
         }
     }
@@ -313,7 +340,24 @@ class FollowUp extends BaseController
                 return $this->respond(['status' => 'success', 'message' => 'Follow-up already completed']);
             }
 
-            $followUpModel->update($sessionId, ['status' => 'completed']);
+            // Set Manila timezone for database operations
+            $originalTimezone = $this->setManilaTimezone();
+            
+            // Update with Manila timezone
+            $followUpModel->update($sessionId, [
+                'status' => 'completed'
+            ]);
+
+            // Send email notification to student
+            $this->sendFollowUpNotificationToStudent($sessionRow, 'completed');
+
+            // Update last_activity for completing follow-up
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($counselorId, 'complete_follow_up');
+            $activityHelper->updateStudentActivity($sessionRow['student_id'], 'follow_up_completed');
+
+            // Restore original timezone
+            $this->restoreTimezone($originalTimezone);
 
             return $this->respond([
                 'status' => 'success',
@@ -321,6 +365,12 @@ class FollowUp extends BaseController
             ]);
         } catch (\Exception $e) {
             log_message('error', 'FollowUp::completeFollowUp - Exception: ' . $e->getMessage());
+            
+            // Restore original timezone in case of exception
+            if (isset($originalTimezone)) {
+                $this->restoreTimezone($originalTimezone);
+            }
+            
             return $this->fail('Failed to complete follow-up');
         }
     }
@@ -361,10 +411,25 @@ class FollowUp extends BaseController
                 return $this->fail('Cannot cancel a completed follow-up');
             }
 
+            // Set Manila timezone for database operations
+            $originalTimezone = $this->setManilaTimezone();
+            
+            // Update with Manila timezone
             $followUpModel->update($sessionId, [
                 'status' => 'cancelled',
-                'reason' => $reason,
+                'reason' => $reason
             ]);
+
+            // Send email notification to student
+            $this->sendFollowUpNotificationToStudent($sessionRow, 'cancelled');
+
+            // Update last_activity for cancelling follow-up
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($counselorId, 'cancel_follow_up');
+            $activityHelper->updateStudentActivity($sessionRow['student_id'], 'follow_up_cancelled');
+
+            // Restore original timezone
+            $this->restoreTimezone($originalTimezone);
 
             return $this->respond([
                 'status' => 'success',
@@ -372,7 +437,235 @@ class FollowUp extends BaseController
             ]);
         } catch (\Exception $e) {
             log_message('error', 'FollowUp::cancelFollowUp - Exception: ' . $e->getMessage());
+            
+            // Restore original timezone in case of exception
+            if (isset($originalTimezone)) {
+                $this->restoreTimezone($originalTimezone);
+            }
+            
             return $this->fail('Failed to cancel follow-up');
+        }
+    }
+
+    /**
+     * Edit a pending follow-up session
+     */
+    public function editFollowUp()
+    {
+        if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+            return $this->failUnauthorized('User not logged in or not authorized');
+        }
+
+        try {
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            $sessionId = $this->request->getPost('id');
+            $preferredDate = $this->request->getPost('preferred_date');
+            $preferredTime = $this->request->getPost('preferred_time');
+            $consultationType = $this->request->getPost('consultation_type');
+            $description = $this->request->getPost('description');
+            $reason = $this->request->getPost('reason');
+
+            if (!$sessionId) {
+                return $this->fail('Follow-up session id is required');
+            }
+
+            $followUpModel = new FollowUpAppointmentModel();
+            $sessionRow = $followUpModel->find($sessionId);
+            if (!$sessionRow) {
+                return $this->failNotFound('Follow-up session not found');
+            }
+
+            // Ensure counselor owns this follow-up
+            if ($sessionRow['counselor_id'] !== $counselorId) {
+                return $this->failForbidden('You are not allowed to modify this follow-up');
+            }
+
+            // Only allow editing pending follow-ups
+            if ($sessionRow['status'] !== 'pending') {
+                return $this->fail('Only pending follow-up sessions can be edited');
+            }
+
+            // Validate required fields
+            if (!$preferredDate || !$preferredTime || !$consultationType) {
+                return $this->fail('Required fields are missing');
+            }
+
+            // Check for conflicts with other follow-up sessions
+            if ($followUpModel->hasCounselorFollowUpConflict($counselorId, $preferredDate, $preferredTime, $sessionId)) {
+                return $this->fail('Time slot conflicts with another follow-up session');
+            }
+
+            // Set Manila timezone for database operations
+            $originalTimezone = $this->setManilaTimezone();
+            
+            // Update with Manila timezone
+            $updateData = [
+                'preferred_date' => $preferredDate,
+                'preferred_time' => $preferredTime,
+                'consultation_type' => $consultationType,
+                'description' => $description ?? '',
+                'reason' => $reason ?? ''
+            ];
+
+            if ($followUpModel->update($sessionId, $updateData)) {
+                // Get updated session data for email
+                $updatedSession = $followUpModel->find($sessionId);
+                
+                // Send email notification to student
+                $this->sendFollowUpNotificationToStudent($updatedSession, 'edited');
+
+                // Update last_activity for editing follow-up
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateCounselorActivity($counselorId, 'edit_follow_up');
+                $activityHelper->updateStudentActivity($sessionRow['student_id'], 'follow_up_edited');
+
+                // Restore original timezone
+                $this->restoreTimezone($originalTimezone);
+
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'Follow-up session updated successfully'
+                ]);
+            } else {
+                $errors = $followUpModel->errors();
+                
+                // Restore original timezone
+                $this->restoreTimezone($originalTimezone);
+                
+                return $this->fail('Validation failed: ' . implode(', ', $errors));
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'FollowUp::editFollowUp - Exception: ' . $e->getMessage());
+            
+            // Restore original timezone in case of exception
+            if (isset($originalTimezone)) {
+                $this->restoreTimezone($originalTimezone);
+            }
+            
+            return $this->fail('Failed to edit follow-up session: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get current datetime in Manila timezone with specified format
+     * 
+     * @return string Manila timezone datetime in format 'Y-m-d H:i:s'
+     */
+    private function getManilaDateTime(): string
+    {
+        try {
+            // Set timezone to Asia/Manila
+            $manilaTimezone = new \DateTimeZone('Asia/Manila');
+            $manilaDateTime = new \DateTime('now', $manilaTimezone);
+            
+            // Return formatted datetime
+            return $manilaDateTime->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            // Fallback to server time if timezone setting fails
+            log_message('error', 'Failed to get Manila timezone: ' . $e->getMessage());
+            return date('Y-m-d H:i:s');
+        }
+    }
+
+    /**
+     * Set Manila timezone for database operations
+     * 
+     * @return string Original timezone before change
+     */
+    private function setManilaTimezone(): string
+    {
+        $originalTimezone = date_default_timezone_get();
+        date_default_timezone_set('Asia/Manila');
+        return $originalTimezone;
+    }
+
+    /**
+     * Restore original timezone after database operations
+     * 
+     * @param string $originalTimezone Original timezone to restore
+     */
+    private function restoreTimezone(string $originalTimezone): void
+    {
+        date_default_timezone_set($originalTimezone);
+    }
+
+    /**
+     * Send follow-up notification email to student
+     * 
+     * @param array $followUpData Follow-up session data
+     * @param string $actionType Type of action (created, edited, completed, cancelled)
+     */
+    private function sendFollowUpNotificationToStudent(array $followUpData, string $actionType): void
+    {
+        try {
+            // Get counselor information for email
+            $db = \Config\Database::connect();
+            $counselorInfo = $db->table('counselors c')
+                ->select('c.counselor_id, c.name, u.email')
+                ->join('users u', 'u.user_id = c.counselor_id', 'left')
+                ->where('c.counselor_id', $followUpData['counselor_id'])
+                ->get()
+                ->getRowArray();
+
+            if (!$counselorInfo) {
+                log_message('error', 'Counselor information not found for follow-up ID: ' . $followUpData['id']);
+                return;
+            }
+
+            // Get student email
+            $studentEmail = $this->getStudentEmail($followUpData['student_id']);
+            if (!$studentEmail) {
+                log_message('error', 'Student email not found for follow-up ID: ' . $followUpData['id']);
+                return;
+            }
+
+            $emailService = new \App\Services\AppointmentEmailService();
+
+            if ($actionType === 'created') {
+                $emailSent = $emailService->sendFollowUpCreatedNotification($followUpData['student_id'], $followUpData, $counselorInfo);
+            } elseif ($actionType === 'edited') {
+                $emailSent = $emailService->sendFollowUpEditedNotification($followUpData['student_id'], $followUpData, $counselorInfo);
+            } elseif ($actionType === 'completed') {
+                $emailSent = $emailService->sendFollowUpCompletedNotification($followUpData['student_id'], $followUpData, $counselorInfo);
+            } elseif ($actionType === 'cancelled') {
+                $emailSent = $emailService->sendFollowUpCancelledNotification($followUpData['student_id'], $followUpData, $counselorInfo);
+            } else {
+                log_message('error', 'Invalid action type for follow-up email notification: ' . $actionType);
+                return;
+            }
+
+            if ($emailSent) {
+                log_message('info', 'Follow-up ' . $actionType . ' notification sent successfully to student: ' . $followUpData['student_id']);
+            } else {
+                log_message('error', 'Failed to send follow-up ' . $actionType . ' notification to student: ' . $followUpData['student_id']);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error sending follow-up notification to student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get student email from users table
+     * 
+     * @param string $studentId Student ID
+     * @return string|null Student email or null if not found
+     */
+    private function getStudentEmail(string $studentId): ?string
+    {
+        try {
+            $db = \Config\Database::connect();
+            $result = $db->table('users')
+                ->select('email')
+                ->where('user_id', $studentId)
+                ->get()
+                ->getRowArray();
+
+            return $result ? $result['email'] : null;
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting student email: ' . $e->getMessage());
+            return null;
         }
     }
 }

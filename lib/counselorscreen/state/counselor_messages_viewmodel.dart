@@ -14,6 +14,9 @@ class CounselorMessagesViewModel extends ChangeNotifier {
   String? _selectedUserId;
   String? _selectedUserName;
   String? _selectedUserAvatar;
+  String? _selectedUserLastActivity;
+  String? _selectedUserLastLogin;
+  String? _selectedUserLogoutTime;
   bool _isLoadingConversations = false;
   bool _isLoadingMessages = false;
   String? _conversationsError;
@@ -27,6 +30,9 @@ class CounselorMessagesViewModel extends ChangeNotifier {
   String? get selectedUserId => _selectedUserId;
   String? get selectedUserName => _selectedUserName;
   String? get selectedUserAvatar => _selectedUserAvatar;
+  String? get selectedUserLastActivity => _selectedUserLastActivity;
+  String? get selectedUserLastLogin => _selectedUserLastLogin;
+  String? get selectedUserLogoutTime => _selectedUserLogoutTime;
   bool get isLoadingConversations => _isLoadingConversations;
   bool get isLoadingMessages => _isLoadingMessages;
   String? get conversationsError => _conversationsError;
@@ -216,6 +222,9 @@ class CounselorMessagesViewModel extends ChangeNotifier {
 
     _selectedUserName = conversation.userName;
     _selectedUserAvatar = conversation.profilePicture;
+    _selectedUserLastActivity = conversation.lastActivity;
+    _selectedUserLastLogin = conversation.lastLogin;
+    _selectedUserLogoutTime = conversation.logoutTime;
 
     // Load messages for this user
     loadMessages(userId);
@@ -335,5 +344,4 @@ class CounselorMessagesViewModel extends ChangeNotifier {
     _isLoadingMessages = false;
     notifyListeners();
   }
-
 }

@@ -2,6 +2,8 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -13,7 +15,7 @@ class AdminProfileApi extends BaseController
     public function updateProfile()
     {
         // Debug: log incoming POST data
-        log_message('error', 'POST: ' . json_encode($this->request->getPost()));
+        SecureLogHelper::debug('Admin profile update request', $this->request->getPost());
 
         // Check if user is logged in and is admin
         if (!session()->get('logged_in') || session()->get('role') !== 'admin') {
@@ -55,6 +57,11 @@ class AdminProfileApi extends BaseController
             $builder->where('role', 'admin');
             
             if ($builder->update() || $db->affectedRows() === 0) {
+                // Update last_activity for profile update
+                $activityHelper = new UserActivityHelper();
+                $adminId = session()->get('user_id_display');
+                $activityHelper->updateAdminActivity($adminId, 'update_profile');
+                
                 // Update session data
                 session()->set($field, $value);
                 
@@ -153,9 +160,8 @@ class AdminProfileApi extends BaseController
 
         if ($this->request->getMethod() === 'POST') {
             try {
-                log_message('error', 'FILES: ' . print_r($_FILES, true));
+                SecureLogHelper::debug('Profile picture upload attempt');
                 $file = $this->request->getFile('profile_picture');
-                log_message('error', 'getFile: ' . print_r($file, true));
                 if (!$file) {
                     $response['message'] = 'No file received';
                     log_message('error', 'No file received');

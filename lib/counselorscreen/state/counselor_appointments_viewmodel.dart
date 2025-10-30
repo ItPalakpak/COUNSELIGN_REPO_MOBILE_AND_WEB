@@ -14,12 +14,22 @@ class CounselorAppointmentsViewModel extends ChangeNotifier {
   DateTimeRange? _dateRange;
   final Session _session = Session();
 
+  // Loading states for individual operations
+  String? _approvingAppointmentId;
+  String? _rejectingAppointmentId;
+  String? _cancellingAppointmentId;
+
   List<CounselorAppointment> get appointments => _visibleAppointments;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   String get statusFilter => _statusFilter;
   DateTimeRange? get dateRange => _dateRange;
+
+  // Loading state getters
+  String? get approvingAppointmentId => _approvingAppointmentId;
+  String? get rejectingAppointmentId => _rejectingAppointmentId;
+  String? get cancellingAppointmentId => _cancellingAppointmentId;
 
   Map<String, int> get statusCounts {
     final Map<String, int> counts = {
@@ -119,15 +129,50 @@ class CounselorAppointmentsViewModel extends ChangeNotifier {
   }
 
   Future<bool> approveAppointment(String appointmentId) async {
-    return _updateStatus(appointmentId, 'approved');
+    _approvingAppointmentId = appointmentId;
+    notifyListeners();
+
+    try {
+      final result = await _updateStatus(appointmentId, 'approved');
+      return result;
+    } finally {
+      _approvingAppointmentId = null;
+      notifyListeners();
+    }
   }
 
   Future<bool> rejectAppointment(String appointmentId, String reason) async {
-    return _updateStatus(appointmentId, 'rejected', rejectionReason: reason);
+    _rejectingAppointmentId = appointmentId;
+    notifyListeners();
+
+    try {
+      final result = await _updateStatus(
+        appointmentId,
+        'rejected',
+        rejectionReason: reason,
+      );
+      return result;
+    } finally {
+      _rejectingAppointmentId = null;
+      notifyListeners();
+    }
   }
 
   Future<bool> cancelAppointment(String appointmentId, String reason) async {
-    return _updateStatus(appointmentId, 'cancelled', rejectionReason: reason);
+    _cancellingAppointmentId = appointmentId;
+    notifyListeners();
+
+    try {
+      final result = await _updateStatus(
+        appointmentId,
+        'cancelled',
+        rejectionReason: reason,
+      );
+      return result;
+    } finally {
+      _cancellingAppointmentId = null;
+      notifyListeners();
+    }
   }
 
   Future<bool> _updateStatus(

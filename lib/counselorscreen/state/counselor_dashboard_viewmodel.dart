@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/session.dart';
 import 'dart:convert';
 import '../../api/config.dart';
+import '../../utils/secure_logger.dart';
 import '../models/counselor_profile.dart';
 import '../models/message.dart';
 import '../models/notification.dart';
@@ -18,12 +19,19 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   String get displayName {
     final profile = _counselorProfile;
     if (profile == null) return 'Counselor';
-    if (profile.counselor?.name != null &&
-        profile.counselor!.name!.isNotEmpty) {
-      return profile.counselor!.name!;
-    }
-    if (profile.userId.isNotEmpty) return profile.userId;
-    return 'Counselor';
+    return profile.displayName;
+  }
+
+  bool get hasName {
+    final profile = _counselorProfile;
+    if (profile == null) return false;
+    return profile.hasName;
+  }
+
+  String get userId {
+    final profile = _counselorProfile;
+    if (profile == null) return '';
+    return profile.userId;
   }
 
   String get profileImageUrl {
@@ -125,6 +133,9 @@ class CounselorDashboardViewModel extends ChangeNotifier {
             '🖼️ Dashboard: profile_picture field: ${data['profile_picture']}',
           );
           debugPrint('🖼️ Dashboard: counselor data: ${data['counselor']}');
+          debugPrint(
+            '🔍 Counselor name fields - first_name: ${data['counselor']?['first_name']}, last_name: ${data['counselor']?['last_name']}, full_name: ${data['counselor']?['full_name']}',
+          );
 
           // Check if profile_picture is in the counselor object instead
           if (data['counselor'] != null) {
@@ -221,6 +232,9 @@ class CounselorDashboardViewModel extends ChangeNotifier {
                       DateTime.tryParse(conv['last_message_time'] ?? '') ??
                       DateTime.now(),
                   isRead: conv['unread_count'] == 0,
+                  lastActivity: conv['last_activity']?.toString(),
+                  lastLogin: conv['last_login']?.toString(),
+                  logoutTime: conv['logout_time']?.toString(),
                 ),
               )
               .toList();
@@ -401,13 +415,20 @@ class CounselorDashboardViewModel extends ChangeNotifier {
 
   void logout(BuildContext context) async {
     try {
+      // Call logout endpoint to update activity fields in database
+      debugPrint('🚪 Calling logout endpoint...');
+      final response = await _session.get(
+        '${ApiConfig.currentBaseUrl}/auth/logout',
+        headers: {'Content-Type': 'application/json'},
+      );
+      debugPrint('🚪 Logout response status: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('Error calling logout endpoint: $e');
+      // Continue with logout even if endpoint call fails
+    } finally {
       // Clear session cookies
       _session.clearCookies();
-      if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-      }
-    } catch (e) {
-      debugPrint('Error during logout: $e');
+      // Navigate back to landing
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }

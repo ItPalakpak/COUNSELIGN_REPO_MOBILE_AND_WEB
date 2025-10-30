@@ -1,5 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'secure_logger.dart';
+import 'secure_storage.dart';
 
 class Session {
   static final Session _instance = Session._internal();
@@ -28,10 +30,10 @@ class Session {
             .map((entry) => '${entry.key}=${entry.value}')
             .join('; ');
         requestHeaders['Cookie'] = cookieString;
-        _logger.i('🍪 Sending cookies: $cookieString');
+        SecureLogger.debug('Sending session cookies');
       }
 
-      _logger.i('🌐 Making GET request to: $url');
+      SecureLogger.debug('Making GET request to: $url');
       final response = await client.get(
         Uri.parse(url),
         headers: requestHeaders,
@@ -66,10 +68,10 @@ class Session {
             .map((entry) => '${entry.key}=${entry.value}')
             .join('; ');
         requestHeaders['Cookie'] = cookieString;
-        _logger.i('🍪 Sending cookies: $cookieString');
+        SecureLogger.debug('Sending session cookies');
       }
 
-      _logger.i('🌐 Making POST request to: $url');
+      SecureLogger.debug('Making POST request to: $url');
 
       // If files are provided, use multipart request
       if (files != null && files.isNotEmpty) {
@@ -120,7 +122,7 @@ class Session {
   void _updateCookies(http.Response response) {
     final setCookieHeader = response.headers['set-cookie'];
     if (setCookieHeader != null) {
-      _logger.i('🍪 Raw Set-Cookie header: $setCookieHeader');
+      SecureLogger.debug('Received Set-Cookie header');
 
       // Parse the Set-Cookie header (handle multiple cookies)
       final cookiesList = setCookieHeader.split(',');
@@ -134,17 +136,24 @@ class Session {
           final cookieName = parts[0].trim();
           final cookieValue = parts.sublist(1).join('=').trim();
           cookies[cookieName] = cookieValue;
-          _logger.i('🍪 Stored cookie: $cookieName=$cookieValue');
+          SecureLogger.debug('Stored session cookie: $cookieName');
+
+          // Store session token in secure storage if it's a session cookie
+          if (cookieName.toLowerCase().contains('session') ||
+              cookieName.toLowerCase().contains('token')) {
+            SecureStorage.storeSessionToken(cookieValue);
+          }
         }
       }
     }
 
-    _logger.i('🍪 Total cookies stored: ${cookies.length}');
+    SecureLogger.debug('Total cookies stored: ${cookies.length}');
   }
 
   void clearCookies() {
     cookies.clear();
-    _logger.i('🍪 Cleared all cookies');
+    SecureStorage.clearSession();
+    SecureLogger.debug('Cleared all session cookies and secure storage');
   }
 
   // Helper method to check if we have a session

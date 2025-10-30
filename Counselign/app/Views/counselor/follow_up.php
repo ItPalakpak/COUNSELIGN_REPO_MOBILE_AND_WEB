@@ -238,6 +238,75 @@
         </div>
     </div>
 
+    <!-- Edit Follow-up Modal -->
+    <div class="modal fade" id="editFollowUpModal" tabindex="-1" aria-labelledby="editFollowUpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editFollowUpModalLabel">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Follow-up Session
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editFollowUpForm">
+                        <input type="hidden" id="editFollowUpId" name="id">
+                        <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="editPreferredDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="editPreferredDate" name="preferred_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="editPreferredTime" class="form-label">Preferred Time <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="editPreferredTime" name="preferred_time" required>
+                                        <option value="">Select a time</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="editConsultationType" class="form-label">Consultation Type <span class="text-danger">*</span></label>
+                            <select class="form-control" id="editConsultationType" name="consultation_type" required>
+                                <option value="">Select consultation type</option>
+                                <option value="Individual Counseling">Individual Counseling</option>
+                                <option value="Group Counseling">Group Counseling</option>
+                                <option value="Career Guidance">Career Guidance</option>
+                                <option value="Academic Counseling">Academic Counseling</option>
+                                <option value="Personal Development">Personal Development</option>
+                                <option value="Crisis Intervention">Crisis Intervention</option>
+                                <option value="Follow-up Session">Follow-up Session</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="editDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editDescription" name="description" rows="3" placeholder="Brief description of the follow-up session"></textarea>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="editReason" class="form-label">Reason for Follow-up</label>
+                            <textarea class="form-control" id="editReason" name="reason" rows="2" placeholder="Reason for scheduling this follow-up session"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="updateFollowUpBtn">
+                        <i class="fas fa-save me-2"></i>
+                        Update Follow-up
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -296,6 +365,7 @@
     <script src="<?= base_url('js/counselor/follow_up.js') ?>" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         // Wire confirm cancel button
         document.addEventListener('DOMContentLoaded', function() {

@@ -6,12 +6,14 @@ class CounselorScreenWrapper extends StatefulWidget {
   final Widget child;
   final int currentBottomNavIndex;
   final ValueChanged<int>? onBottomNavTap;
+  final VoidCallback? onLogout;
 
   const CounselorScreenWrapper({
     super.key,
     required this.child,
     this.currentBottomNavIndex = 0,
     this.onBottomNavTap,
+    this.onLogout,
   });
 
   @override
@@ -208,7 +210,13 @@ class _CounselorScreenWrapperState extends State<CounselorScreenWrapper> {
                               title: 'Log Out',
                               onTap: () {
                                 _closeDrawer();
-                                Navigator.of(context).pushReplacementNamed('/');
+                                if (widget.onLogout != null) {
+                                  widget.onLogout!();
+                                } else {
+                                  Navigator.of(
+                                    context,
+                                  ).pushReplacementNamed('/');
+                                }
                               },
                               isDestructive: true,
                             ),

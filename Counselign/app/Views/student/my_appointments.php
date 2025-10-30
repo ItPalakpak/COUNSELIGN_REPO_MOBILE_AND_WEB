@@ -472,6 +472,7 @@
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
     <script src="<?= base_url('js/student/my_appointments.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         (function() {
             const toggleBtn = document.getElementById('counselorsCalendarToggleBtn');
@@ -487,8 +488,8 @@
     </script>
     <script src="<?= base_url('js/student/logout.js') ?>"></script>
     <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>

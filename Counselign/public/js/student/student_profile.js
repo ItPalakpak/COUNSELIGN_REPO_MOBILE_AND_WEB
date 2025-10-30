@@ -25,7 +25,7 @@ function saveProfileChanges() {
     const newUsername = document.getElementById('update-username').value.trim();
     const newEmail = document.getElementById('update-email').value.trim();
 
-    console.log('Saving profile changes:', { newUsername, newEmail });
+    SecureLogger.info('Saving profile changes:', { newUsername, newEmail });
 
     // Validate inputs
     if (!newUsername) {
@@ -104,7 +104,7 @@ function saveProfileChanges() {
 
 // Function to load current profile data
 function loadProfileData() {
-    console.log('Loading profile data...');
+    SecureLogger.info('Loading profile data...');
     
     // Show loading state
     document.querySelectorAll('.form-value').forEach(el => {
@@ -120,7 +120,7 @@ function loadProfileData() {
         }
     })
     .then(response => {
-        console.log('Response status:', response.status);
+        SecureLogger.info('Response status:', response.status);
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 // Session expired or unauthorized
@@ -132,7 +132,7 @@ function loadProfileData() {
         return response.json();
     })
     .then(data => {
-        console.log('Profile data:', data);
+        SecureLogger.info('Profile data:', data);
         if (data.success) {
             // Update display values
             document.getElementById('display-userid').textContent = data.user_id || 'N/A';
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarDrawerClose = document.getElementById('navbarDrawerClose');
     const navbarOverlay = document.getElementById('navbarOverlay');
 
-    console.log("DOM loaded, setting up profile functionality");
+    SecureLogger.info("DOM loaded, setting up profile functionality");
     
     // Load profile data when page loads
     loadProfileData();
@@ -396,9 +396,9 @@ document.addEventListener('DOMContentLoaded', function() {
             payload.append('services_availed', JSON.stringify(servicesAvailed));
 
             // Debug: Log the data being sent
-            console.log('PDS Save - Sending data:');
+            SecureLogger.info('PDS Save - Sending data:');
             for (let [key, value] of payload.entries()) {
-                console.log(key + ':', value);
+                SecureLogger.info(key + ':', value);
             }
 
             fetch((window.BASE_URL||'') + 'student/pds/save', {
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to load PDS data
 function loadPDSData() {
-    console.log('Loading PDS data...');
+    SecureLogger.info('Loading PDS data...');
     
     fetch(window.BASE_URL + 'student/pds/load', {
         method: 'GET',
@@ -441,11 +441,11 @@ function loadPDSData() {
         return response.json();
     })
     .then(data => {
-        console.log('PDS data:', data);
+        SecureLogger.info('PDS data:', data);
         if (data.success && data.data) {
             populatePDSForm(data.data);
         } else {
-            console.log('No PDS data found or failed to load');
+            SecureLogger.info('No PDS data found or failed to load');
         }
     })
     .catch(error => {
@@ -456,8 +456,8 @@ function loadPDSData() {
 // Function to populate PDS form with data
 function populatePDSForm(pdsData) {
     // Debug: Log the received PDS data
-    console.log('PDS Data received:', pdsData);
-    console.log('User email:', pdsData.user_email);
+    SecureLogger.info('PDS Data received:', pdsData);
+    SecureLogger.info('User email:', pdsData.user_email);
     
     // Academic Information
     if (pdsData.academic) {
@@ -531,9 +531,9 @@ function populatePDSForm(pdsData) {
     if (pdsData.circumstances && pdsData.circumstances.pwd_proof_file && pdsData.circumstances.pwd_proof_file !== 'N/A') {
         showPwdProofPreview(pdsData.circumstances.pwd_proof_file);
         showPwdProofDisplayBox(pdsData.circumstances.pwd_proof_file);
-        console.log('PWD Proof file found on page load:', pdsData.circumstances.pwd_proof_file);
+        SecureLogger.info('PWD Proof file found on page load:', pdsData.circumstances.pwd_proof_file);
     } else {
-        console.log('No PWD Proof file found on page load');
+        SecureLogger.info('No PWD Proof file found on page load');
     }
 
     // Trigger conditional logic after populating
@@ -548,7 +548,7 @@ function handleCivilStatusChange() {
     const spouseLabel = document.querySelector('label[for="spouse"]');
     const spouseContainer = spouseField ? spouseField.closest('.col-md-8') : null;
     
-    console.log('Civil Status Elements:', {
+    SecureLogger.info('Civil Status Elements:', {
         civilStatusSelect: !!civilStatusSelect,
         spouseField: !!spouseField,
         spouseLabel: !!spouseLabel,
@@ -558,20 +558,20 @@ function handleCivilStatusChange() {
     if (civilStatusSelect && spouseField && spouseLabel && spouseContainer) {
         const toggleSpouseField = () => {
             const isMarried = civilStatusSelect.value === 'Married';
-            console.log('Civil Status Changed:', civilStatusSelect.value, 'Is Married:', isMarried);
+            SecureLogger.info('Civil Status Changed:', civilStatusSelect.value, 'Is Married:', isMarried);
             
             // Show/hide spouse field and label
             if (isMarried) {
                 spouseField.style.display = 'block';
                 spouseLabel.style.display = 'block';
                 spouseContainer.style.display = 'block';
-                console.log('Spouse field shown');
+                SecureLogger.info('Spouse field shown');
             } else {
                 spouseField.style.display = 'none';
                 spouseLabel.style.display = 'none';
                 spouseContainer.style.display = 'none';
                 spouseField.value = 'N/A';
-                console.log('Spouse field hidden, value set to N/A');
+                SecureLogger.info('Spouse field hidden, value set to N/A');
             }
         };
         
@@ -636,14 +636,14 @@ function handlePWDChange() {
 // Helper function to set input values
 function setValue(id, value) {
     const element = document.getElementById(id);
-    console.log(`setValue called for ${id}:`, value, 'Element found:', !!element);
+    SecureLogger.info(`setValue called for ${id}:`, value, 'Element found:', !!element);
     if (element && value && value !== 'N/A') {
         element.value = value;
-        console.log(`Value set for ${id}:`, element.value);
+        SecureLogger.info(`Value set for ${id}:`, element.value);
     } else if (element && id === 'personalEmail') {
         // Special case for personalEmail - always set the value even if empty
         element.value = value || '';
-        console.log(`PersonalEmail value set to:`, element.value);
+        SecureLogger.info(`PersonalEmail value set to:`, element.value);
     }
 }
 
@@ -794,7 +794,7 @@ function showPwdProofDisplayBox(filePath) {
     const fileSize = document.getElementById('pwdProofFileSize');
     const downloadBtn = document.getElementById('downloadPwdProofBtn');
     
-    console.log('showPwdProofDisplayBox called with:', filePath);
+    SecureLogger.info('showPwdProofDisplayBox called with:', filePath);
     
     if (filePath && filePath !== 'N/A' && filePath.trim() !== '') {
         const fileNameOnly = filePath.split('/').pop();
@@ -846,10 +846,10 @@ function showPwdProofDisplayBox(filePath) {
         // Show the display box
         displayBox.style.display = 'block';
         
-        console.log('PWD Proof display box shown for file:', fileNameOnly);
+        SecureLogger.info('PWD Proof display box shown for file:', fileNameOnly);
     } else {
         displayBox.style.display = 'none';
-        console.log('PWD Proof display box hidden - no valid file path');
+        SecureLogger.info('PWD Proof display box hidden - no valid file path');
     }
 }
 
@@ -859,7 +859,7 @@ function showPwdProofPreview(filePath) {
     const previewDiv = document.getElementById('pwdProofPreview');
     const fileNameSpan = document.getElementById('currentPwdProofName');
     
-    console.log('showPwdProofPreview called with:', filePath);
+    SecureLogger.info('showPwdProofPreview called with:', filePath);
     
     if (filePath && filePath !== 'N/A' && filePath.trim() !== '') {
         const fileName = filePath.split('/').pop();
@@ -871,11 +871,11 @@ function showPwdProofPreview(filePath) {
         previewButton.setAttribute('data-file-path', filePath);
         previewButton.removeAttribute('data-new-file');
         
-        console.log('PWD Proof preview button shown for file:', fileName);
+        SecureLogger.info('PWD Proof preview button shown for file:', fileName);
     } else {
         previewDiv.style.display = 'none';
         previewButton.style.display = 'none';
-        console.log('PWD Proof preview button hidden - no valid file path');
+        SecureLogger.info('PWD Proof preview button hidden - no valid file path');
     }
 }
 
@@ -1051,7 +1051,7 @@ function initializePwdProofDisplayBox() {
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function(e) {
             // Let the default download behavior handle the file download
-            console.log('PWD Proof file download initiated');
+            SecureLogger.info('PWD Proof file download initiated');
         });
     }
 }

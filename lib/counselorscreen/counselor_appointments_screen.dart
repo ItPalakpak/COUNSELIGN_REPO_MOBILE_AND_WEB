@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'state/counselor_appointments_viewmodel.dart';
 import 'widgets/counselor_screen_wrapper.dart';
+import 'state/counselor_scheduled_appointments_viewmodel.dart';
+import 'widgets/weekly_schedule.dart';
+import 'widgets/mini_calendar.dart';
 
 class CounselorAppointmentsScreen extends StatefulWidget {
   const CounselorAppointmentsScreen({super.key});
@@ -45,30 +48,140 @@ class _CounselorAppointmentsScreenState
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final isTablet = size.width >= 600 && size.width < 1024;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile
-            ? 16
-            : isTablet
-            ? 20
-            : 24,
-        vertical: isMobile ? 16 : 20,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 12),
-          _buildStatusGrid(context),
-          const SizedBox(height: 12),
-          _buildSearchRow(context),
-          const SizedBox(height: 8),
-          _buildFilterRow(context),
-          const SizedBox(height: 16),
-          _buildList(context),
-        ],
-      ),
+    return Stack(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile
+                ? 16
+                : isTablet
+                ? 20
+                : 24,
+            vertical: isMobile ? 16 : 20,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              const SizedBox(height: 12),
+              _buildStatusGrid(context),
+              const SizedBox(height: 12),
+              _buildSearchRow(context),
+              const SizedBox(height: 8),
+              _buildFilterRow(context),
+              const SizedBox(height: 16),
+              _buildList(context),
+            ],
+          ),
+        ),
+        Positioned(
+          top: 10,
+          right: 15,
+          child: ElevatedButton(
+            onPressed: () => _showSchedulesModal(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF060E57),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 4,
+            ),
+            child: const Icon(Icons.calendar_month, size: 16),
+          ),
+        ),
+      ],
     );
+  }
+
+  void _showSchedulesModal(BuildContext context) {
+    final localVm = CounselorScheduledAppointmentsViewModel();
+    localVm.initialize();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: localVm,
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF060E57),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Weekly Schedules & Calendar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Consumer<CounselorScheduledAppointmentsViewModel>(
+                        builder: (context, vm, child) {
+                          return WeeklySchedule(schedule: vm.counselorSchedule);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Consumer<CounselorScheduledAppointmentsViewModel>(
+                        builder: (context, vm, child) {
+                          return MiniCalendar(
+                            viewModel: vm,
+                            onDateSelected: (date) {
+                              debugPrint('Selected date: $date');
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      localVm.dispose();
+    });
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -348,7 +461,7 @@ class _CounselorAppointmentsScreenState
               ),
             ],
             const SizedBox(height: 12),
-            Row(children: _buildActions(context, appt)),
+            _buildActions(context, appt),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
@@ -443,77 +556,98 @@ class _CounselorAppointmentsScreenState
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, dynamic appt) {
-    final vm = Provider.of<CounselorAppointmentsViewModel>(
-      context,
-      listen: false,
-    );
-    if (appt.status == 'pending') {
-      return [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () async {
-              final ok = await vm.approveAppointment(appt.id);
-              if (!mounted) return;
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? 'Appointment approved' : 'Approval failed',
-                    ),
-                    backgroundColor: ok ? Colors.green : Colors.red,
+  Widget _buildActions(BuildContext context, dynamic appt) {
+    return Consumer<CounselorAppointmentsViewModel>(
+      builder: (context, vm, child) {
+        if (appt.status == 'pending') {
+          return Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: vm.approvingAppointmentId == appt.id
+                      ? null
+                      : () async {
+                          final ok = await vm.approveAppointment(appt.id);
+                          if (!mounted) return;
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? 'Appointment approved'
+                                      : 'Approval failed',
+                                ),
+                                backgroundColor: ok ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: vm.approvingAppointmentId == appt.id
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Approve'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _showReasonDialog(context, vm, appt.id, action: 'reject'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  child: const Text('Reject'),
+                ),
+              ),
+            ],
+          );
+        }
+        if (appt.status == 'approved') {
+          return Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _showReasonDialog(context, vm, appt.id, action: 'cancel'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(
+              child: Text(
+                'No actions available',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
             ),
-            child: const Text('Approve'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () =>
-                _showReasonDialog(context, vm, appt.id, action: 'reject'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-            ),
-            child: const Text('Reject'),
-          ),
-        ),
-      ];
-    }
-    if (appt.status == 'approved') {
-      return [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () =>
-                _showReasonDialog(context, vm, appt.id, action: 'cancel'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-            ),
-            child: const Text('Cancel'),
-          ),
-        ),
-      ];
-    }
-    return [
-      Expanded(
-        child: Text(
-          'No actions available',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-      ),
-    ];
+          ],
+        );
+      },
+    );
   }
 
   void _showReasonDialog(
@@ -523,67 +657,114 @@ class _CounselorAppointmentsScreenState
     required String action,
   }) {
     final controller = TextEditingController();
+
     showDialog<void>(
       context: parentContext,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            action == 'reject' ? 'Reject Appointment' : 'Cancel Appointment',
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Please provide a reason:'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter reason...',
+        return ChangeNotifierProvider.value(
+          value: vm,
+          child: Consumer<CounselorAppointmentsViewModel>(
+            builder: (context, viewModel, child) {
+              final isLoading = action == 'reject'
+                  ? viewModel.rejectingAppointmentId == appointmentId
+                  : viewModel.cancellingAppointmentId == appointmentId;
+
+              return AlertDialog(
+                title: Text(
+                  action == 'reject'
+                      ? 'Reject Appointment'
+                      : 'Cancel Appointment',
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final reason = controller.text.trim();
-                if (reason.isEmpty) {
-                  if (!parentContext.mounted) return;
-                  ScaffoldMessenger.of(parentContext).showSnackBar(
-                    const SnackBar(content: Text('Reason is required')),
-                  );
-                  return;
-                }
-
-                // Close dialog first
-                Navigator.of(dialogContext).pop();
-
-                bool ok = false;
-                if (action == 'reject') {
-                  ok = await vm.rejectAppointment(appointmentId, reason);
-                } else {
-                  ok = await vm.cancelAppointment(appointmentId, reason);
-                }
-
-                if (!parentContext.mounted) return;
-                ScaffoldMessenger.of(parentContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? 'Updated successfully' : 'Update failed',
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Please provide a reason:'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: controller,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter reason...',
+                      ),
                     ),
-                    backgroundColor: ok ? Colors.green : Colors.red,
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Close'),
                   ),
-                );
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+                  ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final reason = controller.text.trim();
+                            if (reason.isEmpty) {
+                              if (!parentContext.mounted) return;
+                              ScaffoldMessenger.of(parentContext).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Reason is required'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            bool ok = false;
+                            if (action == 'reject') {
+                              ok = await viewModel.rejectAppointment(
+                                appointmentId,
+                                reason,
+                              );
+                            } else {
+                              ok = await viewModel.cancelAppointment(
+                                appointmentId,
+                                reason,
+                              );
+                            }
+
+                            // Close dialog only after process is finished
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            if (parentContext.mounted) {
+                              ScaffoldMessenger.of(parentContext).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? 'Updated successfully'
+                                        : 'Update failed',
+                                  ),
+                                  backgroundColor: ok
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            action == 'reject'
+                                ? 'Submit Rejection'
+                                : 'Submit Cancellation',
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );

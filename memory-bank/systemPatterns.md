@@ -1,5 +1,47 @@
 # System Patterns
 
+## Admin Dashboard Structure (Updated Oct 27, 2025)
+
+The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure:
+
+### Layout Components
+1. **Sticky Header**: AdminHeader widget with logo, title, and logout button
+2. **Profile Section**: Avatar, greeting, last login, responsive action buttons
+3. **Appointment Reports Section**: Time range filter, "View Past Reports" button
+4. **Statistics Section**: 5 stat cards with FontAwesome icons and proper colors
+5. **Charts Section**: Trend line chart and pie chart using fl_chart
+6. **Appointment Tables Section**: Tabbed interface with search/filter and export
+
+### Responsive Design
+- **Mobile (<600px)**: Stacked action buttons, compact layouts
+- **Tablet (600-1024px)**: Horizontal action buttons, medium spacing
+- **Desktop (>=1024px)**: Full horizontal layout, desktop action buttons
+
+### Data Management
+- AdminDashboardViewModel with getAppointmentsByStatus() method
+- Provider pattern for state management
+- Type-safe appointment filtering and statistics calculation
+
+### Navigation
+- All action buttons navigate to appropriate admin screens
+- Export functionality with PDF/Excel options
+- Tab-based appointment filtering (All, Approved, Rejected, Completed, Cancelled)
+
+## Dialog Themes (Updated Oct 27, 2025)
+
+- All landing dialogs (e.g., LoginDialog, AdminLoginDialog, ContactDialog) use a unified modern style with:
+  - Transparent dialog backgrounds, outer Container with rounded corners (radius 24)
+  - White box with two layers of box shadow (primary large/soft blue, subtle shadow for lift)
+  - Icon header in gradient circle matching dialog purpose (login, admin)
+  - Modern close button with background container
+  - Padding: uniform content padding (32 on all sides)
+  - Inputs styled with prefix icons, consistent colors
+  - Text fields capped at appropriate length, password field with eye toggle using icon/image
+  - Visible, styled error/output feedback sections
+  - Button row: Primary button (color #060E57 or relevant), Elevated secondary options for navigation/other roles
+- All dialogs preserve original business logic and only share a visual styling system.
+- Future dialogs must extend this theme system for consistency and user familiarity.
+
 ## Architecture
 - Flutter client app with route-based navigation (`lib/routes.dart`), MaterialApp in `lib/main.dart`.
 - Integrates with a PHP CodeIgniter backend (separate MVC project) via HTTP.
@@ -18,6 +60,8 @@
 ## Networking
 - `http` package used.
 - `ApiConfig.currentBaseUrl` selects environment (web/Android/iOS/desktop) with default headers and timeouts.
+- Authentication API endpoints:
+  - GET `auth/logout` → Logs out user and updates logout_time, last_activity, last_inactive_at, last_active_at database columns via UserActivityHelper
 - Student API endpoints:
   - GET `student/get-counselor-schedules` → Returns counselor availability data organized by weekday (Monday-Friday only)
 

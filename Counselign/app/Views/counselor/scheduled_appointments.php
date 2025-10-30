@@ -139,22 +139,6 @@
         </div>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        window.BASE_URL = "<?= base_url() ?>";
-    </script>
-    <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
-    <script src="<?= base_url('js/counselor/scheduled_appointments.js') ?>"></script>
-    <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
-
     <div class="modal fade" id="cancellationReasonModal" tabindex="-1" aria-labelledby="cancellationReasonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -176,6 +160,25 @@
             </div>
         </div>
     </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="copyright">
+                <b>© 2025 Counselign Team. All rights reserved.</b>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.BASE_URL = "<?= base_url() ?>";
+    </script>
+    <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/scheduled_appointments.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+
+    
 </body>
 
 </html>

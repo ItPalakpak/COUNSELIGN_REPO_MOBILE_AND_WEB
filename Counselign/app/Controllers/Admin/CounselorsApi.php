@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Admin;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class CounselorsApi extends BaseController
@@ -12,7 +15,7 @@ class CounselorsApi extends BaseController
     {
         $log = date('Y-m-d H:i:s') . " - " . $message;
         if ($data !== null) {
-            $log .= "\nData: " . print_r($data, true);
+            $log .= "\nData: " . /* Debug statement removed for security */;
         }
         file_put_contents(ROOTPATH . 'writable/debug.log', $log . "\n\n", FILE_APPEND);
     }

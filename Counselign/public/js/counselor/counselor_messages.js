@@ -10,7 +10,7 @@ let lastGlobalMessageTimestamp = null;
 let autoSelectUserId = null;
 
 // Debug logging
-console.log('Counselor Message JS file loaded');
+SecureLogger.info('Counselor Message JS file loaded');
 
 // Small helper to normalize image URLs
 function resolveImageUrl(path) {
@@ -83,11 +83,11 @@ function initializeMobileSidebar() {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOM Content Loaded');
+    SecureLogger.info('DOM Content Loaded');
     try {
         const isLoggedIn = await checkSession();
         if (isLoggedIn) {
-            console.log('Counselor is logged in, initializing...');
+            SecureLogger.info('Counselor is logged in, initializing...');
             
             // Initialize mobile sidebar
             initializeMobileSidebar();
@@ -102,13 +102,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             const highlightedUserId = localStorage.getItem('highlightConversation');
             const selectedUserId = userIdFromUrl || userIdFromStorage || highlightedUserId;
             
-            console.log('Selected user ID from URL:', userIdFromUrl);
-            console.log('Selected user ID from storage:', userIdFromStorage);
-            console.log('Highlighted user ID:', highlightedUserId);
+            SecureLogger.info('Selected user ID from URL:', userIdFromUrl);
+            SecureLogger.info('Selected user ID from storage:', userIdFromStorage);
+            SecureLogger.info('Highlighted user ID:', highlightedUserId);
             
             // Set the global autoSelectUserId
             autoSelectUserId = selectedUserId;
-            console.log('autoSelectUserId at DOMContentLoaded:', autoSelectUserId);
+            SecureLogger.info('autoSelectUserId at DOMContentLoaded:', autoSelectUserId);
             // Load conversations
             await loadConversations();
             
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Check session status
 async function checkSession() {
-    console.log('Checking session...');
+    SecureLogger.info('Checking session...');
     try {
         const response = await fetch((window.BASE_URL || '/') + 'counselor/session/check', {
             method: 'GET',
@@ -182,7 +182,7 @@ async function checkSession() {
         }
 
         const data = await response.json();
-        console.log('Session check result:', data);
+        SecureLogger.info('Session check result:', data);
 
         if (!data.loggedin || !data.user_id || data.role !== 'counselor') {
             console.error('Session invalid:', data);
@@ -306,7 +306,7 @@ function handleFileAttachment(event) {
 
 // Initialize message input
 async function initializeMessageInput() {
-    console.log('Initializing message input...');
+    SecureLogger.info('Initializing message input...');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
     const attachButton = document.getElementById('attachment-button');
@@ -323,6 +323,9 @@ async function initializeMessageInput() {
     sendButton.disabled = true;
     if (attachButton) attachButton.disabled = true;
     if (emojiButton) emojiButton.disabled = true;
+    
+    // Initialize chat header with default state
+    initializeChatHeader();
 
     // Add event listeners
     sendButton.addEventListener('click', sendMessage);
@@ -354,19 +357,70 @@ async function initializeMessageInput() {
         this.style.height = (this.scrollHeight) + 'px';
     });
 
-    console.log('Message input initialized');
+    SecureLogger.info('Message input initialized');
+}
+
+// Initialize chat header with default state
+function initializeChatHeader() {
+    const chatHeader = document.querySelector('.chat-user-info');
+    if (chatHeader) {
+        const userNameElement = chatHeader.querySelector('.user-name');
+        const userStatusElement = chatHeader.querySelector('.user-status');
+        const headerAvatar = chatHeader.querySelector('.user-avatar');
+        
+        if (userNameElement) userNameElement.textContent = 'Messages';
+        if (userStatusElement) {
+            userStatusElement.textContent = 'Select a conversation to start messaging';
+            userStatusElement.className = 'user-status';
+        }
+        if (headerAvatar) {
+            headerAvatar.innerHTML = '<i class="fas fa-user"></i>';
+        }
+    }
 }
 
 // Start message polling
 async function startMessagePolling() {
-    console.log('Starting message polling...');
+    SecureLogger.info('Starting message polling...');
     // Keep the conversations list static during message polling
     if (messageUpdateInterval) clearInterval(messageUpdateInterval);
     messageUpdateInterval = setInterval(async () => {
         if (!isSearching && currentUserId) {
             await loadMessages(currentUserId);
         }
+        // Update status indicators every 30 seconds
+        updateStatusIndicators();
     }, 1500);
+}
+
+// Update status indicators for all conversations
+function updateStatusIndicators() {
+    const conversationItems = document.querySelectorAll('.conversation-item');
+    conversationItems.forEach(item => {
+        const lastActivity = item.dataset.lastActivity;
+        const lastLogin = item.dataset.lastLogin;
+        const statusElement = item.querySelector('.conversation-status');
+        if (statusElement && (lastActivity || lastLogin)) {
+            const statusInfo = calculateOnlineStatus(lastActivity, lastLogin, item.dataset.logoutTime);
+            statusElement.textContent = statusInfo.text;
+            statusElement.className = `conversation-status ${statusInfo.class}`;
+        }
+    });
+    
+    // Update chat header status if a conversation is selected
+    if (currentUserId) {
+        const activeCard = document.querySelector(`.conversation-item[data-id="${currentUserId}"]`);
+        if (activeCard) {
+            const userStatusElement = document.querySelector('.user-status');
+            if (userStatusElement) {
+                const lastActivity = activeCard.dataset.lastActivity;
+                const lastLogin = activeCard.dataset.lastLogin;
+                const statusInfo = calculateOnlineStatus(lastActivity, lastLogin, activeCard.dataset.logoutTime);
+                userStatusElement.textContent = statusInfo.text;
+                userStatusElement.className = `user-status ${statusInfo.class}`;
+            }
+        }
+    }
 }
 
 function highlightConversation(userId) {
@@ -438,7 +492,7 @@ async function loadConversations() {
                 
                 // If we found a newer message than what we've seen before
                 if (newestConversation && newestTimestamp > lastGlobalMessageTimestamp) {
-                    console.log('New message detected in conversation:', newestConversation.user_id);
+                    SecureLogger.info('New message detected in conversation:', newestConversation.user_id);
                     lastGlobalMessageTimestamp = newestTimestamp;
                     
                     // If no conversation is selected yet or auto-switching is allowed, switch to this one
@@ -511,15 +565,19 @@ function updateConversations(conversations) {
         if (truncatedLastMessage.length > maxPreviewLength) {
             truncatedLastMessage = truncatedLastMessage.substring(0, maxPreviewLength - 3) + '...';
         }
+        // Calculate online status
+        const statusInfo = calculateOnlineStatus(conv.last_activity, conv.last_login, conv.logout_time);
+        
         const cardHtml = `
             <div class="conversation-item ${otherUserId === currentUserId ? 'active' : ''}" 
-                 data-id="${otherUserId}">
+                 data-id="${otherUserId}" data-last-activity="${conv.last_activity || ''}" data-last-login="${conv.last_login || ''}" data-logout-time="${conv.logout_time || ''}">
                 <div class="conversation-avatar">
                     <img src="${otherAvatar}" alt="avatar" style="width:46px;height:46px;border-radius:50%;object-fit:cover;"/>
                 </div>
                 <div class="conversation-details">
                     <div class="conversation-name">${otherUserName}</div>
                     <div class="conversation-last-message">${truncatedLastMessage}</div>
+                    <div class="conversation-status ${statusInfo.class}">${statusInfo.text}</div>
                 </div>
                 <div class="conversation-meta">
                     <div class="conversation-time">${lastMessageTime}</div>
@@ -540,11 +598,13 @@ function updateConversations(conversations) {
             const existingMessage = existingCard.querySelector('.conversation-last-message');
             const existingTime = existingCard.querySelector('.conversation-time');
             const existingBadge = existingCard.querySelector('.unread-badge');
+            const existingStatus = existingCard.querySelector('.conversation-status');
             
             const newName = newCard.querySelector('.conversation-name');
             const newMessage = newCard.querySelector('.conversation-last-message');
             const newTime = newCard.querySelector('.conversation-time');
             const newBadge = newCard.querySelector('.unread-badge');
+            const newStatus = newCard.querySelector('.conversation-status');
             
             if (existingName && newName && existingName.textContent !== newName.textContent) {
                 existingName.textContent = newName.textContent;
@@ -554,6 +614,18 @@ function updateConversations(conversations) {
             }
             if (existingTime && newTime && existingTime.textContent !== newTime.textContent) {
                 existingTime.textContent = newTime.textContent;
+            }
+            
+            // Update status
+            if (existingStatus && newStatus) {
+                existingStatus.textContent = newStatus.textContent;
+                existingStatus.className = newStatus.className;
+            } else if (newStatus) {
+                // Add status element if it doesn't exist
+                const conversationDetails = existingCard.querySelector('.conversation-details');
+                if (conversationDetails) {
+                    conversationDetails.appendChild(newStatus);
+                }
             }
             
             // Update badge
@@ -574,6 +646,10 @@ function updateConversations(conversations) {
                 existingCard.classList.remove('active');
             }
             
+            // Update dataset
+            existingCard.dataset.lastActivity = conv.last_activity || '';
+            existingCard.dataset.lastLogin = conv.last_login || '';
+            
             existingCards.delete(conv.user_id);
         } else {
             // Add new card
@@ -591,7 +667,7 @@ function updateConversations(conversations) {
     if (highlightId) {
         setTimeout(() => {
             const card = document.querySelector(`.conversation-item[data-id='${highlightId}']`);
-            console.log('Highlighting card for userId:', highlightId, 'Found:', !!card);
+            SecureLogger.info('Highlighting card for userId:', highlightId, 'Found:', !!card);
             if (card) {
                 card.classList.add('highlight-student-card');
                 setTimeout(() => card.classList.remove('highlight-student-card'), 2000);
@@ -601,7 +677,7 @@ function updateConversations(conversations) {
     }
 
     // Auto-select conversation if needed
-    console.log('autoSelectUserId at updateConversations:', autoSelectUserId);
+    SecureLogger.info('autoSelectUserId at updateConversations:', autoSelectUserId);
     if (autoSelectUserId) {
         selectConversation(autoSelectUserId);
         autoSelectUserId = null;
@@ -620,7 +696,7 @@ function resumePolling(delay = 1) {
 
 function selectConversation(userId) {
     pausePolling();
-    console.log('Selecting conversation:', userId);
+    SecureLogger.info('Selecting conversation:', userId);
     if (!userId) return;
     
     // Store the last active conversation
@@ -669,9 +745,33 @@ function selectConversation(userId) {
             const userStatusElement = chatHeader.querySelector('.user-status');
             const headerAvatar = chatHeader.querySelector('.user-avatar');
             if (userNameElement) userNameElement.textContent = userName;
-            if (userStatusElement) userStatusElement.textContent = 'Online';
+            if (userStatusElement) {
+                // Get the last_activity, last_login, and logout_time from the conversation data
+                const lastActivity = activeCard.dataset.lastActivity;
+                const lastLogin = activeCard.dataset.lastLogin;
+                const logoutTime = activeCard.dataset.logoutTime;
+                const statusInfo = calculateOnlineStatus(lastActivity, lastLogin, logoutTime);
+                userStatusElement.textContent = statusInfo.text;
+                userStatusElement.className = `user-status ${statusInfo.class}`;
+            }
             if (headerAvatar && avatarImg) {
                 headerAvatar.innerHTML = `<img src="${avatarImg}" alt="avatar" style="width:50px;height:50px;border-radius:50%;object-fit:cover;"/>`;
+            }
+        }
+    } else {
+        // Reset chat header when no conversation is selected
+        const chatHeader = document.querySelector('.chat-user-info');
+        if (chatHeader) {
+            const userNameElement = chatHeader.querySelector('.user-name');
+            const userStatusElement = chatHeader.querySelector('.user-status');
+            const headerAvatar = chatHeader.querySelector('.user-avatar');
+            if (userNameElement) userNameElement.textContent = 'Messages';
+            if (userStatusElement) {
+                userStatusElement.textContent = 'Select a conversation to start messaging';
+                userStatusElement.className = 'user-status';
+            }
+            if (headerAvatar) {
+                headerAvatar.innerHTML = '<i class="fas fa-user"></i>';
             }
         }
     }
@@ -710,7 +810,7 @@ async function loadMessages(userId) {
             return;
         }
 
-        console.log('Loading messages for user:', userId);
+        SecureLogger.info('Loading messages for user:', userId);
 
         const response = await fetch((window.BASE_URL || '/') + `counselor/message/operations?action=get_messages&user_id=${userId}`, {
             method: 'GET',
@@ -725,13 +825,13 @@ async function loadMessages(userId) {
         }
 
         const data = await response.json();
-        console.log('Received messages data:', data);
+        SecureLogger.info('Received messages data:', data);
 
         if (data.success && Array.isArray(data.messages)) {
             // Filter messages for the current conversation
             const conversationMessages = data.messages.filter(msg => {
                 const isCurrentConversation = (msg.sender_id === userId || msg.receiver_id === userId);
-                console.log('Message:', msg, 'Is current conversation:', isCurrentConversation);
+                SecureLogger.info('Message:', msg, 'Is current conversation:', isCurrentConversation);
                 return isCurrentConversation;
             });
             
@@ -742,7 +842,7 @@ async function loadMessages(userId) {
                 
                 // Always update display if it's the first load or if there are new messages
                 if (!lastMessageTimestamp || messageTime > lastMessageTimestamp) {
-                    console.log('Updating messages display with:', conversationMessages);
+                    SecureLogger.info('Updating messages display with:', conversationMessages);
                     lastMessageTimestamp = messageTime;
                     displayMessages(conversationMessages);
                     markMessagesAsRead(userId);
@@ -766,7 +866,7 @@ function displayMessages(messages) {
     
     if (!messagesContainer || !emptyState) return;
     
-    console.log('Displaying messages:', messages);
+    SecureLogger.info('Displaying messages:', messages);
     
     if (!Array.isArray(messages) || messages.length === 0) {
         emptyState.style.display = 'flex';
@@ -973,6 +1073,66 @@ function showErrorMessage(message) {
     setTimeout(() => {
         errorDiv.remove();
     }, 3000);
+}
+
+// Calculate online status based on last_activity, last_login, and logout_time
+function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
+    // Get all available times
+    const activityTime = lastActivity ? new Date(lastActivity) : null;
+    const loginTime = lastLogin ? new Date(lastLogin) : null;
+    const logoutTimeDate = logoutTime ? new Date(logoutTime) : null;
+    
+    // Check if logout_time equals last_activity (exact match)
+    if (logoutTimeDate && activityTime && logoutTimeDate.getTime() === activityTime.getTime()) {
+        return {
+            status: 'offline',
+            text: 'Offline',
+            class: 'status-offline'
+        };
+    }
+    
+    // Find the most recent time between last_activity and last_login
+    let mostRecentTime = null;
+    
+    if (activityTime && loginTime) {
+        // Use the more recent of the two
+        mostRecentTime = activityTime > loginTime ? activityTime : loginTime;
+    } else if (activityTime) {
+        mostRecentTime = activityTime;
+    } else if (loginTime) {
+        mostRecentTime = loginTime;
+    }
+    
+    if (!mostRecentTime) {
+        return {
+            status: 'offline',
+            text: 'Offline',
+            class: 'status-offline'
+        };
+    }
+
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - mostRecentTime) / (1000 * 60));
+
+    if (diffInMinutes <= 5) {
+        return {
+            status: 'online',
+            text: 'Online',
+            class: 'status-online'
+        };
+    } else if (diffInMinutes <= 60) {
+        return {
+            status: 'active',
+            text: `Last active ${diffInMinutes}m ago`,
+            class: 'status-active-recent'
+        };
+    } else {
+        return {
+            status: 'offline',
+            text: 'Offline',
+            class: 'status-offline'
+        };
+    }
 }
 
 function getStatusHighlightClass(conv) {

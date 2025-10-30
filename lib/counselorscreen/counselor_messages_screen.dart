@@ -4,6 +4,7 @@ import 'state/counselor_messages_viewmodel.dart';
 import 'models/counselor_message.dart';
 import 'widgets/counselor_screen_wrapper.dart';
 import '../routes.dart';
+import '../utils/online_status.dart';
 
 class CounselorMessagesScreen extends StatefulWidget {
   const CounselorMessagesScreen({super.key});
@@ -294,11 +295,35 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
                 color: isSelected ? const Color(0xFF191970) : Colors.black87,
               ),
             ),
-            subtitle: Text(
-              conversation.truncatedLastMessage,
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  conversation.truncatedLastMessage,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      conversation.onlineStatus.statusIcon,
+                      size: 8,
+                      color: conversation.onlineStatus.statusColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      conversation.onlineStatus.text,
+                      style: TextStyle(
+                        color: conversation.onlineStatus.statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -428,7 +453,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
                 ),
                 Text(
                   viewModel.selectedUserId != null
-                      ? 'Online'
+                      ? _getSelectedUserStatus(viewModel)
                       : 'Select a conversation to start messaging',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
@@ -754,5 +779,15 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
         ),
       );
     }
+  }
+
+  /// Get the online status text for the selected user
+  String _getSelectedUserStatus(CounselorMessagesViewModel viewModel) {
+    final statusResult = OnlineStatus.calculateOnlineStatus(
+      viewModel.selectedUserLastActivity,
+      viewModel.selectedUserLastLogin,
+      viewModel.selectedUserLogoutTime,
+    );
+    return statusResult.text;
   }
 }

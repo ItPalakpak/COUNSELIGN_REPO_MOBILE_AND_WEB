@@ -1,3 +1,5 @@
+import '../../utils/online_status.dart';
+
 class Counselor {
   final String counselorId;
   final String name;
@@ -5,6 +7,9 @@ class Counselor {
   final String? profilePicture;
   final String? email;
   final bool isAvailable;
+  final String? lastActivity;
+  final String? lastLogin;
+  final String? logoutTime;
 
   Counselor({
     required this.counselorId,
@@ -13,6 +18,9 @@ class Counselor {
     this.profilePicture,
     this.email,
     this.isAvailable = true,
+    this.lastActivity,
+    this.lastLogin,
+    this.logoutTime,
   });
 
   factory Counselor.fromJson(Map<String, dynamic> json) {
@@ -24,10 +32,23 @@ class Counselor {
       profilePicture: json['profile_picture'] ?? json['profile_image'],
       email: json['email'],
       isAvailable: json['is_available'] ?? true,
+      lastActivity: json['last_activity']?.toString(),
+      lastLogin: json['last_login']?.toString(),
+      logoutTime: json['logout_time']?.toString(),
     );
   }
 
   String get displayName => name; // Remove specialization from display name
+
+  /// Get the calculated online status for this counselor
+  OnlineStatusResult get onlineStatus {
+    return OnlineStatus.calculateOnlineStatus(
+      lastActivity,
+      lastLogin,
+      logoutTime,
+    );
+  }
+
   String get profileImageUrl {
     if (profilePicture == null || profilePicture!.isEmpty) {
       return 'Photos/profile.png';

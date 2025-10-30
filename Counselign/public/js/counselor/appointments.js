@@ -177,17 +177,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateAppointmentStatus(appointmentId, newStatus, rejectionReason = null){
+    async function updateAppointmentStatus(appointmentId, newStatus, rejectionReason = null){
         const formData = new FormData();
         formData.append('appointment_id', appointmentId);
         formData.append('status', newStatus);
         if (newStatus === 'rejected' && rejectionReason) formData.append('rejection_reason', rejectionReason);
-        fetch((window.BASE_URL || '/') + 'counselor/appointments/updateAppointmentStatus', {
-            method: 'POST', body: formData, credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r=>{ if(!r.ok) throw new Error('Server error'); return r.json(); })
-        .then(data=>{ if(data.status==='success'){ window.location.reload(); } else { alert(data.message||'Failed to update'); } })
-        .catch(err=>{ alert(err.message||'Error'); });
+        
+        try {
+            const response = await fetch((window.BASE_URL || '/') + 'counselor/appointments/updateAppointmentStatus', {
+                method: 'POST', body: formData, credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            
+            if (!response.ok) throw new Error('Server error');
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                throw new Error(data.message || 'Failed to update');
+            }
+        } catch (error) {
+            alert(error.message || 'Error');
+            throw error; // Re-throw to trigger catch in calling functions
+        }
+    }
+
+    // Loading button utility functions
+    function showButtonLoading(button, loadingText) {
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingText}`;
+    }
+
+    function hideButtonLoading(button, originalText) {
+        button.disabled = false;
+        button.innerHTML = `<i class="fas fa-check me-1"></i>${originalText}`;
     }
 
     function formatDate(d){ return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}); }
@@ -217,13 +241,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirmActionBtn').addEventListener('click', function(){
         const action = document.getElementById('confirmationModal').dataset.action;
         const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
-        if (action === 'approve') { updateAppointmentStatus(currentAppointmentId, 'approved'); }
-        if (confirmationModal) confirmationModal.hide();
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        
+        // Show loading state
+        showButtonLoading(confirmBtn, 'Processing...');
+        
+        if (action === 'approve') { 
+            updateAppointmentStatus(currentAppointmentId, 'approved')
+                .then(() => {
+                    if (confirmationModal) confirmationModal.hide();
+                })
+                .catch(() => {
+                    hideButtonLoading(confirmBtn, 'Confirm');
+                });
+        }
     });
 
     document.getElementById('confirmRejectionBtn').addEventListener('click', function(){
         const rejectionReason = document.getElementById('rejectionReason').value.trim();
         if (!rejectionReason) { alert('Please provide a reason for rejection.'); return; }
+        
+        const confirmRejectionBtn = document.getElementById('confirmRejectionBtn');
+        showButtonLoading(confirmRejectionBtn, 'Processing...');
+        
         const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         document.querySelector('#confirmationModal .modal-header').className = 'modal-header bg-danger text-white';
         document.getElementById('confirmationModalTitle').textContent = 'Confirm Rejection';
@@ -234,14 +274,37 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('confirmationModal').dataset.reason = rejectionReason;
         const rejectionModal = bootstrap.Modal.getInstance(document.getElementById('rejectionReasonModal')); if (rejectionModal) rejectionModal.hide();
         confirmationModal.show();
+        
+        hideButtonLoading(confirmRejectionBtn, 'Confirm Rejection');
     });
 
     document.getElementById('confirmActionBtn').addEventListener('click', function(){
         const action = document.getElementById('confirmationModal').dataset.action;
         const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
-        if (action === 'approve') { updateAppointmentStatus(currentAppointmentId, 'approved'); }
-        else if (action === 'reject') { const reason = document.getElementById('confirmationModal').dataset.reason; updateAppointmentStatus(currentAppointmentId, 'rejected', reason); }
-        if (confirmationModal) confirmationModal.hide();
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        
+        // Show loading state
+        showButtonLoading(confirmBtn, 'Processing...');
+        
+        if (action === 'approve') { 
+            updateAppointmentStatus(currentAppointmentId, 'approved')
+                .then(() => {
+                    if (confirmationModal) confirmationModal.hide();
+                })
+                .catch(() => {
+                    hideButtonLoading(confirmBtn, 'Confirm');
+                });
+        }
+        else if (action === 'reject') { 
+            const reason = document.getElementById('confirmationModal').dataset.reason; 
+            updateAppointmentStatus(currentAppointmentId, 'rejected', reason)
+                .then(() => {
+                    if (confirmationModal) confirmationModal.hide();
+                })
+                .catch(() => {
+                    hideButtonLoading(confirmBtn, 'Confirm');
+                });
+        }
     });
 
     document.getElementById('rejectionReasonModal').addEventListener('hidden.bs.modal', function(){ document.getElementById('rejectionReason').value = ''; });

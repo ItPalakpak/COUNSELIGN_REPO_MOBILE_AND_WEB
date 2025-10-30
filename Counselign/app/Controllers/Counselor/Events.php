@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 

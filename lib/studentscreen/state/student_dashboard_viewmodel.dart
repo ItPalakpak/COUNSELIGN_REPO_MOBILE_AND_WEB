@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/config.dart';
 import '../../utils/session.dart';
+import '../../utils/secure_logger.dart';
 import '../models/notification.dart' as user_notification;
 import '../models/message.dart';
 import '../models/user_profile.dart';
@@ -21,6 +22,8 @@ class StudentDashboardViewModel extends ChangeNotifier {
 
   // Derived display fields for UI (avoids formatting in widgets)
   String get displayName => _userProfile?.displayName ?? 'Student';
+  bool get hasName => _userProfile?.hasName ?? false;
+  String get userId => _userProfile?.userId ?? '';
   String get formattedLastLogin {
     final raw = _userProfile?.lastLogin;
     if (raw == null || raw.isEmpty) return 'N/A';
@@ -101,6 +104,7 @@ class StudentDashboardViewModel extends ChangeNotifier {
   // Initialize the viewmodel
   void initialize() {
     loadUserProfile();
+    loadPdsData();
     loadNotifications();
     loadCounselors();
     startPolling();
@@ -117,6 +121,51 @@ class StudentDashboardViewModel extends ChangeNotifier {
   }
 
   // User Profile Methods
+  Future<void> loadPdsData() async {
+    try {
+      final response = await _session.get(
+        '${ApiConfig.currentBaseUrl}/student/pds/load',
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint('🔍 Student PDS API Response: $data');
+        if (data['success'] == true && data['data'] != null) {
+          final pdsData = data['data'];
+          final personalData = pdsData['personal'];
+          if (personalData != null) {
+            debugPrint('🔍 PDS Personal Data: $personalData');
+            // Update the user profile with PDS data
+            if (_userProfile != null) {
+              _userProfile = UserProfile(
+                userId: _userProfile!.userId,
+                username: _userProfile!.username,
+                email: _userProfile!.email,
+                lastLogin: _userProfile!.lastLogin,
+                profileImage: _userProfile!.profileImage,
+                courseYear: _userProfile!.courseYear,
+                firstName: personalData['first_name'],
+                lastName: personalData['last_name'],
+                fullName: personalData['full_name'],
+              );
+              debugPrint(
+                '🔍 Updated UserProfile with PDS data - displayName: ${_userProfile?.displayName}, hasName: ${_userProfile?.hasName}',
+              );
+              notifyListeners();
+            }
+          }
+        } else {
+          debugPrint('Failed to load PDS data: ${data['message']}');
+        }
+      } else {
+        debugPrint('PDS API returned status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error loading PDS data: $e');
+    }
+  }
+
   Future<void> loadUserProfile() async {
     try {
       final response = await _session.get(
@@ -126,8 +175,12 @@ class StudentDashboardViewModel extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        debugPrint('🔍 Student Profile API Response: $data');
         if (data['success'] == true) {
           _userProfile = UserProfile.fromJson(data);
+          debugPrint(
+            '🔍 Student Profile loaded - displayName: ${_userProfile?.displayName}, hasName: ${_userProfile?.hasName}',
+          );
           _isLoadingProfile = false;
           notifyListeners();
         } else {
@@ -211,12 +264,27 @@ class StudentDashboardViewModel extends ChangeNotifier {
     Navigator.of(context).pushNamed('/student/profile');
   }
 
-  void logout(BuildContext context) {
+  void logout(BuildContext context) async {
     closeDrawer();
-    // Clear session cookies
-    _session.clearCookies();
-    // Handle logout - navigate back to landing
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    try {
+      // Call logout endpoint to update activity fields in database
+      debugPrint('🚪 Calling logout endpoint...');
+      final response = await _session.get(
+        '${ApiConfig.currentBaseUrl}/auth/logout',
+        headers: {'Content-Type': 'application/json'},
+      );
+      debugPrint('🚪 Logout response status: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('Error calling logout endpoint: $e');
+      // Continue with logout even if endpoint call fails
+    } finally {
+      // Clear session cookies
+      _session.clearCookies();
+      // Navigate back to landing
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    }
   }
 
   // Notification Methods

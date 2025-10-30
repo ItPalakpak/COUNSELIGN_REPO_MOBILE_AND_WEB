@@ -313,6 +313,7 @@
     <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
     <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
     <script src="<?= base_url('js/student/student_schedule_appointment.js') ?>" defer></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         (function() {
             // Minimal drawer wiring; full calendar logic can live in schedule JS if needed later

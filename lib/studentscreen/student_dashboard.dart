@@ -33,7 +33,8 @@ class _StudentDashboardContent extends StatefulWidget {
   const _StudentDashboardContent();
 
   @override
-  State<_StudentDashboardContent> createState() => _StudentDashboardContentState();
+  State<_StudentDashboardContent> createState() =>
+      _StudentDashboardContentState();
 }
 
 class _StudentDashboardContentState extends State<_StudentDashboardContent> {
@@ -176,7 +177,10 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
     );
   }
 
-  Widget _buildPdsReminderModal(BuildContext context, StudentDashboardViewModel viewModel) {
+  Widget _buildPdsReminderModal(
+    BuildContext context,
+    StudentDashboardViewModel viewModel,
+  ) {
     final progress = _timer / 20.0;
 
     return Material(
@@ -188,10 +192,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
           borderRadius: BorderRadius.circular(12),
           color: Colors.white,
           boxShadow: const [
-            BoxShadow(
-              color: Color.fromRGBO(6, 14, 87, 0.15),
-              blurRadius: 8,
-            ),
+            BoxShadow(color: Color.fromRGBO(6, 14, 87, 0.15), blurRadius: 8),
           ],
         ),
         child: Column(
@@ -224,7 +225,11 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                   InkWell(
                     onTap: _closePdsReminder,
                     borderRadius: BorderRadius.circular(12),
-                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -252,7 +257,11 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -262,9 +271,10 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                             Text(
                               'Update Your PDS!',
                               style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: Color(0xFF060E57)),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: Color(0xFF060E57),
+                              ),
                             ),
                             SizedBox(height: 4),
                             Text(
@@ -276,7 +286,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -300,7 +310,10 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                         const SizedBox(height: 6),
                         Text(
                           'Auto-close in $_timer s',
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748b)),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF64748b),
+                          ),
                         ),
                       ],
                     ),
@@ -321,10 +334,18 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                       viewModel.navigateToProfile(context);
                     },
                     icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Update Now', style: TextStyle(fontSize: 12)),
+                    
+                    label: const Text(
+                      'Update Now',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       backgroundColor: const Color(0xFF060E57),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -335,9 +356,15 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                   OutlinedButton.icon(
                     onPressed: _closePdsReminder,
                     icon: const Icon(Icons.close, size: 16),
-                    label: const Text('Dismiss', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Dismiss',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -454,7 +481,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Welcome back!',
+                'Hi!',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
@@ -470,6 +497,16 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                 ),
                 textAlign: TextAlign.center,
               ),
+              // Hidden user_id display (similar to PHP implementation)
+              if (viewModel.hasName)
+                Text(
+                  viewModel.userId,
+                  style: const TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 0,
+                    height: 0,
+                  ),
+                ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(

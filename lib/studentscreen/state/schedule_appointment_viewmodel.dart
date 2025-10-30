@@ -10,6 +10,7 @@ import '../models/counselor_schedule.dart';
 
 class ScheduleAppointmentViewModel extends ChangeNotifier {
   final Session _session = Session();
+  bool _disposed = false;
 
   // Form controllers
   final TextEditingController dateController = TextEditingController();
@@ -100,6 +101,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     dateController.dispose();
     timeController.dispose();
     consultationTypeController.dispose();
@@ -109,18 +111,25 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     super.dispose();
   }
 
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
   void _setMinimumDate() {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final formattedDate =
         '${tomorrow.year}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
     dateController.text = formattedDate;
+    _safeNotifyListeners();
   }
 
   // Check appointment eligibility (pending, approved, pending follow-up)
   Future<void> checkAppointmentEligibility() async {
     try {
       _isCheckingPending = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/student/check-appointment-eligibility',
@@ -211,7 +220,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       // Don't set appointment flags for errors
     } finally {
       _isCheckingPending = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -219,7 +228,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   Future<void> fetchCounselors() async {
     try {
       _isLoadingCounselors = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/student/get-counselors',
@@ -248,7 +257,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       debugPrint('Error fetching counselors: $e');
     } finally {
       _isLoadingCounselors = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -256,7 +265,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   Future<void> fetchCounselorsByAvailability(String date, String time) async {
     try {
       _isLoadingCounselors = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final dayOfWeek = _getDayOfWeek(date);
       final timeBounds = _extractTimeBounds(time);
@@ -311,7 +320,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       debugPrint('Error fetching counselors by availability: $e');
     } finally {
       _isLoadingCounselors = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -372,13 +381,13 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   void setConsentRead(bool value) {
     _consentRead = value;
     _updateConsentError();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void setConsentAccept(bool value) {
     _consentAccept = value;
     _updateConsentError();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void _updateConsentError() {
@@ -450,7 +459,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       _showConsentError = false;
     }
 
-    notifyListeners();
+    _safeNotifyListeners();
     return isValid;
   }
 
@@ -461,7 +470,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     try {
       _isSubmitting = true;
       _message = null;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final formData = {
         'preferredDate': dateController.text,
@@ -520,7 +529,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isSubmitting = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -543,12 +552,12 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     debugPrint(
       'Current appointment status - Pending: $_hasPendingAppointment, Approved: $_hasApprovedAppointment, Follow-up: $_hasPendingFollowUp',
     );
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void setCalendarDate(DateTime date) {
     _currentCalendarDate = date;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   // Handle date and time changes to filter counselors

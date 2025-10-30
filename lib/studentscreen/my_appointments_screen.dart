@@ -1100,50 +1100,114 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
               const SizedBox(height: 20),
 
               // Action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (!isEditing) ...[
-                    TextButton.icon(
-                      onPressed: () => viewModel.toggleEditing(appointment.id),
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Enable Edit'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0D6EFD),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Always use horizontal layout for edit mode buttons to keep them in one row
+                  if (isEditing) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                viewModel.toggleEditing(appointment.id),
+                            icon: const Icon(Icons.close, size: 18),
+                            label: const Text('Cancel Edit'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF6C757D),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          flex: 1,
+                          child: ElevatedButton.icon(
+                            onPressed: viewModel.isUpdatingAppointment
+                                ? null
+                                : () => _savePendingAppointment(
+                                    context,
+                                    appointment,
+                                  ),
+                            icon: viewModel.isUpdatingAppointment
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(Icons.save, size: 18),
+                            label: Text(
+                              viewModel.isUpdatingAppointment
+                                  ? 'Updating...'
+                                  : 'Update',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: viewModel.isUpdatingAppointment
+                                  ? const Color(
+                                      0xFF28A745,
+                                    ).withValues(alpha: 0.6)
+                                  : const Color(0xFF28A745),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  // For non-editing mode, always use horizontal layout to keep buttons in one row
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        flex: 1,
+                        child: TextButton.icon(
+                          onPressed: () =>
+                              viewModel.toggleEditing(appointment.id),
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: const Text('Enable Edit'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF0D6EFD),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: () =>
-                          _showCancellationDialog(context, appointment),
-                      icon: const Icon(Icons.cancel, size: 18),
-                      label: const Text('Cancel'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFDC3545),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        flex: 1,
+                        child: TextButton.icon(
+                          onPressed: () =>
+                              _showCancellationDialog(context, appointment),
+                          icon: const Icon(Icons.cancel, size: 18),
+                          label: const Text('Cancel'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFFDC3545),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ] else ...[
-                    TextButton.icon(
-                      onPressed: () => viewModel.toggleEditing(appointment.id),
-                      icon: const Icon(Icons.close, size: 18),
-                      label: const Text('Cancel Edit'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF6C757D),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () =>
-                          _savePendingAppointment(context, appointment),
-                      icon: const Icon(Icons.save, size: 18),
-                      label: const Text('Save Changes'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF28A745),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ],
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -1191,83 +1255,125 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
   void _showCancellationDialog(BuildContext context, Appointment appointment) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Appointment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Please provide a reason for cancelling this appointment:',
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _viewModel.cancellationReasonController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Enter cancellation reason...',
-                border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Cancel Appointment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Please provide a reason for cancelling this appointment:',
               ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _viewModel.cancellationReasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Enter cancellation reason...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: _viewModel.isCancellingAppointment
+                  ? null
+                  : () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: _viewModel.isCancellingAppointment
+                  ? null
+                  : () async {
+                      debugPrint('Cancel button pressed');
+                      debugPrint(
+                        'Cancellation reason: "${_viewModel.cancellationReasonController.text}"',
+                      );
+                      if (_viewModel.cancellationReasonController.text
+                          .trim()
+                          .isNotEmpty) {
+                        debugPrint(
+                          'Calling cancelAppointment with appointment ID: ${appointment.id}',
+                        );
+
+                        // Set loading state
+                        _viewModel.setCancellingAppointment(true);
+                        setState(() {}); // Trigger dialog rebuild
+
+                        try {
+                          // Call the cancellation method
+                          final success = await _viewModel.cancelAppointment(
+                            context,
+                            appointment.id,
+                            _viewModel.cancellationReasonController.text,
+                          );
+
+                          if (success) {
+                            // Close dialog on success
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          } else {
+                            // Show error message if cancellation failed
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Failed to cancel appointment. Please try again.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        } finally {
+                          // Always clear loading state
+                          _viewModel.setCancellingAppointment(false);
+                          setState(() {}); // Trigger dialog rebuild
+                        }
+                      } else {
+                        debugPrint(
+                          'Cancellation reason is empty, showing error',
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please provide a cancellation reason',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _viewModel.isCancellingAppointment
+                    ? const Color(0xFFDC3545).withValues(alpha: 0.6)
+                    : const Color(0xFFDC3545),
+                foregroundColor: Colors.white,
+              ),
+              child: _viewModel.isCancellingAppointment
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Cancelling...'),
+                      ],
+                    )
+                  : const Text('Confirm Cancellation'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              debugPrint('Cancel button pressed');
-              debugPrint(
-                'Cancellation reason: "${_viewModel.cancellationReasonController.text}"',
-              );
-              if (_viewModel.cancellationReasonController.text
-                  .trim()
-                  .isNotEmpty) {
-                debugPrint(
-                  'Calling cancelAppointment with appointment ID: ${appointment.id}',
-                );
-
-                // Close dialog first to avoid context issues
-                Navigator.of(context).pop();
-
-                // Then call the cancellation method
-                final success = await _viewModel.cancelAppointment(
-                  context,
-                  appointment.id,
-                  _viewModel.cancellationReasonController.text,
-                );
-
-                if (!success) {
-                  // Show error message if cancellation failed
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Failed to cancel appointment. Please try again.',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              } else {
-                debugPrint('Cancellation reason is empty, showing error');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please provide a cancellation reason'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC3545),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirm Cancellation'),
-          ),
-        ],
       ),
     );
   }
@@ -1276,124 +1382,142 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
     BuildContext context,
     Appointment appointment,
   ) async {
-    // Validate required fields
-    final dateController = _viewModel.getPendingController(
-      appointment.id,
-      'preferred_date',
-      appointment.preferredDate ?? '',
-    );
-    final timeController = _viewModel.getPendingController(
-      appointment.id,
-      'preferred_time',
-      appointment.preferredTime ?? '',
-    );
-    final consultationTypeController = _viewModel.getPendingController(
-      appointment.id,
-      'consultation_type',
-      appointment.consultationType ?? '',
-    );
-    final purposeController = _viewModel.getPendingController(
-      appointment.id,
-      'purpose',
-      appointment.purpose ?? '',
-    );
-    final counselorPreferenceController = _viewModel.getPendingController(
-      appointment.id,
-      'counselor_preference',
-      appointment.counselorPreference ?? '',
-    );
+    // Set loading state
+    _viewModel.setUpdatingAppointment(true);
 
-    // Check if required fields are empty
-    if (dateController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a preferred date'),
-          backgroundColor: Colors.red,
-        ),
+    try {
+      // Validate required fields
+      final dateController = _viewModel.getPendingController(
+        appointment.id,
+        'preferred_date',
+        appointment.preferredDate ?? '',
       );
-      return;
-    }
-
-    if (timeController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a preferred time'),
-          backgroundColor: Colors.red,
-        ),
+      final timeController = _viewModel.getPendingController(
+        appointment.id,
+        'preferred_time',
+        appointment.preferredTime ?? '',
       );
-      return;
-    }
-
-    if (consultationTypeController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a consultation type'),
-          backgroundColor: Colors.red,
-        ),
+      final consultationTypeController = _viewModel.getPendingController(
+        appointment.id,
+        'consultation_type',
+        appointment.consultationType ?? '',
       );
-      return;
-    }
-
-    if (purposeController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a purpose'),
-          backgroundColor: Colors.red,
-        ),
+      final purposeController = _viewModel.getPendingController(
+        appointment.id,
+        'purpose',
+        appointment.purpose ?? '',
       );
-      return;
-    }
-
-    if (counselorPreferenceController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a counselor preference'),
-          backgroundColor: Colors.red,
-        ),
+      final counselorPreferenceController = _viewModel.getPendingController(
+        appointment.id,
+        'counselor_preference',
+        appointment.counselorPreference ?? '',
       );
-      return;
-    }
 
-    final formData = {
-      'preferred_date': dateController.text,
-      'preferred_time': timeController.text,
-      'consultation_type': consultationTypeController.text,
-      'purpose': purposeController.text,
-      'counselor_preference': counselorPreferenceController.text,
-      'description': _viewModel
-          .getPendingController(
-            appointment.id,
-            'description',
-            appointment.description ?? '',
-          )
-          .text,
-    };
-
-    final success = await _viewModel.updatePendingAppointment(
-      context,
-      appointment.id,
-      formData,
-    );
-
-    if (success) {
-      _viewModel.toggleEditing(appointment.id);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Appointment updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      // Check if required fields are empty
+      if (dateController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a preferred date'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update appointment. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+
+      if (timeController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a preferred time'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
+
+      if (consultationTypeController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a consultation type'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (purposeController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a purpose'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (counselorPreferenceController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a counselor preference'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final formData = {
+        'preferred_date': dateController.text,
+        'preferred_time': timeController.text,
+        'consultation_type': consultationTypeController.text,
+        'purpose': purposeController.text,
+        'counselor_preference': counselorPreferenceController.text,
+        'description': _viewModel
+            .getPendingController(
+              appointment.id,
+              'description',
+              appointment.description ?? '',
+            )
+            .text,
+      };
+
+      final success = await _viewModel.updatePendingAppointment(
+        context,
+        appointment.id,
+        formData,
+      );
+
+      if (success) {
+        _viewModel.toggleEditing(appointment.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Appointment updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update appointment. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      // Always clear loading state
+      _viewModel.setUpdatingAppointment(false);
     }
   }
 

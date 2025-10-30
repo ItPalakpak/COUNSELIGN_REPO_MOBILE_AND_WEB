@@ -2,8 +2,10 @@
 
 namespace App\Controllers\Student;
 
-use App\Models\UserModel;
 
+use App\Helpers\SecureLogHelper;
+use App\Models\UserModel;
+use App\Helpers\UserActivityHelper;
 use App\Controllers\BaseController;
 
 class Profile extends BaseController
@@ -92,16 +94,12 @@ class Profile extends BaseController
                     }
                 }
 
-                // Set Manila timezone
-                $manilaTime = new \DateTime('now', new \DateTimeZone('Asia/Manila'));
-                $currentTime = $manilaTime->format('Y-m-d H:i:s');
-
-                // Add activity tracking fields
-                $data['last_active_at'] = $currentTime;
-                $data['last_activity'] = $currentTime;
-
                 // Use skipValidation to avoid unique email check since we manually checked above
                 $userModel->skipValidation(true)->update($user['id'], $data);
+                
+                // Update last_activity for profile update
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateStudentActivity($user_id, 'update_profile');
                 // Update session data
                 $session->set('username', $username);
                 $session->set('email', $email);

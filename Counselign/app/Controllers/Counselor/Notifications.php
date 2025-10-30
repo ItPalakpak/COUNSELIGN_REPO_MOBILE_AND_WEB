@@ -2,6 +2,9 @@
 
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\NotificationsModel;
 
@@ -35,6 +38,10 @@ class Notifications extends \CodeIgniter\Controller
             }
 
             $notifications = $this->notificationsModel->getRecentNotifications($userId, $lastActiveTime);
+
+            // Update last_activity for viewing notifications
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($userId, 'view_notifications');
 
             // Add pending appointments for this counselor as notifications
             $db = \Config\Database::connect();
@@ -88,11 +95,9 @@ class Notifications extends \CodeIgniter\Controller
         }
 
         try {
-            $db = \Config\Database::connect();
-            $db->table('users')
-                ->where('user_id', $userId)
-                ->set(['last_activity' => date('Y-m-d H:i:s')])
-                ->update();
+            // Update last_activity for viewing notifications (using Manila time)
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($userId, 'view_notifications');
 
             return $this->respond([
                 'status' => 'success',

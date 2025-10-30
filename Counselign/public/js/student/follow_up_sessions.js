@@ -97,10 +97,10 @@ function displayCompletedAppointments(appointments, searchTerm = '') {
     });
     
     // Debug logging
-    console.log('Total appointments:', appointments.length);
-    console.log('Pending appointments:', pendingAppointments.length);
-    console.log('Regular appointments:', regularAppointments.length);
-    console.log('Appointments data:', appointments);
+    SecureLogger.info('Total appointments:', appointments.length);
+    SecureLogger.info('Pending appointments:', pendingAppointments.length);
+    SecureLogger.info('Regular appointments:', regularAppointments.length);
+    SecureLogger.info('Appointments data:', appointments);
 
     // Handle pending appointments section
     if (pendingAppointments.length > 0 && !searchTerm) {
@@ -269,7 +269,7 @@ function displayFollowUpSessions(sessions) {
                 </div>
                 ` : ''}
                 ${session.description ? `<div class="session-description"><strong>Description:</strong> ${session.description}</div>` : ''}
-                ${session.reason ? `<div class="session-reason"><strong>Reason:</strong> ${session.reason}</div>` : ''}
+                ${session.reason ? `<div class="session-reason"><strong>${session.status === 'cancelled' ? 'Reason For Cancellation:' : 'Reason For Follow-up:'}</strong> ${session.reason}</div>` : ''}
             </div>
         </div>
     `).join('');
@@ -325,7 +325,7 @@ function showSuccess(message) {
             successAlert.classList.remove('show');
         }, 3000);
     } else {
-        console.log('Success:', message);
+        SecureLogger.info('Success:', message);
     }
 }
 
@@ -440,32 +440,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Student navbar drawer functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const drawerToggler = document.getElementById('studentNavbarDrawerToggler');
-    const drawer = document.getElementById('studentNavbarDrawer');
-    const drawerClose = document.getElementById('studentNavbarDrawerClose');
-    const overlay = document.createElement('div');
-    overlay.className = 'navbar-overlay';
-    document.body.appendChild(overlay);
+    const drawerToggler = document.getElementById('navbarDrawerToggler');
+    const drawer = document.getElementById('navbarDrawer');
+    const drawerClose = document.getElementById('navbarDrawerClose');
+    const overlay = document.getElementById('navbarOverlay');
 
-    if (drawerToggler && drawer) {
-        drawerToggler.addEventListener('click', function() {
-            drawer.classList.add('show');
-            overlay.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        });
+    if (!drawerToggler || !drawer || !drawerClose || !overlay) {
+        console.warn('Navbar drawer elements not found');
+        return;
     }
 
-    if (drawerClose) {
-        drawerClose.addEventListener('click', function() {
-            drawer.classList.remove('show');
-            overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        });
+    function openDrawer() {
+        drawer.classList.add('show');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 
-    overlay.addEventListener('click', function() {
+    function closeDrawer() {
         drawer.classList.remove('show');
         overlay.classList.remove('show');
         document.body.style.overflow = '';
+    }
+
+    drawerToggler.addEventListener('click', openDrawer);
+    drawerClose.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    // Close drawer on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && drawer.classList.contains('show')) {
+            closeDrawer();
+        }
     });
 });

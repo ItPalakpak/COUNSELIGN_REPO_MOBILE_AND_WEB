@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Model;
 
 class NotificationsModel extends Model
@@ -143,10 +145,11 @@ class NotificationsModel extends Model
 
         try {
         
-        // Get events created after last active time
+        // Get events created after last active time - only show future events
         $eventsQuery = $db->table('events')
             ->select('id, title, date, time, location, created_at')
             ->where('created_at >', $lastActiveTime)
+            ->where('date >=', date('Y-m-d')) // Only show events from today onwards
             ->get()
             ->getResultArray();
 
@@ -157,18 +160,24 @@ class NotificationsModel extends Model
             ->get()
             ->getResultArray();
 
-        // Get appointments updated after last active time
+        // Get appointments updated after last active time - show all statuses but filter by date
         $appointmentsQuery = $db->table('appointments')
             ->select('id, student_id, preferred_date, preferred_time, status, updated_at, counselor_preference, purpose, reason')
             ->where('student_id', $userId)
             ->where('updated_at >', $lastActiveTime)
+            ->where('preferred_date >=', date('Y-m-d', strtotime('-7 days'))) // Show appointments from 7 days ago onwards
             ->get()
             ->getResultArray();
 
         $notifications = [];
 
-        // Format events
+        // Format events - only include non-expired events
         foreach ($eventsQuery as $event) {
+            // Skip expired events
+            if ($this->isEventExpired($event['date'], $event['time'])) {
+                continue;
+            }
+            
             $notifications[] = [
                 'type' => 'event',
                 'title' => 'New Event: ' . $event['title'],
@@ -190,8 +199,20 @@ class NotificationsModel extends Model
             ];
         }
 
-        // Format appointments
+        // Format appointments - include all statuses but filter by expiration
         foreach ($appointmentsQuery as $appointment) {
+            // Skip expired appointments (older than 7 days past appointment date)
+            if ($this->isAppointmentExpired($appointment['preferred_date'], $appointment['preferred_time'])) {
+                // Only skip if appointment is more than 7 days past
+                $appointmentDateTime = $appointment['preferred_date'] . ' ' . $appointment['preferred_time'];
+                $appointmentTimestamp = strtotime($appointmentDateTime);
+                $sevenDaysAgo = strtotime('-7 days');
+                
+                if ($appointmentTimestamp < $sevenDaysAgo) {
+                    continue;
+                }
+            }
+            
             $reasonText = isset($appointment['reason']) && $appointment['reason'] ? ' Reason: ' . $appointment['reason'] : '';
             $purposeText = isset($appointment['purpose']) && $appointment['purpose'] ? ' Purpose: ' . $appointment['purpose'] : '';
             $notifications[] = [
@@ -245,5 +266,29 @@ class NotificationsModel extends Model
             ->getResultArray();
 
         return array_column($rows, 'user_id');
+    }
+
+    /**
+     * Check if an event has passed based on date and time
+     */
+    private function isEventExpired($eventDate, $eventTime)
+    {
+        $eventDateTime = $eventDate . ' ' . $eventTime;
+        $eventTimestamp = strtotime($eventDateTime);
+        $currentTimestamp = time();
+        
+        return $eventTimestamp < $currentTimestamp;
+    }
+
+    /**
+     * Check if an appointment has passed based on date and time
+     */
+    private function isAppointmentExpired($appointmentDate, $appointmentTime)
+    {
+        $appointmentDateTime = $appointmentDate . ' ' . $appointmentTime;
+        $appointmentTimestamp = strtotime($appointmentDateTime);
+        $currentTimestamp = time();
+        
+        return $appointmentTimestamp < $currentTimestamp;
     }
 } 

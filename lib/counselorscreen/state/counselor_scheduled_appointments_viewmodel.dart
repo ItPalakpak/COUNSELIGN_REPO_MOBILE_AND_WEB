@@ -20,6 +20,13 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
+  // Loading states for specific operations
+  bool _isUpdatingStatus = false;
+  bool get isUpdatingStatus => _isUpdatingStatus;
+
+  String? _updatingAppointmentId;
+  String? get updatingAppointmentId => _updatingAppointmentId;
+
   Future<void> initialize() async {
     await Future.wait([loadAppointments(), loadCounselorSchedule()]);
   }
@@ -101,6 +108,8 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
     String status, {
     String? rejectionReason,
   }) async {
+    _setUpdatingStatus(true, appointmentId);
+
     try {
       debugPrint('🔍 Updating appointment status: $appointmentId to $status');
 
@@ -147,6 +156,8 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
       }
     } catch (e) {
       rethrow;
+    } finally {
+      _setUpdatingStatus(false, null);
     }
   }
 
@@ -156,6 +167,12 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
+    notifyListeners();
+  }
+
+  void _setUpdatingStatus(bool updating, String? appointmentId) {
+    _isUpdatingStatus = updating;
+    _updatingAppointmentId = appointmentId;
     notifyListeners();
   }
 

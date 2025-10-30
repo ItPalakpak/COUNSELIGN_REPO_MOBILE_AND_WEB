@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'state/counselor_follow_up_sessions_viewmodel.dart';
 import 'widgets/counselor_screen_wrapper.dart';
+import 'state/counselor_scheduled_appointments_viewmodel.dart';
+import 'widgets/weekly_schedule.dart';
+import 'widgets/mini_calendar.dart';
 import 'models/completed_appointment.dart';
 import 'models/follow_up_session.dart';
 
@@ -19,6 +22,11 @@ class _CounselorFollowUpSessionsScreenState
   late CounselorFollowUpSessionsViewModel _viewModel;
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounceTimer;
+
+  // Loading states for buttons
+  bool _isCancelling = false;
+  bool _isCreatingFollowUp = false;
+  bool _isUpdatingFollowUp = false;
 
   @override
   void initState() {
@@ -51,28 +59,138 @@ class _CounselorFollowUpSessionsScreenState
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile
-              ? 16
-              : isTablet
-              ? 20
-              : 24,
-          vertical: isMobile ? 20 : 24,
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile
+                  ? 16
+                  : isTablet
+                  ? 20
+                  : 24,
+              vertical: isMobile ? 20 : 24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                SizedBox(height: isMobile ? 20 : 30),
+                _buildSearchBar(context),
+                SizedBox(height: isMobile ? 16 : 20),
+                _buildCompletedAppointmentsList(context),
+              ],
+            ),
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            SizedBox(height: isMobile ? 20 : 30),
-            _buildSearchBar(context),
-            SizedBox(height: isMobile ? 16 : 20),
-            _buildCompletedAppointmentsList(context),
-          ],
+        Positioned(
+          top: 10,
+          right: 15,
+          child: ElevatedButton(
+            onPressed: () => _showSchedulesModal(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF060E57),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 4,
+            ),
+            child: const Icon(Icons.calendar_month, size: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSchedulesModal(BuildContext context) {
+    final localVm = CounselorScheduledAppointmentsViewModel();
+    localVm.initialize();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: localVm,
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF060E57),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Weekly Schedules & Calendar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Consumer<CounselorScheduledAppointmentsViewModel>(
+                        builder: (context, vm, child) {
+                          return WeeklySchedule(schedule: vm.counselorSchedule);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Consumer<CounselorScheduledAppointmentsViewModel>(
+                        builder: (context, vm, child) {
+                          return MiniCalendar(
+                            viewModel: vm,
+                            onDateSelected: (date) {
+                              debugPrint('Selected date: $date');
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      localVm.dispose();
+    });
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -238,7 +356,7 @@ class _CounselorFollowUpSessionsScreenState
                 : MediaQuery.of(context).size.width > 600
                 ? 2
                 : 1,
-            childAspectRatio: 1.2,
+            childAspectRatio: 1.15,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -276,6 +394,7 @@ class _CounselorFollowUpSessionsScreenState
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -624,7 +743,11 @@ class _CounselorFollowUpSessionsScreenState
                           itemCount: viewModel.followUpSessions.length,
                           itemBuilder: (context, index) {
                             final session = viewModel.followUpSessions[index];
-                            return _buildFollowUpSessionCard(context, session);
+                            return _buildFollowUpSessionCard(
+                              context,
+                              session,
+                              viewModel,
+                            );
                           },
                         ),
                       ),
@@ -707,6 +830,7 @@ class _CounselorFollowUpSessionsScreenState
   Widget _buildFollowUpSessionCard(
     BuildContext context,
     FollowUpSession session,
+    CounselorFollowUpSessionsViewModel viewModel,
   ) {
     final statusColor = _getStatusColor(session.status);
     final statusText = _getStatusText(session.status);
@@ -814,11 +938,15 @@ class _CounselorFollowUpSessionsScreenState
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.list_alt, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 4),
+                if (!session.isCancelled) ...[
+                  Icon(Icons.list_alt, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                ],
                 Expanded(
                   child: Text(
-                    'Reason: ${session.reason}',
+                    session.isCancelled
+                        ? session.reason!
+                        : 'Reason: ${session.reason}',
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -853,16 +981,42 @@ class _CounselorFollowUpSessionsScreenState
               if (session.status == 'pending') ...[
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _markSessionCompleted(context, session.id),
+                    onPressed: viewModel.markingCompletedSessionId == session.id
+                        ? null
+                        : () => _markSessionCompleted(context, session.id),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
-                    child: const Text(
-                      'Mark Completed',
-                      style: TextStyle(fontSize: 12),
+                    child: viewModel.markingCompletedSessionId == session.id
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Mark Completed',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showEditFollowUpModal(context, session),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
+                    icon: const Icon(Icons.edit, size: 14),
+                    label: const Text('Edit', style: TextStyle(fontSize: 12)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -936,10 +1090,6 @@ class _CounselorFollowUpSessionsScreenState
             backgroundColor: Colors.green,
           ),
         );
-        // Refresh the follow-up sessions to show updated state
-        await viewModel.loadFollowUpSessions(
-          viewModel.currentParentAppointmentId!,
-        );
         // Also refresh completed appointments to update counts/badges/sorting
         await viewModel.loadCompletedAppointments(
           searchTerm: viewModel.searchTerm,
@@ -958,6 +1108,11 @@ class _CounselorFollowUpSessionsScreenState
   }
 
   void _showCancelFollowUpModal(BuildContext context, FollowUpSession session) {
+    // Reset loading state when opening the modal
+    setState(() {
+      _isCancelling = false;
+    });
+
     final reasonController = TextEditingController();
 
     showDialog(
@@ -986,17 +1141,254 @@ class _CounselorFollowUpSessionsScreenState
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final reason = reasonController.text.trim();
-              if (reason.isEmpty) return;
-              if (context.mounted) Navigator.pop(context);
-              await _cancelFollowUp(context, session.id, reason);
+          StatefulBuilder(
+            builder: (context, setModalState) {
+              return ElevatedButton(
+                onPressed: _isCancelling
+                    ? null
+                    : () async {
+                        final reason = reasonController.text.trim();
+                        if (reason.isEmpty) return;
+
+                        setModalState(() {
+                          _isCancelling = true;
+                        });
+
+                        await _cancelFollowUp(context, session.id, reason);
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: _isCancelling
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Text('Confirm Cancellation'),
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Confirm Cancellation'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditFollowUpModal(BuildContext context, FollowUpSession session) {
+    // Reset loading state when opening the modal
+    setState(() {
+      _isUpdatingFollowUp = false;
+    });
+
+    final dateController = TextEditingController(text: session.preferredDate);
+    final timeController = TextEditingController(text: session.preferredTime);
+    final consultationTypeController = TextEditingController(
+      text: session.consultationType,
+    );
+    final descriptionController = TextEditingController(
+      text: session.description ?? '',
+    );
+    final reasonController = TextEditingController(text: session.reason ?? '');
+
+    // Load availability for the session's date
+    _viewModel.loadCounselorAvailability(session.preferredDate);
+
+    showDialog(
+      context: context,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: _viewModel,
+        child: AlertDialog(
+          title: const Text('Edit Follow-up Session'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: dateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Preferred Date *',
+                      border: OutlineInputBorder(),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().add(
+                          const Duration(days: 1),
+                        ),
+                        firstDate: DateTime.now().add(const Duration(days: 1)),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        dateController.text = date.toIso8601String().split(
+                          'T',
+                        )[0];
+                        // Load availability for selected date
+                        await _viewModel.loadCounselorAvailability(
+                          dateController.text,
+                        );
+                        // Clear previous time selection if not valid anymore
+                        final slots =
+                            _viewModel.counselorAvailability?.timeSlots ??
+                            const <String>[];
+                        if (!slots.contains(timeController.text)) {
+                          timeController.text = '';
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer<CounselorFollowUpSessionsViewModel>(
+                    builder: (context, viewModel, child) {
+                      final slots =
+                          viewModel.counselorAvailability?.timeSlots ??
+                          const <String>[];
+                      return DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Preferred Time *',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: slots
+                            .map(
+                              (time) => DropdownMenuItem(
+                                value: time,
+                                child: Text(time),
+                              ),
+                            )
+                            .toList(),
+                        initialValue:
+                            slots.contains(timeController.text) &&
+                                timeController.text.isNotEmpty
+                            ? timeController.text
+                            : null,
+                        onChanged: (value) => timeController.text = value ?? '',
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? 'Please select a time'
+                            : null,
+                        disabledHint: const Text('No available time slots'),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Consultation Type *',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Individual Counseling',
+                        child: Text('Individual Counseling'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Group Counseling',
+                        child: Text('Group Counseling'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Career Guidance',
+                        child: Text('Career Guidance'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Academic Counseling',
+                        child: Text('Academic Counseling'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Personal Development',
+                        child: Text('Personal Development'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Crisis Intervention',
+                        child: Text('Crisis Intervention'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Follow-up Session',
+                        child: Text('Follow-up Session'),
+                      ),
+                    ],
+                    initialValue: consultationTypeController.text.isNotEmpty
+                        ? consultationTypeController.text
+                        : null,
+                    onChanged: (value) =>
+                        consultationTypeController.text = value ?? '',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reasonController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Reason for Follow-up',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            StatefulBuilder(
+              builder: (context, setModalState) {
+                return ElevatedButton(
+                  onPressed: _isUpdatingFollowUp
+                      ? null
+                      : () async {
+                          if (dateController.text.isNotEmpty &&
+                              timeController.text.isNotEmpty &&
+                              consultationTypeController.text.isNotEmpty) {
+                            setModalState(() {
+                              _isUpdatingFollowUp = true;
+                            });
+                            await _updateFollowUp(
+                              context,
+                              session.id,
+                              dateController.text,
+                              timeController.text,
+                              consultationTypeController.text,
+                              descriptionController.text.trim().isEmpty
+                                  ? null
+                                  : descriptionController.text.trim(),
+                              reasonController.text.trim().isEmpty
+                                  ? null
+                                  : reasonController.text.trim(),
+                            );
+                            if (context.mounted) Navigator.pop(context);
+                          }
+                        },
+                  child: _isUpdatingFollowUp
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Save Changes'),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1034,6 +1426,70 @@ class _CounselorFollowUpSessionsScreenState
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCancelling = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateFollowUp(
+    BuildContext context,
+    int sessionId,
+    String preferredDate,
+    String preferredTime,
+    String consultationType,
+    String? description,
+    String? reason,
+  ) async {
+    setState(() {
+      _isUpdatingFollowUp = true;
+    });
+
+    final viewModel = _viewModel;
+
+    try {
+      await viewModel.updateFollowUp(
+        sessionId: sessionId,
+        preferredDate: preferredDate,
+        preferredTime: preferredTime,
+        consultationType: consultationType,
+        description: description,
+        reason: reason,
+      );
+      // Refresh the follow-up sessions to show updated state
+      await viewModel.loadFollowUpSessions(
+        viewModel.currentParentAppointmentId!,
+      );
+      // Also refresh completed appointments to update counts/badges/sorting
+      await viewModel.loadCompletedAppointments(
+        searchTerm: viewModel.searchTerm,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Follow-up session updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update session: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingFollowUp = false;
+        });
       }
     }
   }
@@ -1194,28 +1650,48 @@ class _CounselorFollowUpSessionsScreenState
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                if (dateController.text.isNotEmpty &&
-                    timeController.text.isNotEmpty &&
-                    consultationTypeController.text.isNotEmpty) {
-                  if (context.mounted) Navigator.pop(context);
-                  await _createFollowUp(
-                    context,
-                    appointment,
-                    dateController.text,
-                    timeController.text,
-                    consultationTypeController.text,
-                    descriptionController.text.trim().isEmpty
-                        ? null
-                        : descriptionController.text.trim(),
-                    reasonController.text.trim().isEmpty
-                        ? null
-                        : reasonController.text.trim(),
-                  );
-                }
+            StatefulBuilder(
+              builder: (context, setModalState) {
+                return ElevatedButton(
+                  onPressed: _isCreatingFollowUp
+                      ? null
+                      : () async {
+                          if (dateController.text.isNotEmpty &&
+                              timeController.text.isNotEmpty &&
+                              consultationTypeController.text.isNotEmpty) {
+                            setState(() {
+                              _isCreatingFollowUp = true;
+                            });
+                            await _createFollowUp(
+                              context,
+                              appointment,
+                              dateController.text,
+                              timeController.text,
+                              consultationTypeController.text,
+                              descriptionController.text.trim().isEmpty
+                                  ? null
+                                  : descriptionController.text.trim(),
+                              reasonController.text.trim().isEmpty
+                                  ? null
+                                  : reasonController.text.trim(),
+                            );
+                            if (context.mounted) Navigator.pop(context);
+                          }
+                        },
+                  child: _isCreatingFollowUp
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Create Follow-up'),
+                );
               },
-              child: const Text('Create Follow-up'),
             ),
           ],
         ),
@@ -1265,6 +1741,12 @@ class _CounselorFollowUpSessionsScreenState
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingFollowUp = false;
+        });
       }
     }
   }

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'state/counselor_dashboard_viewmodel.dart';
 import 'widgets/counselor_screen_wrapper.dart';
+import 'widgets/notifications_dropdown.dart';
 import '../routes.dart';
+import '../utils/online_status.dart';
 
 class CounselorDashboardScreen extends StatefulWidget {
   const CounselorDashboardScreen({super.key});
@@ -32,9 +34,14 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _viewModel,
-      child: CounselorScreenWrapper(
-        currentBottomNavIndex: 0, // Dashboard is Home button (index 0)
-        child: _buildMainContent(context),
+      child: Consumer<CounselorDashboardViewModel>(
+        builder: (context, viewModel, child) {
+          return CounselorScreenWrapper(
+            currentBottomNavIndex: 0, // Dashboard is Home button (index 0)
+            onLogout: () => viewModel.logout(context),
+            child: _buildMainContent(context),
+          );
+        },
       ),
     );
   }
@@ -177,6 +184,16 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                         color: const Color(0xFF003366),
                       ),
                     ),
+                    // Hidden user_id display (similar to PHP implementation)
+                    if (viewModel.hasName)
+                      Text(
+                        viewModel.userId,
+                        style: const TextStyle(
+                          color: Colors.transparent,
+                          fontSize: 0,
+                          height: 0,
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       'Last login: ${viewModel.formattedLastLogin}',
@@ -289,9 +306,15 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                   _buildDashboardCards(context, isMobile),
                 ],
               ),
-              // Notifications Dropdown
+              // Notifications Modal (matches student design)
               if (viewModel.isNotificationsOpen)
-                _buildNotificationsDropdown(context, viewModel, isMobile),
+                NotificationsDropdown(
+                  isVisible: viewModel.isNotificationsOpen,
+                  notifications: viewModel.notifications,
+                  onClose: viewModel.closeNotifications,
+                  onMarkAsRead: (id) => viewModel.markNotificationAsRead(id),
+                  unreadCount: viewModel.unreadNotificationsCount,
+                ),
             ],
           );
         },
@@ -421,13 +444,24 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Student: ${message.senderName}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF191970),
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Student: ${message.senderName}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF191970),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: _buildStatusIndicator(message),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -625,143 +659,32 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
     }
   }
 
-  Widget _buildNotificationsDropdown(
-    BuildContext context,
-    CounselorDashboardViewModel viewModel,
-    bool isMobile,
-  ) {
-    return Positioned(
-      top: 100, // Position below the header
-      right: 20,
-      child: Container(
-        width: 300,
-        constraints: const BoxConstraints(maxHeight: 400),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.1 * 255).round()),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+  /// Build status indicator widget for a message
+  Widget _buildStatusIndicator(dynamic message) {
+    final statusResult = OnlineStatus.calculateOnlineStatus(
+      message.lastActivity,
+      message.lastLogin,
+      message.logoutTime,
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(statusResult.statusIcon, size: 8, color: statusResult.statusColor),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            statusResult.text,
+            style: TextStyle(
+              color: statusResult.statusColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-          border: Border.all(
-            color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
-            width: 1,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFF191970),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Text(
-                    'Notifications',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: viewModel.closeNotifications,
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Notifications List
-            Expanded(
-              child: viewModel.notifications.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Text(
-                          'No notifications',
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: viewModel.notifications.length,
-                      itemBuilder: (context, index) {
-                        final notification = viewModel.notifications[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: notification.isRead
-                                ? Colors.grey[50]
-                                : Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: notification.isRead
-                                  ? Colors.grey[200]!
-                                  : Colors.blue[200]!,
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                notification.title,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: notification.isRead
-                                      ? Colors.grey[700]
-                                      : const Color(0xFF191970),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                notification.message,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: notification.isRead
-                                      ? Colors.grey[600]
-                                      : Colors.grey[700],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _formatDate(
-                                  notification.createdAt.toIso8601String(),
-                                ),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }

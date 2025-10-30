@@ -1632,3 +1632,90 @@ footer {
     max-height: 60vh;
     overflow-y: auto;
 }
+
+/* Dashboard Status Indicators */
+.dashboard-status-indicator {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Dashboard Message Card Layout */
+.dashboard-message-card .d-flex {
+    gap: 0.5rem;
+}
+
+/* Ensure proper spacing between Student label and name */
+.dashboard-message-card .me-1 {
+    margin-right: 0.25rem !important;
+}
+
+/* Keep student name close to label */
+.dashboard-message-card .d-flex.align-items-center:not(.justify-content-between) {
+    gap: 0.25rem;
+}
+
+/* Status indicator positioning */
+.dashboard-message-card .justify-content-between {
+    align-items: center;
+}
+
+.dashboard-message-card .justify-content-between > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.dashboard-status-indicator::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.dashboard-status-indicator.status-online {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.dashboard-status-indicator.status-online::before {
+    background-color: #198754;
+    box-shadow: 0 0 0 1px rgba(25, 135, 84, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.dashboard-status-indicator.status-active-recent {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.dashboard-status-indicator.status-active-recent::before {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.2);
+    animation: none;
+}
+
+.dashboard-status-indicator.status-offline {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.dashboard-status-indicator.status-offline::before {
+    background-color: #6c757d;
+    box-shadow: 0 0 0 1px rgba(108, 117, 125, 0.2);
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

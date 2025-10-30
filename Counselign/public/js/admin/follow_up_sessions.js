@@ -241,7 +241,7 @@ function displayFollowUpSessions(sessions) {
                     <span>${session.consultation_type}</span>
                 </div>
                 ${session.description ? `<div class="session-description"><strong>Description:</strong> ${session.description}</div>` : ''}
-                ${session.reason ? `<div class="session-reason"><strong>Reason:</strong> ${session.reason}</div>` : ''}
+                ${session.reason ? `<div class="session-reason"><strong>${session.status === 'cancelled' ? 'Reason For Cancellation:' : 'Reason For Follow-up:'}</strong> ${session.reason}</div>` : ''}
             </div>
             <!-- No action buttons for admin view - read-only -->
         </div>

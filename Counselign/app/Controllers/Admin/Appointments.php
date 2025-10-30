@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Admin;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\AppointmentsModel;
 
@@ -125,9 +128,25 @@ class Appointments extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $db->table('appointments')
-           ->where('id', $id)
-           ->update(['status' => $status]);
+        
+        // Get appointment details to find the student
+        $appointment = $db->table('appointments')
+            ->where('id', $id)
+            ->get()
+            ->getRowArray();
+        
+        if ($appointment) {
+            // Update appointment status
+            $db->table('appointments')
+               ->where('id', $id)
+               ->update(['status' => $status]);
+            
+            // Update last_activity for both admin and student
+            $activityHelper = new UserActivityHelper();
+            $adminId = session()->get('user_id_display');
+            $activityHelper->updateAdminActivity($adminId, 'update_appointment_status');
+            $activityHelper->updateStudentActivity($appointment['student_id'], 'appointment_status_updated');
+        }
 
         return $this->respond([
             'status' => 'success',
@@ -446,5 +465,39 @@ class Appointments extends BaseController
         //     'related_id' => $appointment_id,
         //     'created_at' => date('Y-m-d H:i:s')
         // ]);
+    }
+
+    /**
+     * Track export activity for admin reports
+     */
+    public function trackExport()
+    {
+        try {
+            if (!session()->get('logged_in') || session()->get('role') !== 'admin') {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 401);
+            }
+            
+            $adminId = session()->get('user_id_display') ?? session()->get('user_id');
+            $exportType = $this->request->getPost('export_type') ?? 'appointments_report';
+            
+            // Update last_activity for exporting reports
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateAdminActivity($adminId, 'export_reports');
+            
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Export activity tracked'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error tracking admin export activity: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error tracking export activity'
+            ], 500);
+        }
     }
 }

@@ -5,6 +5,66 @@
         if (trimmed.startsWith('/')) return trimmed; 
         return (window.BASE_URL || '/') + trimmed;
     }
+
+    // Calculate online status based on last_activity, last_login, and logout_time
+    function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
+        // Get all available times
+        const activityTime = lastActivity ? new Date(lastActivity) : null;
+        const loginTime = lastLogin ? new Date(lastLogin) : null;
+        const logoutTimeDate = logoutTime ? new Date(logoutTime) : null;
+        
+        // Check if logout_time equals last_activity (exact match)
+        if (logoutTimeDate && activityTime && logoutTimeDate.getTime() === activityTime.getTime()) {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+        
+        // Find the most recent time between last_activity and last_login
+        let mostRecentTime = null;
+        
+        if (activityTime && loginTime) {
+            // Use the more recent of the two
+            mostRecentTime = activityTime > loginTime ? activityTime : loginTime;
+        } else if (activityTime) {
+            mostRecentTime = activityTime;
+        } else if (loginTime) {
+            mostRecentTime = loginTime;
+        }
+        
+        if (!mostRecentTime) {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+
+        const now = new Date();
+        const diffInMinutes = Math.floor((now - mostRecentTime) / (1000 * 60));
+
+        if (diffInMinutes <= 5) {
+            return {
+                status: 'online',
+                text: 'Online',
+                class: 'status-online'
+            };
+        } else if (diffInMinutes <= 60) {
+            return {
+                status: 'active',
+                text: `Last active ${diffInMinutes}m ago`,
+                class: 'status-active-recent'
+            };
+        } else {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+    }
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize lastMessageId and isTyping
     let lastMessageId = 0;
@@ -225,8 +285,10 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.status === 'success') {
                     const notifications = Array.isArray(data.notifications) ? data.notifications : [];
-                    renderNotifications(notifications);
-                    updateNotificationCounter(notifications.length);
+                    // Apply client-side expiration filtering
+                    const filteredNotifications = filterExpiredNotifications(notifications);
+                    renderNotifications(filteredNotifications);
+                    updateNotificationCounter(filteredNotifications.length);
                 } else {
                     showEmptyNotifications('Failed to load notifications');
                 }
@@ -234,6 +296,26 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => {
                 showEmptyNotifications('Unable to connect to server');
             });
+    }
+
+    // Filter out expired notifications on the client side
+    function filterExpiredNotifications(notifications) {
+        const now = new Date();
+        return notifications.filter(notification => {
+            // Check if event has passed
+            if (notification.type === 'event' && notification.event_date) {
+                const eventDate = new Date(notification.event_date);
+                return eventDate > now;
+            }
+            // Check if appointment has passed (keep for 7 days after appointment date)
+            if (notification.type === 'appointment' && notification.appointment_date) {
+                const appointmentDate = new Date(notification.appointment_date);
+                const sevenDaysAfter = new Date(appointmentDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                return sevenDaysAfter > now;
+            }
+            // Keep all other notification types (announcements, messages)
+            return true;
+        });
     }
 
     function renderNotifications(notifications = []) {
@@ -400,9 +482,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         try { localStorage.setItem('counselor_profile_picture', src); } catch (e) {}
                     }
                     
-                    // Update the user ID in the welcome message
+                    // Update the user ID in the welcome message only if no display name exists
                     const userIdSpan = document.querySelector('.text-primary i');
-                    if (userIdSpan) {
+                    const userDisplaySpan = document.getElementById('user-id-display');
+                    if (userIdSpan && !userDisplaySpan) {
+                        // Only update if there's no hidden user-id-display element (meaning no name was found)
                         userIdSpan.textContent = data.user_id;
                     }
                 } else {
@@ -423,13 +507,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const closeChat = document.getElementById('closeChat');
 
         // Add console logs for debugging
-        console.log('Chat elements:', { messageForm, messageInput, messagesContainer, chatPopup, openChatBtn, closeChat });
+        SecureLogger.info('Chat elements:', { messageForm, messageInput, messagesContainer, chatPopup, openChatBtn, closeChat });
 
         if (openChatBtn && chatPopup) {
             openChatBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Chat button clicked');
+                SecureLogger.info('Chat button clicked');
                 chatPopup.style.display = 'block';
                 chatPopup.classList.add('visible');
                 openChatBtn.classList.add('active'); // Add active class when chat is opened
@@ -825,8 +909,37 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Auto-refresh notifications every 30 seconds
+    let notificationRefreshInterval = null;
+    
+    function startNotificationAutoRefresh() {
+        // Clear existing interval if any
+        if (notificationRefreshInterval) {
+            clearInterval(notificationRefreshInterval);
+        }
+        
+        // Refresh notifications every 30 seconds
+        notificationRefreshInterval = setInterval(() => {
+            // Only refresh if notifications dropdown is open
+            const notificationsDropdown = document.getElementById('notificationsDropdown');
+            if (notificationsDropdown && notificationsDropdown.style.display === 'block') {
+                loadNotifications();
+            }
+        }, 30000);
+    }
+    
+    function stopNotificationAutoRefresh() {
+        if (notificationRefreshInterval) {
+            clearInterval(notificationRefreshInterval);
+            notificationRefreshInterval = null;
+        }
+    }
+
     // Start the initialization process
     fetchUserIdAndInitialize();
+    
+    // Start auto-refresh for notifications
+    startNotificationAutoRefresh();
 
 /**
  * Fetch and display recent pending appointments for the counselor
@@ -949,8 +1062,10 @@ function displayRecentMessages(conversations) {
 
     conversations.slice(0, 2).forEach(conv => {
         const lastTime = conv.last_message_time ? formatDashboardTime(conv.last_message_time) : '';
+        const statusInfo = calculateOnlineStatus(conv.last_activity, conv.last_login, conv.logout_time);
+        
         const preview = document.createElement('div');
-        preview.className = 'p-3 bg-light rounded shadow-sm d-flex align-items-start gap-2';
+        preview.className = 'p-3 bg-light rounded shadow-sm d-flex align-items-start gap-2 dashboard-message-card';
 
         const avatar = document.createElement('img');
         avatar.alt = 'Student avatar';
@@ -963,7 +1078,13 @@ function displayRecentMessages(conversations) {
         const info = document.createElement('div');
         info.style.flex = '1';
         info.innerHTML = `
-            <p class="text-body-secondary mb-1"><strong>Student:</strong> ${escapeHtml(conv.other_username || conv.other_user_id || '')}</p>
+            <div class="d-flex align-items-center justify-content-between mb-1">
+                <div class="d-flex align-items-start justify-content-left">
+                    <strong class="text-body-secondary me-1">Student:</strong>
+                    <span class="text-body-secondary">${escapeHtml(conv.other_username || conv.other_user_id || '')}</span>
+                </div>
+                <span class="dashboard-status-indicator ${statusInfo.class}">${statusInfo.text}</span>
+            </div>
             <p class="text-body-secondary mb-1"><strong>Last:</strong> ${escapeHtml(conv.last_message || '')}</p>
             <p class="small text-secondary mb-0"><strong>Received on:</strong> ${lastTime}</p>
         `;

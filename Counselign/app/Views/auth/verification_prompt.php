@@ -50,5 +50,32 @@
     </div>
 </div>
 
+<!-- RESEND VERIFICATION MODAL -->
+<div class="modal fade" id="resendVerificationModal" tabindex="-1" aria-labelledby="resendVerificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resendVerificationModalLabel">Resend Verification Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4">Enter your registered email address or user ID to resend the verification email.</p>
+                <div class="mb-3">
+                    <label for="resendVerificationInput" class="form-label">Email or User ID</label>
+                    <input type="text" id="resendVerificationInput" class="form-control" placeholder="Enter your email or user ID">
+                </div>
+                <div id="resendVerificationWarning" class="text-danger mb-3 d-none">
+                    <p id="resendVerificationInputError" class="d-none">*Please enter a valid email or user ID</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button id="resendVerificationBtn" class="btn btn-primary">Send Verification Email</button>
+                    <button id="resendVerificationCancelBtn" class="btn btn-outline-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Link to external JavaScript -->
 <script src="<?= base_url('js/auth/verification_prompt.js') ?>"></script>
+<script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>

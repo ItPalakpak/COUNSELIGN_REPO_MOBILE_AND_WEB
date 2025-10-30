@@ -6,6 +6,9 @@ class Message {
   final String messageText;
   final bool isRead;
   final DateTime createdAt;
+  final String? lastActivity;
+  final String? lastLogin;
+  final String? logoutTime;
 
   Message({
     required this.id,
@@ -15,6 +18,9 @@ class Message {
     required this.messageText,
     required this.isRead,
     required this.createdAt,
+    this.lastActivity,
+    this.lastLogin,
+    this.logoutTime,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -28,6 +34,9 @@ class Message {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
           : DateTime.now(),
+      lastActivity: json['last_activity']?.toString(),
+      lastLogin: json['last_login']?.toString(),
+      logoutTime: json['logout_time']?.toString(),
     );
   }
 
@@ -40,6 +49,9 @@ class Message {
       'message_text': messageText,
       'is_read': isRead ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
+      'last_activity': lastActivity,
+      'last_login': lastLogin,
+      'logout_time': logoutTime,
     };
   }
 
@@ -51,6 +63,9 @@ class Message {
     String? messageText,
     bool? isRead,
     DateTime? createdAt,
+    String? lastActivity,
+    String? lastLogin,
+    String? logoutTime,
   }) {
     return Message(
       id: id ?? this.id,
@@ -60,6 +75,9 @@ class Message {
       messageText: messageText ?? this.messageText,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
+      lastActivity: lastActivity ?? this.lastActivity,
+      lastLogin: lastLogin ?? this.lastLogin,
+      logoutTime: logoutTime ?? this.logoutTime,
     );
   }
 }

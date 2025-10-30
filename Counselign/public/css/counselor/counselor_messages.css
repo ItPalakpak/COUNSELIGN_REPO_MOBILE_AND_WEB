@@ -335,8 +335,65 @@ body {
     font-weight: 400;
 }
 
+.conversation-status {
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.conversation-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.conversation-status.status-online {
+    color: var(--success-color);
+}
+
+.conversation-status.status-online::before {
+    background: var(--success-color);
+    box-shadow: 0 0 0 1px rgba(25, 135, 84, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.conversation-status.status-active-recent {
+    color: var(--warning-color);
+}
+
+.conversation-status.status-active-recent::before {
+    background: var(--warning-color);
+    box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.2);
+    animation: none;
+}
+
+.conversation-status.status-offline {
+    color: var(--gray-500);
+}
+
+.conversation-status.status-offline::before {
+    background: var(--gray-500);
+    box-shadow: 0 0 0 1px rgba(108, 117, 125, 0.2);
+    animation: none;
+}
+
 .conversation-item.active .conversation-last-message {
     color: rgba(255, 255, 255, 0.9);
+}
+
+.conversation-item.active .conversation-status {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.conversation-item.active .conversation-status::before {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .conversation-meta {
@@ -451,6 +508,25 @@ body {
     display: inline-block;
     box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
     animation: pulse 2s ease-in-out infinite;
+}
+
+/* Status indicator styles for chat header */
+.user-status.status-online::before {
+    background: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.user-status.status-active-recent::before {
+    background: var(--warning-color);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+    animation: none;
+}
+
+.user-status.status-offline::before {
+    background: var(--gray-500);
+    box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.2);
+    animation: none;
 }
 
 @keyframes pulse {

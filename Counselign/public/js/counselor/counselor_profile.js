@@ -46,7 +46,7 @@ function saveProfileChanges() {
     const newUsername = document.getElementById('update-username').value.trim();
     const newEmail = document.getElementById('update-email').value.trim();
 
-    console.log('Saving profile changes:', { newUsername, newEmail });
+    SecureLogger.info('Saving profile changes:', { newUsername, newEmail });
 
     // Validate inputs
     if (!newUsername) {
@@ -124,7 +124,7 @@ function saveProfileChanges() {
 
 // Function to load current profile data
 function loadProfileData() {
-    console.log('Loading profile data...');
+    SecureLogger.info('Loading profile data...');
     
     // Show loading state
     document.getElementById('display-username').value = 'Loading...';
@@ -139,7 +139,7 @@ function loadProfileData() {
         }
     })
     .then(response => {
-        console.log('Response status:', response.status);
+        SecureLogger.info('Response status:', response.status);
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 // Session expired or unauthorized
@@ -151,7 +151,7 @@ function loadProfileData() {
         return response.json();
     })
     .then(data => {
-        console.log('Profile data:', data);
+        SecureLogger.info('Profile data:', data);
         if (data.success) {
             // Update display values
             document.getElementById('display-userid').textContent = data.user_id || 'N/A';
@@ -231,7 +231,7 @@ function loadProfileData() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded, setting up profile functionality");
+    SecureLogger.info("DOM loaded, setting up profile functionality");
     
     // Load profile data when page loads
     loadProfileData();
@@ -268,10 +268,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add click event listener to logout button
     if (logoutBtn) {
-        console.log("Logout button found, adding event listener");
+        SecureLogger.info("Logout button found, adding event listener");
         logoutBtn.addEventListener('click', handleLogout);
     } else {
-        console.log("Logout button not found!");
+        SecureLogger.info("Logout button not found!");
     }
     
     // Drawer toggle bindings (match landing behavior)

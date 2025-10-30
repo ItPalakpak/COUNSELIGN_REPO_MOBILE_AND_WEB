@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/scheduled_appointment.dart';
+import '../state/counselor_scheduled_appointments_viewmodel.dart';
 
 class AppointmentsCards extends StatelessWidget {
   final List<CounselorScheduledAppointment> appointments;
@@ -21,17 +23,22 @@ class AppointmentsCards extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: appointments.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final a = appointments[index];
-        return _AppointmentCard(
-          appointment: a,
-          onUpdateStatus: (status) => onUpdateStatus(a, status),
-          onCancelAppointment: () => onCancelAppointment(a),
+    return Consumer<CounselorScheduledAppointmentsViewModel>(
+      builder: (context, viewModel, child) {
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: appointments.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final a = appointments[index];
+            return _AppointmentCard(
+              appointment: a,
+              viewModel: viewModel,
+              onUpdateStatus: (status) => onUpdateStatus(a, status),
+              onCancelAppointment: () => onCancelAppointment(a),
+            );
+          },
         );
       },
     );
@@ -40,11 +47,13 @@ class AppointmentsCards extends StatelessWidget {
 
 class _AppointmentCard extends StatelessWidget {
   final CounselorScheduledAppointment appointment;
+  final CounselorScheduledAppointmentsViewModel viewModel;
   final void Function(String status) onUpdateStatus;
   final VoidCallback onCancelAppointment;
 
   const _AppointmentCard({
     required this.appointment,
+    required this.viewModel,
     required this.onUpdateStatus,
     required this.onCancelAppointment,
   });
@@ -147,9 +156,26 @@ class _AppointmentCard extends StatelessWidget {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => onUpdateStatus('completed'),
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text('Mark Complete'),
+                  onPressed: _isMarkCompleteLoading()
+                      ? null
+                      : () => onUpdateStatus('completed'),
+                  icon: _isMarkCompleteLoading()
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(
+                    _isMarkCompleteLoading()
+                        ? 'Processing...'
+                        : 'Mark Complete',
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[600],
                     foregroundColor: Colors.white,
@@ -212,6 +238,11 @@ class _AppointmentCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  bool _isMarkCompleteLoading() {
+    return viewModel.isUpdatingStatus &&
+        viewModel.updatingAppointmentId == appointment.id.toString();
   }
 
   Widget _buildStatusChip(String status) {

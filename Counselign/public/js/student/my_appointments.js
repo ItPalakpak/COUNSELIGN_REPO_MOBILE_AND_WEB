@@ -570,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 counselorSelect.appendChild(opt);
             }
         } catch (e) {
-            console.log('Error loading counselors by availability:', e);
+            SecureLogger.info('Error loading counselors by availability:', e);
             counselorSelect.innerHTML = '<option value="">Error loading counselors</option>';
         } finally {
             counselorSelect.disabled = false;
@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Check for counselor conflicts before updating
         const hasConflict = await checkEditConflicts(appointmentId, counselor_preference, preferred_date, preferred_time);
         if (hasConflict) {
-            return; // Conflict modal will be shown, don't proceed with update
+            throw new Error('Counselor conflict detected'); // Throw error to trigger catch block
         }
 
         try {
@@ -819,10 +819,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 showSuccess('Appointment updated successfully.');
                 fetchAppointments();
             } else {
-                showError(data.message || 'Failed to update appointment.');
+                throw new Error(data.message || 'Failed to update appointment.');
             }
         } catch (error) {
-            showError('An error occurred while updating the appointment.');
+            showError(error.message || 'An error occurred while updating the appointment.');
+            throw error; // Re-throw to trigger catch block in modal handler
         }
     }
 
@@ -860,16 +861,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 showSuccess('Appointment cancelled successfully.');
                 fetchAppointments();
             } else {
-                showError(data.message || 'Failed to cancel appointment.');
+                throw new Error(data.message || 'Failed to cancel appointment.');
             }
         } catch (error) {
-            showError('An error occurred while cancelling the appointment.');
+            showError(error.message || 'An error occurred while cancelling the appointment.');
+            throw error; // Re-throw to trigger catch block in modal handler
         }
     }
 
     // Utility functions
     function formatDate(dateString) {
         return new Date(dateString).toLocaleDateString();
+    }
+
+    // Loading button utility functions
+    function showButtonLoading(button, loadingText) {
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingText}`;
+    }
+
+    function hideButtonLoading(button, originalText) {
+        button.disabled = false;
+        button.innerHTML = `<i class="fas fa-check me-1"></i>${originalText}`;
     }
 
     function formatTime(timeString) {
@@ -1053,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         svgEl.removeAttribute('width');
                         svgEl.removeAttribute('height');
                     }
-                    console.log('QR Code (SVG) generated successfully');
+                    SecureLogger.info('QR Code (SVG) generated successfully');
                     
                 } catch (error) {
                     console.error('QR Code generation error:', error);
@@ -1089,6 +1102,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // Download appointment ticket as PDF
     async function downloadAppointmentTicket(appointment) {
         try {
+            // Track download activity
+            try {
+                await fetch((window.BASE_URL || '/') + 'student/appointments/track-download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        appointment_id: appointment.id
+                    })
+                });
+            } catch (error) {
+                SecureLogger.info('Activity tracking failed:', error);
+                // Continue with download even if tracking fails
+            }
+            
             const ticketId = `TICKET-${appointment.id}-${Date.now()}`;
             const qrCodeData = JSON.stringify({
                 appointmentId: appointment.id,
@@ -1517,9 +1548,19 @@ document.addEventListener('DOMContentLoaded', function () {
     if (confirmSaveBtn) {
         confirmSaveBtn.addEventListener('click', function() {
             if (pendingSaveContext) {
-                updatePendingAppointment(pendingSaveContext.appointmentId, pendingSaveContext.form);
-                bootstrap.Modal.getInstance(document.getElementById('saveChangesModal')).hide();
-                pendingSaveContext = null;
+                // Show loading state
+                showButtonLoading(confirmSaveBtn, 'Saving Changes...');
+                
+                updatePendingAppointment(pendingSaveContext.appointmentId, pendingSaveContext.form)
+                    .then(() => {
+                        // Hide modal after successful update
+                        bootstrap.Modal.getInstance(document.getElementById('saveChangesModal')).hide();
+                        pendingSaveContext = null;
+                    })
+                    .catch(() => {
+                        // Reset button state on error
+                        hideButtonLoading(confirmSaveBtn, 'Save Changes');
+                    });
             }
         });
     }
@@ -1531,9 +1572,19 @@ document.addEventListener('DOMContentLoaded', function () {
             if (pendingCancelContext) {
                 const reason = document.getElementById('cancellationReason').value;
                 if (reason && reason.trim() !== '') {
-                    cancelPendingAppointment(pendingCancelContext.appointmentId, reason);
-                    bootstrap.Modal.getInstance(document.getElementById('cancellationReasonModal')).hide();
-                    pendingCancelContext = null;
+                    // Show loading state
+                    showButtonLoading(confirmCancelBtn, 'Cancelling...');
+                    
+                    cancelPendingAppointment(pendingCancelContext.appointmentId, reason)
+                        .then(() => {
+                            // Hide modal after successful cancellation
+                            bootstrap.Modal.getInstance(document.getElementById('cancellationReasonModal')).hide();
+                            pendingCancelContext = null;
+                        })
+                        .catch(() => {
+                            // Reset button state on error
+                            hideButtonLoading(confirmCancelBtn, 'Confirm Cancellation');
+                        });
                 } else {
                     showError('Cancellation reason is required.');
                 }

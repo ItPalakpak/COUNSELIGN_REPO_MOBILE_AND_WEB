@@ -261,11 +261,14 @@ function displayFollowUpSessions(sessions) {
                     <span>${session.consultation_type}</span>
                 </div>
                 ${session.description ? `<div class="session-description"><strong>Description:</strong> ${session.description}</div>` : ''}
-                ${session.reason ? `<div class="session-reason"><strong>Reason:</strong> ${session.reason}</div>` : ''}
+                ${session.reason ? `<div class="session-reason"><strong>${session.status === 'cancelled' ? 'Reason For Cancellation:' : 'Reason For Follow-up:'}</strong> ${session.reason}</div>` : ''}
             </div>
             <div class="session-actions d-flex gap-2 flex-wrap">
                 <button class="btn btn-success btn-sm" ${(session.status === 'completed' || session.status === 'cancelled') ? 'disabled' : ''} onclick="markFollowUpCompleted(${session.id})">
                     <i class="fas fa-check"></i> Mark as Completed
+                </button>
+                <button class="btn btn-warning btn-sm" ${session.status !== 'pending' ? 'disabled' : ''} onclick="openEditFollowUpModal(${session.id})">
+                    <i class="fas fa-edit"></i> Edit
                 </button>
                 <button class="btn btn-danger btn-sm" ${session.status !== 'pending' ? 'disabled' : ''} onclick="openCancelFollowUpModal(${session.id})">
                     <i class="fas fa-ban"></i> Cancel
@@ -286,7 +289,15 @@ function createNewFollowUpFromSession(sessionId, currentSequence) {
 
 // Mark follow-up as completed
 async function markFollowUpCompleted(id) {
+    // Find the button that was clicked
+    const button = document.querySelector(`button[onclick*="markFollowUpCompleted(${id})"]`);
+    
     try {
+        // Show loading state
+        if (button) {
+            showButtonLoading(button, 'Completing...');
+        }
+
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfName = csrfMeta?.getAttribute('name') || 'csrf_test_name';
         const csrfHash = csrfMeta?.getAttribute('content') || '';
@@ -317,6 +328,11 @@ async function markFollowUpCompleted(id) {
     } catch (e) {
         console.error(e);
         showError('Failed to complete follow-up: ' + e.message);
+    } finally {
+        // Hide loading state
+        if (button) {
+            hideButtonLoading(button, 'Mark as Completed');
+        }
     }
 }
 
@@ -336,14 +352,23 @@ function openCancelFollowUpModal(id) {
 async function confirmCancelFollowUp() {
     const id = document.getElementById('cancelFollowUpId').value;
     const reason = document.getElementById('cancelReason').value.trim();
+    const confirmBtn = document.getElementById('confirmCancelFollowUpBtn');
+    
     if (!reason) {
         showError('Cancellation reason is required');
         return;
     }
+    
+    // Show loading state
+    showButtonLoading(confirmBtn, 'Cancelling...');
+    
     try {
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfName = csrfMeta?.getAttribute('name') || 'csrf_test_name';
         const csrfHash = csrfMeta?.getAttribute('content') || '';
+
+        // Append default text prefix to the cancellation reason
+        //const formattedReason = `${reason}`;
 
         const form = new URLSearchParams();
         form.append('id', String(id));
@@ -375,6 +400,9 @@ async function confirmCancelFollowUp() {
     } catch (e) {
         console.error(e);
         showError('Failed to cancel follow-up: ' + e.message);
+    } finally {
+        // Hide loading state
+        hideButtonLoading(confirmBtn, 'Confirm Cancellation');
     }
 }
 
@@ -468,6 +496,12 @@ function setupModalEventListeners() {
         saveFollowUpBtn.addEventListener('click', saveFollowUp);
     }
 
+    // Update follow-up button
+    const updateFollowUpBtn = document.getElementById('updateFollowUpBtn');
+    if (updateFollowUpBtn) {
+        updateFollowUpBtn.addEventListener('click', updateFollowUp);
+    }
+
     // Date change listener for availability loading
     const preferredDateInput = document.getElementById('preferredDate');
     if (preferredDateInput) {
@@ -477,12 +511,23 @@ function setupModalEventListeners() {
             }
         });
     }
+
+    // Edit date change listener for availability loading
+    const editPreferredDateInput = document.getElementById('editPreferredDate');
+    if (editPreferredDateInput) {
+        editPreferredDateInput.addEventListener('change', function() {
+            if (this.value) {
+                loadCounselorAvailabilityForEdit(this.value);
+            }
+        });
+    }
 }
 
 // Save follow-up appointment
 async function saveFollowUp() {
     const form = document.getElementById('createFollowUpForm');
     const formData = new FormData(form);
+    const saveBtn = document.getElementById('saveFollowUpBtn');
 
     // Validate required fields
     const requiredFields = ['parent_appointment_id', 'student_id', 'preferred_date', 'preferred_time', 'consultation_type'];
@@ -492,6 +537,9 @@ async function saveFollowUp() {
             return;
         }
     }
+
+    // Show loading state
+    showButtonLoading(saveBtn, 'Creating Follow-up...');
 
     try {
         const response = await fetch((window.BASE_URL || '/') + 'counselor/follow-up/create', {
@@ -531,7 +579,34 @@ async function saveFollowUp() {
     } catch (error) {
         console.error('Error creating follow-up appointment:', error);
         showError('Error creating follow-up appointment: ' + error.message);
+    } finally {
+        // Hide loading state
+        hideButtonLoading(saveBtn, 'Create Follow-up');
     }
+}
+
+// Loading button utility functions
+function showButtonLoading(button, loadingText) {
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingText}`;
+}
+
+function hideButtonLoading(button, originalText) {
+    button.disabled = false;
+    
+    // Determine the appropriate icon based on the button text
+    let icon = 'fas fa-save';
+    if (originalText.includes('Create')) {
+        icon = 'fas fa-plus';
+    } else if (originalText.includes('Mark as Completed')) {
+        icon = 'fas fa-check';
+    } else if (originalText.includes('Update')) {
+        icon = 'fas fa-save';
+    } else if (originalText.includes('Confirm Cancellation')) {
+        icon = 'fas fa-ban';
+    }
+    
+    button.innerHTML = `<i class="${icon} me-2"></i>${originalText}`;
 }
 
 // Utility functions
@@ -662,3 +737,181 @@ function initializeSearch() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeSearch();
 });
+
+// Open edit follow-up modal
+function openEditFollowUpModal(sessionId) {
+    // Get the session data from the displayed card
+    const sessionCard = document.querySelector(`.follow-up-session-card button[onclick*="openEditFollowUpModal(${sessionId})"]`)?.closest('.follow-up-session-card');
+    if (!sessionCard) {
+        showError('Session data not found');
+        return;
+    }
+
+    // Extract session data from the card
+    const sessionDate = sessionCard.querySelector('.session-date span')?.textContent;
+    const sessionTime = sessionCard.querySelector('.session-time span')?.textContent;
+    const sessionType = sessionCard.querySelector('.session-type span')?.textContent;
+    const sessionDescription = sessionCard.querySelector('.session-description')?.textContent?.replace('Description: ', '') || '';
+    const sessionReason = sessionCard.querySelector('.session-reason')?.textContent?.replace(/^(Reason For Follow-up:|Reason For Cancellation:)/, '').trim() || '';
+
+    // Set the session ID
+    document.getElementById('editFollowUpId').value = sessionId;
+
+    // Set minimum date to today
+    const today = new Date();
+    const minDate = today.toISOString().split('T')[0];
+    document.getElementById('editPreferredDate').setAttribute('min', minDate);
+
+    // Parse and set the date
+    if (sessionDate) {
+        const dateObj = new Date(sessionDate);
+        if (!isNaN(dateObj.getTime())) {
+            document.getElementById('editPreferredDate').value = dateObj.toISOString().split('T')[0];
+        }
+    }
+
+    // Clear and populate time options
+    const timeSelect = document.getElementById('editPreferredTime');
+    timeSelect.innerHTML = '<option value="">Select a time</option>';
+    
+    if (sessionTime) {
+        const option = document.createElement('option');
+        option.value = sessionTime;
+        option.textContent = sessionTime;
+        option.selected = true;
+        timeSelect.appendChild(option);
+    }
+
+    // Set consultation type
+    if (sessionType) {
+        document.getElementById('editConsultationType').value = sessionType;
+    }
+
+    // Set description and reason
+    document.getElementById('editDescription').value = sessionDescription;
+    document.getElementById('editReason').value = sessionReason;
+
+    // Load availability for the selected date
+    const selectedDate = document.getElementById('editPreferredDate').value;
+    if (selectedDate) {
+        loadCounselorAvailabilityForEdit(selectedDate);
+    }
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editFollowUpModal'));
+    modal.show();
+}
+
+// Load counselor availability for edit modal
+async function loadCounselorAvailabilityForEdit(date) {
+    try {
+        const response = await fetch((window.BASE_URL || '/') + `counselor/follow-up/availability?date=${date}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            populateTimeOptionsForEdit(data.time_slots);
+        } else {
+            showError(data.message || 'Failed to load counselor availability');
+        }
+    } catch (error) {
+        console.error('Error loading counselor availability for edit:', error);
+        showError('Error loading counselor availability: ' + error.message);
+    }
+}
+
+// Populate time options for edit modal
+function populateTimeOptionsForEdit(timeSlots) {
+    const timeSelect = document.getElementById('editPreferredTime');
+    const currentValue = timeSelect.value;
+    
+    if (timeSlots.length === 0) {
+        timeSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+        return;
+    }
+
+    timeSelect.innerHTML = '<option value="">Select a time</option>';
+    
+    timeSlots.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot;
+        option.textContent = slot;
+        if (slot === currentValue) {
+            option.selected = true;
+        }
+        timeSelect.appendChild(option);
+    });
+}
+
+// Update follow-up appointment
+async function updateFollowUp() {
+    const form = document.getElementById('editFollowUpForm');
+    const formData = new FormData(form);
+    const updateBtn = document.getElementById('updateFollowUpBtn');
+
+    // Validate required fields
+    const requiredFields = ['id', 'preferred_date', 'preferred_time', 'consultation_type'];
+    for (const field of requiredFields) {
+        if (!formData.get(field)) {
+            showError(`Please fill in all required fields`);
+            return;
+        }
+    }
+
+    // Show loading state
+    showButtonLoading(updateBtn, 'Updating...');
+
+    try {
+        const response = await fetch((window.BASE_URL || '/') + 'counselor/follow-up/edit', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams(formData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Network response was not ok');
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showSuccess(data.message || 'Follow-up session updated successfully');
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editFollowUpModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Refresh the follow-up sessions
+            if (currentParentAppointmentId) {
+                openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
+            }
+        } else {
+            showError(data.message || 'Failed to update follow-up session');
+        }
+    } catch (error) {
+        console.error('Error updating follow-up session:', error);
+        showError('Error updating follow-up session: ' + error.message);
+    } finally {
+        // Hide loading state
+        hideButtonLoading(updateBtn, 'Update Follow-up');
+    }
+}

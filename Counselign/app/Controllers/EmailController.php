@@ -2,38 +2,52 @@
 
 namespace App\Controllers;
 
+
+use App\Helpers\SecureLogHelper;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class EmailController extends BaseController
 {
-    private $mailer;
-    private $systemEmail = 'systemsample13@gmail.com'; // Replace with your system email
-    private $systemEmailPassword = 'qxcikmevrevrqzsa'; // Replace with your email password
-    private $recipientEmail = 'counselign2025@gmail.com'; // Replace with recipient email
+    private PHPMailer $mailer;
+    private \Config\Email $emailConfig;
+    private string $recipientEmail = 'counselign2025@gmail.com'; // Contact form recipient
 
     public function __construct()
     {
         $this->mailer = new PHPMailer(true);
+        $this->emailConfig = new \Config\Email();
         $this->setupMailer();
     }
 
-    private function setupMailer()
+    /**
+     * Setup PHPMailer configuration using centralized Email config
+     */
+    private function setupMailer(): void
     {
         try {
-            // Server settings
+            // Server settings from centralized config
             $this->mailer->isSMTP();
-            $this->mailer->Host = 'smtp.gmail.com'; // Replace with your SMTP host
+            $this->mailer->Host = $this->emailConfig->SMTPHost;
             $this->mailer->SMTPAuth = true;
-            $this->mailer->Username = $this->systemEmail;
-            $this->mailer->Password = $this->systemEmailPassword;
-            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mailer->Port = 587;
+            $this->mailer->Username = $this->emailConfig->SMTPUser;
+            $this->mailer->Password = $this->emailConfig->SMTPPass;
+            $this->mailer->SMTPSecure = $this->emailConfig->SMTPCrypto === 'tls' ? PHPMailer::ENCRYPTION_STARTTLS : PHPMailer::ENCRYPTION_SMTPS;
+            $this->mailer->Port = $this->emailConfig->SMTPPort;
+            $this->mailer->Timeout = $this->emailConfig->SMTPTimeout;
+            $this->mailer->SMTPKeepAlive = $this->emailConfig->SMTPKeepAlive;
 
-            // Default sender
-            $this->mailer->setFrom($this->systemEmail, 'Counselign');
+            // Default sender from centralized config
+            $this->mailer->setFrom($this->emailConfig->fromEmail, $this->emailConfig->fromName);
+            
+            // Additional settings
+            $this->mailer->CharSet = $this->emailConfig->charset;
+            $this->mailer->WordWrap = $this->emailConfig->wordWrap;
+            $this->mailer->Priority = $this->emailConfig->priority;
+            
+            log_message('info', 'EmailController initialized with centralized email config');
         } catch (Exception $e) {
-            log_message('error', 'Mailer setup failed: ' . $e->getMessage());
+            log_message('error', 'EmailController setup failed: ' . $e->getMessage());
         }
     }
 
@@ -80,6 +94,9 @@ class EmailController extends BaseController
         }
 
         try {
+            // Clear previous recipients
+            $this->mailer->clearAddresses();
+            
             // Recipients
             $this->mailer->addAddress($this->recipientEmail);
             $this->mailer->addReplyTo($email, $name);
@@ -105,6 +122,7 @@ class EmailController extends BaseController
             return $this->response->setJSON(['status' => 'success', 'message' => 'Message sent successfully']);
         } catch (Exception $e) {
             log_message('error', 'Email sending failed: ' . $e->getMessage());
+            log_message('error', 'PHPMailer ErrorInfo: ' . $this->mailer->ErrorInfo);
             return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to send message. Please try again later.']);
         }
     }

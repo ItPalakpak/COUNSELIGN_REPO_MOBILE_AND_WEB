@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Admin;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\API\ResponseTrait;
 
 class EventsApi extends \CodeIgniter\Controller

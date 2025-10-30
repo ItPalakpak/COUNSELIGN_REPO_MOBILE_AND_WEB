@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Appointment extends BaseController
@@ -150,6 +153,16 @@ class Appointment extends BaseController
                 if (in_array('profile_picture', $userFields, true)) {
                     $builder->join('users', 'counselors.counselor_id = users.user_id', 'left');
                     $selectFields[] = 'users.profile_picture AS profile_picture';
+                }
+                // Add last_activity, last_login, and logout_time fields for status indicators
+                if (in_array('last_activity', $userFields, true)) {
+                    $selectFields[] = 'users.last_activity';
+                }
+                if (in_array('last_login', $userFields, true)) {
+                    $selectFields[] = 'users.last_login';
+                }
+                if (in_array('logout_time', $userFields, true)) {
+                    $selectFields[] = 'users.logout_time';
                 }
             }
 
@@ -456,17 +469,14 @@ class Appointment extends BaseController
             ];
 
             if ($builder->insert($data)) {
-                // Set Manila timezone
-                $manilaTime = new \DateTime('now', new \DateTimeZone('Asia/Manila'));
-                $currentTime = $manilaTime->format('Y-m-d H:i:s');
+                // Update last_activity for creating appointment
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateStudentActivity($user_id, 'create_appointment');
 
-                // Update user's activity for this specific appointment
-                $db->table('users')
-                    ->where('user_id', $user_id)
-                    ->update([
-                        'last_active_at' => $currentTime,
-                        'last_activity' => $currentTime
-                    ]);
+                // Send email notification to counselor if counselor preference is selected
+                if (!empty($counselor_preference) && $counselor_preference !== 'No preference') {
+                    $this->sendAppointmentNotificationToCounselor($counselor_preference, $data, $user_id, 'booking');
+                }
 
                 $response['status'] = 'success';
                 $response['message'] = 'Your appointment has been scheduled successfully. Please wait for admin approval.';
@@ -543,26 +553,82 @@ class Appointment extends BaseController
         $builder->where('id', $appointment_id);
 
         if ($builder->update($updateData)) {
-            // Set Manila timezone
-            $manilaTime = new \DateTime('now', new \DateTimeZone('Asia/Manila'));
-            $currentTime = $manilaTime->format('Y-m-d H:i:s');
-
             // Get the user_id for this specific appointment
             $appointment = $builder->where('id', $appointment_id)->get()->getRowArray();
             
             if ($appointment) {
-                // Update user's activity for this specific appointment
-                $db->table('users')
-                    ->where('user_id', $appointment['student_id'])
-                    ->update([
-                        'last_active_at' => $currentTime,
-                        'last_activity' => $currentTime
-                    ]);
+                // Update last_activity for editing appointment
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateStudentActivity($appointment['student_id'], 'edit_appointment');
+
+                // Send email notification to counselor if counselor preference is selected
+                if (!empty($appointment['counselor_preference']) && $appointment['counselor_preference'] !== 'No preference') {
+                    $this->sendAppointmentNotificationToCounselor($appointment['counselor_preference'], $appointment, $appointment['student_id'], 'editing');
+                }
             }
 
             return $this->response->setJSON(['success' => true]);
         } else {
             return $this->response->setJSON(['success' => false, 'message' => 'Failed to update appointment']);
+        }
+    }
+
+    /**
+     * Track download activity for appointment tickets
+     */
+    public function trackDownload()
+    {
+        try {
+            $session = session();
+            
+            if (!$session->get('logged_in') || $session->get('role') !== 'student') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ])->setStatusCode(401);
+            }
+            
+            $user_id = $session->get('user_id_display');
+            $appointment_id = $this->request->getPost('appointment_id');
+            
+            if (!$appointment_id) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Appointment ID is required'
+                ])->setStatusCode(400);
+            }
+            
+            // Verify the appointment belongs to the student
+            $db = \Config\Database::connect();
+            $appointment = $db->table('appointments')
+                ->where('id', $appointment_id)
+                ->where('student_id', $user_id)
+                ->where('status', 'approved')
+                ->get()
+                ->getRowArray();
+            
+            if (!$appointment) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Appointment not found or not approved'
+                ])->setStatusCode(404);
+            }
+            
+            // Update last_activity for downloading ticket
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateStudentActivity($user_id, 'download_ticket');
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Download activity tracked'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error tracking download activity: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error tracking download activity'
+            ])->setStatusCode(500);
         }
     }
 
@@ -740,6 +806,13 @@ class Appointment extends BaseController
                     'last_activity' => $currentTime
                 ]);
 
+            // Send email notification to counselor if appointment had a counselor preference
+            if (!empty($appointment['counselor_preference']) && $appointment['counselor_preference'] !== 'No preference') {
+                // Add the cancellation reason to the appointment data for email
+                $appointment['reason'] = $reason;
+                $this->sendAppointmentCancellationNotificationToCounselor($appointment['counselor_preference'], $appointment, $appointment['student_id']);
+            }
+
             return $this->response->setJSON(['success' => true]);
         } else {
             return $this->response->setJSON(['success' => false, 'message' => 'Failed to cancel appointment']);
@@ -818,4 +891,158 @@ class Appointment extends BaseController
             ]);
         }
     }
+
+    /**
+     * Test email service functionality (for debugging)
+     * 
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function testEmailService()
+    {
+        try {
+            // Check if user is logged in and is a student
+            if (!session()->get('logged_in') || session()->get('role') !== 'student') {
+                return $this->response->setStatusCode(401)
+                    ->setJSON([
+                        'status' => 'error',
+                        'message' => 'Unauthorized access'
+                    ]);
+            }
+
+            // Get test email from request
+            $testEmail = $this->request->getPost('test_email');
+            if (empty($testEmail)) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Test email address is required'
+                ]);
+            }
+
+            // Initialize email service
+            $emailService = new \App\Services\AppointmentEmailService();
+            
+            // Test email configuration
+            $testResults = $emailService->testEmailConfiguration($testEmail);
+            
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'Email test completed',
+                'results' => $testResults
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error testing email service: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Error testing email service: ' . $e->getMessage()
+                ]);
+        }
+    }
+
+    /**
+     * Send appointment notification email to counselor
+     * 
+     * @param string $counselorId The counselor ID
+     * @param array $appointmentData The appointment data
+     * @param string $studentId The student ID
+     * @param string $actionType The action type ('booking' or 'editing')
+     * @return void
+     */
+    private function sendAppointmentNotificationToCounselor(string $counselorId, array $appointmentData, string $studentId, string $actionType): void
+    {
+        try {
+            // Get student information for email (join with student_personal_info table)
+            $db = \Config\Database::connect();
+            $studentInfo = $db->table('users u')
+                ->select('u.user_id, u.email, spi.first_name, spi.last_name')
+                ->join('student_personal_info spi', 'spi.student_id = u.user_id', 'left')
+                ->where('u.user_id', $studentId)
+                ->get()
+                ->getRowArray();
+
+            if (!$studentInfo) {
+                log_message('error', 'Student information not found for ID: ' . $studentId);
+                return;
+            }
+
+            // Check if we have the required name fields
+            if (empty($studentInfo['first_name']) || empty($studentInfo['last_name'])) {
+                log_message('error', 'Student name information incomplete for ID: ' . $studentId);
+                return;
+            }
+
+            // Initialize email service
+            $emailService = new \App\Services\AppointmentEmailService();
+
+            // Send appropriate email based on action type
+            if ($actionType === 'booking') {
+                $emailSent = $emailService->sendAppointmentBookingNotification($counselorId, $appointmentData, $studentInfo);
+            } elseif ($actionType === 'editing') {
+                $emailSent = $emailService->sendAppointmentEditNotification($counselorId, $appointmentData, $studentInfo);
+            } else {
+                log_message('error', 'Invalid action type for email notification: ' . $actionType);
+                return;
+            }
+
+            if ($emailSent) {
+                log_message('info', 'Appointment ' . $actionType . ' notification sent successfully to counselor: ' . $counselorId);
+            } else {
+                log_message('error', 'Failed to send appointment ' . $actionType . ' notification to counselor: ' . $counselorId);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error sending appointment notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send appointment cancellation notification email to counselor
+     * 
+     * @param string $counselorId The counselor ID
+     * @param array $appointmentData The appointment data
+     * @param string $studentId The student ID
+     * @return void
+     */
+    private function sendAppointmentCancellationNotificationToCounselor(string $counselorId, array $appointmentData, string $studentId): void
+    {
+        try {
+            // Get student information for email (join with student_personal_info table)
+            $db = \Config\Database::connect();
+            $studentInfo = $db->table('users u')
+                ->select('u.user_id, u.email, spi.first_name, spi.last_name')
+                ->join('student_personal_info spi', 'spi.student_id = u.user_id', 'left')
+                ->where('u.user_id', $studentId)
+                ->get()
+                ->getRowArray();
+
+            if (!$studentInfo) {
+                log_message('error', 'Student information not found for ID: ' . $studentId);
+                return;
+            }
+
+            // Check if we have the required name fields
+            if (empty($studentInfo['first_name']) || empty($studentInfo['last_name'])) {
+                log_message('error', 'Student name information incomplete for ID: ' . $studentId);
+                return;
+            }
+
+            // Initialize email service
+            $emailService = new \App\Services\AppointmentEmailService();
+
+            // Send cancellation notification email
+            $emailSent = $emailService->sendAppointmentCancellationNotification($counselorId, $appointmentData, $studentInfo);
+
+            if ($emailSent) {
+                log_message('info', 'Appointment cancellation notification sent successfully to counselor: ' . $counselorId);
+            } else {
+                log_message('error', 'Failed to send appointment cancellation notification to counselor: ' . $counselorId);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error sending appointment cancellation notification: ' . $e->getMessage());
+        }
+    }
 }
+
+

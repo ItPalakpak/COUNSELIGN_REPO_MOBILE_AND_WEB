@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         renderCalendar() {
-            console.log('Rendering calendar...');
+            SecureLogger.info('Rendering calendar...');
             const year = this.currentDate.getFullYear();
             const month = this.currentDate.getMonth();
 
@@ -218,14 +218,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const monthYearElement = document.getElementById('monthYear');
             if (monthYearElement) {
                 monthYearElement.textContent = `${monthNames[month]} ${year}`;
-                console.log('Month year set to:', monthYearElement.textContent);
+                SecureLogger.info('Month year set to:', monthYearElement.textContent);
             }
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const today = new Date();
 
-            console.log('Calendar data:', { year, month, firstDay, daysInMonth });
+            SecureLogger.info('Calendar data:', { year, month, firstDay, daysInMonth });
 
             const calendarDays = document.getElementById('calendarDays');
             if (!calendarDays) {
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Check if it's today
                 if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                     dayElement.classList.add('today');
-                    console.log('Today highlighted:', day);
+                    SecureLogger.info('Today highlighted:', day);
                 }
 
                 if (appointmentCount > 0) {
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="appointment-badge">${appointmentCount}</span>
                     `;
                     dayElement.title = `${appointmentCount} appointment${appointmentCount > 1 ? 's' : ''}`;
-                    console.log('Day with appointment:', day, 'Count:', appointmentCount);
+                    SecureLogger.info('Day with appointment:', day, 'Count:', appointmentCount);
                 } else {
                     dayElement.innerHTML = `<span class="day-number">${day}</span>`;
                 }
@@ -271,12 +271,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 calendarDays.appendChild(dayElement);
             }
             
-            console.log('Calendar rendering complete. Total days added:', daysInMonth);
+            SecureLogger.info('Calendar rendering complete. Total days added:', daysInMonth);
         }
     }
 
     // Initialize calendar after class definition
-    console.log('Initializing calendar from main function...');
+    SecureLogger.info('Initializing calendar from main function...');
     appointmentCalendar = new AppointmentCalendar();
 
     // Function to update calendar with appointments

@@ -11,6 +11,34 @@ $routes->post('auth/login', 'Auth::login');
 $routes->match(['GET', 'POST'], 'auth/signup', 'Auth::signup');
 $routes->post('auth/verify-admin', 'Auth::verifyAdmin');
 $routes->get('auth/logout', 'Logout::index');
+$routes->get('test/logout', 'TestActivity::testLogout');
+$routes->get('test/login', 'TestActivity::testLogin');
+
+$routes->post('update-password', 'UpdatePassword::index');
+
+$routes->post('email/sendContactEmail', 'EmailController::sendContactEmail');
+
+$routes->get('photo/(:segment)', 'Photo::show/$1');
+$routes->get('photo/(:segment)/(:any)', 'Photo::show/$1/$2');
+
+$routes->post('forgot-password/send-code', 'ForgotPassword::sendCode');
+$routes->post('forgot-password/resend-code', 'ForgotPassword::resendCode');
+$routes->post('forgot-password/verify-code', 'ForgotPassword::verifyCode');
+$routes->post('forgot-password/set-password', 'ForgotPassword::setPassword');
+
+// Counselor basic info route (for landing page signup)
+$routes->post('counselor/save-basic-info', 'Counselor::saveBasicInfo');
+
+// Account verification routes
+$routes->get('verify-account/prompt', 'Auth::verificationPrompt');
+$routes->match(['GET', 'POST'], 'verify-account/(:segment)', 'Auth::verifyAccount/$1');
+$routes->post('verify-account', 'Auth::verifyAccount');
+$routes->post('resend-verification-email', 'Auth::resendVerificationEmail');
+
+$routes->get('/services', 'Services::index');
+
+// Debug route (remove in production)
+$routes->get('/debug/session', 'Debug::session');
 
 // Admin routes
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($routes) {
@@ -25,6 +53,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('appointments/getAppointments', 'Appointments::getAppointments');
     $routes->post('appointments/updateStatus', 'Appointments::updateStatus');
     $routes->post('appointments/updateAppointmentStatus', 'Appointments::updateAppointmentStatus');
+    $routes->post('appointments/track-export', 'Appointments::trackExport');
     $routes->get('follow-up-sessions', 'FollowUpSessions::index');
     $routes->get('follow-up-sessions/completed-appointments', 'FollowUpSessions::getAllCompletedAppointments');
     $routes->get('follow-up-sessions/sessions', 'FollowUpSessions::getFollowUpSessions');
@@ -107,7 +136,9 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->get('follow-up-sessions/completed-appointments', 'FollowUpSessions::getCompletedAppointments');
     $routes->get('follow-up-sessions/sessions', 'FollowUpSessions::getFollowUpSessions');
     $routes->post('appointments/cancel', 'Appointment::cancel');
-    
+    $routes->post('appointments/track-download', 'Appointment::trackDownload');
+    $routes->post('appointments/test-email', 'Appointment::testEmailService');
+
     // PDS (Personal Data Sheet) routes
     $routes->get('pds/load', 'PDS::loadPDS');
     $routes->post('pds/save', 'PDS::savePDS');
@@ -144,6 +175,7 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('appointments/getAppointments', 'Appointments::getAppointments');
     $routes->post('appointments/updateStatus', 'Appointments::updateStatus');
     $routes->post('appointments/updateAppointmentStatus', 'Appointments::updateAppointmentStatus');
+    $routes->post('appointments/track-export', 'Appointments::trackExport');
     $routes->get('appointments/schedule', 'Appointments::getCounselorSchedule');
     $routes->get('follow-up', 'Appointments::followUp');
 
@@ -175,6 +207,7 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('follow-up/sessions', 'FollowUp::getFollowUpSessions');
     $routes->get('follow-up/availability', 'FollowUp::getCounselorAvailability');
     $routes->post('follow-up/create', 'FollowUp::createFollowUp');
+    $routes->post('follow-up/edit', 'FollowUp::editFollowUp');
     $routes->post('follow-up/complete', 'FollowUp::completeFollowUp');
     $routes->post('follow-up/cancel', 'FollowUp::cancelFollowUp');
     
@@ -183,26 +216,6 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('filter-data/courses', 'FilterData::getCourses');
     $routes->get('filter-data/year-levels', 'FilterData::getYearLevels');
     $routes->get('filter-data/student-academic-map', 'FilterData::getStudentAcademicMap');
+    // Counselor timezone test route
+    $routes->get('appointments/test-timezone', 'Appointments::testManilaTimezone');
 });
-
-$routes->post('update-password', 'UpdatePassword::index');
-
-$routes->post('email/sendContactEmail', 'EmailController::sendContactEmail');
-
-$routes->get('photo/(:segment)', 'Photo::show/$1');
-$routes->get('photo/(:segment)/(:any)', 'Photo::show/$1/$2');
-
-$routes->post('forgot-password/send-code', 'ForgotPassword::sendCode');
-$routes->post('forgot-password/verify-code', 'ForgotPassword::verifyCode');
-$routes->post('forgot-password/set-password', 'ForgotPassword::setPassword');
-
-// Account verification routes
-$routes->get('verify-account/prompt', 'Auth::verificationPrompt');
-$routes->match(['GET', 'POST'], 'verify-account/(:segment)', 'Auth::verifyAccount/$1');
-$routes->post('verify-account', 'Auth::verifyAccount');
-$routes->post('resend-verification-email', 'Auth::resendVerificationEmail');
-
-$routes->get('/services', 'Services::index');
-
-// Debug route (remove in production)
-$routes->get('/debug/session', 'Debug::session');

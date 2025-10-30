@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load appointments data
     function loadAppointments() {
-        console.log('Loading appointments...');
+        SecureLogger.info('Loading appointments...');
         
         // Show loading indicator and hide appointments list
         if (loadingIndicator) {
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Response status:', response.status);
+            SecureLogger.info('Response status:', response.status);
             if (response.status === 401) {
                 // Session expired or unauthorized
                 window.location.href = '/Counselign/auth';
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Received data:', data);
+            SecureLogger.info('Received data:', data);
             
             if (data.status === 'error') {
                 if (data.message && data.message.toLowerCase().includes('session')) {
@@ -524,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update appointment status
     function updateAppointmentStatus(appointmentId, newStatus, rejectionReason = null) {
-        console.log('Updating appointment status:', { appointmentId, newStatus, rejectionReason });
+        SecureLogger.info('Updating appointment status:', { appointmentId, newStatus, rejectionReason });
         
         // Get the current buttons from the modal
         const currentApproveBtn = document.getElementById('approveAppointmentBtn');
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('rejection_reason', rejectionReason);
         }
         
-        console.log('Sending request to update status...');
+        SecureLogger.info('Sending request to update status...');
         
         // Send request to update appointment status
         fetch((window.BASE_URL || '/') + 'admin/appointments/updateAppointmentStatus', {
@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Response received:', response);
+            SecureLogger.info('Response received:', response);
             if (!response.ok) {
                 if (response.status === 401) {
                     window.location.href = 'auth/logout';
@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Response data:', data);
+            SecureLogger.info('Response data:', data);
             if (data.status === 'success') {
                 // Show success modal
                 const successModal = new bootstrap.Modal(document.getElementById('successModal'));
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (errorMessage.toLowerCase().includes('session') || 
                 errorMessage.toLowerCase().includes('log in') || 
                 errorMessage.toLowerCase().includes('unauthorized')) {
-                console.log('Session error detected, redirecting to login...');
+                SecureLogger.info('Session error detected, redirecting to login...');
                 showToast('Your session has expired. Redirecting to login...', 'error');
                 setTimeout(() => {
                     window.location.href = 'auth/logout';
@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function saveToScheduledAppointments(appointment) {
         try {
-            console.log('Saving appointment to scheduled appointments:', appointment);
+            SecureLogger.info('Saving appointment to scheduled appointments:', appointment);
             
         // Get existing scheduled appointments from localStorage
             let scheduledAppointments = [];
@@ -715,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 timestamp: new Date().toISOString()
             };
             
-            console.log('Formatted appointment:', scheduledAppointment);
+            SecureLogger.info('Formatted appointment:', scheduledAppointment);
             
             // Remove any existing entry for this appointment
             scheduledAppointments = scheduledAppointments.filter(app => app.id !== scheduledAppointment.id);
@@ -733,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save to localStorage
             try {
                 localStorage.setItem('scheduledAppointments', JSON.stringify(scheduledAppointments));
-                console.log('Successfully saved to localStorage');
+                SecureLogger.info('Successfully saved to localStorage');
                 
                 // Also save to sessionStorage as backup
                 sessionStorage.setItem('scheduledAppointments', JSON.stringify(scheduledAppointments));
@@ -932,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check if the clicked element is one of our action buttons
         if (target.id === 'approveAppointmentBtn' || target.closest('#approveAppointmentBtn')) {
-            console.log('Approve button clicked');
+            SecureLogger.info('Approve button clicked');
             if (currentAppointmentId) {
                 // Show confirmation modal for approval
                 const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -957,7 +957,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmationModal.show();
             }
         } else if (target.id === 'rejectAppointmentBtn' || target.closest('#rejectAppointmentBtn')) {
-            console.log('Reject button clicked');
+            SecureLogger.info('Reject button clicked');
             if (currentAppointmentId) {
                 // Close the appointment details modal first
                 const appointmentModal = bootstrap.Modal.getInstance(document.getElementById('appointmentDetailsModal'));

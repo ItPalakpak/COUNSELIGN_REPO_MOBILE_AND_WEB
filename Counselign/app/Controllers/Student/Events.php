@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 

@@ -124,47 +124,174 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Resend verification email handler
-    resendEmailLink.onclick = function(event) {
-        event.preventDefault();
-        const identifier = prompt("Please enter your registered email or user ID to resend the verification email:");
-        if (!identifier) {
+    if (resendEmailLink) {
+        resendEmailLink.onclick = function(event) {
+            event.preventDefault();
+            const resendVerificationModalElement = document.getElementById('resendVerificationModal');
+            if (resendVerificationModalElement) {
+                const resendVerificationModal = new bootstrap.Modal(resendVerificationModalElement);
+                resendVerificationModal.show();
+            } else {
+                console.error('Resend verification modal element not found');
+            }
+        };
+    }
+
+    // Resend verification modal handlers
+    const resendVerificationModal = document.getElementById('resendVerificationModal');
+    const resendVerificationInput = document.getElementById('resendVerificationInput');
+    const resendVerificationBtn = document.getElementById('resendVerificationBtn');
+    const resendVerificationCancelBtn = document.getElementById('resendVerificationCancelBtn');
+    const resendVerificationWarning = document.getElementById('resendVerificationWarning');
+    const resendVerificationInputError = document.getElementById('resendVerificationInputError');
+
+    // Check if all elements exist
+    if (!resendVerificationModal || !resendVerificationInput || !resendVerificationBtn || !resendVerificationCancelBtn || !resendVerificationWarning || !resendVerificationInputError) {
+        console.error('Resend verification modal elements not found');
+        return;
+    }
+
+    // Helper function to validate email or user ID
+    function isValidEmailOrUserId(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return false;
+        
+        // Check if it's a valid email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(trimmedInput)) return true;
+        
+        // Check if it's a valid user ID (at least 3 characters, alphanumeric)
+        const userIdRegex = /^[a-zA-Z0-9]{3,}$/;
+        if (userIdRegex.test(trimmedInput)) return true;
+        
+        return false;
+    }
+
+    // Resend verification button handler
+    if (resendVerificationBtn) {
+        resendVerificationBtn.addEventListener('click', function() {
+        // Reset error messages
+        resendVerificationWarning.classList.add('d-none');
+        resendVerificationInputError.classList.add('d-none');
+        
+        const identifier = resendVerificationInput.value.trim();
+        
+        // Basic validation
+        if (!isValidEmailOrUserId(identifier)) {
+            resendVerificationInputError.classList.remove('d-none');
+            resendVerificationWarning.classList.remove('d-none');
             return;
         }
+
+        // Show loading state
+        const originalBtnText = resendVerificationBtn.innerHTML;
+        resendVerificationBtn.disabled = true;
+        resendVerificationBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+        // Create form data for POST request
+        const formData = new FormData();
+        formData.append('identifier', identifier);
+        formData.append(window.CSRF_TOKEN_NAME, document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
         fetch(window.BASE_URL + 'resend-verification-email', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                [window.CSRF_TOKEN_NAME]: document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ identifier: identifier })
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
+            // Revert button state
+            resendVerificationBtn.disabled = false;
+            resendVerificationBtn.innerHTML = originalBtnText;
+
             if (data.status === 'success') {
+                // Close the resend modal
+                const resendModalInstance = bootstrap.Modal.getInstance(document.getElementById('resendVerificationModal'));
+                if (resendModalInstance) {
+                    resendModalInstance.hide();
+                }
+                
+                // Clear the input
+                resendVerificationInput.value = '';
+                
+                // Show success message
                 openConfirmationModal(data.message);
                 verificationMessage.textContent = data.message;
             } else if (data.status === 'already_verified') {
-                openConfirmationModal(data.message);
+                // Close both modals
+                const resendModalInstance = bootstrap.Modal.getInstance(document.getElementById('resendVerificationModal'));
                 const verificationModalInstance = bootstrap.Modal.getInstance(document.getElementById('verificationModal'));
-                if (verificationModalInstance) {
-                    verificationModalInstance.hide();
-                }
+                if (resendModalInstance) resendModalInstance.hide();
+                if (verificationModalInstance) verificationModalInstance.hide();
+                
+                // Clear the input
+                resendVerificationInput.value = '';
+                
+                // Show message and redirect
+                openConfirmationModal(data.message);
                 setTimeout(() => {
                     window.location.href = window.BASE_URL + '?open=login';
                 }, 1500);
             } else {
+                // Show error message
                 openConfirmationModal(data.message);
                 verificationMessage.textContent = data.message;
             }
         })
         .catch(error => {
+            // Revert button state
+            resendVerificationBtn.disabled = false;
+            resendVerificationBtn.innerHTML = originalBtnText;
+
             console.error('Error:', error);
             openConfirmationModal('An error occurred while trying to resend the email.');
             verificationMessage.textContent = 'An error occurred while trying to resend the email.';
         });
-    };
+        });
+    }
+
+    // Cancel button handler
+    if (resendVerificationCancelBtn) {
+        resendVerificationCancelBtn.addEventListener('click', function() {
+        const resendModalInstance = bootstrap.Modal.getInstance(document.getElementById('resendVerificationModal'));
+        if (resendModalInstance) {
+            resendModalInstance.hide();
+        }
+        // Clear the input
+        resendVerificationInput.value = '';
+        // Reset error messages
+        resendVerificationWarning.classList.add('d-none');
+        resendVerificationInputError.classList.add('d-none');
+        });
+    }
+
+    // Enter key handler for resend verification input
+    if (resendVerificationInput) {
+        resendVerificationInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                if (resendVerificationBtn) {
+                    resendVerificationBtn.click();
+                }
+            }
+        });
+    }
+
+    // Clear input and errors when modal is hidden
+    if (resendVerificationModal) {
+        resendVerificationModal.addEventListener('hidden.bs.modal', function() {
+            if (resendVerificationInput) {
+                resendVerificationInput.value = '';
+            }
+            if (resendVerificationWarning) {
+                resendVerificationWarning.classList.add('d-none');
+            }
+            if (resendVerificationInputError) {
+                resendVerificationInputError.classList.add('d-none');
+            }
+        });
+    }
 
     // Countdown timer function
     function startCountdown(redirect) {

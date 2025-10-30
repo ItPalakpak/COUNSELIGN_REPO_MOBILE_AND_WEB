@@ -6,7 +6,7 @@ let announcements = [];
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Counselor Announcements page loaded');
+    SecureLogger.info('Counselor Announcements page loaded');
     
     // Initialize calendar
     initializeCalendar();

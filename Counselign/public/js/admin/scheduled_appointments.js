@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
    * Load appointments from the server
    */
   function loadAppointments() {
-    console.log("Starting to load appointments...");
+    SecureLogger.info("Starting to load appointments...");
 
     loadingIndicator.classList.remove("d-none");
     appointmentsTableContainer.classList.add("d-none");
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((data) => {
-        console.log("Received data:", data);
+        SecureLogger.info("Received data:", data);
 
         if (data.status === "success") {
           if (
@@ -141,24 +141,24 @@ document.addEventListener("DOMContentLoaded", function () {
    * Display appointments in the table
    */
   function displayAppointments(appointments) {
-    console.log("Starting to display appointments..."); // Debug log
+    SecureLogger.info("Starting to display appointments..."); // Debug log
 
     // Clear the table
     appointmentsBody.innerHTML = "";
 
     // Check if there are appointments
     if (!appointments || appointments.length === 0) {
-      console.log("No appointments to display"); // Debug log
+      SecureLogger.info("No appointments to display"); // Debug log
       emptyMessage.classList.remove("d-none");
       appointmentsTableContainer.classList.add("d-none");
       return;
     }
 
-    console.log("Processing appointments:", appointments); // Debug log
+    SecureLogger.info("Processing appointments:", appointments); // Debug log
 
     // Add appointments to the table
     appointments.forEach((appointment, index) => {
-      console.log(`Processing appointment ${index + 1}:`, appointment); // Debug log
+      SecureLogger.info(`Processing appointment ${index + 1}:`, appointment); // Debug log
 
       const row = document.createElement("tr");
       row.dataset.id = appointment.id;
@@ -416,7 +416,7 @@ document.addEventListener("DOMContentLoaded", function () {
    * Update appointment status in the database
    */
   function updateAppointmentStatus(appointmentId, newStatus) {
-    console.log(`Updating appointment ${appointmentId} status to ${newStatus}`);
+    SecureLogger.info(`Updating appointment ${appointmentId} status to ${newStatus}`);
 
     // Disable the buttons to prevent multiple submissions
     const buttons = document.querySelectorAll(
@@ -456,7 +456,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((data) => {
-        console.log("Response:", data);
+        SecureLogger.info("Response:", data);
 
         if (data.status === "success") {
           // Update the row in the table

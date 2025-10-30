@@ -2,6 +2,9 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\NotificationsModel;
 
@@ -35,6 +38,10 @@ class Notifications extends \CodeIgniter\Controller
             }
 
             $notifications = $this->notificationsModel->getRecentNotifications($userId, $lastActiveTime);
+
+            // Update last_activity for viewing notifications
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateStudentActivity($userId, 'view_notifications');
 
             // Enrich message notifications safely: only received from counselors; attach counselor info
             if (is_array($notifications) && !empty($notifications)) {
@@ -121,11 +128,9 @@ class Notifications extends \CodeIgniter\Controller
         // we don't have a persistent notifications table to mark as read.
         // The "read" state is handled by updating the user's last_activity timestamp.
         try {
-            $db = \Config\Database::connect();
-            $db->table('users')
-                ->where('user_id', $userId)
-                ->set(['last_activity' => date('Y-m-d H:i:s')])
-                ->update();
+            // Update last_activity for viewing notifications (using Manila time)
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateStudentActivity($userId, 'view_notifications');
 
             return $this->respond([
                 'status' => 'success',

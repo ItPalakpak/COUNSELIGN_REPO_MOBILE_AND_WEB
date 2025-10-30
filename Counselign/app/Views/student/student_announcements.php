@@ -134,6 +134,7 @@
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="<?= base_url('js/student/student_announcements.js') ?>" defer></script>
     <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/student/logout.js') ?>"></script>
     <script>
         window.BASE_URL = "<?= base_url() ?>";

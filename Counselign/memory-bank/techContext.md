@@ -16,6 +16,48 @@
 - App config in `app/Config/*.php` (e.g., `App.php`, `Database.php`, `Routes.php`)
 - Base URL, database DSN, email settings via environment or config files
 
+### Password Reset Flow (Technical Note)
+- Endpoint: `POST forgot-password/send-code` (JSON body: `{ input: string }` where input is email or user_id)
+- Alias: `POST forgot-password/resend-code` mapped to the same logic
+- Behavior:
+  - When `input` is an email, backend resolves `users.user_id` and saves `password_resets.user_id` accordingly
+  - When `input` is a user_id, backend looks up destination email and sends there
+  - Old tokens for the same `user_id` are removed before insert to avoid duplicates
+  - Prevents `Data too long for column 'user_id'` by never inserting emails into `password_resets.user_id`
+
+### Email Service Configuration
+**ENHANCED FEATURE**: Centralized email configuration with debugging capabilities for appointment notifications.
+
+#### Email Service Architecture:
+- **Centralized Configuration**: Both `AppointmentEmailService` and `EmailController` use `Config\Email` settings
+- **PHPMailer Integration**: Uses PHPMailer library for reliable email delivery
+- **Gmail SMTP Configuration**: All settings loaded from centralized config
+  - Host: `$emailConfig->SMTPHost` (smtp.gmail.com)
+  - Port: `$emailConfig->SMTPPort` (587)
+  - Authentication: `$emailConfig->SMTPUser` and `$emailConfig->SMTPPass`
+  - Encryption: `$emailConfig->SMTPCrypto` (tls)
+  - Timeout: `$emailConfig->SMTPTimeout`
+  - Keep Alive: `$emailConfig->SMTPKeepAlive`
+
+#### Email Notification Features:
+- **Automatic Counselor Notifications**: Emails sent to counselors when students book or edit appointments
+- **Professional HTML Templates**: Responsive email design with system branding
+- **Complete Appointment Details**: Includes all appointment and student information
+- **Enhanced Error Handling**: Comprehensive logging and graceful failure handling
+- **Non-Blocking Operations**: Email sending doesn't interfere with appointment operations
+- **Debugging Tools**: Built-in email testing capabilities
+
+#### Database Integration:
+- **Counselor Email Lookup**: Uses `counselors.counselor_id = users.user_id` relationship
+- **Student Information Retrieval**: Automatic student data fetching for email content
+- **Type-Safe Implementation**: Proper error handling and data validation
+
+#### Testing and Debugging:
+- **Test Method**: `testEmailConfiguration()` in AppointmentEmailService
+- **Test Endpoint**: `POST student/appointments/test-email`
+- **Comprehensive Testing**: Config loading, SMTP connection, and email sending tests
+- **Detailed Logging**: Step-by-step logging for debugging email issues
+
 ### CORS Configuration
 **PROBLEM SOLVED**: CORS (Cross-Origin Resource Sharing) policy errors when accessing from different origins.
 

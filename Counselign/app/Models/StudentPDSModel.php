@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Model;
 
 /**

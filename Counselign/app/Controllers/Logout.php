@@ -2,28 +2,19 @@
 
 namespace App\Controllers;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Controller;
+use App\Helpers\UserActivityHelper;
 
 class Logout extends Controller
 {
     public function index()
     {
         try {
-            // Update last_inactive_at before destroying the session
-            if (session()->get('user_id')) {
-                $db = \Config\Database::connect();
-                $builder = $db->table('users');
-                $manilaTime = new \DateTime('now', new \DateTimeZone('Asia/Manila'));
-                $manilaNow = $manilaTime->format('Y-m-d H:i:s');
-                $builder->set([
-                    'logout_time' => $manilaNow,
-                    'last_active_at' => $manilaNow,
-                    'last_activity' => $manilaNow,
-                    'last_inactive_at' => $manilaNow
-                ]);
-                $builder->where('user_id', session()->get('user_id_display'));
-                $builder->update();
-            }
+            // Update all activity fields before destroying the session (dynamic ID detection)
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateLogoutActivity();
 
             // Clear all session variables
             session()->destroy();

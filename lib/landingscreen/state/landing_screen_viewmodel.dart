@@ -5,6 +5,10 @@ import 'dart:async';
 import 'package:counselign/api/config.dart';
 import '../../routes.dart';
 import '../../utils/session.dart';
+import '../../utils/secure_logger.dart';
+import '../../utils/input_validator.dart';
+import '../../utils/secure_storage.dart';
+import '../dialogs/resend_verification_dialog.dart';
 
 class LandingScreenViewModel extends ChangeNotifier {
   // Session management
@@ -21,6 +25,9 @@ class LandingScreenViewModel extends ChangeNotifier {
   bool _showVerificationDialog = false;
   bool _showVerificationSuccessDialog = false;
   bool _showAdminLoginDialog = false;
+  bool _showResendResetCodeDialog = false;
+  bool _showCounselorInfoDialog = false;
+  bool _showCounselorPendingDialog = false;
 
   // Loading states
   bool _isLoginLoading = false;
@@ -32,6 +39,7 @@ class LandingScreenViewModel extends ChangeNotifier {
   bool _isVerificationLoading = false;
   bool _isResendVerificationLoading = false;
   bool _isAdminLoginLoading = false;
+  bool _isResendResetCodeLoading = false;
   final bool _isForgotPasswordNavigating = false;
   final bool _isSignUpNavigating = false;
 
@@ -43,7 +51,12 @@ class LandingScreenViewModel extends ChangeNotifier {
   String _newPasswordError = '';
   String _contactError = '';
   String _verificationError = '';
+  String _resendVerificationError = '';
   String _adminLoginError = '';
+  String _resendResetCodeError = '';
+  String _resendResetCodeInputError = '';
+  String _cInfoWarning = '';
+  String _counselorPendingMessage = '';
 
   // Individual field errors
   String _loginUserIdError = '';
@@ -61,7 +74,6 @@ class LandingScreenViewModel extends ChangeNotifier {
   // Verification state
   String _verificationMessage =
       'A verification email has been sent to your registered email address. Please enter the token below to verify your account.';
-  String _redirectUrl = '';
   String _verificationRole = '';
 
   // Controllers for form fields
@@ -89,8 +101,29 @@ class LandingScreenViewModel extends ChangeNotifier {
       TextEditingController();
   final TextEditingController verificationTokenController =
       TextEditingController();
+  final TextEditingController resendVerificationController =
+      TextEditingController();
+  final TextEditingController resendResetCodeController =
+      TextEditingController();
+
   final TextEditingController adminUserIdController = TextEditingController();
   final TextEditingController adminPasswordController = TextEditingController();
+
+  // Counselor info controllers
+  final TextEditingController cCounselorIdController = TextEditingController();
+  final TextEditingController cNameController = TextEditingController();
+  final TextEditingController cDegreeController = TextEditingController();
+  final TextEditingController cEmailController = TextEditingController();
+  final TextEditingController cContactController = TextEditingController();
+  final TextEditingController cAddressController = TextEditingController();
+  final TextEditingController cBirthdateController = TextEditingController();
+
+  // Counselor optional dropdowns
+  String? _cCivilStatus = '';
+  String? _cSex = '';
+
+  // Counselor info loading
+  bool _isCounselorInfoSaving = false;
 
   // Dropdown values
   String? _loginRole;
@@ -120,6 +153,9 @@ class LandingScreenViewModel extends ChangeNotifier {
   bool get showContactDialog => _showContactDialog;
   bool get showVerificationDialog => _showVerificationDialog;
   bool get showAdminLoginDialog => _showAdminLoginDialog;
+  bool get showResendResetCodeDialog => _showResendResetCodeDialog;
+  bool get showCounselorInfoDialog => _showCounselorInfoDialog;
+  bool get showCounselorPendingDialog => _showCounselorPendingDialog;
 
   bool get isLoginLoading => _isLoginLoading;
   bool get isSignUpLoading => _isSignUpLoading;
@@ -130,6 +166,7 @@ class LandingScreenViewModel extends ChangeNotifier {
   bool get isVerificationLoading => _isVerificationLoading;
   bool get isResendVerificationLoading => _isResendVerificationLoading;
   bool get isAdminLoginLoading => _isAdminLoginLoading;
+  bool get isResendResetCodeLoading => _isResendResetCodeLoading;
   bool get isForgotPasswordNavigating => _isForgotPasswordNavigating;
   bool get isSignUpNavigating => _isSignUpNavigating;
 
@@ -140,7 +177,12 @@ class LandingScreenViewModel extends ChangeNotifier {
   String get newPasswordError => _newPasswordError;
   String get contactError => _contactError;
   String get verificationError => _verificationError;
+  String get resendVerificationError => _resendVerificationError;
   String get adminLoginError => _adminLoginError;
+  String get resendResetCodeError => _resendResetCodeError;
+  String get resendResetCodeInputError => _resendResetCodeInputError;
+  String get cInfoWarning => _cInfoWarning;
+  String get counselorPendingMessage => _counselorPendingMessage;
 
   // Individual field error getters
   String get loginUserIdError => _loginUserIdError;
@@ -161,17 +203,21 @@ class LandingScreenViewModel extends ChangeNotifier {
 
   String? get loginRole => _loginRole;
   String? get signUpRole => _signUpRole;
+  String? get cCivilStatus => _cCivilStatus;
+  String? get cSex => _cSex;
 
   bool get loginPasswordVisible => _loginPasswordVisible;
   bool get signUpPasswordVisible => _signUpPasswordVisible;
   bool get signUpConfirmPasswordVisible => _signUpConfirmPasswordVisible;
   bool get newPasswordVisible => _newPasswordVisible;
   bool get confirmNewPasswordVisible => _confirmNewPasswordVisible;
+  bool get isCounselorInfoSaving => _isCounselorInfoSaving;
 
   bool get termsAccepted => _termsAccepted;
 
   // Setters for state
   set loginRole(String? value) {
+    // Deprecated: role selection is no longer required for login.
     _loginRole = value;
     notifyListeners();
   }
@@ -211,6 +257,16 @@ class LandingScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  set cCivilStatus(String? value) {
+    _cCivilStatus = value;
+    notifyListeners();
+  }
+
+  set cSex(String? value) {
+    _cSex = value;
+    notifyListeners();
+  }
+
   // Initialization
   void initialize() {
     loginUserIdController.addListener(_filterLoginUserId);
@@ -235,15 +291,31 @@ class LandingScreenViewModel extends ChangeNotifier {
     contactSubjectController.dispose();
     contactMessageController.dispose();
     verificationTokenController.dispose();
+    resendVerificationController.dispose();
     adminUserIdController.dispose();
     adminPasswordController.dispose();
+    cCounselorIdController.dispose();
+    cNameController.dispose();
+    cDegreeController.dispose();
+    cEmailController.dispose();
+    cContactController.dispose();
+    cAddressController.dispose();
+    cBirthdateController.dispose();
     super.dispose();
   }
 
   void _filterLoginUserId() {
-    String value = loginUserIdController.text.replaceAll(RegExp(r'\D'), '');
-    if (_loginRole == 'student' || _loginRole == 'counselor') {
-      if (value.length > 10) value = value.substring(0, 10);
+    final current = loginUserIdController.text;
+    // Allow email or alphanumeric identifiers without forcing numeric-only input.
+    // If the input looks like an email or contains letters, do not filter.
+    if (RegExp(r'[A-Za-z@.]').hasMatch(current)) {
+      return;
+    }
+
+    // If purely numeric flow, keep only digits and limit to 10
+    String value = current.replaceAll(RegExp(r'\D'), '');
+    if (value.length > 10) {
+      value = value.substring(0, 10);
     }
     if (loginUserIdController.text != value) {
       loginUserIdController.value = TextEditingValue(
@@ -284,6 +356,11 @@ class LandingScreenViewModel extends ChangeNotifier {
 
   void setShowCodeEntryDialog(bool value) {
     _showCodeEntryDialog = value;
+    if (value) {
+      _codeEntryError = '';
+      _resetCodeError = '';
+      resetCodeController.clear();
+    }
     notifyListeners();
   }
 
@@ -312,6 +389,9 @@ class LandingScreenViewModel extends ChangeNotifier {
     _verificationError = '';
     verificationTokenController.clear();
     _verificationRole = role;
+    _log('===== SETTING VERIFICATION DIALOG =====');
+    _log('Role received: $role');
+    _log('Role stored in _verificationRole: $_verificationRole');
     _showVerificationDialog = value;
     notifyListeners();
   }
@@ -331,6 +411,30 @@ class LandingScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setShowResendResetCodeDialog(bool value) {
+    _showResendResetCodeDialog = value;
+    if (value) {
+      _resendResetCodeError = '';
+      _resendResetCodeInputError = '';
+      resendResetCodeController.clear();
+    }
+    notifyListeners();
+  }
+
+  void setShowCounselorInfoDialog(bool value) {
+    _showCounselorInfoDialog = value;
+    if (!value) {
+      _cInfoWarning = '';
+    }
+    notifyListeners();
+  }
+
+  void setShowCounselorPendingDialog(bool value, {String message = ''}) {
+    _showCounselorPendingDialog = value;
+    _counselorPendingMessage = message;
+    notifyListeners();
+  }
+
   void hideAllDialogs() {
     _showLoginDialog = false;
     _showSignUpDialog = false;
@@ -342,6 +446,7 @@ class LandingScreenViewModel extends ChangeNotifier {
     _showVerificationDialog = false;
     _showVerificationSuccessDialog = false;
     _showAdminLoginDialog = false;
+    _showResendResetCodeDialog = false;
     notifyListeners();
   }
 
@@ -381,21 +486,18 @@ class LandingScreenViewModel extends ChangeNotifier {
     String userId = loginUserIdController.text.trim();
     String password = loginPasswordController.text.trim();
 
+    // Validate identifier (email or 10-digit user ID)
+    final userIdError = InputValidator.validateIdentifier(userId);
+    final passwordError = InputValidator.validatePassword(password);
+
     bool isValid = true;
-    if (userId.isEmpty) {
-      _loginUserIdError = 'Please enter your User ID.';
-      isValid = false;
-    } else if (_loginRole == 'student' &&
-        !RegExp(r'^\d{10}$').hasMatch(userId)) {
-      _loginUserIdError = 'User ID must be exactly 10 digits.';
-      isValid = false;
-    } else if (_loginRole == 'admin' && userId.length > 10) {
-      _loginUserIdError = 'Admin User ID cannot exceed 10 characters.';
+    if (userIdError != null) {
+      _loginUserIdError = userIdError;
       isValid = false;
     }
 
-    if (password.isEmpty) {
-      _loginPasswordError = 'Please enter your password.';
+    if (passwordError != null) {
+      _loginPasswordError = passwordError;
       isValid = false;
     }
 
@@ -410,22 +512,33 @@ class LandingScreenViewModel extends ChangeNotifier {
     }
 
     try {
-      _log('🔐 Starting login for userId=$_loginRole:$userId');
+      SecureLogger.debug('Starting login');
+      SecureLogger.logRequest(
+        'POST',
+        '${ApiConfig.currentBaseUrl}/auth/login',
+        {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        {'identifier': userId, 'password': password},
+      );
+
       final response = await _session.post(
         '${ApiConfig.currentBaseUrl}/auth/login',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Requested-With': 'XMLHttpRequest',
         },
-        body: {
-          'user_id': userId,
-          'password': password,
-          if (_loginRole != null) 'role': _loginRole!,
-        }.entries.map((e) => '${e.key}=${e.value}').join('&'),
+        body: {'identifier': userId, 'password': password}.entries
+            .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+            .join('&'),
       );
 
-      _log('✅ Login Response Status: ${response.statusCode}');
-      _log('📨 Login Response Body: ${response.body}');
+      SecureLogger.logResponse(
+        response.statusCode,
+        response.headers,
+        response.body,
+      );
 
       if (response.statusCode != 200) {
         _loginError =
@@ -436,14 +549,40 @@ class LandingScreenViewModel extends ChangeNotifier {
       final data = json.decode(response.body);
       final status = data['status'];
       final message = data['message'];
-      final role = (_loginRole ?? '').toLowerCase();
+      // Role will be determined by the backend response/redirect
+      String resolvedRole = '';
 
       if (status == 'success') {
-        _log('🎉 Login success for role=$role');
+        // Try to resolve role from response
+        if (data.containsKey('role')) {
+          resolvedRole = (data['role'] ?? '').toString().toLowerCase();
+        } else if (data.containsKey('redirect')) {
+          final redirect = (data['redirect'] ?? '').toString();
+          if (redirect.contains('/admin/')) {
+            resolvedRole = 'admin';
+          } else if (redirect.contains('/counselor/')) {
+            resolvedRole = 'counselor';
+          } else if (redirect.contains('/student/')) {
+            resolvedRole = 'student';
+          }
+        }
+
+        SecureLogger.success(
+          'Login successful. Resolved role: ${resolvedRole.isEmpty ? 'unknown' : resolvedRole}',
+        );
+
+        // Store user data securely (userId may be email; backend session holds canonical id)
+        await SecureStorage.storeUserId(userId);
+        if (resolvedRole.isNotEmpty) {
+          await SecureStorage.storeUserRole(resolvedRole);
+        }
+        await SecureStorage.storeLastLogin(DateTime.now());
+
         if (context.mounted) {
           _safePop(context);
           _showSnackBar(context, 'Login successful!');
-          if (role == 'student' || role == 'student') {
+          final role = resolvedRole;
+          if (role == 'student') {
             navigateToDashboard(context);
           } else if (role == 'counselor') {
             AppRoutes.navigateToCounselorDashboard(context);
@@ -451,30 +590,40 @@ class LandingScreenViewModel extends ChangeNotifier {
             AppRoutes.navigateToAdminDashboard(context);
           } else {
             // default to user dashboard if role ambiguous
-            _log('ℹ️ Unknown role "$role". Defaulting to user dashboard.');
+            SecureLogger.warning(
+              'Unknown role "${role.isEmpty ? 'unset' : role}". Defaulting to user dashboard.',
+            );
             navigateToDashboard(context);
           }
         }
       } else if (status == 'unverified') {
-        _log('⚠️ Account unverified for userId=$userId');
+        SecureLogger.warning('Account unverified');
         if (context.mounted) {
           _safePop(context);
-          setShowVerificationDialog(
-            true,
-            message:
-                message ??
-                'Your account is not verified. Please enter the token to verify your account or resend the verification email.',
-            role: _loginRole ?? 'student',
-          );
+          final msg = (message ?? '').toString();
+          final isCounselorUnverified =
+              msg.toLowerCase().contains('counselor') ||
+              msg.toLowerCase().contains('admin approval');
+          if (isCounselorUnverified) {
+            setShowCounselorPendingDialog(true, message: msg);
+          } else {
+            setShowVerificationDialog(
+              true,
+              message: msg.isNotEmpty
+                  ? msg
+                  : 'Your account is not verified. Please enter the token to verify your account or resend the verification email.',
+              role: resolvedRole.isNotEmpty ? resolvedRole : 'student',
+            );
+          }
         }
       } else {
-        _log('❌ Login failed: ${message ?? 'Unknown error'}');
+        SecureLogger.error('Login failed: ${message ?? 'Unknown error'}');
         _loginError =
             message ??
-            'Invalid credentials. Please check your User ID and password.';
+            'Invalid credentials. Please check your User ID/Email and password.';
       }
     } catch (e) {
-      _log('💥 Login Error: $e');
+      SecureLogger.error('Login Error', e);
       _loginError =
           'Network error. Please check your connection and try again.';
     } finally {
@@ -657,13 +806,19 @@ class LandingScreenViewModel extends ChangeNotifier {
 
         if (context.mounted) {
           _safePop(context);
-          setShowVerificationDialog(
-            true,
-            message:
-                data['message'] ??
-                'A verification email has been sent to your registered email address. Please enter the token below to verify your account.',
-            role: _signUpRole ?? 'student',
-          );
+          if ((_signUpRole ?? 'student') == 'counselor') {
+            cCounselorIdController.text = userId;
+            cEmailController.text = email;
+            setShowCounselorInfoDialog(true);
+          } else {
+            setShowVerificationDialog(
+              true,
+              message:
+                  data['message'] ??
+                  'A verification email has been sent to your registered email address. Please enter the token below to verify your account.',
+              role: 'student',
+            );
+          }
         }
       } else {
         _signUpError = data['message'] ?? 'Sign up failed.';
@@ -739,6 +894,71 @@ class LandingScreenViewModel extends ChangeNotifier {
     } finally {
       _log('🏁 Forgot Password process completed');
       _isForgotPasswordLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> handleResendResetCode(BuildContext context) async {
+    _resendResetCodeError = '';
+    _resendResetCodeInputError = '';
+    _isResendResetCodeLoading = true;
+    notifyListeners();
+
+    String input = resendResetCodeController.text.trim();
+
+    if (input.isEmpty) {
+      _resendResetCodeInputError = 'Please enter your email or user ID.';
+      await Future.delayed(const Duration(milliseconds: 1000));
+      _isResendResetCodeLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      _log('🚀 Starting resend reset code for: $input');
+
+      _session.clearCookies();
+
+      final response = await _session.post(
+        '${ApiConfig.currentBaseUrl}/forgot-password/send-code',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: json.encode({'input': input}),
+      );
+
+      _log('✅ Resend Reset Code Response Status: ${response.statusCode}');
+      _log('📨 Resend Reset Code Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          _log('🎉 Reset code resent successfully');
+
+          resendResetCodeController.clear();
+          if (context.mounted) {
+            _safePop(context);
+            _showSnackBar(
+              context,
+              'A new reset code has been sent to your email. It will expire in 5 minutes.',
+            );
+            // Open code entry dialog after successful resend
+            setShowCodeEntryDialog(true);
+          }
+        } else {
+          _resendResetCodeError =
+              data['message'] ?? 'Failed to resend reset code.';
+        }
+      } else {
+        _resendResetCodeError = 'Server error. Please try again.';
+      }
+    } catch (e) {
+      _log('❌ Resend Reset Code Error: $e');
+      _resendResetCodeError = 'An error occurred. Please try again.';
+    } finally {
+      _log('🏁 Resend Reset Code process completed');
+      _isResendResetCodeLoading = false;
       notifyListeners();
     }
   }
@@ -1034,10 +1254,58 @@ class LandingScreenViewModel extends ChangeNotifier {
 
       final data = json.decode(response.body);
 
+      _log('=== VERIFICATION RESPONSE DEBUG ===');
+      _log('Response status code: ${response.statusCode}');
+      _log('Response body: ${response.body}');
+      _log('Parsed data: $data');
+
       if (response.statusCode == 200) {
         if (data['status'] == 'success') {
-          _redirectUrl =
-              data['redirect'] ?? '${ApiConfig.currentBaseUrl}/user/dashboard';
+          _log('Before role check - _verificationRole: $_verificationRole');
+          _log('SignUpRole: $_signUpRole');
+
+          // Check for role in various possible locations
+          if (data.containsKey('role')) {
+            _verificationRole = data['role'];
+            _log('✓ Role found in data[\'role\']: $_verificationRole');
+          } else if (data.containsKey('user_role')) {
+            _verificationRole = data['user_role'];
+            _log('✓ Role found in data[\'user_role\']: $_verificationRole');
+          } else if (data.containsKey('redirect')) {
+            // Extract role from redirect URL if role not explicitly provided
+            final redirectUrl = data['redirect'] as String;
+            _log('Extracting role from redirect URL: $redirectUrl');
+
+            if (redirectUrl.contains('/counselor/')) {
+              _verificationRole = 'counselor';
+              _log('✓ Role extracted from redirect URL: counselor');
+            } else if (redirectUrl.contains('/admin/')) {
+              _verificationRole = 'admin';
+              _log('✓ Role extracted from redirect URL: admin');
+            } else if (redirectUrl.contains('/student/')) {
+              _verificationRole = 'student';
+              _log('✓ Role extracted from redirect URL: student');
+            }
+          }
+
+          // Last resort: use signup role if still not set
+          if (_verificationRole.isEmpty && _signUpRole != null) {
+            _verificationRole = _signUpRole ?? 'student';
+            _log('✓ Using signup role as fallback: $_verificationRole');
+          }
+
+          if (_verificationRole.isEmpty) {
+            _log('⚠️ No role found in response data or signup');
+          }
+
+          _log('After role check - _verificationRole: $_verificationRole');
+
+          // Store the role securely for session management
+          if (_verificationRole.isNotEmpty) {
+            SecureStorage.storeUserRole(_verificationRole);
+            _log('✓ Role stored in secure storage: $_verificationRole');
+          }
+
           if (context.mounted) {
             _safePop(context);
             setShowVerificationSuccessDialog(true);
@@ -1068,46 +1336,116 @@ class LandingScreenViewModel extends ChangeNotifier {
 
   Future<void> handleResendVerification(BuildContext context) async {
     _verificationError = '';
-    _isResendVerificationLoading = true;
+    _resendVerificationError = '';
+    // Don't set loading to true here - only when submit button is clicked
     notifyListeners();
 
     String identifier = signUpEmailController.text.trim();
 
     if (identifier.isEmpty) {
+      // Show the new resend verification dialog
       final result = await showDialog<String>(
         context: context,
-        builder: (context) {
-          String inputIdentifier = '';
-          return AlertDialog(
-            title: const Text('Resend Verification Email'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Please enter your registered email address or user ID:',
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Email or User ID',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) => inputIdentifier = value,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => _safePop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, inputIdentifier),
-                child: const Text('Submit'),
-              ),
-            ],
-          );
-        },
+        barrierDismissible: false,
+        builder: (context) => buildResendVerificationDialog(
+          context: context,
+          identifierController: resendVerificationController,
+          error: _resendVerificationError,
+          isLoading: _isResendVerificationLoading,
+          onResendPressed: () async {
+            final inputIdentifier = resendVerificationController.text.trim();
+            if (inputIdentifier.isEmpty) {
+              _resendVerificationError = 'Please enter your email or user ID';
+              notifyListeners();
+              return;
+            }
+
+            // Start the resend process
+            _isResendVerificationLoading = true;
+            _resendVerificationError = '';
+            notifyListeners();
+
+            try {
+              _log('Resending verification for identifier: $inputIdentifier');
+
+              final response = await _session.post(
+                '${ApiConfig.currentBaseUrl}/resend-verification-email',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: 'identifier=$inputIdentifier',
+              );
+
+              _log('Resend Verification Response: ${response.statusCode}');
+              _log('Resend Verification Body: ${response.body}');
+
+              final data = json.decode(response.body);
+
+              if (response.statusCode == 200) {
+                if (data['status'] == 'success') {
+                  _verificationMessage =
+                      data['message'] ??
+                      'Verification email sent successfully. Please check your inbox.';
+                  if (context.mounted) {
+                    _showSnackBar(
+                      context,
+                      data['message'] ??
+                          'Verification email sent successfully.',
+                    );
+                    // Reset loading state before closing modal
+                    _isResendVerificationLoading = false;
+                    notifyListeners();
+                    Navigator.pop(context, inputIdentifier);
+                  }
+                } else if (data['status'] == 'already_verified') {
+                  _verificationMessage =
+                      data['message'] ?? 'Account is already verified.';
+                  if (context.mounted) {
+                    _showSnackBar(
+                      context,
+                      data['message'] ?? 'Account is already verified.',
+                    );
+                    // Reset loading state before closing modal
+                    _isResendVerificationLoading = false;
+                    notifyListeners();
+                    Navigator.pop(context, inputIdentifier);
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (context.mounted) {
+                        _safePop(context);
+                        setShowLoginDialog(true);
+                      }
+                    });
+                  }
+                } else {
+                  _resendVerificationError =
+                      data['message'] ?? 'Failed to resend verification email.';
+                  // Reset loading state on error
+                  _isResendVerificationLoading = false;
+                  notifyListeners();
+                }
+              } else {
+                _resendVerificationError =
+                    data['message'] ?? 'Failed to resend verification email.';
+                // Reset loading state on error
+                _isResendVerificationLoading = false;
+                notifyListeners();
+              }
+            } catch (e) {
+              _log('Resend Verification Error: $e');
+              _resendVerificationError = 'Network error. Please try again.';
+              // Reset loading state on error
+              _isResendVerificationLoading = false;
+              notifyListeners();
+            }
+          },
+          onCancelPressed: () {
+            // Reset loading state when canceling
+            _isResendVerificationLoading = false;
+            notifyListeners();
+            Navigator.pop(context);
+          },
+        ),
       );
 
       if (result == null || result.isEmpty) {
@@ -1118,64 +1456,67 @@ class LandingScreenViewModel extends ChangeNotifier {
       identifier = result;
     }
 
-    try {
-      _log('Resending verification for identifier: $identifier');
+    // If we have an identifier from signup form, process it directly
+    if (identifier.isNotEmpty) {
+      try {
+        _log('Resending verification for identifier: $identifier');
 
-      final response = await _session.post(
-        '${ApiConfig.currentBaseUrl}/resend-verification-email',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: 'identifier=$identifier',
-      );
+        final response = await _session.post(
+          '${ApiConfig.currentBaseUrl}/resend-verification-email',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: 'identifier=$identifier',
+        );
 
-      _log('Resend Verification Response: ${response.statusCode}');
-      _log('Resend Verification Body: ${response.body}');
+        _log('Resend Verification Response: ${response.statusCode}');
+        _log('Resend Verification Body: ${response.body}');
 
-      final data = json.decode(response.body);
+        final data = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        if (data['status'] == 'success') {
-          _verificationMessage =
-              data['message'] ??
-              'Verification email sent successfully. Please check your inbox.';
-          if (context.mounted) {
-            _showSnackBar(
-              context,
-              data['message'] ?? 'Verification email sent successfully.',
-            );
-          }
-        } else if (data['status'] == 'already_verified') {
-          _verificationMessage =
-              data['message'] ?? 'Account is already verified.';
-          if (context.mounted) {
-            _showSnackBar(
-              context,
-              data['message'] ?? 'Account is already verified.',
-            );
-            Future.delayed(const Duration(seconds: 2), () {
-              if (context.mounted) {
-                _safePop(context);
-                setShowLoginDialog(true);
-              }
-            });
+        if (response.statusCode == 200) {
+          if (data['status'] == 'success') {
+            _verificationMessage =
+                data['message'] ??
+                'Verification email sent successfully. Please check your inbox.';
+            if (context.mounted) {
+              _showSnackBar(
+                context,
+                data['message'] ?? 'Verification email sent successfully.',
+              );
+            }
+          } else if (data['status'] == 'already_verified') {
+            _verificationMessage =
+                data['message'] ?? 'Account is already verified.';
+            if (context.mounted) {
+              _showSnackBar(
+                context,
+                data['message'] ?? 'Account is already verified.',
+              );
+              Future.delayed(const Duration(seconds: 2), () {
+                if (context.mounted) {
+                  _safePop(context);
+                  setShowLoginDialog(true);
+                }
+              });
+            }
+          } else {
+            _verificationError =
+                data['message'] ?? 'Failed to resend verification email.';
           }
         } else {
           _verificationError =
               data['message'] ?? 'Failed to resend verification email.';
         }
-      } else {
-        _verificationError =
-            data['message'] ?? 'Failed to resend verification email.';
+      } catch (e) {
+        _log('Resend Verification Error: $e');
+        _verificationError = 'Network error. Please try again.';
       }
-    } catch (e) {
-      _log('Resend Verification Error: $e');
-      _verificationError = 'Network error. Please try again.';
-    } finally {
-      _isResendVerificationLoading = false;
-      notifyListeners();
     }
+
+    _isResendVerificationLoading = false;
+    notifyListeners();
   }
 
   void goToDashboard(BuildContext context) {
@@ -1185,14 +1526,135 @@ class LandingScreenViewModel extends ChangeNotifier {
         context,
         'Verification successful! Welcome to your dashboard.',
       );
-      navigateToDashboard(context);
-      _log('Redirecting to: $_redirectUrl');
+
+      // Get the role from verification
+      final role = _verificationRole.isEmpty
+          ? 'student'
+          : _verificationRole.toLowerCase();
+
+      _log('=== VERIFICATION REDIRECT DEBUG ===');
+      _log('Verification role before cleanup: $_verificationRole');
+      _log('Role after cleanup: $role');
+
+      // Navigate based on role, exactly like login does
+      if (role == 'student') {
+        _log('Redirecting to STUDENT dashboard');
+        navigateToDashboard(context);
+      } else if (role == 'counselor') {
+        _log('Redirecting to COUNSELOR dashboard');
+        AppRoutes.navigateToCounselorDashboard(context);
+      } else if (role == 'admin') {
+        _log('Redirecting to ADMIN dashboard');
+        AppRoutes.navigateToAdminDashboard(context);
+      } else {
+        // Default to student dashboard if role is ambiguous
+        _log(
+          '⚠️ Unknown verification role "$role". Defaulting to student dashboard.',
+        );
+        SecureLogger.warning(
+          'Unknown verification role "$role". Defaulting to student dashboard.',
+        );
+        navigateToDashboard(context);
+      }
     }
   }
 
   void stayOnLandingPage(BuildContext context) {
     if (context.mounted) {
       _safePop(context);
+    }
+  }
+
+  Future<void> handleSaveCounselorInfo(BuildContext context) async {
+    _cInfoWarning = '';
+    _isCounselorInfoSaving = true;
+    notifyListeners();
+
+    final counselorId = cCounselorIdController.text.trim();
+    final name = cNameController.text.trim();
+    final degree = cDegreeController.text.trim();
+    final email = cEmailController.text.trim();
+    final contact = cContactController.text.trim();
+    final address = cAddressController.text.trim();
+    final civil = (_cCivilStatus ?? '').trim();
+    final s = (_cSex ?? '').trim();
+    final birthdate = cBirthdateController.text.trim();
+
+    if (counselorId.isEmpty ||
+        name.isEmpty ||
+        degree.isEmpty ||
+        email.isEmpty ||
+        contact.isEmpty ||
+        address.isEmpty) {
+      _cInfoWarning = 'Please fill in all required fields.';
+      _isCounselorInfoSaving = false;
+      notifyListeners();
+      return;
+    }
+
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      _cInfoWarning = 'Please enter a valid email address.';
+      _isCounselorInfoSaving = false;
+      notifyListeners();
+      return;
+    }
+
+    if (!RegExp(r'^09[0-9]{9}$').hasMatch(contact)) {
+      _cInfoWarning = 'Contact number must be in the format 09XXXXXXXXX.';
+      _isCounselorInfoSaving = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final payload = {
+        'counselor_id': counselorId,
+        'name': name,
+        'degree': degree,
+        'email': email,
+        'contact_number': contact,
+        'address': address,
+        if (civil.isNotEmpty) 'civil_status': civil,
+        if (s.isNotEmpty) 'sex': s,
+        if (birthdate.isNotEmpty) 'birthdate': birthdate,
+      };
+
+      final response = await _session.post(
+        '${ApiConfig.currentBaseUrl}/counselor/save-basic-info',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: payload.entries
+            .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+            .join('&'),
+      );
+
+      final data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        cNameController.clear();
+        cDegreeController.clear();
+        cContactController.clear();
+        cAddressController.clear();
+        cBirthdateController.clear();
+        _cCivilStatus = '';
+        _cSex = '';
+        if (context.mounted) {
+          _safePop(context);
+          _showSnackBar(
+            context,
+            'Your information has been saved. Please wait for admin approval.',
+          );
+        }
+      } else {
+        _cInfoWarning = (data['message'] ?? 'Failed to save information.')
+            .toString();
+      }
+    } catch (e) {
+      _cInfoWarning = 'An error occurred. Please try again.';
+    } finally {
+      _isCounselorInfoSaving = false;
+      notifyListeners();
     }
   }
 }

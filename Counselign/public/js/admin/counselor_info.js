@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load counselors from database
     function loadCounselors() {
-        console.log('Loading counselors...');
+        SecureLogger.info('Loading counselors...');
         
         // Create a timestamp to prevent caching
         const timestamp = new Date().getTime();
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.text().then(text => {
-                    console.log('Raw server response:', text); // Add this for debugging
+                    SecureLogger.info('Raw server response:', text); // Add this for debugging
                     try {
                         const data = JSON.parse(text);
                         return data;
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .then(data => {
-                console.log('Received counselors data:', data);
+                SecureLogger.info('Received counselors data:', data);
                 counselors = data.data || [];
                 
                 // Update add button visibility
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function handleSubmit(e) {
         e.preventDefault();
-        console.log('Form submission started');
+        SecureLogger.info('Form submission started');
 
         // Create FormData object from the form
         const formData = new FormData();
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('availableDays', JSON.stringify(selectedDays));
 
         // Log form data for debugging
-        console.log('Form data being sent:', {
+        SecureLogger.info('Form data being sent:', {
             counselorId,
             startTime,
             endTime,
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Log the data being sent
-        console.log('Sending form data:', Object.fromEntries(formData));
+        SecureLogger.info('Sending form data:', Object.fromEntries(formData));
 
         // Show loading indicator
         showNotification('Processing...', 'info');
@@ -211,9 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
             body: formData
         })
         .then(response => {
-            console.log('Raw response:', response);
+            SecureLogger.info('Raw response:', response);
             return response.text().then(text => {
-                console.log('Response text:', text);
+                SecureLogger.info('Response text:', text);
                 if (!response.ok) {
                     throw new Error(text || `HTTP error! status: ${response.status}`);
                 }
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         })
         .then(data => {
-            console.log('Server response:', data);
+            SecureLogger.info('Server response:', data);
             if (data.success) {
                 showNotification(data.message || 'Counselor updated successfully', 'success');
         closeModal();
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        console.log('Displaying counselor info:', counselor); // Add this for debugging
+        SecureLogger.info('Displaying counselor info:', counselor); // Add this for debugging
 
         // Update main content profile section
         mainContent.innerHTML = `

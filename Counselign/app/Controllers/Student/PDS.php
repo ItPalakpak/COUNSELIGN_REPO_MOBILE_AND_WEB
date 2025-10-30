@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use App\Models\StudentPDSModel;
 use App\Models\StudentAcademicInfoModel;
 use App\Models\StudentPersonalInfoModel;
@@ -53,8 +56,7 @@ class PDS extends BaseController
 
         $userId = $session->get('user_id_display') ?? $session->get('user_id');
         $userId = (string) $userId; // Force string conversion for varchar(10) column
-        log_message('debug', 'PDS Load - Session data: user_id_display=' . $session->get('user_id_display') . ', user_id=' . $session->get('user_id') . ', username=' . $session->get('username'));
-        log_message('debug', 'PDS Load - Using userId: ' . $userId . ' (Type: ' . gettype($userId) . ')');
+        SecureLogHelper::debug('Loading PDS data');
         
         if (!$userId) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid session data'])->setStatusCode(400);
@@ -88,7 +90,7 @@ class PDS extends BaseController
                             $pdsData['user_email'] = ''; // Set empty email to prevent errors
                         }
                     } else {
-                        log_message('error', 'PDS Load - User not found for ID: ' . $userId . ', No username in session');
+                        SecureLogHelper::error('User not found for PDS loading');
                         $pdsData['user_email'] = ''; // Set empty email to prevent errors
                     }
                 }
@@ -141,6 +143,10 @@ class PDS extends BaseController
                 $result = $this->pdsModel->saveCompletePDS($userId, $pdsData);
                 
                 if ($result) {
+                    // Update last_activity for PDS save
+                    $activityHelper = new UserActivityHelper();
+                    $activityHelper->updateStudentActivity($userId, 'save_pds');
+                    
                     log_message('debug', 'PDS Save - Successfully saved data for user: ' . $userId);
                     return $this->response->setJSON(['success' => true, 'message' => 'PDS data saved successfully']);
                 } else {

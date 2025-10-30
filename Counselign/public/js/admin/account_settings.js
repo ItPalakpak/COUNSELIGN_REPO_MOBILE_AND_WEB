@@ -1,11 +1,11 @@
 // Debug function to log events
 function debug(message) {
-    console.log(`[DEBUG] ${message}`);
+    SecureLogger.info(`[DEBUG] ${message}`);
 }
 
 // Modal functions for editing fields and changing password
 function editField(field) {
-    console.log(`editField called with field: ${field}`);
+    SecureLogger.info(`editField called with field: ${field}`);
 
     // Check if a modal is already open
     if (document.querySelector('.modal-overlay')) {
@@ -27,7 +27,7 @@ function editField(field) {
         currentValue = document.querySelector('.info-item:nth-of-type(2) .info-value').textContent;
     }
 
-    console.log(`Current value for ${field}: ${currentValue}`);
+    SecureLogger.info(`Current value for ${field}: ${currentValue}`);
 
     modal.innerHTML = `
         <div class="modal-container">

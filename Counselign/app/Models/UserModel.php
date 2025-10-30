@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use App\Helpers\SecureLogHelper;
 
 class UserModel extends Model
 {
@@ -72,7 +73,7 @@ class UserModel extends Model
 
     public function getUserByVerificationToken(string $token)
     {
-        log_message('debug', 'Searching for user with verification token: ' . $token);
+        SecureLogHelper::debug('Searching for user by verification token');
         return $this->where('verification_token', $token)->first();
     }
 }

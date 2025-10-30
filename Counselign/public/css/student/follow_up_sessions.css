@@ -515,12 +515,44 @@ h1 { margin: 0 0 0 8px; font-size: 1.1rem; }
 }
 
 /* Drawer styles (match dashboard) */
-.custom-navbar-toggler { background: transparent !important; border: none !important; box-shadow: none !important; padding: .25rem; color: #fff; border-radius: .25rem; margin: 0 !important; }
-.custom-navbar-toggler:focus, .custom-navbar-toggler:active, .custom-navbar-toggler:hover { border: none !important; box-shadow: none !important; background: none !important; }
-.custom-navbar-toggler .navbar-toggler-icon { display: flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; filter: brightness(0) invert(1); }
-.custom-navbar-toggler .navbar-toggler-icon i { font-size: 1.5em; color: #fff; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transition: transform .3s ease; }
-.custom-navbar-toggler:hover .navbar-toggler-icon i { transform: rotate(90deg); }
-.custom-navbar-toggler.active .navbar-toggler-icon i { transform: rotate(180deg); }
+.custom-navbar-toggler { 
+    background: transparent !important; 
+    border: none !important; 
+    box-shadow: none !important; 
+    padding: .25rem; 
+    color: #fff; 
+    border-radius: .25rem; 
+    margin: 0 !important; 
+    position: relative !important;
+    z-index: 1001 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+.custom-navbar-toggler:focus, .custom-navbar-toggler:active, .custom-navbar-toggler:hover { 
+    border: none !important; 
+    box-shadow: none !important; 
+    background: none !important; 
+}
+.custom-navbar-toggler .navbar-toggler-icon { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    width: 1.5em; 
+    height: 1.5em; 
+    filter: brightness(0) invert(1); 
+}
+.custom-navbar-toggler .navbar-toggler-icon i { 
+    font-size: 1.5em; 
+    color: #fff; 
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); 
+    transition: transform .3s ease; 
+}
+.custom-navbar-toggler:hover .navbar-toggler-icon i { 
+    transform: rotate(90deg); 
+}
+.custom-navbar-toggler.active .navbar-toggler-icon i { 
+    transform: rotate(180deg); 
+}
 .navbar-drawer { position: fixed; top:0; right:0; width:280px; max-width:80vw; height:100%; background:#060E57; box-shadow:-2px 0 8px rgba(0,0,0,.2); transform:translateX(100%); transition:transform .3s ease-out; z-index:1040; padding-top:20px; visibility:hidden; }
 .navbar-drawer.show { transform: translateX(0); visibility: visible; }
 .navbar-drawer .navbar-nav { flex-direction: column; padding: 1rem; }
@@ -556,6 +588,14 @@ header {
     z-index: 1000;
     transition: box-shadow 0.3s ease;
     width: 100%;
+}
+
+/* Ensure header interactive elements are clickable */
+header a,
+header button {
+    position: relative;
+    z-index: 1001;
+    pointer-events: auto;
 }
 
 header.sticky-header {

@@ -46,7 +46,7 @@ function confirmLogout() {
 function loadCounselorSchedules() {
     const baseUrl = window.BASE_URL || '/';
     
-    console.log('Loading counselor schedules...');
+    SecureLogger.info('Loading counselor schedules...');
     
     fetch(baseUrl + 'admin/admins-management/schedules')
         .then(response => {
@@ -58,7 +58,7 @@ function loadCounselorSchedules() {
         .then(data => {
             if (data.success) {
                 displayCounselorSchedules(data.schedules);
-                console.log(`Loaded schedules for ${data.total_counselors} counselors`);
+                SecureLogger.info(`Loaded schedules for ${data.total_counselors} counselors`);
             } else {
                 console.error('Failed to load counselor schedules:', data.message);
                 showScheduleError(data.message);
@@ -86,7 +86,7 @@ function displayCounselorSchedules(scheduleData) {
         'linear-gradient(135deg, #7986CB 0%, #9DA6D9 100%)'   // Indigo
     ];
 
-    console.log('Processing counselor schedules...', scheduleData);
+    SecureLogger.info('Processing counselor schedules...', scheduleData);
 
     days.forEach(day => {
         const dayLower = day.toLowerCase();

@@ -123,6 +123,13 @@ header {
     z-index: 1000;
 }
 
+.navbar-nav .nav-link {
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 1001;
+}
+
 .navbar-nav .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
@@ -167,6 +174,10 @@ nav a {
     display: inline-block;
     padding: 8px 12px;
     border-radius: 4px;
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 1001;
 }
 
 nav a:hover {

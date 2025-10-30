@@ -44,14 +44,13 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
     return ChangeNotifierProvider(
       create: (context) {
         final viewModel = CounselorReportsViewModel();
-        // Initialize the viewModel after creation
         WidgetsBinding.instance.addPostFrameCallback((_) {
           viewModel.initialize();
         });
         return viewModel;
       },
       child: CounselorScreenWrapper(
-        currentBottomNavIndex: 0, // Dashboard is Home button (index 0)
+        currentBottomNavIndex: 0,
         child: Consumer<CounselorReportsViewModel>(
           builder: (context, viewModel, child) {
             if (viewModel.isLoading) {
@@ -63,11 +62,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
                     Text(
                       'Error: ${viewModel.error}',
@@ -89,23 +84,14 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Report Header
                   _buildReportHeader(viewModel),
                   const SizedBox(height: 20),
-
-                  // Time Range Filter
                   _buildTimeRangeFilter(viewModel),
                   const SizedBox(height: 20),
-
-                  // Statistics Summary
                   _buildStatisticsSummary(viewModel),
                   const SizedBox(height: 20),
-
-                  // Charts Section
                   _buildChartsSection(viewModel),
                   const SizedBox(height: 20),
-
-                  // Appointments Section
                   _buildAppointmentsSection(viewModel),
                 ],
               ),
@@ -135,11 +121,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           Row(
             children: [
-              const Icon(
-                FontAwesomeIcons.chartLine,
-                color: Color(0xFF0d6efd),
-                size: 24,
-              ),
+              const Icon(FontAwesomeIcons.chartLine, color: Color(0xFF0d6efd), size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -188,11 +170,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       ),
       child: Row(
         children: [
-          const Icon(
-            FontAwesomeIcons.calendar,
-            color: Color(0xFF0d6efd),
-            size: 20,
-          ),
+          const Icon(FontAwesomeIcons.calendar, color: Color(0xFF0d6efd), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField<TimeRange>(
@@ -200,16 +178,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               decoration: const InputDecoration(
                 labelText: 'Report Period',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: TimeRange.values.map((range) {
-                return DropdownMenuItem(
-                  value: range,
-                  child: Text(range.displayName),
-                );
+                return DropdownMenuItem(value: range, child: Text(range.displayName));
               }).toList(),
               onChanged: (TimeRange? value) {
                 if (value != null) {
@@ -242,69 +214,18 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'Statistics Summary',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Completed',
-                  viewModel.totalCompleted,
-                  FontAwesomeIcons.circleCheck,
-                  const Color(0xFF0d6efd),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Approved',
-                  viewModel.totalApproved,
-                  FontAwesomeIcons.thumbsUp,
-                  const Color(0xFF198754),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Rejected',
-                  viewModel.totalRejected,
-                  FontAwesomeIcons.circleXmark,
-                  const Color(0xFFdc3545),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Pending',
-                  viewModel.totalPending,
-                  FontAwesomeIcons.clock,
-                  const Color(0xFFffc107),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Cancelled',
-                  viewModel.totalCancelled,
-                  FontAwesomeIcons.ban,
-                  const Color(0xFF6c757d),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(child: SizedBox()), // Empty space
+              _buildStatCard('Completed', viewModel.totalCompleted, FontAwesomeIcons.circleCheck, const Color(0xFF0d6efd)),
+              _buildStatCard('Approved', viewModel.totalApproved, FontAwesomeIcons.thumbsUp, const Color(0xFF198754)),
+              _buildStatCard('Rejected', viewModel.totalRejected, FontAwesomeIcons.circleXmark, const Color(0xFFdc3545)),
+              _buildStatCard('Pending', viewModel.totalPending, FontAwesomeIcons.clock, const Color(0xFFffc107)),
+              _buildStatCard('Cancelled', viewModel.totalCancelled, FontAwesomeIcons.ban, const Color(0xFF6c757d)),
             ],
           ),
         ],
@@ -314,6 +235,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
 
   Widget _buildStatCard(String title, int count, IconData icon, Color color) {
     return Container(
+      width: (MediaQuery.of(context).size.width - 80) / 2,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -326,20 +248,9 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
           const SizedBox(height: 8),
           Text(
             count.toString(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
           ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(title, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -364,11 +275,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'Data Visualization',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
           ),
           const SizedBox(height: 20),
           LayoutBuilder(
@@ -377,7 +284,6 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               final isMobile = screenWidth < 600;
 
               if (isMobile) {
-                // Mobile layout: Line chart takes full width, pie chart below
                 return Column(
                   children: [
                     _buildTrendChart(viewModel),
@@ -386,7 +292,6 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                   ],
                 );
               } else {
-                // Desktop/tablet layout: Side by side
                 return Row(
                   children: [
                     Expanded(flex: 2, child: _buildTrendChart(viewModel)),
@@ -408,40 +313,92 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       return const Center(child: Text('No chart data available'));
     }
 
+    // Determine Y-axis max value based on time range (matching web version)
+    double maxY;
+    double interval;
+    switch (viewModel.selectedTimeRange) {
+      case TimeRange.daily:
+        maxY = 8;
+        interval = 2;
+        break;
+      case TimeRange.weekly:
+        maxY = 40;
+        interval = 10;
+        break;
+      case TimeRange.monthly:
+        maxY = 100;
+        interval = 20;
+        break;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Appointment Trends',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            const Icon(FontAwesomeIcons.chartLine, color: Color(0xFF0d6efd), size: 16),
+            const SizedBox(width: 8),
+            const Text(
+              'Appointment Trends',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 300,
+          height: 400,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width:
-                  chartData.labels.length *
-                  60.0, // Dynamic width based on data points
+              width: chartData.labels.length * 60.0,
               child: LineChart(
                 LineChartData(
-                  gridData: const FlGridData(show: true),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: true,
+                    drawHorizontalLine: true,
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        strokeWidth: 1,
+                      );
+                    },
+                    getDrawingVerticalLine: (value) {
+                      return FlLine(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        strokeWidth: 1,
+                      );
+                    },
+                  ),
                   titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: true),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        interval: interval,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: const TextStyle(fontSize: 10),
+                          );
+                        },
+                      ),
                     ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
+                        reservedSize: 60,
                         getTitlesWidget: (value, meta) {
                           if (value.toInt() < chartData.labels.length) {
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                chartData.labels[value.toInt()],
-                                style: const TextStyle(fontSize: 10),
-                                textAlign: TextAlign.center,
+                              child: Transform.rotate(
+                                angle: -0.785398, // 45 degrees
+                                child: Text(
+                                  chartData.labels[value.toInt()],
+                                  style: const TextStyle(fontSize: 9),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             );
                           }
@@ -449,136 +406,97 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                  ),
+                  minX: 0,
+                  maxX: (chartData.labels.length - 1).toDouble(),
+                  minY: 0,
+                  maxY: maxY,
+                  lineBarsData: [
+                    _buildLineChartBarData(chartData.completed, const Color(0xFF0d6efd)),
+                    _buildLineChartBarData(chartData.approved, const Color(0xFF198754)),
+                    _buildLineChartBarData(chartData.rejected, const Color(0xFFdc3545)),
+                    _buildLineChartBarData(chartData.pending, const Color(0xFFffc107)),
+                    _buildLineChartBarData(chartData.cancelled, const Color(0xFF6c757d)),
+                  ],
+                  lineTouchData: LineTouchData(
+                    enabled: true,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                        return touchedBarSpots.map((barSpot) {
+                          final flSpot = barSpot;
+                          return LineTooltipItem(
+                            '${flSpot.y.toInt()}',
+                            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          );
+                        }).toList();
+                      },
                     ),
                   ),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: chartData.completed
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => FlSpot(e.key.toDouble(), e.value.toDouble()),
-                          )
-                          .toList(),
-                      isCurved: true,
-                      color: const Color(0xFF0d6efd),
-                      barWidth: 4,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFF0d6efd),
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                    ),
-                    LineChartBarData(
-                      spots: chartData.approved
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => FlSpot(e.key.toDouble(), e.value.toDouble()),
-                          )
-                          .toList(),
-                      isCurved: true,
-                      color: const Color(0xFF198754),
-                      barWidth: 4,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFF198754),
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                    ),
-                    LineChartBarData(
-                      spots: chartData.rejected
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => FlSpot(e.key.toDouble(), e.value.toDouble()),
-                          )
-                          .toList(),
-                      isCurved: true,
-                      color: const Color(0xFFdc3545),
-                      barWidth: 4,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFFdc3545),
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                    ),
-                    LineChartBarData(
-                      spots: chartData.pending
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => FlSpot(e.key.toDouble(), e.value.toDouble()),
-                          )
-                          .toList(),
-                      isCurved: true,
-                      color: const Color(0xFFffc107),
-                      barWidth: 4,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFFffc107),
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                    ),
-                    LineChartBarData(
-                      spots: chartData.cancelled
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => FlSpot(e.key.toDouble(), e.value.toDouble()),
-                          )
-                          .toList(),
-                      isCurved: true,
-                      color: const Color(0xFF6c757d),
-                      barWidth: 4,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFF6c757d),
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        // Legend
+        Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            _buildLegendItem('Completed', const Color(0xFF0d6efd)),
+            _buildLegendItem('Approved', const Color(0xFF198754)),
+            _buildLegendItem('Rejected', const Color(0xFFdc3545)),
+            _buildLegendItem('Pending', const Color(0xFFffc107)),
+            _buildLegendItem('Cancelled', const Color(0xFF6c757d)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  LineChartBarData _buildLineChartBarData(List<int> data, Color color) {
+    return LineChartBarData(
+      spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList(),
+      isCurved: true,
+      color: color,
+      barWidth: 4,
+      curveSmoothness: 0.4,
+      isStrokeCapRound: true,
+      dotData: FlDotData(
+        show: true,
+        getDotPainter: (spot, percent, barData, index) {
+          return FlDotCirclePainter(
+            radius: 4,
+            color: color,
+            strokeWidth: 2,
+            strokeColor: Colors.white,
+          );
+        },
+      ),
+      belowBarData: BarAreaData(show: false),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 4,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }
@@ -595,18 +513,22 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         final isMobile = screenWidth < 600;
 
         if (isMobile) {
-          // Mobile layout: Pie chart and legend side by side
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Status Distribution',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  const Icon(FontAwesomeIcons.chartPie, color: Color(0xFF0d6efd), size: 16),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Status Distribution',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  // Pie chart
                   SizedBox(
                     width: 150,
                     height: 150,
@@ -631,36 +553,33 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Legend
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: pieData
-                          .map(
-                            (data) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      color: data.color,
-                                      shape: BoxShape.circle,
+                          .map((data) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: data.color,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      data.label,
-                                      style: const TextStyle(fontSize: 12),
-                                      overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        data.label,
+                                        style: const TextStyle(fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
+                                  ],
+                                ),
+                              ))
                           .toList(),
                     ),
                   ),
@@ -669,13 +588,18 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             ],
           );
         } else {
-          // Desktop layout: Original vertical layout
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Status Distribution',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  const Icon(FontAwesomeIcons.chartPie, color: Color(0xFF0d6efd), size: 16),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Status Distribution',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -709,10 +633,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                       Container(
                         width: 12,
                         height: 12,
-                        decoration: BoxDecoration(
-                          color: data.color,
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: data.color, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 8),
                       Text(data.label, style: const TextStyle(fontSize: 12)),
@@ -746,15 +667,9 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'List of All Your Appointments',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
           ),
           const SizedBox(height: 16),
-
-          // Tab Navigation
           TabBar(
             controller: _tabController,
             isScrollable: true,
@@ -774,12 +689,8 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             ],
           ),
           const SizedBox(height: 16),
-
-          // Search and Filter Controls
           _buildSearchAndFilterControls(viewModel),
           const SizedBox(height: 16),
-
-          // Appointments List
           _buildAppointmentsList(viewModel),
         ],
       ),
@@ -787,62 +698,85 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
   }
 
   Widget _buildSearchAndFilterControls(CounselorReportsViewModel viewModel) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          flex: 2,
-          child: TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(
-              hintText: 'Search appointments...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Search appointments...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onChanged: (value) {
+                  _searchTimer?.cancel();
+                  _searchTimer = Timer(const Duration(milliseconds: 300), () {
+                    viewModel.updateSearchQuery(value);
+                  });
+                },
+              ),
             ),
-            onChanged: (value) {
-              _searchTimer?.cancel();
-              _searchTimer = Timer(const Duration(milliseconds: 300), () {
-                viewModel.updateSearchQuery(value);
-              });
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: _dateController,
-            decoration: const InputDecoration(
-              hintText: 'Filter by month',
-              prefixIcon: Icon(Icons.calendar_month),
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _dateController,
+                decoration: const InputDecoration(
+                  hintText: 'Filter by month',
+                  prefixIcon: Icon(Icons.calendar_month),
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                readOnly: true,
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    final monthString = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+                    _dateController.text = monthString;
+                    viewModel.updateDateFilter(monthString);
+                  }
+                },
+              ),
             ),
-            readOnly: true,
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
-              );
-              if (date != null) {
-                final monthString =
-                    '${date.year}-${date.month.toString().padLeft(2, '0')}';
-                _dateController.text = monthString;
-                viewModel.updateDateFilter(monthString);
-              }
-            },
-          ),
+          ],
         ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          onPressed: () => _showExportFiltersDialog(viewModel),
-          icon: const Icon(Icons.file_download),
-          label: const Text('Export'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0d6efd),
-            foregroundColor: Colors.white,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _showExportFiltersDialog(viewModel, 'PDF'),
+                icon: const Icon(FontAwesomeIcons.filePdf, size: 16),
+                label: const Text('Export PDF'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0d6efd),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _showExportFiltersDialog(viewModel, 'Excel'),
+                icon: const Icon(FontAwesomeIcons.fileExcel, size: 16),
+                label: const Text('Export Excel'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF198754),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -859,10 +793,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             children: [
               Icon(Icons.info_outline, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text(
-                'No appointments found.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
+              Text('No appointments found.', style: TextStyle(fontSize: 16, color: Colors.grey)),
             ],
           ),
         ),
@@ -883,10 +814,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
     );
   }
 
-  void _showExportFiltersDialog(CounselorReportsViewModel viewModel) {
+  void _showExportFiltersDialog(CounselorReportsViewModel viewModel, String exportType) {
     showDialog(
       context: context,
       builder: (context) => ExportFiltersDialog(
+        exportType: exportType,
         onExportPDF: (filters) => viewModel.exportToPDF(filters),
         onExportExcel: (filters) => viewModel.exportToExcel(filters),
         isExporting: viewModel.isExporting,
@@ -907,14 +839,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               _buildDetailRow('Student Name', appointment.studentName),
               _buildDetailRow('Date', appointment.formattedDate),
               _buildDetailRow('Time', appointment.appointedTime),
-              _buildDetailRow(
-                'Consultation Type',
-                appointment.consultationType,
-              ),
+              _buildDetailRow('Consultation Type', appointment.consultationType),
               _buildDetailRow('Purpose', appointment.purpose),
               _buildDetailRow('Status', appointment.status),
-              if (appointment.reason != null)
-                _buildDetailRow('Reason', appointment.reason!),
+              if (appointment.reason != null) _buildDetailRow('Reason', appointment.reason!),
             ],
           ),
         ),
@@ -936,10 +864,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           SizedBox(
             width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           Expanded(child: Text(value)),
         ],

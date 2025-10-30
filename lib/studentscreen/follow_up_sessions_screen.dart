@@ -982,7 +982,9 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
           if (session.reason != null && session.reason!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              'Reason: ${session.reason!}',
+              session.isCancelled
+                  ? session.reason!
+                  : 'Reason: ${session.reason!}',
               style: TextStyle(
                 fontSize: 12,
                 color: const Color(0xFF64748B),

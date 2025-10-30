@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\API\ResponseTrait;
 
 class Appointments extends BaseController
@@ -78,9 +81,28 @@ class Appointments extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $db->table('appointments')
-           ->where('id', $id)
-           ->update(['status' => $status]);
+        
+        // Get appointment details to find the student
+        $appointment = $db->table('appointments')
+            ->where('id', $id)
+            ->get()
+            ->getRowArray();
+        
+        if ($appointment) {
+            // Update appointment status with Manila timezone
+            $db->table('appointments')
+               ->where('id', $id)
+               ->update([
+                   'status' => $status,
+                   'updated_at' => $this->getManilaDateTime()
+               ]);
+            
+            // Update last_activity for both counselor and student
+            $activityHelper = new UserActivityHelper();
+            $counselorId = session()->get('user_id_display');
+            $activityHelper->updateCounselorActivity($counselorId, 'update_appointment_status');
+            $activityHelper->updateStudentActivity($appointment['student_id'], 'appointment_status_updated');
+        }
 
         return $this->respond([
             'status' => 'success',
@@ -150,7 +172,7 @@ class Appointments extends BaseController
         $builder->where('id', $appointment_id);
         $updateData = [
             'status' => $new_status,
-            'updated_at' => date('Y-m-d H:i:s')
+            'updated_at' => $this->getManilaDateTime()
         ];
 
         if (($new_status === 'rejected' || $new_status === 'cancelled') && !empty($rejection_reason)) {
@@ -159,6 +181,14 @@ class Appointments extends BaseController
 
         $builder->update($updateData);
 
+        // Get the updated appointment data for email notification
+        $updatedAppointment = $builder->where('id', $appointment_id)->get()->getRowArray();
+        
+        if ($updatedAppointment) {
+            // Send email notification to student
+            $this->sendAppointmentNotificationToStudent($updatedAppointment, $new_status);
+        }
+
         $db->transComplete();
 
         if ($db->transStatus() === false) {
@@ -166,6 +196,99 @@ class Appointments extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Appointment status updated successfully']);
+    }
+
+    /**
+     * Send appointment notification email to student
+     * 
+     * @param array $appointmentData The appointment data
+     * @param string $actionType The action type ('approved', 'rejected', 'cancelled')
+     * @return void
+     */
+    private function sendAppointmentNotificationToStudent(array $appointmentData, string $actionType): void
+    {
+        try {
+            // Get counselor information for email
+            $db = \Config\Database::connect();
+            $counselorInfo = $db->table('counselors c')
+                ->select('c.counselor_id, c.name, u.email')
+                ->join('users u', 'u.user_id = c.counselor_id', 'left')
+                ->where('c.counselor_id', session()->get('user_id_display'))
+                ->get()
+                ->getRowArray();
+
+            if (!$counselorInfo) {
+                log_message('error', 'Counselor information not found for ID: ' . session()->get('user_id_display'));
+                return;
+            }
+
+            $emailService = new \App\Services\AppointmentEmailService();
+
+            if ($actionType === 'approved') {
+                $emailSent = $emailService->sendAppointmentApprovalNotification($appointmentData['student_id'], $appointmentData, $counselorInfo);
+            } elseif ($actionType === 'rejected') {
+                $emailSent = $emailService->sendAppointmentRejectionNotification($appointmentData['student_id'], $appointmentData, $counselorInfo);
+            } elseif ($actionType === 'cancelled') {
+                $emailSent = $emailService->sendAppointmentCancellationByCounselorNotification($appointmentData['student_id'], $appointmentData, $counselorInfo);
+            } else {
+                log_message('error', 'Invalid action type for email notification: ' . $actionType);
+                return;
+            }
+
+            if ($emailSent) {
+                log_message('info', 'Appointment ' . $actionType . ' notification sent successfully to student: ' . $appointmentData['student_id']);
+            } else {
+                log_message('error', 'Failed to send appointment ' . $actionType . ' notification to student: ' . $appointmentData['student_id']);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error sending appointment notification to student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get current datetime in Manila timezone with specified format
+     * 
+     * @return string Manila timezone datetime in format 'Y-m-d H:i:s'
+     */
+    private function getManilaDateTime(): string
+    {
+        try {
+            // Set timezone to Asia/Manila
+            $manilaTimezone = new \DateTimeZone('Asia/Manila');
+            $manilaDateTime = new \DateTime('now', $manilaTimezone);
+            
+            // Return formatted datetime
+            return $manilaDateTime->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            // Fallback to server time if timezone setting fails
+            log_message('error', 'Failed to get Manila timezone: ' . $e->getMessage());
+            return date('Y-m-d H:i:s');
+        }
+    }
+
+    /**
+     * Test method to verify Manila timezone format
+     * This method can be removed after testing
+     */
+    public function testManilaTimezone()
+    {
+        if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Unauthorized access'
+            ], 401);
+        }
+
+        $manilaTime = $this->getManilaDateTime();
+        
+        return $this->response->setJSON([
+            'status' => 'success',
+            'manila_time' => $manilaTime,
+            'format' => 'Y-m-d H:i:s',
+            'timezone' => 'Asia/Manila',
+            'message' => 'Manila timezone test successful'
+        ]);
     }
 
     public function scheduled()
@@ -306,6 +429,40 @@ class Appointments extends BaseController
                 'status' => 'error',
                 'message' => 'An error occurred while fetching schedule: ' . $e->getMessage(),
                 'schedule' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Track export activity for counselor reports
+     */
+    public function trackExport()
+    {
+        try {
+            if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 401);
+            }
+            
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            $exportType = $this->request->getPost('export_type') ?? 'appointments_report';
+            
+            // Update last_activity for exporting reports
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($counselorId, 'export_reports');
+            
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Export activity tracked'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error tracking counselor export activity: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error tracking export activity'
             ], 500);
         }
     }

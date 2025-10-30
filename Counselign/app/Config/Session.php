@@ -40,7 +40,7 @@ class Session extends BaseConfig
      * The number of SECONDS you want the session to last.
      * Setting to 0 (zero) means expire when the browser is closed.
      */
-    public int $expiration = 7200;
+    public int $expiration = 3600; // Reduced to 1 hour for better security
 
     /**
      * --------------------------------------------------------------------------
@@ -69,7 +69,7 @@ class Session extends BaseConfig
      * WARNING: If you're using the database driver, don't forget to update
      *          your session table's PRIMARY KEY when changing this setting.
      */
-    public bool $matchIP = false;
+    public bool $matchIP = true; // Enable IP matching for better security
 
     /**
      * --------------------------------------------------------------------------
@@ -89,7 +89,7 @@ class Session extends BaseConfig
      * when auto-regenerating the session ID. When set to FALSE, the data
      * will be later deleted by the garbage collector.
      */
-    public bool $regenerateDestroy = false;
+    public bool $regenerateDestroy = true; // Destroy old session on regenerate for better security
 
     /**
      * --------------------------------------------------------------------------
@@ -124,4 +124,65 @@ class Session extends BaseConfig
      * seconds.
      */
     public int $lockMaxRetries = 300;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie Secure
+     * --------------------------------------------------------------------------
+     *
+     * Whether to set the cookie as secure (HTTPS only).
+     * For localhost development, set to false.
+     * In production with HTTPS, set to true.
+     */
+    public bool $cookieSecure = false; // Set to true in production when using HTTPS
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie HTTP Only
+     * --------------------------------------------------------------------------
+     *
+     * Whether to set the cookie as HTTP only (not accessible via JavaScript).
+     * This prevents XSS attacks from stealing session cookies.
+     */
+    public bool $cookieHTTPOnly = true; // Always true for security
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie Same Site
+     * --------------------------------------------------------------------------
+     *
+     * The SameSite attribute of the session cookie.
+     * Options: 'Lax', 'Strict', or 'None'
+     * 'Strict' provides the best CSRF protection
+     */
+    public string $cookieSameSite = 'Lax'; // Use 'Strict' in production
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie Path
+     * --------------------------------------------------------------------------
+     *
+     * The path that the session cookie will be available on.
+     */
+    public string $cookiePath = '/';
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie Domain
+     * --------------------------------------------------------------------------
+     *
+     * The domain that the session cookie will be available on.
+     * Empty string means the cookie will only be available on the current domain.
+     */
+    public string $cookieDomain = '';
+
+    /**
+     * --------------------------------------------------------------------------
+     * Session Cookie Raw
+     * --------------------------------------------------------------------------
+     *
+     * Whether to send the cookie without URL encoding.
+     * Should always be false for security.
+     */
+    public bool $cookieRaw = false;
 }

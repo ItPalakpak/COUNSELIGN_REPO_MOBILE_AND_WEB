@@ -118,6 +118,7 @@
     </script>
     <script src="<?= base_url('js/admin/account_settings.js?v=1.1') ?>"></script>
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>"></script>
 
 </body>

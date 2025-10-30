@@ -21,66 +21,55 @@ class NotificationsDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!isVisible) return const SizedBox.shrink();
 
-    return Positioned(
-      top: 80,
-      right: 30,
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.all(20),
       child: Container(
-        width: 320,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height - 120,
-        ),
+        width: MediaQuery.of(context).size.width > 480
+            ? 380
+            : MediaQuery.of(context).size.width - 40,
+        constraints: const BoxConstraints(maxHeight: 500),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.08 * 255).round()),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: const Color(0xFFE9ECEF),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFD),
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFEEF2F7), width: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFD),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+                border: Border(
+                  bottom: BorderSide(color: const Color(0xFFEEF2F7), width: 1),
                 ),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
                     Icons.notifications,
-                    color: Color(0xFF060E57),
+                    color: Color(0xFF003366),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Notifications',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF060E57),
-                      ),
+                  const Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF003366),
                     ),
                   ),
+                  const Spacer(),
                   IconButton(
-                    onPressed: onClose,
                     icon: const Icon(Icons.close, size: 20),
+                    onPressed: onClose,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -91,15 +80,37 @@ class NotificationsDropdown extends StatelessWidget {
             // Notifications list
             Flexible(
               child: notifications.isEmpty
-                  ? Container(
-                      padding: const EdgeInsets.all(32),
-                      child: const Text(
-                        'No notifications',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
+                  ? const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.notifications_none,
+                              color: Color(0xFF64748B),
+                              size: 48,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'No notifications',
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'You\'re all caught up!',
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     )
                   : ListView.builder(
@@ -110,14 +121,15 @@ class NotificationsDropdown extends StatelessWidget {
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            border: index < notifications.length - 1
-                                ? const Border(
-                                    bottom: BorderSide(
-                                      color: Color(0xFFF0F4F8),
-                                      width: 1,
-                                    ),
-                                  )
-                                : null,
+                            color: notification.isRead
+                                ? Colors.white
+                                : const Color(0xFFF0F9FF),
+                            border: const Border(
+                              bottom: BorderSide(
+                                color: Color(0xFFF0F4F8),
+                                width: 1,
+                              ),
+                            ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +139,10 @@ class NotificationsDropdown extends StatelessWidget {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  margin: const EdgeInsets.only(top: 6, right: 12),
+                                  margin: const EdgeInsets.only(
+                                    top: 8,
+                                    right: 12,
+                                  ),
                                   decoration: const BoxDecoration(
                                     color: Color(0xFF060E57),
                                     shape: BoxShape.circle,
@@ -141,13 +156,29 @@ class NotificationsDropdown extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      notification.title,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF060E57),
-                                      ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            notification.title,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF003366),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _formatTime(notification.createdAt),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -158,14 +189,6 @@ class NotificationsDropdown extends StatelessWidget {
                                         height: 1.4,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _formatDate(notification.createdAt),
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -173,7 +196,8 @@ class NotificationsDropdown extends StatelessWidget {
                               // Mark as read button
                               if (!notification.isRead)
                                 IconButton(
-                                  onPressed: () => onMarkAsRead(notification.id),
+                                  onPressed: () =>
+                                      onMarkAsRead(notification.id),
                                   icon: const Icon(
                                     Icons.check_circle_outline,
                                     size: 18,
@@ -195,18 +219,22 @@ class NotificationsDropdown extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dateTime) {
+  String _formatTime(DateTime time) {
     final now = DateTime.now();
-    final difference = now.difference(dateTime);
+    final diff = now.difference(time);
 
-    if (difference.inDays == 0) {
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } else if (difference.inDays == 1) {
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    } else if (diff.inHours < 1) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inDays == 0) {
+      return '${diff.inHours}h ago';
+    } else if (diff.inDays == 1) {
       return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays}d ago';
     } else {
-      return '${dateTime.month}/${dateTime.day}/${dateTime.year}';
+      return '${time.day}/${time.month}/${time.year}';
     }
   }
 }

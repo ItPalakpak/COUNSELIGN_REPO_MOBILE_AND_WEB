@@ -2,10 +2,13 @@
 
 namespace App\Controllers\Student;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Controller;
 use App\Models\UserModel;
 use CodeIgniter\Database\BaseConnection;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 
 class Message extends BaseController
 {
@@ -84,6 +87,10 @@ class Message extends BaseController
                         $messages = $query->getResultArray();
                         $response = ['success' => true, 'messages' => $messages];
                     }
+                    
+                    // Update last_activity for viewing messages
+                    $activityHelper = new UserActivityHelper();
+                    $activityHelper->updateStudentActivity($user_id, 'view_messages');
                     break;
 
                 case 'send_message':
@@ -101,13 +108,12 @@ class Message extends BaseController
                             'message_text' => $message_text
                         ]);
 
-                        // Update user's activity
-                        $db->table('users')
-                            ->where('user_id', $user_id)
-                            ->update([
-                                'last_active_at' => $currentTime,
-                                'last_activity' => $currentTime
-                            ]);
+                        // Update last_activity for sending message (dynamic ID detection)
+                        $activityHelper = new UserActivityHelper();
+                        $activityHelper->updateStudentActivity(null, 'send_message', [
+                            'sender_id' => $user_id,
+                            'receiver_id' => $receiver_id
+                        ]);
 
                         $response = ['success' => true, 'message' => 'Message sent successfully'];
                     } else {

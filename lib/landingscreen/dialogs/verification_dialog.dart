@@ -8,109 +8,226 @@ Widget buildVerificationDialog({
   required String message,
   required String error,
   required bool isLoading,
-  required bool isResendLoading,
   required VoidCallback onVerifyPressed,
   required VoidCallback onResendPressed,
 }) {
   return Dialog(
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Stack(
-          children: [
-            // ❌ Close Button
-            Positioned(
-              top: 0,
-              right: 0,
+    backgroundColor: Colors.transparent,
+    insetPadding: const EdgeInsets.all(20),
+    child: Container(
+      constraints: const BoxConstraints(maxWidth: 420, maxHeight: 600),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.1),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Close Button
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFD),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(
+                  Icons.close,
+                  color: Color(0xFF64748B),
+                  size: 20,
+                ),
                 onPressed: () => Navigator.pop(context),
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(),
               ),
             ),
+          ),
 
-            // ✅ Dialog Content
-            Padding(
-              padding: const EdgeInsets.only(top: 30),
+          // Content
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Header with icon
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF060E57).withValues(alpha: 0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.verified_user,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Title
                   const Text(
                     'Account Verification',
                     style: TextStyle(
-                      color: Color(0xFF0D6EFD),
-                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF060E57),
+                      fontWeight: FontWeight.w700,
                       fontSize: 24,
                     ),
                   ),
-                  const SizedBox(height: 20),
+
+                  const SizedBox(height: 16),
+
+                  // Message
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
+                    ),
                   ),
-                  const SizedBox(height: 20),
 
-                  /// Token Input (6 boxes)
+                  const SizedBox(height: 32),
+
+                  // Token Input (6 boxes)
                   _SixCharCodeInput(
                     onCodeChanged: (value) {
-                      // Keep the original controller as the single source of truth
                       tokenController.text = value;
                     },
                   ),
+
                   if (error.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      error,
-                      style: const TextStyle(color: Colors.red, fontSize: 14),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFFECACA),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Color(0xFFDC2626),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              error,
+                              style: const TextStyle(
+                                color: Color(0xFFDC2626),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 20),
 
-                  /// Verify Account Button
-                  AsyncButton(
-                    onPressed: onVerifyPressed,
-                    isLoading: isLoading,
-                    child: const Text(
-                      'Verify Account',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                  const SizedBox(height: 32),
+
+                  // Verify Account Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : onVerifyPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF060E57),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Verify Account',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 16),
 
-                  /// Resend Verification Email
+                  // Resend Verification Email Button
                   SizedBox(
-                    height: 36,
-                    child: AsyncButton(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
                       onPressed: onResendPressed,
-                      isLoading: isResendLoading,
-                      width: null,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      backgroundColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF060E57),
+                        side: const BorderSide(
+                          color: Color(0xFF060E57),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text(
                         'Resend Verification Email',
-                        style: TextStyle(color: Color(0xFF0D6EFD)),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     ),
   );
@@ -182,53 +299,74 @@ class _SixCharCodeInputState extends State<_SixCharCodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(6, (index) {
-        return SizedBox(
-          width: 44,
-          height: 56,
-          child: KeyboardListener(
-            focusNode: FocusNode(),
-            onKeyEvent: (e) {
-              _handleKeyEvent(e, index);
-            },
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-              decoration: InputDecoration(
-                counterText: '',
-                isDense: true,
-                contentPadding: EdgeInsets.only(top: 10, bottom: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(6, (index) {
+          return Flexible(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              height: 56,
+              child: KeyboardListener(
+                focusNode: FocusNode(),
+                onKeyEvent: (e) {
+                  _handleKeyEvent(e, index);
+                },
+                child: TextField(
+                  controller: _controllers[index],
+                  focusNode: _focusNodes[index],
+                  textAlign: TextAlign.center,
+                  maxLength: 1,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF060E57),
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF060E57),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFD),
+                  ),
+                  textAlignVertical: TextAlignVertical.center,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    UpperCaseTextFormatter(),
+                  ],
+                  keyboardType: TextInputType.visiblePassword,
+                  textInputAction: index == 5
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  onChanged: (v) => _handleOnChanged(v, index),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF86B7FE)),
-                ),
               ),
-              textAlignVertical: TextAlignVertical.center,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                UpperCaseTextFormatter(),
-              ],
-              keyboardType: TextInputType.visiblePassword,
-              textInputAction: index == 5
-                  ? TextInputAction.done
-                  : TextInputAction.next,
-              onChanged: (v) => _handleOnChanged(v, index),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 }

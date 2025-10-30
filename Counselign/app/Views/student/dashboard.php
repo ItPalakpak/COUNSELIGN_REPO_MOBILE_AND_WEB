@@ -58,8 +58,19 @@
                 <img id="profile-img" src="<?= base_url('Photos/profile.png') ?>" alt="User Avatar" class="profile-img" />
             </button>
             <div class="profile-details-wrapper">
-                <div class="fs-12 fw-bold" style="color: #003366;">Hello! <span
-                        class="text-primary"><i><?= session()->get('user_id_display') ?></i></span></div>
+                <?php
+                $userDisplayHelper = new \App\Helpers\UserDisplayHelper();
+                $userInfo = $userDisplayHelper->getUserDisplayInfo(session()->get('user_id_display'), session()->get('role'));
+                ?>
+                <div class="fs-12 fw-bold" style="color: #003366;">
+                    Hello! 
+                    <span class="text-primary">
+                        <i><?= $userInfo['display_name'] ?></i>
+                    </span>
+                    <?php if ($userInfo['has_name']): ?>
+                        <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
+                    <?php endif; ?>
+                </div>
                 <div class="small text-secondary">Last login: <?= session()->get('last_login') ?></div>
             </div>
             <div class="ml-auto flex items-center space-x-6">
@@ -236,6 +247,7 @@
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="<?= base_url('js/student/student_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/student/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.BASE_URL = "<?= base_url() ?>";

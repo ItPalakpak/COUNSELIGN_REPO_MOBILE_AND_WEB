@@ -59,64 +59,64 @@ class AppointmentsCard extends StatelessWidget {
                 child: viewModel.isLoadingAppointments
                     ? const Center(child: CircularProgressIndicator())
                     : appointments.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No appointments',
-                              style: TextStyle(color: Colors.grey),
+                    ? const Center(
+                        child: Text(
+                          'No appointments',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: appointments.length,
+                        itemBuilder: (context, index) {
+                          final appointment = appointments[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFE9ECEF),
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            itemCount: appointments.length,
-                            itemBuilder: (context, index) {
-                              final appointment = appointments[index];
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: const Color(0xFFE9ECEF),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            'User ID: ${appointment.userId}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                        _buildStatusBadge(appointment.status),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Date: ${appointment.preferredDate}',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    if (appointment.preferredTime != null)
-                                      Text(
-                                        'Time: ${appointment.preferredTime}',
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 12,
+                                    Expanded(
+                                      child: Text(
+                                        'User ID: ${appointment.userId}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
                                         ),
                                       ),
+                                    ),
+                                    _buildStatusBadge(appointment.status),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Date: ${appointment.preferredDate}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                if (appointment.preferredTime != null)
+                                  Text(
+                                    'Time: ${appointment.preferredTime}',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
               ),
 
               // Action buttons
@@ -203,10 +203,10 @@ class AppointmentsCard extends StatelessWidget {
   }
 
   void _navigateToViewAll(BuildContext context) {
-    Navigator.of(context).pushNamed('/admin/appointments/view-all');
+    Navigator.of(context).pushNamed('/admin/view-all-appointments');
   }
 
   void _navigateToManage(BuildContext context) {
-    Navigator.of(context).pushNamed('/admin/appointments');
+    Navigator.of(context).pushNamed('/admin/scheduled-appointments');
   }
 }

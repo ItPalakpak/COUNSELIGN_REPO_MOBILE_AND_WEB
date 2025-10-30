@@ -178,6 +178,7 @@
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
     <script src="<?= base_url('js/admin/scheduled_appointments.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     
 </body>
 

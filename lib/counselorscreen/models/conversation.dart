@@ -1,4 +1,5 @@
 import '../../api/config.dart';
+import '../../utils/online_status.dart';
 
 class Conversation {
   final String userId;
@@ -9,6 +10,9 @@ class Conversation {
   final String lastMessageType; // 'sent' or 'received'
   final int unreadCount;
   final String? statusText;
+  final String? lastActivity;
+  final String? lastLogin;
+  final String? logoutTime;
 
   Conversation({
     required this.userId,
@@ -19,6 +23,9 @@ class Conversation {
     required this.lastMessageType,
     required this.unreadCount,
     this.statusText,
+    this.lastActivity,
+    this.lastLogin,
+    this.logoutTime,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
@@ -37,6 +44,9 @@ class Conversation {
       lastMessageType: json['last_message_type']?.toString() ?? 'received',
       unreadCount: _parseInt(json['unread_count']) ?? 0,
       statusText: json['status_text']?.toString(),
+      lastActivity: json['last_activity']?.toString(),
+      lastLogin: json['last_login']?.toString(),
+      logoutTime: json['logout_time']?.toString(),
     );
   }
 
@@ -78,5 +88,14 @@ class Conversation {
       return '${formattedLastMessage.substring(0, maxLength - 3)}...';
     }
     return formattedLastMessage;
+  }
+
+  /// Get the calculated online status for this conversation
+  OnlineStatusResult get onlineStatus {
+    return OnlineStatus.calculateOnlineStatus(
+      lastActivity,
+      lastLogin,
+      logoutTime,
+    );
   }
 }

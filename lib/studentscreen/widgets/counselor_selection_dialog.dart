@@ -3,6 +3,7 @@ import '../state/student_dashboard_viewmodel.dart';
 import '../models/counselor.dart';
 import '../../api/config.dart';
 import '../utils/image_url_helper.dart';
+import '../../utils/online_status.dart';
 
 class CounselorSelectionDialog extends StatelessWidget {
   final StudentDashboardViewModel viewModel;
@@ -150,12 +151,35 @@ class CounselorSelectionDialog extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    counselor.specialization,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF64748B),
+                  // Only show specialization if it's not "General Counseling"
+                  if (counselor.specialization != 'General Counseling') ...[
+                    Text(
+                      counselor.specialization,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                  ],
+                  // Online status indicator
+                  Row(
+                    children: [
+                      Icon(
+                        counselor.onlineStatus.statusIcon,
+                        size: 8,
+                        color: counselor.onlineStatus.statusColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        counselor.onlineStatus.text,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: counselor.onlineStatus.statusColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                   if (counselor.email != null) ...[
                     const SizedBox(height: 2),
@@ -168,18 +192,6 @@ class CounselorSelectionDialog extends StatelessWidget {
                     ),
                   ],
                 ],
-              ),
-            ),
-
-            // Availability indicator
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: counselor.isAvailable
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFFEF4444),
-                shape: BoxShape.circle,
               ),
             ),
 

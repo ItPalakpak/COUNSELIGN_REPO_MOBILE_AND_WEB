@@ -42,6 +42,9 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
   String? _currentStudentId;
   String? get currentStudentId => _currentStudentId;
 
+  int? _markingCompletedSessionId;
+  int? get markingCompletedSessionId => _markingCompletedSessionId;
+
   Future<void> initialize() async {
     await loadCompletedAppointments();
   }
@@ -219,6 +222,9 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
   }
 
   Future<void> markSessionCompleted(int sessionId) async {
+    _markingCompletedSessionId = sessionId;
+    notifyListeners();
+
     try {
       final formData = {'id': sessionId.toString()};
 
@@ -234,7 +240,6 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
           if (_currentParentAppointmentId != null) {
             await loadFollowUpSessions(_currentParentAppointmentId!);
           }
-          notifyListeners();
         } else {
           throw Exception(
             data['message'] ?? 'Failed to mark session as completed',
@@ -247,6 +252,9 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
       }
     } catch (e) {
       rethrow;
+    } finally {
+      _markingCompletedSessionId = null;
+      notifyListeners();
     }
   }
 
@@ -275,6 +283,53 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
       } else {
         throw Exception(
           'Failed to cancel follow-up session: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateFollowUp({
+    required int sessionId,
+    required String preferredDate,
+    required String preferredTime,
+    required String consultationType,
+    String? description,
+    String? reason,
+  }) async {
+    try {
+      final formData = {
+        'id': sessionId.toString(),
+        'preferred_date': preferredDate,
+        'preferred_time': preferredTime,
+        'consultation_type': consultationType,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+      };
+
+      final response = await Session().post(
+        '${ApiConfig.currentBaseUrl}/counselor/follow-up/edit',
+        body: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          // Reload follow-up sessions to reflect the change
+          if (_currentParentAppointmentId != null) {
+            await loadFollowUpSessions(_currentParentAppointmentId!);
+          }
+          notifyListeners();
+        } else {
+          throw Exception(
+            data['message'] ?? 'Failed to update follow-up session',
+          );
+        }
+      } else {
+        throw Exception(
+          'Failed to update follow-up session: ${response.statusCode}',
         );
       }
     } catch (e) {

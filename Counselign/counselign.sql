@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 23, 2025 at 04:54 AM
+-- Generation Time: Oct 26, 2025 at 03:42 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -37,13 +37,6 @@ CREATE TABLE `announcements` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `announcements`
---
-
-INSERT INTO `announcements` (`id`, `title`, `content`, `created_at`, `updated_at`) VALUES
-(1, 'try', 'tryan', '2025-10-09 07:06:42', '2025-10-09 07:06:42');
-
 -- --------------------------------------------------------
 
 --
@@ -64,22 +57,6 @@ CREATE TABLE `appointments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ;
-
---
--- Dumping data for table `appointments`
---
-
-INSERT INTO `appointments` (`id`, `student_id`, `preferred_date`, `preferred_time`, `consultation_type`, `purpose`, `counselor_preference`, `description`, `reason`, `status`, `created_at`, `updated_at`) VALUES
-(4, '2023304958', '2025-10-30', '8:00 AM - 9:00 AM', 'In-person', NULL, '2023303610', 'try', NULL, 'completed', '2025-10-13 10:52:05', '2025-10-21 09:44:28'),
-(5, '2023303620', '2025-11-07', '3:00 PM - 4:00 PM', 'In-person', NULL, '2023303610', 'try lang', 'Reason from Counselor: try lang', 'rejected', '2025-10-14 15:05:56', '2025-10-16 01:27:06'),
-(6, '2023303620', '2025-10-31', '3:00 PM - 4:00 PM', 'In-person', 'Initial Interview', '2023303610', 'try again', '', 'completed', '2025-10-14 18:19:23', '2025-10-21 08:13:09'),
-(7, '2023303620', '2025-10-30', '8:00 AM - 9:00 AM', 'In-person', NULL, '2022311680', 'try lang gihapun', NULL, 'completed', '2025-10-14 18:22:17', '2025-10-21 08:50:27'),
-(8, '2023303620', '2025-10-29', '10:00 AM - 11:00 AM', 'In-person', 'Counseling', '2023303610', 'try again', '', 'completed', '2025-10-14 18:23:57', '2025-10-21 07:48:25'),
-(12, '2023303620', '2025-10-30', '8:00 AM - 9:00 AM', 'In-person', 'Counseling', '2023303610', 'try', NULL, 'completed', '2025-10-21 08:54:29', NULL),
-(13, '2023303620', '2025-10-30', '8:00 AM - 9:00 AM', 'In-person', 'Counseling', '2023303610', 'ascascsc', NULL, 'completed', '2025-10-21 09:11:25', NULL),
-(14, '2023303620', '2025-10-30', '8:00 AM - 9:00 AM', 'In-person', 'Counseling', '2022311680', 'scsdcsdc', NULL, 'completed', '2025-10-21 09:37:28', '2025-10-21 09:44:15'),
-(16, '2023303620', '2025-10-29', '9:00 AM - 10:00 AM', 'In-person', 'Counseling', '2023303610', 'adadawdwadw', NULL, 'completed', '2025-10-21 09:50:08', NULL),
-(20, '2023303620', '2025-10-27', '10:00 AM - 11:00 AM', 'In-person', 'Counseling', '2023303610', 'xsaxasxdasd', NULL, 'pending', '2025-10-21 11:22:05', NULL);
 
 --
 -- Triggers `appointments`
@@ -163,18 +140,8 @@ CREATE TABLE `counselors` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `civil_status` varchar(20) DEFAULT NULL,
   `sex` varchar(10) DEFAULT NULL,
-  `birthdate` date DEFAULT NULL,
-  `time_scheduled` varchar(50) DEFAULT NULL,
-  `available_days` text DEFAULT NULL
+  `birthdate` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `counselors`
---
-
-INSERT INTO `counselors` (`id`, `counselor_id`, `name`, `degree`, `email`, `contact_number`, `address`, `profile_picture`, `created_at`, `updated_at`, `civil_status`, `sex`, `birthdate`, `time_scheduled`, `available_days`) VALUES
-(1, '2022311680', 'Princess Grace Marie Sitoy', 'BS in IT', 'esangairemgrace@gmail.com', '09876543212', 'Galaxy St., Terryhills Subd, Bulua, CDO', 'Photos/profile_pictures/counselor_2022311680_1760489478.png', '2025-10-03 16:16:09', '2025-10-15 00:51:18', NULL, NULL, NULL, NULL, NULL),
-(3, '2023303610', 'Rex Dominic Sihay', 'Bachelor Of Science In Information Technology', 'sihay.rexdominic13@gmail.com', '09201839205', 'Zone 3, Cabacungan, Claveria', NULL, '2025-10-12 08:15:07', '2025-10-23 02:24:21', 'Single', 'Male', '2005-03-13', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -189,23 +156,6 @@ CREATE TABLE `counselor_availability` (
   `time_scheduled` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `counselor_availability`
---
-
-INSERT INTO `counselor_availability` (`id`, `counselor_id`, `available_days`, `time_scheduled`, `created_at`) VALUES
-(112, '2023303610', 'Tuesday', '7:00 AM-9:00 AM', '2025-10-21 10:49:23'),
-(113, '2023303610', 'Monday', '7:00 AM-8:00 AM', '2025-10-21 10:50:10'),
-(114, '2023303610', 'Tuesday', '1:00 PM-2:00 PM', '2025-10-21 10:50:38'),
-(115, '2023303610', 'Wednesday', '1:00 PM-2:00 PM', '2025-10-21 10:50:38'),
-(116, '2023303610', 'Monday', '10:00 AM-11:00 AM', '2025-10-21 11:03:42'),
-(117, '2023303610', 'Monday', '1:00 PM-2:00 PM', '2025-10-21 11:03:42'),
-(118, '2023303610', 'Tuesday', '10:00 AM-11:00 AM', '2025-10-21 11:03:42'),
-(119, '2023303610', 'Wednesday', '10:00 AM-11:00 AM', '2025-10-21 11:03:42'),
-(120, '2023303610', 'Wednesday', '7:00 AM-5:30 PM', '2025-10-22 18:07:36'),
-(121, '2023303610', 'Thursday', '7:00 AM-5:30 PM', '2025-10-22 18:07:36'),
-(122, '2023303610', 'Friday', '7:00 AM-5:30 PM', '2025-10-22 18:07:36');
 
 -- --------------------------------------------------------
 
@@ -222,14 +172,6 @@ CREATE TABLE `events` (
   `location` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `events`
---
-
-INSERT INTO `events` (`id`, `title`, `description`, `date`, `time`, `location`, `created_at`) VALUES
-(1, 'GenSan Tuna Festival', 'try lang', '2025-10-11', '19:06:00', 'diri lang gud', '2025-10-09 07:07:10'),
-(2, 'try', 'try', '2025-10-30', '07:30:00', 'Sl', '2025-10-14 12:28:21');
 
 -- --------------------------------------------------------
 
@@ -252,26 +194,6 @@ CREATE TABLE `follow_up_appointments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ;
-
---
--- Dumping data for table `follow_up_appointments`
---
-
-INSERT INTO `follow_up_appointments` (`id`, `counselor_id`, `student_id`, `parent_appointment_id`, `preferred_date`, `preferred_time`, `consultation_type`, `follow_up_sequence`, `description`, `reason`, `status`, `created_at`, `updated_at`) VALUES
-(4, '2023303610', '2023303640', 4, '2025-10-17', '15:30-17:00', 'Follow-up Session', 1, 'asxas', 'xasxa', 'completed', '2025-10-15 20:50:07', '2025-10-21 03:19:27'),
-(5, '2023303610', '2023303640', 4, '2025-10-20', '07:00-08:30', 'Follow-up Session', 2, 'rferfwsfec', 'try lang', 'completed', '2025-10-15 20:56:41', '2025-10-21 03:19:30'),
-(6, '2023303610', '2023303640', 4, '2025-10-29', '07:00-10:30', 'Follow-up Session', 3, 'try lang naman', 'try again', 'completed', '2025-10-16 00:27:51', '2025-10-21 03:19:32'),
-(7, '2023303610', '2023303640', 6, '2025-10-22', '07:00-10:30', 'Follow-up Session', 1, 'try lang', 'efsfef', 'cancelled', '2025-10-20 23:51:19', '2025-10-21 02:14:57'),
-(9, '2023303610', '2023304958', 4, '2025-10-29', '1:00 PM-2:00 PM', 'Follow-up Session', 4, 'ewad', 'dcsdcdsfreferf', 'completed', '2025-10-21 03:19:48', '2025-10-22 00:01:52'),
-(12, '2023303610', '2023303620', 6, '2025-10-22', '10:00 AM-11:00 AM', 'Follow-up Session', 2, 'try lang', 'try lang', 'completed', '2025-10-21 07:06:42', '2025-10-21 23:49:40'),
-(13, '2023303610', '2023303620', 12, '2025-11-05', '10:00 AM-11:00 AM', 'Follow-up Session', 1, 'try lang', 'try lang', 'completed', '2025-10-21 07:07:06', '2025-10-21 07:07:18'),
-(14, '2023303610', '2023303620', 12, '2025-10-29', '10:00 AM-11:00 AM', 'Follow-up Session', 2, 'try lang', 'try', 'cancelled', '2025-10-21 07:07:28', '2025-10-22 00:03:39'),
-(15, '2023303610', '2023303620', 6, '2025-10-29', '10:00 AM-11:00 AM', 'Follow-up Session', 3, 'sxascasxas', 'sxasxasxas', 'completed', '2025-10-22 00:04:18', '2025-10-22 00:11:45'),
-(16, '2023303610', '2023303620', 16, '2025-11-12', '1:00 PM-2:00 PM', 'Follow-up Session', 1, 'wdacdscds', 'try from dart', 'cancelled', '2025-10-22 00:04:51', '2025-10-22 00:11:59'),
-(17, '2023303610', '2023303620', 6, '2025-11-11', '1:00 PM-2:00 PM', 'Follow-up Session', 4, 'asxas', 'cancel lang', 'cancelled', '2025-10-22 00:12:23', '2025-10-22 00:17:43'),
-(18, '2023303610', '2023303620', 6, '2025-11-26', '10:00 AM-11:00 AM', 'Follow-up Session', 5, 'sxaxascdsc', 'xsaxasxasxas', 'cancelled', '2025-10-22 00:18:26', '2025-10-22 00:18:47'),
-(19, '2023303610', '2023303620', 6, '2025-11-19', '10:00 AM-11:00 AM', 'Follow-up Session', 6, 'asxasxas', 'asxasxsa', 'completed', '2025-10-22 00:19:15', '2025-10-22 00:26:09'),
-(20, '2023303610', '2023303620', 12, '2025-11-18', '1:00 PM-2:00 PM', 'Follow-up Session', 3, 'sxaxasxx', 'sxasxas', 'pending', '2025-10-22 00:26:32', '2025-10-22 00:26:32');
 
 --
 -- Triggers `follow_up_appointments`
@@ -304,35 +226,6 @@ CREATE TABLE `messages` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `messages`
---
-
-INSERT INTO `messages` (`message_id`, `sender_id`, `receiver_id`, `message_text`, `is_read`, `created_at`) VALUES
-(3, '2023303620', '2022311680', 'hello', 1, '2025-10-14 05:53:19'),
-(4, '2023303620', '2023303610', 'hi', 1, '2025-10-14 05:57:28'),
-(5, '2023303620', '1234567890', 'hcaxaxa', 0, '2025-10-14 06:14:11'),
-(6, '2023303620', '1234567890', 'hi princess', 0, '2025-10-14 06:23:56'),
-(7, '2023303620', '1234567890', 'rex ni', 0, '2025-10-14 06:25:17'),
-(8, '2023303620', '2023303610', 'hello', 1, '2025-10-14 06:57:53'),
-(9, '2023303610', '2023303620', 'hello', 0, '2025-10-14 07:58:17'),
-(10, '2023303610', '2023303620', 'hi', 0, '2025-10-14 09:07:42'),
-(11, '2023303620', '2023303610', 'hello', 1, '2025-10-14 09:34:09'),
-(12, '2023303610', '2023303620', 'how za', 0, '2025-10-14 14:47:49'),
-(13, '2023303620', '2022311680', 'aloha', 1, '2025-10-15 00:56:39'),
-(14, '2022311680', '2023303620', 'aloha', 0, '2025-10-15 00:57:02'),
-(15, '2023303610', '2023303620', 'asxasxa', 0, '2025-10-15 23:45:03'),
-(16, '2023303610', '2023303620', 'sacascaca', 0, '2025-10-15 23:56:43'),
-(17, '2023303610', '2023303620', 'ascacascascascascsa', 0, '2025-10-15 23:56:49'),
-(18, '2023303610', '2023303620', 'ascxasxasx', 0, '2025-10-16 00:03:15'),
-(19, '2023303610', '2023303620', 'hi bro', 0, '2025-10-16 00:03:25'),
-(20, '2023303610', '2023303620', 'uftgu8edgawt7d8fx9w8dhaqwgfd8q9spacshcsdhicdssdefcesudygce eyesf esfeb  yudgeuyfcedc edgeufcbefc ed gwefyg8e edygwed', 0, '2025-10-16 03:37:42'),
-(21, '2023303620', '2023303610', 'hello', 1, '2025-10-18 04:54:52'),
-(22, '2023303610', '2023303620', 'wwjcejdwedwedwe', 0, '2025-10-20 09:28:58'),
-(23, '2023303610', '2023303620', 'hello', 0, '2025-10-20 12:12:00'),
-(24, '2023303610', '2023303620', 'dasdasas', 0, '2025-10-20 12:12:07'),
-(25, '2023303610', '2023303620', 'axasdcawdwedwdaqfqw', 0, '2025-10-21 11:46:56');
-
 -- --------------------------------------------------------
 
 --
@@ -348,20 +241,6 @@ CREATE TABLE `migrations` (
   `time` int(11) NOT NULL,
   `batch` int(11) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `migrations`
---
-
-INSERT INTO `migrations` (`id`, `version`, `class`, `group`, `namespace`, `time`, `batch`) VALUES
-(1, '2024_01_01_000001', 'App\\Database\\Migrations\\FixForeignKeyConstraints', 'default', 'App', 1761183887, 1),
-(2, '2024_01_01_000002', 'App\\Database\\Migrations\\AddBusinessRuleTriggers', 'default', 'App', 1761184144, 2),
-(3, '2024_01_01_000003', 'App\\Database\\Migrations\\ConfigureACIDSettings', 'default', 'App', 1761184290, 3),
-(4, '2025-09-23-160820', 'App\\Database\\Migrations\\AddNotificationsTable', 'default', 'App', 1761185122, 4),
-(5, '2025-09-23-160918', 'App\\Database\\Migrations\\CreateCiSessionsTable', 'default', 'App', 1761185122, 4),
-(6, '2025-09-23-160926', 'App\\Database\\Migrations\\AlterNotificationsTableUserIdField', 'default', 'App', 1761185122, 4),
-(7, '2025-09-23-163630', 'App\\Database\\Migrations\\AddVerificationToUsers', 'default', 'App', 1761185142, 5),
-(8, '2025-09-23-174254', 'App\\Database\\Migrations\\AddResetTokenExpirationToUsers', 'default', 'App', 1761185142, 5);
 
 -- --------------------------------------------------------
 
@@ -395,15 +274,6 @@ CREATE TABLE `password_resets` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `password_resets`
---
-
-INSERT INTO `password_resets` (`id`, `user_id`, `reset_code`, `reset_expires_at`, `created_at`) VALUES
-(10, '2023303610', '668216', '2025-10-06 10:00:22', '2025-10-06 01:55:22'),
-(12, '2023303610', '581210', '2025-10-13 14:38:33', '2025-10-13 06:33:33'),
-(17, '2023303640', '161684', '2025-10-19 23:08:43', '2025-10-19 15:03:43');
-
 -- --------------------------------------------------------
 
 --
@@ -419,13 +289,6 @@ CREATE TABLE `student_academic_info` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_academic_info`
---
-
-INSERT INTO `student_academic_info` (`id`, `student_id`, `course`, `year_level`, `academic_status`, `created_at`, `updated_at`) VALUES
-(1, '2023303620', 'BSIT', 'III', 'Continuing/Old', '2025-10-12 04:42:02', '2025-10-15 23:25:24');
 
 -- --------------------------------------------------------
 
@@ -448,13 +311,6 @@ CREATE TABLE `student_address_info` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_address_info`
---
-
-INSERT INTO `student_address_info` (`id`, `student_id`, `permanent_zone`, `permanent_barangay`, `permanent_city`, `permanent_province`, `present_zone`, `present_barangay`, `present_city`, `present_province`, `created_at`, `updated_at`) VALUES
-(1, '2023303620', '3', 'Cabacungan', 'Claveria', 'Misamis Oriental', '1', 'Poblacion', 'Claveria', 'Misamis Oriental', '2025-10-12 04:42:02', '2025-10-15 23:25:24');
-
 -- --------------------------------------------------------
 
 --
@@ -473,13 +329,6 @@ CREATE TABLE `student_family_info` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_family_info`
---
-
-INSERT INTO `student_family_info` (`id`, `student_id`, `father_name`, `father_occupation`, `mother_name`, `mother_occupation`, `spouse`, `guardian_contact_number`, `created_at`, `updated_at`) VALUES
-(2, '2023303620', 'Sihay, Ricky P.', 'Company Worker', 'Sihay, Leila B.', 'Housewife', 'N/A', '09064659426', '2025-10-12 05:41:13', '2025-10-15 23:25:24');
 
 -- --------------------------------------------------------
 
@@ -503,13 +352,6 @@ CREATE TABLE `student_personal_info` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_personal_info`
---
-
-INSERT INTO `student_personal_info` (`id`, `student_id`, `last_name`, `first_name`, `middle_name`, `date_of_birth`, `age`, `sex`, `civil_status`, `contact_number`, `fb_account_name`, `created_at`, `updated_at`) VALUES
-(2, '2023303620', 'Beronilla', 'Rex Dominic', 'Fajardo', '2005-03-13', 20, 'Male', 'Single', '09619335143', 'Rex D Beronilla', '2025-10-12 06:04:56', '2025-10-15 23:25:24');
-
 -- --------------------------------------------------------
 
 --
@@ -526,13 +368,6 @@ CREATE TABLE `student_residence_info` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_residence_info`
---
-
-INSERT INTO `student_residence_info` (`id`, `student_id`, `residence_type`, `residence_other_specify`, `has_consent`, `created_at`, `updated_at`) VALUES
-(1, '2023303620', 'boarding house', 'N/A', 1, '2025-10-12 04:42:02', '2025-10-15 23:25:24');
-
 -- --------------------------------------------------------
 
 --
@@ -547,13 +382,6 @@ CREATE TABLE `student_services_availed` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_services_availed`
---
-
-INSERT INTO `student_services_availed` (`id`, `student_id`, `service_type`, `other_specify`, `created_at`) VALUES
-(17, '2023303620', 'insurance', NULL, '2025-10-16 07:25:24');
-
 -- --------------------------------------------------------
 
 --
@@ -567,13 +395,6 @@ CREATE TABLE `student_services_needed` (
   `other_specify` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_services_needed`
---
-
-INSERT INTO `student_services_needed` (`id`, `student_id`, `service_type`, `other_specify`, `created_at`) VALUES
-(16, '2023303620', 'counseling', NULL, '2025-10-16 07:25:24');
 
 -- --------------------------------------------------------
 
@@ -593,13 +414,6 @@ CREATE TABLE `student_special_circumstances` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_special_circumstances`
---
-
-INSERT INTO `student_special_circumstances` (`id`, `student_id`, `is_solo_parent`, `is_indigenous`, `is_breastfeeding`, `is_pwd`, `pwd_disability_type`, `pwd_proof_file`, `created_at`, `updated_at`) VALUES
-(1, '2023303620', 'Yes', 'Yes', 'N/A', 'Yes', 'Asthma', 'Photos/pwd_proofs/pwd_proof_2023303620_1760316767.png', '2025-10-12 04:42:02', '2025-10-15 23:25:24');
 
 -- --------------------------------------------------------
 
@@ -625,18 +439,6 @@ CREATE TABLE `users` (
   `last_active_at` timestamp NULL DEFAULT NULL,
   `last_inactive_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `user_id`, `username`, `email`, `password`, `verification_token`, `reset_expires_at`, `is_verified`, `role`, `created_at`, `profile_picture`, `last_login`, `logout_time`, `last_activity`, `last_active_at`, `last_inactive_at`) VALUES
-(1, '0000000001', 'CounselignAdmin', 'technorex13@gmail.com', '$2y$10$PC5UrxtIFNH6Kh1hdps/euy3XbXTKYpyY8bUeA.Uldqj6PdV8BbsW', NULL, NULL, 1, 'admin', '2025-09-25 12:44:46', 'Photos/profile_pictures/admin_1_1759996110.png', '2025-10-22 12:26:13', '2025-10-22 13:51:30', '2025-10-22 13:51:30', '2025-10-22 13:51:30', '2025-10-22 13:51:30'),
-(20, '2022311680', 'Freynsis Greys', 'esangairemgrace@gmail.com', '$2y$10$1EeQMD6EBK4Lu1dJQlUPOOJHsCCvUXd1cYZpr3aG8ntawO/4Vg.Da', NULL, NULL, 1, 'counselor', '2025-10-03 12:30:26', 'Photos/profile_pictures/counselor_2022311680_1760489478.png', '2025-10-15 00:50:45', '2025-10-05 14:23:02', '2025-10-14 16:59:02', '2025-10-15 00:57:02', '2025-10-05 14:23:02'),
-(21, '2023303610', 'rexd', 'sihay.rexdominic13@gmail.com', '$2y$10$9.6QtCLHL93wI8Ntro9EqOZX8Oe7OFbxf67Zn637tWfcpxQGB8Vve', NULL, NULL, 1, 'counselor', '2025-09-25 06:38:06', 'Photos/profile_pictures/counselor_2023303610_1760250516.png', '2025-10-23 02:17:54', '2025-10-22 14:33:34', '2025-10-22 14:33:34', '2025-10-22 14:33:34', '2025-10-22 14:33:34'),
-(24, '2023304958', 'Mil', 'milwaukeearrubio@gmail.com', '$2y$10$UI.XJG3nPuh4wVBqHZnHZeQTDmgXF6Y0854GeCwAuEgE/I50AHjRW', NULL, NULL, 1, 'student', '2025-09-25 12:48:40', 'Photos/profile.png', '2025-09-25 12:56:50', '2025-09-25 12:57:55', '2025-09-25 12:57:55', '2025-09-25 12:57:55', '2025-09-25 12:57:55'),
-(30, '2023303620', 'syrex', 'rexsihay@gmail.com', '$2y$10$LTxNJwXigT3/XQIsHQVw1eWJQNaRzEiq2LGNKQl5CO3IXxkE20dJW', NULL, NULL, 1, 'student', '2025-10-05 16:25:12', 'Photos/profile_pictures/student_2023303620_1760251620.png', '2025-10-23 02:16:35', '2025-10-21 17:56:37', '2025-10-22 18:09:19', '2025-10-21 17:56:37', '2025-10-21 17:56:37'),
-(35, '2023303640', 'demoacc', 'counselign2025@gmail.com', '$2y$10$WACan4mm3m.aeWy1ctr5LeUCfNo8uF81No./F7Z1mE.2oO3NJbBbq', NULL, NULL, 1, 'student', '2025-10-19 14:54:02', 'http://192.168.18.65/Counselign/public/Photos/profile.png', '2025-10-19 15:10:17', NULL, NULL, NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -806,7 +608,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `appointments`
@@ -818,19 +620,19 @@ ALTER TABLE `appointments`
 -- AUTO_INCREMENT for table `counselors`
 --
 ALTER TABLE `counselors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `counselor_availability`
 --
 ALTER TABLE `counselor_availability`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `follow_up_appointments`
@@ -842,13 +644,13 @@ ALTER TABLE `follow_up_appointments`
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `message_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `message_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -860,61 +662,61 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_academic_info`
 --
 ALTER TABLE `student_academic_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_address_info`
 --
 ALTER TABLE `student_address_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_family_info`
 --
 ALTER TABLE `student_family_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_personal_info`
 --
 ALTER TABLE `student_personal_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_residence_info`
 --
 ALTER TABLE `student_residence_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_services_availed`
 --
 ALTER TABLE `student_services_availed`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_services_needed`
 --
 ALTER TABLE `student_services_needed`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_special_circumstances`
 --
 ALTER TABLE `student_special_circumstances`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables

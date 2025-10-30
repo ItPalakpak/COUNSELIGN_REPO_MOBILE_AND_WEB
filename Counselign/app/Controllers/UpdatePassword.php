@@ -2,7 +2,10 @@
 
 namespace App\Controllers;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Models\UserModel;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class UpdatePassword extends BaseController
@@ -60,10 +63,12 @@ class UpdatePassword extends BaseController
         $currentTime = $manilaTime->format('Y-m-d H:i:s');
 
         $userModel->skipValidation(true)->update($user['id'], [
-            'password' => $new_password_hash,
-            'last_active_at' => $currentTime,
-            'last_activity' => $currentTime
+            'password' => $new_password_hash
         ]);
+
+        // Update last_activity for password change
+        $activityHelper = new UserActivityHelper();
+        $activityHelper->updateLastActivity($user_id, 'password_change');
 
         return $this->response->setJSON(['success' => true, 'message' => 'Password updated successfully']);
     }

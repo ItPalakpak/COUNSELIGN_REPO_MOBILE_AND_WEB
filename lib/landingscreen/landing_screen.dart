@@ -12,6 +12,9 @@ import 'dialogs/terms_dialog.dart';
 import 'dialogs/contact_dialog.dart';
 import 'dialogs/verification_dialog.dart';
 import 'dialogs/verification_success_dialog.dart';
+import 'dialogs/resend_reset_code_dialog.dart';
+import 'dialogs/counselor_info_dialog.dart';
+import 'dialogs/counselor_pending_dialog.dart';
 
 // Frontend imports
 import 'frontend/app_bar.dart';
@@ -91,6 +94,18 @@ class _LandingScreenState extends State<LandingScreen> {
       _showAdminLoginDialog();
       _viewModel.setShowAdminLoginDialog(false);
     }
+    if (_viewModel.showResendResetCodeDialog) {
+      _showResendResetCodeDialog();
+      _viewModel.setShowResendResetCodeDialog(false);
+    }
+    if (_viewModel.showCounselorInfoDialog) {
+      _showCounselorInfoDialog();
+      _viewModel.setShowCounselorInfoDialog(false);
+    }
+    if (_viewModel.showCounselorPendingDialog) {
+      _showCounselorPendingDialog();
+      _viewModel.setShowCounselorPendingDialog(false);
+    }
   }
 
   void _showLoginDialog() {
@@ -102,8 +117,6 @@ class _LandingScreenState extends State<LandingScreen> {
           builder: (context, viewModel, child) => LoginDialog(
             userIdController: viewModel.loginUserIdController,
             passwordController: viewModel.loginPasswordController,
-            role: viewModel.loginRole,
-            onRoleChanged: (value) => viewModel.loginRole = value,
             error: viewModel.loginError,
             userIdError: viewModel.loginUserIdError,
             passwordError: viewModel.loginPasswordError,
@@ -232,6 +245,10 @@ class _LandingScreenState extends State<LandingScreen> {
             codeError: viewModel.resetCodeError,
             isLoading: viewModel.isCodeEntryLoading,
             onVerifyCodePressed: () => viewModel.handleVerifyCode(context),
+            onResendCodePressed: () {
+              Navigator.pop(context);
+              viewModel.setShowResendResetCodeDialog(true);
+            },
           ),
         ),
       ),
@@ -302,7 +319,6 @@ class _LandingScreenState extends State<LandingScreen> {
         message: _viewModel.verificationMessage,
         error: _viewModel.verificationError,
         isLoading: _viewModel.isVerificationLoading,
-        isResendLoading: _viewModel.isResendVerificationLoading,
         onVerifyPressed: () => _viewModel.handleVerification(context),
         onResendPressed: () => _viewModel.handleResendVerification(context),
       ),
@@ -318,6 +334,70 @@ class _LandingScreenState extends State<LandingScreen> {
         role: _viewModel.verificationRole,
         onGoToDashboardPressed: () => _viewModel.goToDashboard(context),
         onStayPressed: () => _viewModel.stayOnLandingPage(context),
+      ),
+    );
+  }
+
+  void _showResendResetCodeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: _viewModel,
+        child: Consumer<LandingScreenViewModel>(
+          builder: (context, viewModel, child) => buildResendResetCodeDialog(
+            context: context,
+            controller: viewModel.resendResetCodeController,
+            error: viewModel.resendResetCodeError,
+            inputError: viewModel.resendResetCodeInputError,
+            isLoading: viewModel.isResendResetCodeLoading,
+            onResendCodePressed: () => viewModel.handleResendResetCode(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCounselorInfoDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: _viewModel,
+        child: Consumer<LandingScreenViewModel>(
+          builder: (context, viewModel, child) => CounselorInfoDialog(
+            counselorIdController: viewModel.cCounselorIdController,
+            nameController: viewModel.cNameController,
+            degreeController: viewModel.cDegreeController,
+            emailController: viewModel.cEmailController,
+            contactController: viewModel.cContactController,
+            addressController: viewModel.cAddressController,
+            birthdateController: viewModel.cBirthdateController,
+            civilStatus: viewModel.cCivilStatus,
+            sex: viewModel.cSex,
+            onCivilStatusChanged: (v) => viewModel.cCivilStatus = v,
+            onSexChanged: (v) => viewModel.cSex = v,
+            warning: viewModel.cInfoWarning,
+            isLoading: viewModel.isCounselorInfoSaving,
+            onSavePressed: () => viewModel.handleSaveCounselorInfo(context),
+            onCancelPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCounselorPendingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: _viewModel,
+        child: Consumer<LandingScreenViewModel>(
+          builder: (context, viewModel, child) => CounselorPendingDialog(
+            message: viewModel.counselorPendingMessage,
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        ),
       ),
     );
   }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Model;
 use App\Libraries\TransactionManager;
 use CodeIgniter\Exceptions\CodeIgniterException;

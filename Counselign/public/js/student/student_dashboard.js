@@ -3,6 +3,66 @@ document.addEventListener('DOMContentLoaded', function () {
     let lastMessageId = 0;
     let isTyping = false;
     let lastConversationCounselorId = null; // Track which counselor's thread is rendered
+
+    // Calculate online status based on last_activity, last_login, and logout_time
+    function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
+        // Get all available times
+        const activityTime = lastActivity ? new Date(lastActivity) : null;
+        const loginTime = lastLogin ? new Date(lastLogin) : null;
+        const logoutTimeDate = logoutTime ? new Date(logoutTime) : null;
+        
+        // Check if logout_time equals last_activity (exact match)
+        if (logoutTimeDate && activityTime && logoutTimeDate.getTime() === activityTime.getTime()) {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+        
+        // Find the most recent time between last_activity and last_login
+        let mostRecentTime = null;
+        
+        if (activityTime && loginTime) {
+            // Use the more recent of the two
+            mostRecentTime = activityTime > loginTime ? activityTime : loginTime;
+        } else if (activityTime) {
+            mostRecentTime = activityTime;
+        } else if (loginTime) {
+            mostRecentTime = loginTime;
+        }
+        
+        if (!mostRecentTime) {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+
+        const now = new Date();
+        const diffInMinutes = Math.floor((now - mostRecentTime) / (1000 * 60));
+
+        if (diffInMinutes <= 5) {
+            return {
+                status: 'online',
+                text: 'Online',
+                class: 'status-online'
+            };
+        } else if (diffInMinutes <= 60) {
+            return {
+                status: 'active',
+                text: `Last active ${diffInMinutes}m ago`,
+                class: 'status-active-recent'
+            };
+        } else {
+            return {
+                status: 'offline',
+                text: 'Offline',
+                class: 'status-offline'
+            };
+        }
+    }
     
     // Get references to all necessary elements
     const header = document.querySelector('header');
@@ -235,12 +295,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     const raw = Array.isArray(data.notifications) ? data.notifications : [];
                     // Exclude ALL message notifications from display per requirement
                     const displayable = raw.filter(n => !(n && n.type === 'message'));
-                    if (displayable.length === 0) {
+                    // Apply additional client-side expiration filtering
+                    const filteredNotifications = filterExpiredNotifications(displayable);
+                    if (filteredNotifications.length === 0) {
                         showEmptyNotifications('No notifications');
                     } else {
-                        renderNotifications(displayable);
+                        renderNotifications(filteredNotifications);
                     }
-                    updateNotificationCounter(displayable.length);
+                    updateNotificationCounter(filteredNotifications.length);
                 } else {
                     showEmptyNotifications('Failed to load notifications');
                     openAlertModal('Failed to load notifications. Please try again later.', 'error');
@@ -250,6 +312,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 showEmptyNotifications('Unable to connect to server');
                 openAlertModal('Unable to connect to server. Please check your connection.', 'error');
             });
+    }
+
+    // Filter out expired notifications on the client side
+    function filterExpiredNotifications(notifications) {
+        const now = new Date();
+        return notifications.filter(notification => {
+            // Check if event has passed
+            if (notification.type === 'event' && notification.event_date) {
+                const eventDate = new Date(notification.event_date);
+                return eventDate > now;
+            }
+            // Check if appointment has passed (keep for 7 days after appointment date)
+            if (notification.type === 'appointment' && notification.appointment_date) {
+                const appointmentDate = new Date(notification.appointment_date);
+                const sevenDaysAfter = new Date(appointmentDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                return sevenDaysAfter > now;
+            }
+            // Keep all other notification types (announcements, messages)
+            return true;
+        });
     }
 
     // Replace the renderNotifications function in student_dashboard.js (around line 245)
@@ -372,15 +454,15 @@ function renderNotifications(notifications = []) {
 
     // Function to load and display student profile picture
     function loadStudentProfilePicture() {
-        console.log('Loading student profile picture...');
+        SecureLogger.info('Loading student profile picture...');
         fetch(window.BASE_URL + 'student/dashboard/get-profile-data', {
             method: 'GET',
             credentials: 'include'
         })
         .then(response => {
-            console.log('Profile picture response status:', response.status);
+            SecureLogger.info('Profile picture response status:', response.status);
             return response.text().then(text => {
-                console.log('Raw profile picture response:', text);
+                SecureLogger.info('Raw profile picture response:', text);
                 try {
                     return JSON.parse(text);
                 } catch (e) {
@@ -390,15 +472,15 @@ function renderNotifications(notifications = []) {
             });
         })
         .then(data => {
-            console.log('Parsed profile picture data:', data);
+            SecureLogger.info('Parsed profile picture data:', data);
             if (data.success) {
                 const studentData = data.data;
-                console.log('Student data:', studentData);
+                SecureLogger.info('Student data:', studentData);
 
                 // Update profile picture
                 const profileImg = document.getElementById('profile-img');
                 if (profileImg && studentData.profile_picture) {
-                    console.log('Updating student profile picture:', studentData.profile_picture);
+                    SecureLogger.info('Updating student profile picture:', studentData.profile_picture);
                     profileImg.src = studentData.profile_picture;
                 }
             } else {
@@ -424,9 +506,11 @@ function renderNotifications(notifications = []) {
                     // Load student profile picture
                     loadStudentProfilePicture();
                     
-                    // Update the user ID in the welcome message
+                    // Update the user ID in the welcome message only if no display name exists
                     const userIdSpan = document.querySelector('.text-primary i');
-                    if (userIdSpan) {
+                    const userDisplaySpan = document.getElementById('user-id-display');
+                    if (userIdSpan && !userDisplaySpan) {
+                        // Only update if there's no hidden user-id-display element (meaning no name was found)
                         userIdSpan.textContent = data.user_id;
                     }
                 } else {
@@ -449,13 +533,13 @@ function renderNotifications(notifications = []) {
         const closeChat = document.getElementById('closeChat');
 
         // Add console logs for debugging
-        console.log('Chat elements:', { messageForm, messageInput, messagesContainer, chatPopup, openChatBtn, closeChat });
+        SecureLogger.info('Chat elements:', { messageForm, messageInput, messagesContainer, chatPopup, openChatBtn, closeChat });
 
         if (openChatBtn && chatPopup) {
             openChatBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Chat button clicked');
+                SecureLogger.info('Chat button clicked');
                 // Open chat popup only; do not open counselor selection here
                 chatPopup.style.display = 'block';
                 chatPopup.classList.add('visible');
@@ -946,6 +1030,9 @@ function renderNotifications(notifications = []) {
             counselorItem.className = 'counselor-item';
             counselorItem.dataset.counselorId = counselor.counselor_id;
             
+            // Calculate status based on last_activity, last_login, and logout_time
+            const statusInfo = calculateOnlineStatus(counselor.last_activity, counselor.last_login, counselor.logout_time);
+            
             // Determine avatar URL with safe fallback
             const avatarUrl = (counselor && counselor.profile_picture)
                 ? (toAbsoluteUrl(counselor.profile_picture) || (window.BASE_URL + 'Photos/profile.png'))
@@ -957,9 +1044,10 @@ function renderNotifications(notifications = []) {
                 </div>
                 <div class="counselor-info">
                     <div class="counselor-name">${counselor.name || 'Unknown Counselor'}</div>
-                    <div class="counselor-specialization">${counselor.specialization || 'General Counseling'}</div>
                 </div>
-                <div class="counselor-status"></div>
+                <div class="counselor-status">
+                    <span class="counselor-status-indicator ${statusInfo.class}">${statusInfo.text}</span>
+                </div>
             `;
 
             // Add click event to select counselor
@@ -1063,8 +1151,37 @@ function renderNotifications(notifications = []) {
         });
     }
 
+    // Auto-refresh notifications every 30 seconds
+    let notificationRefreshInterval = null;
+    
+    function startNotificationAutoRefresh() {
+        // Clear existing interval if any
+        if (notificationRefreshInterval) {
+            clearInterval(notificationRefreshInterval);
+        }
+        
+        // Refresh notifications every 30 seconds
+        notificationRefreshInterval = setInterval(() => {
+            // Only refresh if notifications dropdown is open
+            const notificationsDropdown = document.getElementById('notificationsDropdown');
+            if (notificationsDropdown && notificationsDropdown.style.display === 'block') {
+                loadNotifications();
+            }
+        }, 30000);
+    }
+    
+    function stopNotificationAutoRefresh() {
+        if (notificationRefreshInterval) {
+            clearInterval(notificationRefreshInterval);
+            notificationRefreshInterval = null;
+        }
+    }
+
     // Start the initialization process
     fetchUserIdAndInitialize();
+    
+    // Start auto-refresh for notifications
+    startNotificationAutoRefresh();
 
     // PDS Reminder Popup functionality
     function initializePdsReminder() {
@@ -1086,7 +1203,7 @@ function renderNotifications(notifications = []) {
             const hasShownReminder = sessionStorage.getItem(reminderShownKey);
             
             // Debug logging to help troubleshoot
-            console.log('PDS Reminder Debug:', {
+            SecureLogger.info('PDS Reminder Debug:', {
                 hasShownReminder: hasShownReminder,
                 referrer: document.referrer,
                 currentPath: window.location.pathname
@@ -1094,7 +1211,7 @@ function renderNotifications(notifications = []) {
             
             // If reminder hasn't been shown in this session, show it
             if (!hasShownReminder) {
-                console.log('PDS Reminder: Showing (first time in session)');
+                SecureLogger.info('PDS Reminder: Showing (first time in session)');
                 return true;
             }
             
@@ -1103,18 +1220,18 @@ function renderNotifications(notifications = []) {
             
             // If coming from login page or auth pages, show reminder again
             if (referrer && (referrer.includes('/auth') || referrer.includes('/login') || referrer.includes('/signup'))) {
-                console.log('PDS Reminder: Showing (from auth pages)');
+                SecureLogger.info('PDS Reminder: Showing (from auth pages)');
                 return true;
             }
             
             // If coming from landing page (root), show reminder again
             if (referrer && referrer.includes('/') && referrer.endsWith('/') && !referrer.includes('/student/')) {
-                console.log('PDS Reminder: Showing (from landing page)');
+                SecureLogger.info('PDS Reminder: Showing (from landing page)');
                 return true;
             }
             
             // If coming from other pages within the app, don't show
-            console.log('PDS Reminder: Not showing (already shown in session)');
+            SecureLogger.info('PDS Reminder: Not showing (already shown in session)');
             return false;
         }
         
@@ -1145,7 +1262,7 @@ function renderNotifications(notifications = []) {
             
             // Mark reminder as shown in session storage
             sessionStorage.setItem('pdsReminderShown', 'true');
-            console.log('PDS Reminder: Marked as shown in session');
+            SecureLogger.info('PDS Reminder: Marked as shown in session');
             
             const modal = bootstrap.Modal.getInstance(pdsReminderModal);
             if (modal) {
@@ -1155,7 +1272,7 @@ function renderNotifications(notifications = []) {
         
         // Function to show modal
         function showPdsReminderModal() {
-            console.log('PDS Reminder: Attempting to show modal');
+            SecureLogger.info('PDS Reminder: Attempting to show modal');
             
             // Reset timer
             timeLeft = 20;
@@ -1172,7 +1289,7 @@ function renderNotifications(notifications = []) {
                 keyboard: false
             });
             modal.show();
-            console.log('PDS Reminder: Modal shown successfully');
+            SecureLogger.info('PDS Reminder: Modal shown successfully');
             
             // Start timer
             timerInterval = setInterval(updateTimer, 1000);
@@ -1188,13 +1305,13 @@ function renderNotifications(notifications = []) {
         }
         
         // Only show modal if this is an initial login
-        console.log('PDS Reminder: Checking if should show reminder');
+        SecureLogger.info('PDS Reminder: Checking if should show reminder');
         if (shouldShowPdsReminder()) {
-            console.log('PDS Reminder: Will show modal in 1 second');
+            SecureLogger.info('PDS Reminder: Will show modal in 1 second');
             // Show modal after a short delay to ensure page is fully loaded
             setTimeout(showPdsReminderModal, 1000);
         } else {
-            console.log('PDS Reminder: Not showing modal');
+            SecureLogger.info('PDS Reminder: Not showing modal');
         }
     }
     

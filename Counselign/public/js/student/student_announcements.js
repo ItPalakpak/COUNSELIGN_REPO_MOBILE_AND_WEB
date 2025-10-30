@@ -17,9 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success && data.user_id) {
                     userId = data.user_id;
-                    // Update the user ID in the welcome message
+                    // Update the user ID in the welcome message only if no display name exists
                     const userIdSpan = document.querySelector('.text-primary i');
-                    if (userIdSpan) {
+                    const userDisplaySpan = document.getElementById('user-id-display');
+                    if (userIdSpan && !userDisplaySpan) {
+                        // Only update if there's no hidden user-id-display element (meaning no name was found)
                         userIdSpan.textContent = data.user_id;
                     }
                     // Load announcements and events

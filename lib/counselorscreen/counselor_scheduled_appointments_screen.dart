@@ -57,7 +57,7 @@ class _CounselorScheduledAppointmentsScreenState
             : isTablet
             ? 20
             : 24,
-        vertical: isMobile ? 20 : 24,
+        vertical: isMobile ? 16 : 20,
       ),
       child: Stack(
         children: [
@@ -71,9 +71,9 @@ class _CounselorScheduledAppointmentsScreenState
           ),
           // Floating toggle button (calendar/schedules) - positioned below header
           Positioned(
-            top: 10, // 10-20px below header
+            top: -5, // 10-20px below header
             right: 0,
-            child: ElevatedButton.icon(
+            child: ElevatedButton(
               onPressed: () {
                 _showSchedulesModal(context);
               },
@@ -89,11 +89,7 @@ class _CounselorScheduledAppointmentsScreenState
                 ),
                 elevation: 4,
               ),
-              icon: const Icon(Icons.calendar_month, size: 16),
-              label: const Text(
-                'Calendar',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
+              child: const Icon(Icons.calendar_month, size: 16),
             ),
           ),
         ],
@@ -378,8 +374,6 @@ class _CounselorScheduledAppointmentsScreenState
         appointmentId: appointment.id.toString(),
         studentName: appointment.studentName,
         onConfirm: (reason) async {
-          Navigator.of(context).pop();
-
           try {
             await _viewModel.updateAppointmentStatus(
               appointment.id.toString(),
@@ -398,14 +392,8 @@ class _CounselorScheduledAppointmentsScreenState
               );
             }
           } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to cancel appointment: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+            // Re-throw the error so the dialog can handle it
+            rethrow;
           }
         },
       ),

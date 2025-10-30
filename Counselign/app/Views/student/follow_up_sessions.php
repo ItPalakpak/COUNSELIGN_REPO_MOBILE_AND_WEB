@@ -164,6 +164,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/student/follow_up_sessions.js') ?>"></script>
     <script src="<?= base_url('js/student/student_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         // Set BASE_URL for JavaScript
         window.BASE_URL = '<?= base_url() ?>';

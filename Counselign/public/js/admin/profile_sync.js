@@ -16,19 +16,19 @@ function fetchAdminData() {
 
 // Function to update admin profile pictures on the current page
 function updateAdminProfilePictures() {
-    console.log('Updating profile pictures...');
+    SecureLogger.info('Updating profile pictures...');
     const storedPicture = localStorage.getItem('adminProfilePicture');
     
     // If we have a stored picture, use it immediately
     if (storedPicture) {
-        console.log('Using stored picture:', storedPicture);
+        SecureLogger.info('Using stored picture:', storedPicture);
         updatePicturesWithUrl(storedPicture);
     }
     
     // Always fetch fresh data from server
     fetchAdminData()
         .then(profilePicture => {
-            console.log('Fetched new picture:', profilePicture);
+            SecureLogger.info('Fetched new picture:', profilePicture);
             updatePicturesWithUrl(profilePicture);
         })
         .catch(error => {
@@ -58,7 +58,7 @@ function updatePicturesWithUrl(pictureUrl) {
     selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(img => {
-            console.log('Updating element:', selector, img);
+            SecureLogger.info('Updating element:', selector, img);
             img.src = urlWithCache;
         });
     });
@@ -72,14 +72,14 @@ function forceReloadProfilePictures() {
 // Listen for profile picture updates from other tabs/windows
 window.addEventListener('storage', (event) => {
     if (event.key === 'adminProfilePicture') {
-        console.log('Storage event detected:', event.newValue);
+        SecureLogger.info('Storage event detected:', event.newValue);
         updatePicturesWithUrl(event.newValue);
     }
 });
 
 // Initialize when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing profile sync...');
+    SecureLogger.info('DOM loaded, initializing profile sync...');
     
     // Initial update
     updateAdminProfilePictures();

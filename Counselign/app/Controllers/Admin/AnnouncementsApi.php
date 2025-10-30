@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Admin;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 

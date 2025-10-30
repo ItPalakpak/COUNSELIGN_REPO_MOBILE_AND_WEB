@@ -1,6 +1,397 @@
-- Focus: Counselor History Reports Data Filtering Bug Fix
+- Implemented counselor-specific signup flow:
+  - Added `counselor/save-basic-info` route and frontend modal to capture counselor details after signup (no email verification for counselors at signup).
+  - Updated `public/js/landing.js` to open the Counselor Info modal on counselor signup, validate inputs, and submit to backend; kept student flow unchanged.
+  - Adjusted unverified login handling to show verification modal only for students; counselors receive an informational pending-approval message.
+  - `Counselor::saveBasicInfo` already sends notification email to the admin account.
+
+Next steps:
+- Admin approval flow (future): endpoints and UI to approve counselor accounts and set `is_verified = 1`.
+- Focus: Enhanced Resend Reset Code Modal Implementation with Professional UI/UX Design and Type-Safe Coding Standards
 Recent Changes:
-- **CRITICAL BUG FIX**: Fixed counselor history reports data filtering issue:
+- **RESEND RESET CODE MODAL IMPLEMENTATION**: Added professional resend functionality for forgot password flow
+  - ✅ **Modal HTML Structure**: Created dedicated resend reset code modal in `landing.php`
+    - ✅ Professional modal design matching other system modals
+    - ✅ Proper form structure with label, input, and validation elements
+    - ✅ Bootstrap 5 classes for consistent styling
+    - ✅ Cancel and Send buttons with proper accessibility
+  - ✅ **JavaScript Implementation**: Enhanced `landing.js` with resend reset code functionality
+    - ✅ Added resend link to code entry modal
+    - ✅ Comprehensive input validation for email/user ID
+    - ✅ Loading states with spinner animations
+    - ✅ Proper error handling and user feedback
+    - ✅ Enter key support for form submission
+    - ✅ Modal cleanup on hide/cancel events
+    - ✅ Uses `forgot-password/send-code`; alias `forgot-password/resend-code` supported
+  - ✅ **Backend Fix (Critical)**: Resolved reset code persistence when input is email
+    - ✅ If input is an email, backend now resolves `user_id` from `users.email` and saves token with the correct `user_id` into `password_resets`
+    - ✅ If input is a user_id, backend resolves email and uses that as destination
+    - ✅ Prevents DB errors like "Data too long for column 'user_id'" by never inserting email into `password_resets.user_id`
+    - ✅ Ensures verify step no longer yields False "Invalid or expired code" after email-based requests
+    - ✅ Added alias route `forgot-password/resend-code` which reuses the same logic
+  - ✅ **CSS Styling**: Added professional styling in `landing.css`
+    - ✅ Consistent design matching other modals
+    - ✅ Responsive design for mobile devices
+    - ✅ Proper focus states and transitions
+    - ✅ Error message styling
+  - ✅ **Type-Safe Implementation**: Clean, maintainable code structure
+    - ✅ Clear variable naming and function organization
+    - ✅ Proper error handling without ambiguous patterns
+    - ✅ No linter errors or warnings
+    - ✅ Maintains existing forgot password functionality
+- **RESEND VERIFICATION MODAL ENHANCEMENT**: Replaced prompt() dialog with professional Bootstrap modal
+  - ✅ **Modal HTML Structure**: Created dedicated resend verification modal in `verification_prompt.php`
+    - ✅ Professional modal design matching other system modals
+    - ✅ Proper form structure with label, input, and validation elements
+    - ✅ Bootstrap 5 classes for consistent styling
+    - ✅ Cancel and Send buttons with proper accessibility
+  - ✅ **JavaScript Implementation**: Enhanced `verification_prompt.js` with modal functionality
+    - ✅ Replaced `prompt()` with Bootstrap modal instance
+    - ✅ Added comprehensive input validation for email/user ID
+    - ✅ Loading states with spinner animations
+    - ✅ Proper error handling and user feedback
+    - ✅ Enter key support for form submission
+    - ✅ Modal cleanup on hide/cancel events
+  - ✅ **CSS Styling**: Added professional styling in `verification_prompt.css`
+    - ✅ Consistent design matching other modals
+    - ✅ Responsive design for mobile devices
+    - ✅ Proper focus states and transitions
+    - ✅ Error message styling
+  - ✅ **Type-Safe Implementation**: Clean, maintainable code structure
+    - ✅ Clear variable naming and function organization
+    - ✅ Proper error handling without ambiguous patterns
+    - ✅ No linter errors or warnings
+    - ✅ Maintains existing functionality while improving UX
+- **CRITICAL BUG FIXES**: Resolved routing and email display issues
+  - **Routing Fix**: Fixed missing edit route for follow-up sessions
+    - ✅ Added `$routes->post('follow-up/edit', 'FollowUp::editFollowUp');` to counselor group
+    - ✅ Removed duplicate route outside counselor group
+    - ✅ Edit follow-up functionality now properly accessible
+  - **Email Time Display Fix**: Corrected time formatting in email templates
+    - ✅ Fixed `$followUpTime` to display actual preferred_time value
+    - ✅ Removed incorrect `date('h:i A', strtotime())` formatting
+    - ✅ Now displays counselor-selected time exactly as chosen
+    - ✅ Applied fix to all follow-up email templates (created, edited, completed, cancelled)
+- **FOLLOW-UP UI/UX IMPROVEMENTS**: Enhanced user experience with loading states and email template improvements:
+  - **Email Template Updates**: Removed logo and improved branding
+    - ✅ Replaced logo with "Counselign - The USTP Guidance Counseling Sanctuary" text
+    - ✅ Updated all follow-up email templates (created, edited, completed, cancelled)
+    - ✅ Professional text-based headers for better email compatibility
+    - ✅ Consistent branding across all follow-up notifications
+  - **Loading States**: Professional loading animations for all follow-up actions
+    - ✅ Create Follow-up button: "Creating Follow-up..." loading state
+    - ✅ Mark as Complete button: "Completing..." loading state
+    - ✅ Update Follow-up button: "Updating..." loading state
+    - ✅ Confirm Cancellation button: "Cancelling..." loading state
+    - ✅ Smart icon restoration based on button type
+    - ✅ Proper error handling with loading state cleanup
+  - **Manila Timezone Integration**: Complete timezone support for follow-up sessions
+    - ✅ `created_at` column uses Manila timezone for new follow-up sessions
+    - ✅ `updated_at` column uses Manila timezone for all follow-up modifications
+    - ✅ Consistent timezone handling across all follow-up operations
+    - ✅ Proper timezone format: 'Y-m-d H:i:s' (e.g., '2025-10-25 23:42:32')
+    - ✅ **CRITICAL FIX**: Real-time Manila timezone implementation
+      - ✅ `date_default_timezone_set('Asia/Manila')` before database operations
+      - ✅ Automatic timezone restoration after operations
+      - ✅ Exception handling with timezone cleanup
+      - ✅ All follow-up operations now use actual Manila time
+      - ✅ Database timestamps now reflect real Manila time (not server time)
+- **FOLLOW-UP SESSION EDIT FUNCTIONALITY**: Implemented comprehensive edit functionality for pending follow-up sessions:
+  - **Edit Modal**: New edit modal for modifying follow-up session details
+    - ✅ Date and time editing with availability checking
+    - ✅ Consultation type, description, and reason editing
+    - ✅ Form validation and conflict detection
+    - ✅ Pre-populated with current session data
+  - **Edit Button Logic**: Smart button state management
+    - ✅ Edit button only enabled for pending sessions
+    - ✅ Disabled for completed or cancelled sessions
+    - ✅ Visual feedback with proper button states
+  - **Backend Integration**: Complete edit functionality
+    - ✅ `editFollowUp()` method in FollowUp controller
+    - ✅ Conflict detection with other follow-up sessions
+    - ✅ Manila timezone updates for `updated_at` column
+    - ✅ Email notifications to students on edit
+    - ✅ Activity tracking for counselor and student
+  - **Frontend Implementation**: Seamless user experience
+    - ✅ Edit modal with pre-populated data
+    - ✅ Availability loading for selected dates
+    - ✅ Form validation and error handling
+    - ✅ Success/error feedback with modals
+    - ✅ Automatic refresh after successful edit
+
+- **FOLLOW-UP EMAIL NOTIFICATIONS**: Implemented comprehensive email system for follow-up actions:
+  - **Email Templates**: Professional HTML and text email templates
+    - ✅ Follow-up Created notifications (blue theme)
+    - ✅ Follow-up Edited notifications (yellow theme)
+    - ✅ Follow-up Completed notifications (green theme)
+    - ✅ Follow-up Cancelled notifications (red theme)
+  - **Email Service Integration**: Seamless email delivery
+    - ✅ `sendFollowUpCreatedNotification()` method
+    - ✅ `sendFollowUpEditedNotification()` method
+    - ✅ `sendFollowUpCompletedNotification()` method
+    - ✅ `sendFollowUpCancelledNotification()` method
+  - **Student Notifications**: Automatic email delivery
+    - ✅ Created: When counselor creates new follow-up session
+    - ✅ Edited: When counselor modifies pending follow-up session
+    - ✅ Completed: When counselor marks follow-up as completed
+    - ✅ Cancelled: When counselor cancels follow-up session
+  - **Email Content**: Comprehensive follow-up details
+    - ✅ Session date, time, and consultation type
+    - ✅ Description and reason for follow-up
+    - ✅ Counselor information (name, email)
+    - ✅ Professional messaging and branding
+
+- **MANILA TIMEZONE IMPLEMENTATION**: Fixed appointment update timestamps to use Manila timezone:
+  - **Timezone Conversion**: All counselor appointment updates now use Asia/Manila timezone
+    - ✅ `getManilaDateTime()` helper method for consistent timezone handling
+    - ✅ Format: 'Y-m-d H:i:s' (e.g., '2025-10-25 23:42:32')
+    - ✅ Fallback to server time if timezone setting fails
+    - ✅ Comprehensive error handling and logging
+  - **Updated Methods**: Fixed both counselor appointment update methods
+    - ✅ `updateStatus()` method - now updates `updated_at` with Manila timezone
+    - ✅ `updateAppointmentStatus()` method - now uses Manila timezone for timestamps
+    - ✅ All counselor actions (approve, reject, cancel, mark complete) use Manila timezone
+    - ✅ Type-safe implementation with proper error handling
+  - **Testing Support**: Added timezone testing functionality
+    - ✅ `testManilaTimezone()` method for verification
+    - ✅ Test route: `counselor/appointments/test-timezone`
+    - ✅ Returns current Manila time in specified format
+    - ✅ Can be removed after testing completion
+  - **Approval Notifications**: Students receive professional approval emails with appointment details and counselor information
+    - ✅ Green-themed HTML email templates with success indicators
+    - ✅ Complete appointment details (date, time, consultation type, purpose, description)
+    - ✅ Counselor information (name, email, counselor ID)
+    - ✅ Professional confirmation messaging
+  - **Rejection Notifications**: Students receive detailed rejection emails with counselor's reason
+    - ✅ Red-themed HTML email templates with rejection indicators
+    - ✅ Clear rejection reason display with warning styling
+    - ✅ Complete appointment details for reference
+    - ✅ Counselor information and guidance for rescheduling
+  - **Cancellation Notifications**: Students receive cancellation emails when counselors cancel appointments
+    - ✅ Gray-themed HTML email templates with cancellation indicators
+    - ✅ Cancellation reason display with professional messaging
+    - ✅ Complete appointment details and counselor information
+    - ✅ Apology messaging and rescheduling guidance
+- **EMAIL SERVICE ARCHITECTURE**: Enhanced AppointmentEmailService with counselor-specific methods:
+  - ✅ `sendAppointmentApprovalNotification()` - Sends approval emails to students
+  - ✅ `sendAppointmentRejectionNotification()` - Sends rejection emails to students
+  - ✅ `sendAppointmentCancellationByCounselorNotification()` - Sends cancellation emails to students
+  - ✅ `getStudentEmail()` - Retrieves student email from users table
+  - ✅ External `CounselorEmailTemplates` class for maintainable email templates
+  - ✅ Centralized email configuration using `Config\Email` settings
+- **COUNSELOR CONTROLLER INTEGRATION**: Enhanced Counselor Appointment controller:
+  - ✅ `sendAppointmentNotificationToStudent()` helper method for centralized email handling
+  - ✅ Automatic email sending on appointment status updates (approve/reject/cancel)
+  - ✅ Counselor information retrieval for email content
+  - ✅ Comprehensive error handling and logging
+- **LOADING STATES**: Added professional loading animations to counselor modal interactions:
+  - ✅ **Approval Button**: Shows spinner and "Processing..." text during approval
+  - ✅ **Rejection Button**: Shows spinner and "Processing..." text during rejection confirmation
+  - ✅ **Cancellation Button**: Already implemented in scheduled appointments page
+  - ✅ **Button State Management**: Disables buttons during processing, restores on error
+  - ✅ **Promise-based Architecture**: Updated JavaScript functions to return promises for proper async handling
+- **TECHNICAL IMPLEMENTATION**: Type-safe and maintainable code structure:
+  - ✅ Professional HTML email templates with responsive design
+  - ✅ Plain text fallback for email clients that don't support HTML
+  - ✅ Comprehensive error handling with detailed logging
+  - ✅ Database query optimization with proper JOINs
+  - ✅ Centralized email configuration management
+  - ✅ Modular template system for easy maintenance
+  - **Loading Button States**: Added loading animations to Save Changes and Confirm Cancellation buttons
+    - ✅ Shows spinner and loading text during API calls
+    - ✅ Disables buttons to prevent multiple submissions
+    - ✅ Resets button state on error with proper error handling
+    - ✅ Type-safe implementation with proper promise handling
+  - **Improved Modal Flow**: Enhanced user experience during appointment operations
+    - ✅ Modals stay open during loading process with visual feedback
+    - ✅ Success confirmation appears after successful completion
+    - ✅ Proper error handling with button state restoration
+    - ✅ Clear visual indication of processing state
+- **BUG FIX**: Resolved cancellation reason not showing in email notifications:
+  - **Data Flow Issue**: Fixed appointment data not including cancellation reason
+    - ✅ Added cancellation reason to appointment data before sending email
+    - ✅ Ensures counselor receives complete cancellation information
+    - ✅ Proper data passing between controller and email service
+    - ✅ Type-safe implementation with proper error handling
+- **NEW FEATURE**: Added appointment cancellation email notifications:
+  - **Cancellation Email Service**: Added `sendAppointmentCancellationNotification()` method to `AppointmentEmailService`
+    - ✅ Sends professional cancellation notifications to counselors
+    - ✅ Includes cancellation reason, appointment details, and student information
+    - ✅ Uses centralized email configuration from `Config\Email`
+    - ✅ Comprehensive error handling and logging
+  - **Cancellation Email Templates**: Created HTML and plain text email templates
+    - ✅ Professional HTML template with red color scheme for cancellations
+    - ✅ Clear cancellation reason display with warning styling
+    - ✅ Complete appointment details and student information
+    - ✅ Plain text fallback for email clients that don't support HTML
+  - **Controller Integration**: Enhanced `cancel()` method in `Student\Appointment` controller
+    - ✅ Automatically sends email notification when student cancels appointment
+    - ✅ Only sends notification if appointment had a counselor preference
+    - ✅ Uses same database query pattern as booking/editing notifications
+    - ✅ Type-safe implementation with proper error handling
+  - **Database Query Fix**: Resolved database query error in email notification system:
+  - **Database Schema Issue**: Fixed "Unknown column 'first_name' in 'field list'" error
+    - ✅ Student personal information stored in `student_personal_info` table, not `users` table
+    - ✅ Updated query to properly join `users` and `student_personal_info` tables
+    - ✅ Added validation for required name fields before sending emails
+    - ✅ Enhanced error handling for incomplete student information
+  - **Corrected Database Query**: Updated `sendAppointmentNotificationToCounselor()` method
+    - ✅ Uses proper JOIN: `users u LEFT JOIN student_personal_info spi ON spi.student_id = u.user_id`
+    - ✅ Selects correct fields: `u.user_id, u.email, spi.first_name, spi.last_name`
+    - ✅ Validates name fields exist before proceeding with email sending
+    - ✅ Type-safe implementation with proper error handling
+  - **Enhanced Error Handling**: Better validation and logging
+    - ✅ Checks if student information exists before processing
+    - ✅ Validates that first_name and last_name are not empty
+    - ✅ Comprehensive error logging for debugging
+    - ✅ Graceful handling of missing student data
+- **ENHANCED FEATURE**: Improved email notification system with centralized configuration and debugging capabilities:
+  - **Centralized Email Configuration**: Both `AppointmentEmailService` and `EmailController` now use `Config\Email` settings
+    - ✅ All SMTP settings (host, port, username, password, encryption) from centralized config
+    - ✅ Email sender information (fromEmail, fromName) from centralized config
+    - ✅ Additional settings (charset, wordWrap, priority, timeout) from centralized config
+    - ✅ Type-safe configuration loading with proper error handling
+  - **Enhanced Error Handling**: Improved debugging and error reporting for email operations
+    - ✅ Comprehensive logging for email configuration loading
+    - ✅ Detailed error messages with PHPMailer ErrorInfo
+    - ✅ Step-by-step logging for email sending process
+    - ✅ Better error handling in both booking and editing notifications
+  - **Email Testing Capabilities**: Added debugging tools for email service
+    - ✅ `testEmailConfiguration()` method in AppointmentEmailService
+    - ✅ `testEmailService()` endpoint in Student Appointment controller
+    - ✅ Route: `POST student/appointments/test-email` for testing email functionality
+    - ✅ Comprehensive test results (config, SMTP connection, send test)
+  - **Improved Email Sending**: Enhanced reliability and debugging
+    - ✅ Better recipient clearing and management
+    - ✅ Enhanced logging for counselor email lookup
+    - ✅ Improved error handling with detailed error messages
+    - ✅ Non-blocking email operations with comprehensive logging
+  - **Files Enhanced**:
+    - `app/Services/AppointmentEmailService.php` - Centralized config, enhanced error handling, test method
+    - `app/Controllers/EmailController.php` - Centralized config, enhanced error handling
+    - `app/Controllers/Student/Appointment.php` - Added test email endpoint
+    - `app/Config/Routes.php` - Added test email route
+- **MAJOR FEATURE**: Implemented comprehensive last_activity tracking across all student and counselor activities:
+  - **AppointmentEmailService Class**: Created dedicated service class for appointment email notifications
+    - ✅ PHPMailer integration with Gmail SMTP configuration
+    - ✅ Type-safe email sending with comprehensive error handling
+    - ✅ Counselor email lookup from users table using counselor_id
+    - ✅ Professional HTML email templates for booking and editing notifications
+    - ✅ Detailed appointment and student information in email content
+  - **Student Appointment Controller Enhanced**: Updated `App\Controllers\Student\Appointment`
+    - ✅ `save()` method now sends booking notification to selected counselor
+    - ✅ `update()` method now sends editing notification to selected counselor
+    - ✅ Added `sendAppointmentNotificationToCounselor()` helper method
+    - ✅ Comprehensive error handling and logging for email operations
+  - **Email Notification Features**:
+    - ✅ Automatic counselor email lookup using `counselors.counselor_id = users.user_id` relationship
+    - ✅ Professional HTML email templates with responsive design
+    - ✅ Complete appointment details (date, time, consultation type, purpose, description)
+    - ✅ Student information (name, ID, email) included in notifications
+    - ✅ Different email templates for booking vs editing actions
+    - ✅ Proper error handling and logging for failed email deliveries
+  - **Integration Points**:
+    - ✅ Email sent only when counselor preference is selected (not "No preference")
+    - ✅ Non-blocking email sending (appointment operations continue even if email fails)
+    - ✅ Comprehensive logging for debugging email delivery issues
+  - **Files Created/Modified**:
+    - `app/Services/AppointmentEmailService.php` - New email service class
+    - `app/Controllers/Student/Appointment.php` - Enhanced with email notifications
+- **MAJOR FEATURE**: Implemented comprehensive last_activity tracking across all student and counselor activities:
+  - **UserActivityHelper Enhanced**: Now dynamically detects user IDs from multiple sources
+  - **Dynamic ID Detection**: Automatically finds user_id from:
+    - ✅ Session data (`user_id`, `user_id_display`)
+    - ✅ Data arrays (`student_id`, `counselor_id`, `sender_id`, `receiver_id`)
+    - ✅ Request parameters (POST data)
+    - ✅ Direct parameter passing
+  - **Smart Validation**: Validates user existence before updating activity
+  - **Type-Safe Implementation**: Maintains strict typing and error handling
+  - **Manila Timezone Consistency**: All timestamps use `$manilaTime->format('Y-m-d H:i:s')` format
+  - **Centralized Time Management**: `getManilaTime()` method ensures consistent timezone handling
+  - **Student Activities Tracked**:
+    - ✅ Login (Auth.php)
+    - ✅ Profile updates (password, photo, email, username) (Profile.php)
+    - ✅ PDS updates (PDS.php)
+    - ✅ Messaging counselors (Message.php)
+    - ✅ Scheduling appointments (Appointment.php)
+    - ✅ Editing pending appointments (Appointment.php)
+    - ✅ Downloading approved tickets (Appointment.php + JavaScript tracking)
+    - ✅ Logout with all fields (logout_time, last_inactive_at, last_active_at, last_activity) (Logout.php)
+  - **Counselor Activities Tracked**:
+    - ✅ Login (Auth.php)
+    - ✅ Replying to student messages (Message.php)
+    - ✅ Creating follow-up sessions (FollowUp.php)
+    - ✅ Completing follow-up sessions (FollowUp.php)
+    - ✅ Cancelling follow-up sessions (FollowUp.php)
+    - ✅ Approving/cancelling appointments (Appointments.php)
+    - ✅ Marking appointments as complete (Appointments.php)
+    - ✅ Profile updates (Profile.php)
+    - ✅ Exporting reports (Appointments.php + JavaScript tracking)
+    - ✅ Logout with all fields (Logout.php)
+  - **Admin Activities Tracked**:
+    - ✅ Login (Auth.php)
+    - ✅ Profile updates (AdminProfileApi.php)
+    - ✅ Exporting reports (Appointments.php + JavaScript tracking)
+    - ✅ Logout with all fields (Logout.php)
+  - **Files Modified**:
+    - `app/Helpers/UserActivityHelper.php` - Enhanced to update both last_activity and last_active_at
+    - `app/Controllers/Student/Appointment.php` - Added trackDownload endpoint
+    - `app/Controllers/Counselor/Appointments.php` - Added trackExport endpoint
+    - `app/Controllers/Admin/Appointments.php` - Added trackExport endpoint
+    - `app/Config/Routes.php` - Added tracking routes
+    - `public/js/student/my_appointments.js` - Added download activity tracking
+- **MAJOR FEATURE**: Implemented comprehensive last_activity tracking across all student and counselor activities:
+  - **UserActivityHelper Class**: Created centralized helper class for consistent last_activity updates
+  - **Authentication Tracking**: Updated login, logout, password reset, and account verification controllers
+  - **Messaging Tracking**: Enhanced student and counselor messaging controllers for send/view activities
+  - **Appointment Tracking**: Updated appointment creation, editing, approval, cancellation, and completion controllers
+  - **Follow-up Tracking**: Enhanced follow-up appointment creation, completion, and cancellation controllers
+  - **Profile Tracking**: Updated profile update controllers for all user types (student, counselor, admin)
+  - **PDS Tracking**: Enhanced Personal Data Sheet save functionality with activity tracking
+  - **Notification Tracking**: Updated notification viewing controllers for both students and counselors
+  - **Type Safety**: Maintained clean, descriptive code with comprehensive error handling throughout
+  - **Activity Types**: Implemented specific activity types for different user actions (login, send_message, create_appointment, etc.)
+  - **Role-based Tracking**: Separate tracking methods for students, counselors, and admins with appropriate activity types
+  - **Files Modified**: 
+    - `app/Helpers/UserActivityHelper.php` - New centralized helper class
+    - `app/Controllers/Auth.php` - Login and verification tracking
+    - `app/Controllers/Logout.php` - Logout tracking
+    - `app/Controllers/UpdatePassword.php` - Password change tracking
+    - `app/Controllers/ForgotPassword.php` - Password reset tracking
+    - `app/Controllers/Student/Message.php` - Student messaging tracking
+    - `app/Controllers/Counselor/Message.php` - Counselor messaging tracking
+    - `app/Controllers/Student/Appointment.php` - Student appointment tracking
+    - `app/Controllers/Admin/Appointments.php` - Admin appointment management tracking
+    - `app/Controllers/Counselor/Appointments.php` - Counselor appointment tracking
+    - `app/Controllers/Counselor/FollowUp.php` - Follow-up appointment tracking
+    - `app/Controllers/Student/Profile.php` - Student profile tracking
+    - `app/Controllers/Counselor/Profile.php` - Counselor profile tracking
+    - `app/Controllers/Admin/AdminProfileApi.php` - Admin profile tracking
+    - `app/Controllers/Student/PDS.php` - PDS save tracking
+    - `app/Controllers/Student/Notifications.php` - Student notification tracking
+    - `app/Controllers/Counselor/Notifications.php` - Counselor notification tracking
+
+Previous Changes:
+- **FOLLOW-UP REASON LABEL ENHANCEMENT**: Enhanced follow-up session reason display across all user types:
+  - **Enhancement**: Added conditional reason labels based on session status
+  - **Implementation**: Modified reason display logic in all follow-up session files
+  - **Logic**: Shows "Reason For Cancellation:" for cancelled sessions, "Reason For Follow-up:" for pending/completed sessions
+  - **Type Safety**: Used clear conditional logic with descriptive variable names
+  - **Impact**: Improves user experience by providing context-appropriate labels for different session statuses
+  - **Code Quality**: Maintained clean, descriptive code without modifying existing functions
+  - **Files Modified**: 
+    - `public/js/counselor/follow_up.js` - Enhanced reason label display
+    - `public/js/admin/follow_up_sessions.js` - Enhanced reason label display  
+    - `public/js/student/follow_up_sessions.js` - Enhanced reason label display
+
+- **PREVIOUS ENHANCEMENT**: Modified counselor follow-up cancellation functionality:
+  - **Enhancement**: Added automatic prefix "Reason From Counselor:" to cancellation reasons
+  - **Implementation**: Modified `confirmCancelFollowUp()` function in `public/js/counselor/follow_up.js`
+  - **Type Safety**: Used clear variable naming with `formattedReason` for better debugging
+  - **Impact**: Improves clarity in database records by clearly identifying counselor-provided reasons
+  - **Code Quality**: Maintained clean, descriptive code without modifying existing functions
+  - **Files Modified**: `public/js/counselor/follow_up.js` - Enhanced cancellation reason formatting
+
+- **PREVIOUS BUG FIX**: Fixed counselor history reports data filtering issue:
   - **Issue Identified**: Counselor history reports were showing data from ALL counselors instead of only the logged-in counselor
   - **Root Cause Analysis**: 
     - **Primary Issue**: JavaScript was calling the WRONG endpoint - `admin/history-reports/historical-data` instead of `counselor/history-reports/historical-data`

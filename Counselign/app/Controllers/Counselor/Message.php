@@ -2,7 +2,10 @@
 
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
+use App\Helpers\UserActivityHelper;
 use CodeIgniter\API\ResponseTrait;
 
 class Message extends BaseController
@@ -67,6 +70,9 @@ class Message extends BaseController
                     COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), u.username) as other_username,
                     u.email as other_email,
                     u.profile_picture as other_profile_picture,
+                    u.last_activity,
+                    u.last_login,
+                    u.logout_time,
                     m.created_at as last_message_time,
                     m.message_text as last_message,
                     CASE 
@@ -100,6 +106,9 @@ class Message extends BaseController
                     'other_username' => $message['other_username'],
                     'other_email' => $message['other_email'],
                     'other_profile_picture' => $message['other_profile_picture'],
+                    'last_activity' => $message['last_activity'],
+                    'last_login' => $message['last_login'],
+                    'logout_time' => $message['logout_time'],
                     'last_message_time' => $message['last_message_time'],
                     'last_message' => $message['last_message'],
                     'last_message_type' => $message['last_message_type'],
@@ -126,6 +135,9 @@ class Message extends BaseController
                     COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), u.username) as other_username,
                     u.email as other_email,
                     u.profile_picture as other_profile_picture,
+                    u.last_activity,
+                    u.last_login,
+                    u.logout_time,
                     m.created_at as last_message_time,
                     m.message_text as last_message,
                     m.is_read
@@ -151,6 +163,9 @@ class Message extends BaseController
                     'other_username' => $message['other_username'],
                     'other_email' => $message['other_email'],
                     'other_profile_picture' => $message['other_profile_picture'],
+                    'last_activity' => $message['last_activity'],
+                    'last_login' => $message['last_login'],
+                    'logout_time' => $message['logout_time'],
                     'last_message_time' => $message['last_message_time'],
                     'last_message' => $message['last_message'],
                     'unread_count' => $message['is_read'] ? 0 : 1
@@ -186,6 +201,11 @@ class Message extends BaseController
         }
 
         $messages = $query->getResultArray();
+        
+        // Update last_activity for viewing messages
+        $activityHelper = new UserActivityHelper();
+        $activityHelper->updateCounselorActivity($userId, 'view_messages');
+        
         return $this->respond(['success' => true, 'messages' => $messages]);
     }
 
@@ -209,13 +229,12 @@ class Message extends BaseController
         
         $db->query($sql, [$userId, $receiverId, $messageText]);
 
-        // Update counselor's activity
-        $db->table('users')
-            ->where('user_id', $userId)
-            ->update([
-                'last_active_at' => $currentTime,
-                'last_activity' => $currentTime
-            ]);
+        // Update last_activity for sending message (dynamic ID detection)
+        $activityHelper = new UserActivityHelper();
+        $activityHelper->updateCounselorActivity(null, 'send_message', [
+            'sender_id' => $userId,
+            'receiver_id' => $receiverId
+        ]);
 
         return $this->respond(['success' => true, 'message' => 'Message sent successfully']);
     }

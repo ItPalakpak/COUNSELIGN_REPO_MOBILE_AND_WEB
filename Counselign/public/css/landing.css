@@ -762,7 +762,93 @@ footer {
     }
 }
 
+/* Resend Reset Code Modal Styles */
+#resendResetCodeModal .modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#resendResetCodeModal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+#resendResetCodeModal .modal-title {
+    color: #495057;
+    font-weight: 600;
+}
+
+#resendResetCodeModal .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+#resendResetCodeModal .form-control {
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    padding: 0.75rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#resendResetCodeModal .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+#resendResetCodeModal .btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+#resendResetCodeModal .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+#resendResetCodeModal .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+#resendResetCodeModal .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+#resendResetCodeModal .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+#resendResetCodeModal .text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+#resendResetCodeModal .text-muted {
+    color: #6c757d !important;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
 @media (max-width: 576px) {
     .token-inputs { gap: 0.4rem; }
     .token-inputs .token-box { width: 40px; height: 46px; font-size: 1.1rem; }
+    
+    /* Mobile styles for resend reset code modal */
+    #resendResetCodeModal .modal-dialog {
+        margin: 1rem;
+    }
+    
+    #resendResetCodeModal .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
 }

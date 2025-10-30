@@ -70,13 +70,13 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'cors',        // Enable CORS for all requests
+            //'csrf',        // Enable CSRF protection for all POST requests
             // 'honeypot',
-            // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
             // 'honeypot',
-            // 'secureheaders',
+            'secureheaders', // Enable security headers
         ],
     ];
 

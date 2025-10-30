@@ -400,6 +400,7 @@
     </script>
     <script src="<?= base_url('js/admin/view_all_appointments.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         function confirmLogout() {
             if (confirm('Are you sure you want to log out?')) {

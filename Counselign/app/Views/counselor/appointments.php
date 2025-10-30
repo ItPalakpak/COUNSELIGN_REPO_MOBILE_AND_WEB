@@ -314,6 +314,7 @@
     </script>
     <script src="<?= base_url('js/counselor/appointments.js') ?>" defer></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 </body>
 
 </html>

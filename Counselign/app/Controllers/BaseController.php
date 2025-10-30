@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+
+use App\Helpers\SecureLogHelper;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\IncomingRequest;

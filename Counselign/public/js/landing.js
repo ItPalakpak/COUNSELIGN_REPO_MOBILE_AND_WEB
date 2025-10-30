@@ -5,7 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const forgotPasswordModal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
     const termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
     const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
-    const verificationModalInstance = new bootstrap.Modal(document.getElementById('verificationModal')); // Initialize Bootstrap modal instance
+    const verificationModalInstance = new bootstrap.Modal(document.getElementById('verificationModal'));
+    const counselorInfoModalInstance = (function(){
+        const el = document.getElementById('counselorInfoModal');
+        return el ? new bootstrap.Modal(el) : null;
+    })();
     const urlParams = new URLSearchParams(window.location.search);
     const openParam = urlParams.get('open');
     
@@ -14,6 +18,91 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         contactModal.show();
     });
+
+    // --- Counselor Info submission ---
+    (function initCounselorInfoFlow(){
+        const submitBtn = document.getElementById('counselorInfoSubmitBtn');
+        const modalEl = document.getElementById('counselorInfoModal');
+        if (!submitBtn || !modalEl) return;
+
+        function resetWarning() {
+            const warn = document.getElementById('counselorInfoWarning');
+            if (warn) { warn.classList.add('d-none'); warn.textContent = ''; }
+        }
+
+        function showWarn(msg) {
+            const warn = document.getElementById('counselorInfoWarning');
+            if (warn) { warn.textContent = msg; warn.classList.remove('d-none'); }
+        }
+
+        function getField(id){ return document.getElementById(id); }
+
+        submitBtn.addEventListener('click', function(e){
+            e.preventDefault();
+            resetWarning();
+
+            const counselor_id = (getField('c_info_counselor_id')?.value || '').trim();
+            const name = (getField('c_info_name')?.value || '').trim();
+            const degree = (getField('c_info_degree')?.value || '').trim();
+            const email = (getField('c_info_email')?.value || '').trim();
+            const contact_number = (getField('c_info_contact')?.value || '').trim();
+            const address = (getField('c_info_address')?.value || '').trim();
+            const civil_status = getField('c_info_civil_status')?.value || '';
+            const sex = getField('c_info_sex')?.value || '';
+            const birthdate = getField('c_info_birthdate')?.value || '';
+
+            if (!counselor_id || !name || !degree || !email || !contact_number || !address) {
+                return showWarn('Please fill in all required fields.');
+            }
+            if (!isValidEmail(email)) {
+                return showWarn('Please enter a valid email address.');
+            }
+            if (!/^09[0-9]{9}$/.test(contact_number)) {
+                return showWarn('Contact number must be in the format 09XXXXXXXXX.');
+            }
+
+            const original = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+            const formData = new FormData();
+            formData.append('counselor_id', counselor_id);
+            formData.append('name', name);
+            formData.append('degree', degree);
+            formData.append('email', email);
+            formData.append('contact_number', contact_number);
+            formData.append('address', address);
+            if (civil_status) formData.append('civil_status', civil_status);
+            if (sex) formData.append('sex', sex);
+            if (birthdate) formData.append('birthdate', birthdate);
+            formData.append(window.CSRF_TOKEN_NAME, document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+            fetch((window.BASE_URL || '/') + 'counselor/save-basic-info', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = original;
+                if (data.status === 'success') {
+                    try { bootstrap.Modal.getInstance(modalEl).hide(); } catch (e) {}
+                    openConfirmationModal('Your information has been saved. Please wait for admin approval.');
+                    // Clear fields
+                    ['c_info_name','c_info_degree','c_info_email','c_info_contact','c_info_address','c_info_civil_status','c_info_sex','c_info_birthdate']
+                        .forEach(function(id){ const el = getField(id); if (el) el.value = ''; });
+                } else {
+                    showWarn(data.message || 'Failed to save information.');
+                }
+            })
+            .catch(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = original;
+                showWarn('An error occurred. Please try again.');
+            });
+        });
+    })();
 
     // Contact form submission
     document.getElementById('contactSubmitBtn').addEventListener('click', function(e) {
@@ -60,15 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (isValid) {
-            // Get the submit button
             const submitBtn = document.getElementById('contactSubmitBtn');
             const originalBtnText = submitBtn.innerHTML;
             
-            // Disable button and show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
             
-            // Create form data
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
@@ -76,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('message', message);
             formData.append(window.CSRF_TOKEN_NAME, document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-            // Send AJAX request
             fetch(window.BASE_URL + 'email/sendContactEmail', {
                 method: 'POST',
                 headers: {
@@ -86,13 +171,11 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Reset button state
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
                 
                 if (data.status === 'success') {
                     openConfirmationModal('Thank you for your message! We will get back to you soon.');
-                    // Clear form
                     document.getElementById('contactName').value = '';
                     document.getElementById('contactEmail').value = '';
                     document.getElementById('contactSubject').value = '';
@@ -103,10 +186,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                // Reset button state
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
-                
                 console.error('Error:', error);
                 openConfirmationModal('An error occurred. Please try again later.');
             });
@@ -154,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('backToLoginLink').addEventListener('click', function(e) {
-            e.preventDefault();
+        e.preventDefault();
         signUpModal.hide();
         setTimeout(() => {
             loginModal.show();
@@ -172,23 +253,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Terms link
     document.getElementById('termsLink').addEventListener('click', function(e) {
-            e.preventDefault();
+        e.preventDefault();
         termsModal.show();
     });
     
-    // Helper to toggle password and swap icon between FA eye and eye.png
+    // Password visibility toggle helper
     function togglePasswordWithIcon(inputId, buttonId, iconId) {
         const input = document.getElementById(inputId);
         const button = document.getElementById(buttonId);
         if (!input || !button) return;
 
-        // Determine current icon element inside the button (could be <i> or <img>)
         let currentIcon = document.getElementById(iconId) || button.querySelector('.toggle-password');
 
         if (input.type === 'password') {
-            // Show password, switch to image hide icon
             input.type = 'text';
-
             if (currentIcon && currentIcon.tagName && currentIcon.tagName.toLowerCase() === 'img') {
                 currentIcon.src = (window.BASE_URL || '/') + 'Photos/close_eye.png';
                 currentIcon.alt = 'Hide password';
@@ -200,11 +278,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.style.width = '20px';
                 img.style.height = '20px';
                 img.style.cursor = 'pointer';
-                img.id = iconId; // keep same id for consistency
+                img.id = iconId;
                 if (currentIcon) currentIcon.replaceWith(img); else button.appendChild(img);
             }
         } else {
-            // Hide password, restore FA eye icon
             input.type = 'password';
             if (currentIcon && currentIcon.tagName && currentIcon.tagName.toLowerCase() === 'img') {
                 const icon = document.createElement('i');
@@ -238,50 +315,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('toggleNewPassword').addEventListener('click', function() {
         togglePasswordWithIcon('newPasswordInput', 'toggleNewPassword', 'eyeIconNewPassword');
     });
+    
     // Password visibility toggle for confirm new password
     document.getElementById('toggleConfirmNewPassword').addEventListener('click', function() {
         togglePasswordWithIcon('confirmNewPasswordInput', 'toggleConfirmNewPassword', 'eyeIconConfirmNewPassword');
     });
     
-    // --- Input Filtering --- 
-
-    const loginUserIdInput = document.getElementById('loginUserIdInput');
-    const signUpUserIdInput = document.getElementById('signUpUserIdInput'); // Moved declaration here
-    const loginRoleSelect = document.getElementById('loginRole');
+    // --- Regular User/Counselor Login --- 
+    const loginIdentifierInput = document.getElementById('loginIdentifierInput');
     const openAdminModalBtn = document.getElementById('openAdminModalBtn');
-
-    // Function to filter input for numeric only and max length 10
-    function filterNumericInput(inputElement) {
-        inputElement.value = inputElement.value.replace(/\D/g, ''); // Remove non-digits
-        if (inputElement.value.length > 10) {
-            inputElement.value = inputElement.value.slice(0, 10); // Enforce max length
-        }
-    }
-
-    // Function to enforce max length 10 (for admin)
-    function filterMaxLength(inputElement) {
-        if (inputElement.value.length > 10) {
-            inputElement.value = inputElement.value.slice(0, 10); // Enforce max length
-        }
-    }
-
-    // Filter Signup User ID (always numeric)
-    signUpUserIdInput.addEventListener('input', function() {
-        filterNumericInput(this);
-    });
-
-    // Filter Login User ID (no admin role, only numeric for user/counselor)
-    loginUserIdInput.addEventListener('input', function() {
-        filterNumericInput(this);
-    });
-
-    // Apply filter immediately when login role changes
-    loginRoleSelect.addEventListener('change', function() {
-        const selectedRole = this.value;
-        loginUserIdInput.placeholder = 'User ID';
-        filterNumericInput(loginUserIdInput);
-        document.getElementById('loginUserIdError').classList.add('d-none');
-    });
 
     // Login form submission
     document.getElementById('loginBtn').addEventListener('click', function(e) {
@@ -289,27 +331,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset error messages
         document.getElementById('loginWarning').classList.add('d-none');
-        document.getElementById('loginUserIdError').classList.add('d-none');
+        document.getElementById('loginIdentifierError').classList.add('d-none');
         document.getElementById('loginPasswordError').classList.add('d-none');
         document.getElementById('loginInvalidError').classList.add('d-none');
         
         // Get form data
-        const role = document.getElementById('loginRole').value;
-        const userId = document.getElementById('loginUserIdInput').value.trim();
+        const identifier = document.getElementById('loginIdentifierInput').value.trim();
         const password = document.getElementById('passwordInput').value.trim();
         
         // Basic validation
         let isValid = true;
         
-        if (!userId) {
-            document.getElementById('loginUserIdError').textContent = "Please enter your User ID.";
-            document.getElementById('loginUserIdError').classList.remove('d-none');
-            document.getElementById('loginWarning').classList.remove('d-none');
-            isValid = false;
-        } else if (role === 'student' && !/^\d{10}$/.test(userId)) {
-            // User ID validation: Must be exactly 10 digits
-            document.getElementById('loginUserIdError').textContent = "User ID must be exactly 10 digits.";
-            document.getElementById('loginUserIdError').classList.remove('d-none');
+        if (!identifier) {
+            document.getElementById('loginIdentifierError').textContent = "Please enter your User ID or Email.";
+            document.getElementById('loginIdentifierError').classList.remove('d-none');
             document.getElementById('loginWarning').classList.remove('d-none');
             isValid = false;
         }
@@ -324,13 +359,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const loginBtn = document.getElementById('loginBtn');
             const originalLoginBtnText = loginBtn.innerHTML;
 
-            // Show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging In...';
 
-            // Send AJAX request to login handler
             const formData = new FormData();
-            formData.append('user_id', userId);
+            formData.append('identifier', identifier);
             formData.append('password', password);
             
             fetch(window.BASE_URL + 'index.php/auth/login', {
@@ -342,32 +375,29 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Revert button state
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = originalLoginBtnText;
 
                 if (data.status === 'success') {
-                    // Redirect to appropriate dashboard
                     window.location.href = data.redirect.startsWith('http') || data.redirect.startsWith('/') ? data.redirect : window.BASE_URL + data.redirect;
                 } else if (data.status === 'unverified') {
-                    // Hide current modal, open verification modal
                     loginModal.hide();
                     setTimeout(() => {
-                        openConfirmationModal(data.message); // Use confirmation modal
-                        verificationModalInstance.show(); // Use Bootstrap's show method
+                        openConfirmationModal(data.message);
+                        // Only show verification modal for student (server includes redirect in that case)
+                        if (data.redirect) {
+                            try { verificationModalInstance.show(); } catch (e) {}
+                        }
                     }, 500);
                 } else {
-                    // Show error message
                     document.getElementById('loginInvalidError').textContent = data.message;
                     document.getElementById('loginInvalidError').classList.remove('d-none');
                     document.getElementById('loginWarning').classList.remove('d-none');
                 }
             })
             .catch(error => {
-                // Revert button state
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = originalLoginBtnText;
-
                 console.error('Error:', error);
                 document.getElementById('loginInvalidError').textContent = 'An error occurred. Please try again.';
                 document.getElementById('loginInvalidError').classList.remove('d-none');
@@ -376,12 +406,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Dedicated Admin Login button
+    // --- Admin Login ---
     if (openAdminModalBtn) {
         openAdminModalBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            const adminIdInput = document.getElementById('adminUserIdInput');
-            if (adminIdInput) adminIdInput.value = loginUserIdInput.value;
+            const adminIdInput = document.getElementById('adminIdentifierInput');
+            if (adminIdInput) adminIdInput.value = loginIdentifierInput.value;
             try { loginModal.hide(); } catch (e) {}
             setTimeout(() => adminPasswordModal.show(), 300);
         });
@@ -396,18 +426,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('adminLoginBtn').addEventListener('click', function(e) {
         e.preventDefault();
 
-        // Reset admin error messages
         document.getElementById('adminLoginWarning').classList.add('d-none');
-        document.getElementById('adminUserIdError').classList.add('d-none');
+        document.getElementById('adminIdentifierError').classList.add('d-none');
         document.getElementById('adminPasswordError').classList.add('d-none');
         document.getElementById('adminInvalidError').classList.add('d-none');
 
-        const adminUserId = document.getElementById('adminUserIdInput').value.trim();
+        const adminIdentifier = document.getElementById('adminIdentifierInput').value.trim();
         const adminPassword = document.getElementById('adminPasswordInput').value.trim();
 
         let adminValid = true;
-        if (!adminUserId) {
-            document.getElementById('adminUserIdError').classList.remove('d-none');
+        if (!adminIdentifier) {
+            document.getElementById('adminIdentifierError').classList.remove('d-none');
             document.getElementById('adminLoginWarning').classList.remove('d-none');
             adminValid = false;
         }
@@ -425,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verifying...';
 
         const formData = new FormData();
-        formData.append('user_id', adminUserId);
+        formData.append('identifier', adminIdentifier);
         formData.append('password', adminPassword);
 
         fetch((window.BASE_URL || '/') + 'index.php/auth/verify-admin', {
@@ -440,7 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = originalText;
             if (data.status === 'success') {
-                // Close both modals and redirect to admin dashboard
                 try { adminPasswordModal.hide(); } catch (e) {}
                 try { loginModal.hide(); } catch (e) {}
                 window.location.href = data.redirect.startsWith('http') || data.redirect.startsWith('/') ? data.redirect : (window.BASE_URL || '/') + data.redirect;
@@ -448,10 +476,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 adminPasswordModal.hide();
                 setTimeout(() => {
                     openConfirmationModal(data.message);
-                    verificationModalInstance.show();
+                    if (data.redirect) {
+                        try { verificationModalInstance.show(); } catch (e) {}
+                    }
                 }, 300);
             } else {
-                document.getElementById('adminInvalidError').textContent = data.message || 'Invalid Admin ID or password';
+                document.getElementById('adminInvalidError').textContent = data.message || 'Invalid Admin credentials';
                 document.getElementById('adminInvalidError').classList.remove('d-none');
                 document.getElementById('adminLoginWarning').classList.remove('d-none');
             }
@@ -469,20 +499,30 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('adminBackToLoginBtn').addEventListener('click', function(e) {
         e.preventDefault();
         try { adminPasswordModal.hide(); } catch (e) {}
-        // Reset login role so selecting Admin again will fire change
-        const roleSelect = document.getElementById('loginRole');
-        const userIdInput = document.getElementById('loginUserIdInput');
-        if (roleSelect) {
-            roleSelect.value = 'student';
-            // Update placeholder and filters consistently
-            userIdInput.placeholder = 'User ID';
-            // Trigger change to apply numeric filter and clear any errors
-            const evt = new Event('change', { bubbles: true });
-            roleSelect.dispatchEvent(evt);
-        }
         setTimeout(() => loginModal.show(), 300);
     });
+
+    // Helper function to validate email
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
     
+    const signUpUserIdInput = document.getElementById('signUpUserIdInput');
+
+    // Function to filter input for numeric only and max length 10
+    function filterNumericInput(inputElement) {
+        inputElement.value = inputElement.value.replace(/\D/g, '');
+        if (inputElement.value.length > 10) {
+            inputElement.value = inputElement.value.slice(0, 10);
+        }
+    }
+
+    // Filter Signup User ID (always numeric)
+    signUpUserIdInput.addEventListener('input', function() {
+        filterNumericInput(this);
+    });
+
     // Sign Up form submission
     document.getElementById('signUpBtn').addEventListener('click', function(e) {
         e.preventDefault();
@@ -501,14 +541,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = document.getElementById('signUpPasswordInput').value.trim();
         const confirmPassword = document.getElementById('confirmPasswordInput').value.trim();
         const termsChecked = document.getElementById('termsCheckbox').checked;
-        const username = document.getElementById('signUpUsernameInput').value.trim(); // Assuming you add a username input
-        const selectedRole = document.getElementById('signUpRole').value; // Get selected role
+        const username = document.getElementById('signUpUsernameInput').value.trim();
+        const selectedRole = document.getElementById('signUpRole').value;
 
-        
         // Basic validation
         let isValid = true;
         
-        // User ID validation: Must be exactly 10 digits for 'user' role, or non-empty for 'counselor'
+        // User ID validation
         if (!userId) {
             document.getElementById('signUpUserIdError').textContent = "Please enter your User ID or Counselor ID.";
             document.getElementById('signUpUserIdError').classList.remove('d-none');
@@ -519,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('signUpUserIdError').classList.remove('d-none');
             document.getElementById('signUpWarning').classList.remove('d-none');
             isValid = false;
-        } else if (selectedRole === 'counselor' && userId.length < 3) { // Example: minimum length for counselor ID
+        } else if (selectedRole === 'counselor' && userId.length < 3) {
             document.getElementById('signUpUserIdError').textContent = "Counselor ID must be at least 3 characters long.";
             document.getElementById('signUpUserIdError').classList.remove('d-none');
             document.getElementById('signUpWarning').classList.remove('d-none');
@@ -532,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        if (!username) { // Validate username
+        if (!username) {
             document.getElementById('signUpUsernameError').textContent = "Please enter your username.";
             document.getElementById('signUpUsernameError').classList.remove('d-none');
             document.getElementById('signUpWarning').classList.remove('d-none');
@@ -560,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const signUpBtn = document.getElementById('signUpBtn');
             const originalSignUpBtnText = signUpBtn.innerHTML;
 
-            // Show loading state
             signUpBtn.disabled = true;
             signUpBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing Up...';
 
@@ -570,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('email', email);
             formData.append('password', password);
             formData.append('confirmPassword', confirmPassword);
-            formData.append('username', username); // Append username
+            formData.append('username', username);
             formData.append(window.CSRF_TOKEN_NAME, document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
             
             fetch(window.BASE_URL + 'index.php/auth/signup', {
@@ -582,36 +620,42 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Revert button state
                 signUpBtn.disabled = false;
                 signUpBtn.innerHTML = originalSignUpBtnText;
 
                 if (data.status === 'success') {
-                    // Clear form inputs
                     document.getElementById('signUpUserIdInput').value = '';
                     document.getElementById('signUpEmailInput').value = '';
                     document.getElementById('signUpPasswordInput').value = '';
                     document.getElementById('confirmPasswordInput').value = '';
                     document.getElementById('termsCheckbox').checked = false;
-                    document.getElementById('signUpUsernameInput').value = ''; // Clear username
-
-                    // Show success message and open verification modal
+                    document.getElementById('signUpUsernameInput').value = '';
+                    // Branch depending on role
                     signUpModal.hide();
                     setTimeout(() => {
-                        verificationModalInstance.show(); // Use Bootstrap's show method
+                        if (selectedRole === 'student') {
+                            try { verificationModalInstance.show(); } catch (e) {}
+                        } else if (selectedRole === 'counselor') {
+                            if (counselorInfoModalInstance) {
+                                const cid = document.getElementById('c_info_counselor_id');
+                                const cemail = document.getElementById('c_info_email');
+                                if (cid) cid.value = userId;
+                                if (cemail) cemail.value = email;
+                                counselorInfoModalInstance.show();
+                            } else {
+                                openConfirmationModal('Counselor account created. Please wait for admin approval.');
+                            }
+                        }
                     }, 500);
                 } else {
-                    // Show error message
                     document.getElementById('signUpExistingError').textContent = data.message;
                     document.getElementById('signUpExistingError').classList.remove('d-none');
                     document.getElementById('signUpWarning').classList.remove('d-none');
                 }
             })
             .catch(error => {
-                // Revert button state
                 signUpBtn.disabled = false;
                 signUpBtn.innerHTML = originalSignUpBtnText;
-
                 console.error('Error:', error);
                 document.getElementById('signUpExistingError').textContent = 'An error occurred. Please try again.';
                 document.getElementById('signUpExistingError').classList.remove('d-none');
@@ -619,13 +663,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-    
-    // Helper function to validate email
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
 
+    // --- Forgot Password Section ---
     document.getElementById('resetPasswordBtn').onclick = function() {
         const btn = this;
         const input = document.getElementById('forgotPasswordInput').value.trim();
@@ -643,10 +682,9 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = originalText;
             if (data.status === 'success') {
-                // Hide current modal, show code entry modal
                 bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal')).hide();
                 new bootstrap.Modal(document.getElementById('codeEntryModal')).show();
-                setTimeout(() => openConfirmationModal('A reset code has been sent to your email. It will expire in 5 minutes.'), 300); // Updated message
+                setTimeout(() => openConfirmationModal('A reset code has been sent to your email. It will expire in 5 minutes.'), 300);
             } else {
                 document.getElementById('forgotPasswordWarning').classList.remove('d-none');
                 document.getElementById('forgotPasswordInputError').textContent = data.message;
@@ -658,6 +696,105 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = originalText;
         });
     };
+
+    // Resend reset code link handler
+    document.getElementById('resendResetCodeLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        const resendResetCodeModal = new bootstrap.Modal(document.getElementById('resendResetCodeModal'));
+        resendResetCodeModal.show();
+    });
+
+    // Resend reset code modal handlers
+    const resendResetCodeModal = document.getElementById('resendResetCodeModal');
+    const resendResetCodeInput = document.getElementById('resendResetCodeInput');
+    const resendResetCodeBtn = document.getElementById('resendResetCodeBtn');
+    const resendResetCodeCancelBtn = document.getElementById('resendResetCodeCancelBtn');
+    const resendResetCodeWarning = document.getElementById('resendResetCodeWarning');
+    const resendResetCodeInputError = document.getElementById('resendResetCodeInputError');
+
+    if (resendResetCodeModal && resendResetCodeInput && resendResetCodeBtn) {
+        function isValidEmailOrUserId(input) {
+            const trimmedInput = input.trim();
+            if (!trimmedInput) return false;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(trimmedInput)) return true;
+            const userIdRegex = /^[a-zA-Z0-9]{3,}$/;
+            if (userIdRegex.test(trimmedInput)) return true;
+            return false;
+        }
+
+        resendResetCodeBtn.addEventListener('click', function() {
+            resendResetCodeWarning.classList.add('d-none');
+            resendResetCodeInputError.classList.add('d-none');
+            
+            const identifier = resendResetCodeInput.value.trim();
+            
+            if (!isValidEmailOrUserId(identifier)) {
+                resendResetCodeInputError.classList.remove('d-none');
+                resendResetCodeWarning.classList.remove('d-none');
+                return;
+            }
+
+            const originalBtnText = resendResetCodeBtn.innerHTML;
+            resendResetCodeBtn.disabled = true;
+            resendResetCodeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+            fetch(window.BASE_URL + 'forgot-password/send-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({input: identifier})
+            })
+            .then(response => response.json())
+            .then(data => {
+                resendResetCodeBtn.disabled = false;
+                resendResetCodeBtn.innerHTML = originalBtnText;
+
+                if (data.status === 'success') {
+                    const resendModalInstance = bootstrap.Modal.getInstance(document.getElementById('resendResetCodeModal'));
+                    if (resendModalInstance) {
+                        resendModalInstance.hide();
+                    }
+                    resendResetCodeInput.value = '';
+                    openConfirmationModal('A new reset code has been sent to your email. It will expire in 5 minutes.');
+                } else {
+                    resendResetCodeInputError.textContent = data.message;
+                    resendResetCodeInputError.classList.remove('d-none');
+                    resendResetCodeWarning.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                resendResetCodeBtn.disabled = false;
+                resendResetCodeBtn.innerHTML = originalBtnText;
+                console.error('Error:', error);
+                openConfirmationModal('An error occurred while trying to resend the reset code.');
+            });
+        });
+
+        resendResetCodeCancelBtn.addEventListener('click', function() {
+            const resendModalInstance = bootstrap.Modal.getInstance(document.getElementById('resendResetCodeModal'));
+            if (resendModalInstance) {
+                resendModalInstance.hide();
+            }
+            resendResetCodeInput.value = '';
+            resendResetCodeWarning.classList.add('d-none');
+            resendResetCodeInputError.classList.add('d-none');
+        });
+
+        resendResetCodeInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                resendResetCodeBtn.click();
+            }
+        });
+
+        resendResetCodeModal.addEventListener('hidden.bs.modal', function() {
+            resendResetCodeInput.value = '';
+            resendResetCodeWarning.classList.add('d-none');
+            resendResetCodeInputError.classList.add('d-none');
+        });
+    }
 
     // Build reset code from 6 inputs
     function buildResetCode() {
@@ -716,7 +853,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Focus first input when modal opens
         const codeModal = document.getElementById('codeEntryModal');
         if (codeModal) {
             codeModal.addEventListener('shown.bs.modal', function(){
@@ -750,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 bootstrap.Modal.getInstance(document.getElementById('codeEntryModal')).hide();
                 new bootstrap.Modal(document.getElementById('newPasswordModal')).show();
-                setTimeout(() => openConfirmationModal('Code verified! You may now set a new password.'), 300); // Use confirmation modal
+                setTimeout(() => openConfirmationModal('Code verified! You may now set a new password.'), 300);
             } else {
                 document.getElementById('resetCodeWarning').classList.remove('d-none');
                 document.getElementById('resetCodeWarning').textContent = data.message;
@@ -785,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = originalText;
             if (data.status === 'success') {
-                openConfirmationModal('Password reset successful! You can now log in with your new password.'); // Use confirmation modal
+                openConfirmationModal('Password reset successful! You can now log in with your new password.');
                 bootstrap.Modal.getInstance(document.getElementById('newPasswordModal')).hide();
             } else {
                 document.getElementById('newPasswordWarning').classList.remove('d-none');
@@ -807,13 +943,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function openDrawer() {
         navbarDrawer.classList.add('show');
         navbarOverlay.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent scrolling when drawer is open
+        document.body.style.overflow = 'hidden';
     }
 
     function closeDrawer() {
         navbarDrawer.classList.remove('show');
         navbarOverlay.classList.remove('show');
-        document.body.style.overflow = ''; // Restore scrolling
+        document.body.style.overflow = '';
     }
 
     if (navbarDrawerToggler) {
@@ -828,7 +964,6 @@ document.addEventListener('DOMContentLoaded', function() {
         navbarOverlay.addEventListener('click', closeDrawer);
     }
 
-    // Handle Login/Signup clicks within the drawer to close drawer before opening modal
     document.getElementById('openLoginModalDrawer').addEventListener('click', function() {
         closeDrawer();
         setTimeout(() => {
@@ -865,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize placeholder based on default selected role (if any)
+    // Initialize placeholder based on default selected role
     const initialSignUpRole = document.getElementById('signUpRole').value;
     if (initialSignUpRole === 'student') {
         signUpUserIdInput.placeholder = 'Preferred User ID (10 digits)';

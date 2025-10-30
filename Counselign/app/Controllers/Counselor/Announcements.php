@@ -1,6 +1,8 @@
 <?php
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 
 class Announcements extends BaseController

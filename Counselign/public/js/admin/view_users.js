@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add download event listener
         newDownloadBtn.addEventListener('click', function() {
-            console.log('PWD Proof file download initiated:', filePath);
+            SecureLogger.info('PWD Proof file download initiated:', filePath);
         });
     }
 

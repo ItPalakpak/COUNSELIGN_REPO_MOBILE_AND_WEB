@@ -117,6 +117,75 @@
         </section>
     </main>
 
+    <!-- COUNSELOR BASIC INFO MODAL -->
+    <div class="modal fade" id="counselorInfoModal" tabindex="-1" aria-labelledby="counselorInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="counselorInfoModalLabel">Counselor Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="c_info_counselor_id" class="form-label">Counselor ID</label>
+                        <input type="text" id="c_info_counselor_id" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_name" class="form-label">Full Name</label>
+                        <input type="text" id="c_info_name" class="form-control" placeholder="Enter your full name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_degree" class="form-label">Degree</label>
+                        <input type="text" id="c_info_degree" class="form-control" placeholder="Enter your degree (e.g., RGC, RPm)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_email" class="form-label">Email</label>
+                        <input type="email" id="c_info_email" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_contact" class="form-label">Contact Number</label>
+                        <input type="text" id="c_info_contact" class="form-control" placeholder="09XXXXXXXXX">
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_address" class="form-label">Address</label>
+                        <textarea id="c_info_address" class="form-control" rows="2" placeholder="Enter your address"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_info_birthdate" class="form-label">Birthdate (optional)</label>
+                        <input type="date" id="c_info_birthdate" class="form-control">
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <label for="c_info_civil_status" class="form-label">Civil Status (optional)</label>
+                            <select id="c_info_civil_status" class="form-select">
+                                <option value="">Select</option>
+                                <option>Single</option>
+                                <option>Married</option>
+                                <option>Widowed</option>
+                                <option>Legally Separated</option>
+                                <option>Annulled</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="c_info_sex" class="form-label">Sex (optional)</label>
+                            <select id="c_info_sex" class="form-select">
+                                <option value="">Select</option>
+                                <option>Male</option>
+                                <option>Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="counselorInfoWarning" class="text-danger mt-3 d-none"></div>
+                    <div class="d-grid gap-2 mt-3">
+                        <button id="counselorInfoSubmitBtn" class="btn btn-primary">Save Information</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
     <!-- LOGIN MODAL -->
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -127,15 +196,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <select id="loginRole" class="form-select">
-                            <option text-muted disabled selected>Select your role</option>
-                            <option value="student">Student</option>
-                            <option value="counselor">Counselor</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <input type="text" id="loginUserIdInput" placeholder="User ID" class="form-control"
-                            maxlength="10">
+                        <input type="text" id="loginIdentifierInput" placeholder="User ID or Email" class="form-control">
                     </div>
                     <div class="mb-3 position-relative">
                         <input type="password" id="passwordInput" placeholder="Enter password" class="form-control">
@@ -144,15 +205,13 @@
                         </button>
                     </div>
                     <div id="loginWarning" class="text-danger mb-3 d-none">
-                        <p id="loginUserIdError" class="d-none">*Please enter a valid User ID</p>
+                        <p id="loginIdentifierError" class="d-none">*Please enter a valid User ID or Email</p>
                         <p id="loginPasswordError" class="d-none">*Please enter your password</p>
-                        <p id="loginInvalidError" class="d-none">*Invalid User ID or password</p>
+                        <p id="loginInvalidError" class="d-none">*Invalid credentials</p>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
-                        <a href="#" id="forgotPasswordLink" class="text-primary text-decoration-none">Forgot
-                            Password?</a>
-                        <a href="#" id="goToSignUpLink" class="text-primary text-decoration-none">Don't have an account?
-                            Sign up</a>
+                        <a href="#" id="forgotPasswordLink" class="text-primary text-decoration-none">Forgot Password?</a>
+                        <a href="#" id="goToSignUpLink" class="text-primary text-decoration-none">Don't have an account? Sign up</a>
                     </div>
                     <button id="loginBtn" class="btn btn-primary w-100 mb-2">Login</button>
                     <button id="openAdminModalBtn" class="btn btn-outline-dark w-100">Admin Login</button>
@@ -171,7 +230,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <input type="text" id="adminUserIdInput" placeholder="Admin ID" class="form-control" maxlength="10">
+                        <input type="text" id="adminIdentifierInput" placeholder="Admin ID or Email" class="form-control">
                     </div>
                     <div class="mb-3 position-relative">
                         <input type="password" id="adminPasswordInput" placeholder="Enter admin password" class="form-control">
@@ -180,9 +239,9 @@
                         </button>
                     </div>
                     <div id="adminLoginWarning" class="text-danger mb-3 d-none">
-                        <p id="adminUserIdError" class="d-none">*Please enter your Admin ID</p>
+                        <p id="adminIdentifierError" class="d-none">*Please enter your Admin ID or Email</p>
                         <p id="adminPasswordError" class="d-none">*Please enter your password</p>
-                        <p id="adminInvalidError" class="d-none">*Invalid Admin ID or password</p>
+                        <p id="adminInvalidError" class="d-none">*Invalid Admin credentials</p>
                     </div>
                     <div class="d-grid gap-2">
                         <button id="adminLoginBtn" class="btn btn-primary">Continue to Admin</button>
@@ -301,6 +360,9 @@
                     </div>
                     <div id="resetCodeWarning" class="text-danger mb-3 d-none"></div>
                     <button id="verifyCodeBtn" class="btn btn-primary w-100">Verify Code</button>
+                    <div class="text-center mt-3">
+                        <p><a href="#" id="resendResetCodeLink" class="text-primary text-decoration-none">Didn't receive the code? Resend</a></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -330,6 +392,32 @@
         </div>
     </div>
 
+    <!-- RESEND RESET CODE MODAL -->
+    <div class="modal fade" id="resendResetCodeModal" tabindex="-1" aria-labelledby="resendResetCodeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resendResetCodeModalLabel">Resend Reset Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">Enter your registered email address or user ID to resend the password reset code.</p>
+                    <div class="mb-3">
+                        <label for="resendResetCodeInput" class="form-label">Email or User ID</label>
+                        <input type="text" id="resendResetCodeInput" class="form-control" placeholder="Enter your email or user ID">
+                    </div>
+                    <div id="resendResetCodeWarning" class="text-danger mb-3 d-none">
+                        <p id="resendResetCodeInputError" class="d-none">*Please enter a valid email or user ID</p>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="resendResetCodeBtn" class="btn btn-primary">Send Reset Code</button>
+                        <button id="resendResetCodeCancelBtn" class="btn btn-outline-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TERMS AND CONDITIONS MODAL -->
     <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -340,10 +428,10 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-start text-muted">
-                        <p>Last updated: APRIL 2025</p>
+                        <p>Last updated: OCTOBER 2025</p>
 
                         <h5 class="fw-bold">1. Acceptance of Terms</h5>
-                        <p>By accessing and using the University Guidance Counseling System, you accept and agree to be
+                        <p>By accessing and using the Counselign System, you accept and agree to be
                             bound by these Terms and Conditions.</p>
 
                         <h5 class="fw-bold">2. Privacy Policy</h5>
@@ -421,6 +509,7 @@
     <?php echo view('modals/confirmation_modal'); // Include the new confirmation modal 
     ?>
     <script src="<?= base_url('js/landing.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>
         window.CSRF_TOKEN_NAME = "<?= csrf_token() ?>";
         window.BASE_URL = "<?= base_url() ?>";

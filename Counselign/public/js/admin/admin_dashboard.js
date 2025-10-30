@@ -8,7 +8,7 @@ let currentFilters = {
 
 // Document ready function
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM loaded, initializing admin dashboard...');
+    SecureLogger.info('DOM loaded, initializing admin dashboard...');
 
     // Load admin data
     loadAdminData();
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    console.log('DOM loaded, calling loadLatestAppointments...');
+    SecureLogger.info('DOM loaded, calling loadLatestAppointments...');
 
     updateRecentMessages();
     // Update messages every 30 seconds
@@ -342,15 +342,15 @@ function formatDateTime(dateTimeStr) {
 
 // Function to load and display admin data
 function loadAdminData() {
-    console.log('Loading admin data...');
+    SecureLogger.info('Loading admin data...');
     fetch((window.BASE_URL || '/') + 'admin/dashboard/data', {
         method: 'GET',
         credentials: 'include'
     })
         .then(response => {
-            console.log('Response status:', response.status);
+            SecureLogger.info('Response status:', response.status);
             return response.text().then(text => {
-                console.log('Raw response:', text);
+                SecureLogger.info('Raw response:', text);
                 try {
                     return JSON.parse(text);
                 } catch (e) {
@@ -360,22 +360,22 @@ function loadAdminData() {
             });
         })
         .then(data => {
-            console.log('Parsed data:', data);
+            SecureLogger.info('Parsed data:', data);
             if (data.success) {
                 const adminData = data.data;
-                console.log('Admin data:', adminData);
+                SecureLogger.info('Admin data:', adminData);
 
                 // Update profile picture
                 const profileImg = document.getElementById('profile-img');
                 if (profileImg && adminData.profile_picture) {
-                    console.log('Updating profile picture:', adminData.profile_picture);
+                    SecureLogger.info('Updating profile picture:', adminData.profile_picture);
                     profileImg.src = adminData.profile_picture;
                 }
 
                 // Update admin name
                 const adminName = document.getElementById('adminName');
                 if (adminName) {
-                    console.log('Updating admin name:', adminData.username);
+                    SecureLogger.info('Updating admin name:', adminData.username);
                     adminName.textContent = adminData.username || 'Admin';
                 }
 
@@ -383,7 +383,7 @@ function loadAdminData() {
                 const lastLogin = document.getElementById('lastLogin');
                 if (lastLogin) {
                     const formattedTime = formatDateTime(adminData.last_login);
-                    console.log('Updating last login:', formattedTime);
+                    SecureLogger.info('Updating last login:', formattedTime);
                     lastLogin.textContent = 'Login at: ' + formattedTime;
                 }
             } else {
@@ -434,7 +434,7 @@ function updateMessagesBadgeFromServer() {
 }
 
 function updateRecentMessages() {
-    console.log('Updating recent messages...');
+    SecureLogger.info('Updating recent messages...');
     fetch((window.BASE_URL || '/') + 'admin/message/operations?action=get_conversations', {
         credentials: 'include'
     })

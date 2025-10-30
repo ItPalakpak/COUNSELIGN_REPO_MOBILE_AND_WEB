@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Counselor;
 
+
+use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 use App\Models\CounselorAvailabilityModel;
 

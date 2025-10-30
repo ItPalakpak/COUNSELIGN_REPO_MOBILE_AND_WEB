@@ -24,10 +24,10 @@ Widget buildTermsDialog({required VoidCallback onClose}) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            Text('Last updated: APRIL 2025', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Last updated: NOVEMBER 2025', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Text('1. Acceptance of Terms', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('By accessing and using the University Guidance Counseling System, you accept and agree to be bound by these Terms and Conditions.'),
+            Text('By accessing and using the Counselign System, you accept and agree to be bound by these Terms and Conditions.'),
             SizedBox(height: 10),
             Text('2. Privacy Policy', style: TextStyle(fontWeight: FontWeight.bold)),
             Text('Your privacy is important to us. All personal information provided will be handled in accordance with our Privacy Policy.'),

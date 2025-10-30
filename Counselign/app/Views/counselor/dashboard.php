@@ -60,8 +60,19 @@
 
             </button>
             <div class="profile-details-wrapper">
-                <div class="fs-12 fw-bold" style="color: #003366;">Hello! <span
-                        class="text-primary"><i><?= session()->get('user_id_display') ?></i></span></div>
+                <?php
+                $userDisplayHelper = new \App\Helpers\UserDisplayHelper();
+                $userInfo = $userDisplayHelper->getUserDisplayInfo(session()->get('user_id_display'), session()->get('role'));
+                ?>
+                <div class="fs-12 fw-bold" style="color: #003366;">
+                    Hello! 
+                    <span class="text-primary">
+                        <i><?= $userInfo['display_name'] ?></i>
+                    </span>
+                    <?php if ($userInfo['has_name']): ?>
+                        <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
+                    <?php endif; ?>
+                </div>
                 <div class="small text-secondary">Last login: <?= session()->get('last_login') ?></div>
             </div>
             <div class="ml-auto flex items-center space-x-6">
@@ -193,14 +204,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
-    <script src="<?= base_url('js/counselor/counselor_dashboard.js') ?>"></script>
-    <script>
-        window.BASE_URL = "<?= base_url() ?>";
-    </script>
-    
-    <!-- Shared Confirmation Modal (used for logout and other confirms) -->
+     <!-- Shared Confirmation Modal (used for logout and other confirms) -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -254,6 +258,16 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/counselor_dashboard.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script>
+        window.BASE_URL = "<?= base_url() ?>";
+    </script>
+    
+   
 </body>
 
 </html>

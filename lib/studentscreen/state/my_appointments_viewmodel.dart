@@ -10,6 +10,7 @@ import '../models/counselor_schedule.dart';
 
 class MyAppointmentsViewModel extends ChangeNotifier {
   final Session _session = Session();
+  bool _disposed = false;
 
   // Appointments data
   List<Appointment> _allAppointments = [];
@@ -95,6 +96,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     searchController.dispose();
     dateFilterController.dispose();
     editDateController.dispose();
@@ -109,11 +111,17 @@ class MyAppointmentsViewModel extends ChangeNotifier {
     super.dispose();
   }
 
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
   // Fetch appointments
   Future<void> fetchAppointments() async {
     try {
       _isLoadingAppointments = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final url =
           '${ApiConfig.currentBaseUrl}/student/appointments/get-my-appointments';
@@ -155,7 +163,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       debugPrint('Error fetching appointments: $e');
     } finally {
       _isLoadingAppointments = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -165,7 +173,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
 
     try {
       _isLoadingCounselors = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final url = '${ApiConfig.currentBaseUrl}/student/get-counselors';
       debugPrint('Fetching counselors from: $url');
@@ -203,7 +211,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       debugPrint('Error fetching counselors: $e');
     } finally {
       _isLoadingCounselors = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -211,7 +219,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   Future<void> fetchCounselorsByAvailability(String date, String time) async {
     try {
       _isLoadingCounselors = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final dayOfWeek = _getDayOfWeek(date);
       final timeBounds = _extractTimeBounds(time);
@@ -266,7 +274,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       debugPrint('Error fetching counselors by availability: $e');
     } finally {
       _isLoadingCounselors = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -312,17 +320,17 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   // Filter appointments
   void updateSearchTerm(String term) {
     _searchTerm = term;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateDateFilter(String date) {
     _dateFilter = date;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateSelectedTab(int index) {
     _selectedTabIndex = index;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   List<Appointment> getFilteredAppointments() {
@@ -392,12 +400,22 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   // Calendar functionality
   void toggleCalendar() {
     _isCalendarVisible = !_isCalendarVisible;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void setCalendarDate(DateTime date) {
     _currentCalendarDate = date;
-    notifyListeners();
+    _safeNotifyListeners();
+  }
+
+  void setUpdatingAppointment(bool value) {
+    _isUpdatingAppointment = value;
+    _safeNotifyListeners();
+  }
+
+  void setCancellingAppointment(bool value) {
+    _isCancellingAppointment = value;
+    _safeNotifyListeners();
   }
 
   // Fetch counselor availability for calendar date
@@ -592,58 +610,58 @@ class MyAppointmentsViewModel extends ChangeNotifier {
     editConsultationTypeController.text = appointment.consultationType ?? '';
     editDescriptionController.text = appointment.description ?? '';
     _showEditModal = true;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void closeEditModal() {
     _showEditModal = false;
     _currentAppointment = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void openCancelModal(Appointment appointment) {
     _currentAppointment = appointment;
     cancelReasonController.clear();
     _showCancelModal = true;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void closeCancelModal() {
     _showCancelModal = false;
     _currentAppointment = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void openSaveChangesModal() {
     _showSaveChangesModal = true;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void closeSaveChangesModal() {
     _showSaveChangesModal = false;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void openCancellationReasonModal() {
     _showCancellationReasonModal = true;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void closeCancellationReasonModal() {
     _showCancellationReasonModal = false;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void openDeleteModal(Appointment appointment) {
     _currentAppointment = appointment;
     _showDeleteModal = true;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void closeDeleteModal() {
     _showDeleteModal = false;
     _currentAppointment = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   // Pending appointment editing
@@ -653,7 +671,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
 
   void toggleEditing(int appointmentId) {
     _editingStates[appointmentId] = !(_editingStates[appointmentId] ?? false);
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   TextEditingController getPendingController(
@@ -697,7 +715,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
 
     try {
       _isUpdatingAppointment = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final formData = {
         'appointment_id': _currentAppointment!.id.toString(),
@@ -747,7 +765,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isUpdatingAppointment = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
     return false;
   }
@@ -759,7 +777,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   ) async {
     try {
       _isUpdatingAppointment = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final data = {
         'appointment_id': appointmentId.toString(),
@@ -795,7 +813,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isUpdatingAppointment = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -809,7 +827,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
         'Starting cancellation for appointment $appointmentId with reason: $reason',
       );
       _isCancellingAppointment = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final formData = {
         'appointment_id': appointmentId.toString(),
@@ -851,7 +869,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isCancellingAppointment = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -861,7 +879,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   ) async {
     try {
       _isDeletingAppointment = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       // Use regular http.delete with session cookies
       final headers = {
@@ -915,7 +933,7 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isDeletingAppointment = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
     return false;
   }

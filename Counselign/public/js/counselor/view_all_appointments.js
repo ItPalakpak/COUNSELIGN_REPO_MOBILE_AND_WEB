@@ -634,32 +634,32 @@ document.addEventListener('DOMContentLoaded', function () {
             ? allAppointments 
             : allAppointments.filter(app => app.status && app.status.toUpperCase() === status);
 
-        console.log(`Tab changed to ${targetTabId}, filtering ${status} appointments. Found: ${filteredAppointments.length}`);
+        SecureLogger.info(`Tab changed to ${targetTabId}, filtering ${status} appointments. Found: ${filteredAppointments.length}`);
         displayAppointments(filteredAppointments, targetTableId);
     }
 
     // Update initial display after fetch
     function updateInitialDisplay() {
-        console.log('Updating initial display for all tabs');
+        SecureLogger.info('Updating initial display for all tabs');
         
         // Display all appointments first
         displayAppointments(allAppointments, 'allAppointmentsTable');
         
         // Pre-filter and display appointments for each status tab
         const approvedAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'APPROVED');
-        console.log(`Found ${approvedAppointments.length} approved appointments`);
+        SecureLogger.info(`Found ${approvedAppointments.length} approved appointments`);
         displayAppointments(approvedAppointments, 'approvedAppointmentsTable');
         
         const rejectedAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'REJECTED');
-        console.log(`Found ${rejectedAppointments.length} rejected appointments`);
+        SecureLogger.info(`Found ${rejectedAppointments.length} rejected appointments`);
         displayAppointments(rejectedAppointments, 'rejectedAppointmentsTable');
         
         const completedAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'COMPLETED');
-        console.log(`Found ${completedAppointments.length} completed appointments`);
+        SecureLogger.info(`Found ${completedAppointments.length} completed appointments`);
         displayAppointments(completedAppointments, 'completedAppointmentsTable');
         
         const cancelledAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED');
-        console.log(`Found ${cancelledAppointments.length} cancelled appointments`);
+        SecureLogger.info(`Found ${cancelledAppointments.length} cancelled appointments`);
         displayAppointments(cancelledAppointments, 'cancelledAppointmentsTable');
     }
 
@@ -684,23 +684,23 @@ document.addEventListener('DOMContentLoaded', function () {
             
             const data = await response.json();
             
-            console.log('Full API Response:', data);
+            SecureLogger.info('Full API Response:', data);
             
             if (data.success) {
                 allAppointments = data.appointments;
-                console.log('Appointments received:', allAppointments);
-                console.log('Number of appointments:', allAppointments.length);
+                SecureLogger.info('Appointments received:', allAppointments);
+                SecureLogger.info('Number of appointments:', allAppointments.length);
                 
                 // Log first appointment to see structure
                 if (allAppointments.length > 0) {
-                    console.log('First appointment structure:', allAppointments[0]);
+                    SecureLogger.info('First appointment structure:', allAppointments[0]);
                 }
                 
                 // Check if we have appointments with these statuses
-                console.log('APPROVED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'APPROVED').length);
-                console.log('REJECTED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'REJECTED').length);
-                console.log('COMPLETED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'COMPLETED').length);
-                console.log('CANCELLED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED').length);
+                SecureLogger.info('APPROVED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'APPROVED').length);
+                SecureLogger.info('REJECTED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'REJECTED').length);
+                SecureLogger.info('COMPLETED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'COMPLETED').length);
+                SecureLogger.info('CANCELLED appointments:', allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED').length);
                 
                 updateInitialDisplay(); // Update all tables initially
                 

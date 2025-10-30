@@ -1,7 +1,7 @@
 // Add click event to open conversation
 messageContent.addEventListener('click', function () {
     const userId = this.dataset.userId;
-    console.log('Message clicked, redirecting to conversation with user:', userId);
+    SecureLogger.info('Message clicked, redirecting to conversation with user:', userId);
     // Store the user ID for highlighting the student card
     localStorage.setItem('highlightStudentCard', userId);
     // Redirect to messages page

@@ -7,6 +7,15 @@ import 'studentscreen/student_profile_screen.dart';
 import 'studentscreen/announcements_screen.dart';
 import 'studentscreen/follow_up_sessions_screen.dart';
 import 'adminscreen/admin_dashboard_screen.dart';
+import 'adminscreen/view_users_screen.dart';
+import 'adminscreen/view_all_appointments_screen.dart';
+import 'adminscreen/announcements_screen.dart' as admin;
+import 'adminscreen/counselor_management_screen.dart';
+import 'adminscreen/follow_up_sessions_screen.dart' as admin;
+import 'adminscreen/scheduled_appointments_screen.dart';
+import 'adminscreen/history_reports_screen.dart';
+import 'adminscreen/account_settings_screen.dart';
+import 'adminscreen/admins_management_screen.dart';
 import 'counselorscreen/counselor_dashboard_screen.dart';
 import 'counselorscreen/counselor_announcements_screen.dart';
 import 'counselorscreen/counselor_scheduled_appointments_screen.dart';
@@ -28,10 +37,16 @@ class AppRoutes {
 
   // Admin routes
   static const String adminDashboard = '/admin/dashboard';
-  static const String adminAdminsManagement = '/admin/admins-management';
+  static const String adminViewUsers = '/admin/view-users';
+  static const String adminViewAllAppointments = '/admin/view-all-appointments';
   static const String adminAnnouncements = '/admin/announcements';
-  static const String adminAppointments = '/admin/appointments';
-  static const String adminAppointmentsViewAll = '/admin/appointments/view-all';
+  static const String adminAdminsManagement = '/admin/admins-management';
+  static const String adminCounselorManagement = '/admin/counselor-management';
+  static const String adminFollowUpSessions = '/admin/follow-up-sessions';
+  static const String adminScheduledAppointments =
+      '/admin/scheduled-appointments';
+  static const String adminHistoryReports = '/admin/history-reports';
+  static const String adminAccountSettings = '/admin/account-settings';
 
   // Counselor routes
   static const String counselorDashboard = '/counselor/dashboard';
@@ -58,7 +73,16 @@ class AppRoutes {
 
       // Admin routes
       adminDashboard: (context) => const AdminDashboardScreen(),
-
+      adminViewUsers: (context) => const ViewUsersScreen(),
+      adminViewAllAppointments: (context) => const ViewAllAppointmentsScreen(),
+      adminAnnouncements: (context) => const admin.AnnouncementsScreen(),
+      adminAdminsManagement: (context) => const AdminsManagementScreen(),
+      adminCounselorManagement: (context) => const CounselorManagementScreen(),
+      adminFollowUpSessions: (context) => const admin.FollowUpSessionsScreen(),
+      adminScheduledAppointments: (context) =>
+          const ScheduledAppointmentsScreen(),
+      adminHistoryReports: (context) => const HistoryReportsScreen(),
+      adminAccountSettings: (context) => const AccountSettingsScreen(),
       // Counselor routes
       counselorDashboard: (context) => const CounselorDashboardScreen(),
       counselorAnnouncements: (context) => const CounselorAnnouncementsScreen(),

@@ -62,7 +62,7 @@ async function checkAppointmentEligibility() {
         
         if (!response.ok) {
             if (response.status === 401) {
-                console.log('User not logged in, skipping pending appointment check');
+                SecureLogger.info('User not logged in, skipping pending appointment check');
                 return; // Skip if not logged in
             }
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -114,7 +114,7 @@ async function checkAppointmentEligibility() {
             }
         }
     } catch (error) {
-        console.log('Error checking pending appointment (user may not be logged in):', error.message);
+        SecureLogger.info('Error checking pending appointment (user may not be logged in):', error.message);
         // Don't show error to user, just log it
     }
 }
@@ -209,7 +209,7 @@ function loadCounselors() {
             }
         })
         .catch(error => {
-            console.log('Error loading counselors (user may not be logged in):', error.message);
+            SecureLogger.info('Error loading counselors (user may not be logged in):', error.message);
             counselorSelect.innerHTML = '<option value="">Please log in to see counselors</option>';
         })
         .finally(() => {
@@ -285,7 +285,7 @@ function loadCounselorsByAvailability(preferredDate, preferredTime) {
             }
         })
         .catch(error => {
-            console.log('Error loading counselors by availability:', error.message);
+            SecureLogger.info('Error loading counselors by availability:', error.message);
             counselorSelect.innerHTML = '<option value="">Error loading counselors</option>';
         })
         .finally(() => {
@@ -307,7 +307,7 @@ function setupCounselorAvailabilityFiltering() {
     const counselorSelect = document.getElementById('counselorPreference');
 
     if (!preferredDateInput || !preferredTimeSelect || !counselorSelect) {
-        console.log('Required form elements not found for counselor availability filtering');
+        SecureLogger.info('Required form elements not found for counselor availability filtering');
         return;
     }
 

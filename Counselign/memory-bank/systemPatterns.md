@@ -1,3 +1,176 @@
+## Resend Reset Code Modal Pattern
+
+**Purpose**: Professional modal interface for resending password reset codes with improved user experience
+
+**Modal Structure**:
+- **HTML**: Bootstrap 5 modal with proper accessibility attributes
+- **Form Elements**: Label, input field, validation messages, action buttons
+- **Design**: Consistent with other system modals (login, signup, contact, resend verification)
+- **Responsive**: Mobile-friendly layout with proper spacing
+
+**User Experience Features**:
+- **Input Validation**: Real-time validation for email/user ID format
+- **Loading States**: Professional spinner animations during API calls
+- **Error Handling**: Clear error messages with proper styling
+- **Keyboard Support**: Enter key submission, proper focus management
+- **Modal Management**: Clean open/close behavior with input clearing
+- **Integration**: Seamlessly integrated into existing forgot password flow
+
+**Technical Implementation**:
+- **JavaScript**: Type-safe implementation with clear variable naming
+- **Validation**: Email regex and user ID format checking
+- **API Integration**: Uses `forgot-password/send-code`; alias `forgot-password/resend-code` supported
+- **State Management**: Proper button state handling and cleanup
+- **Event Handling**: Comprehensive event listeners for all interactions
+- **Data Format**: JSON format matching backend expectations
+
+**Files Modified**:
+- `app/Views/landing.php` - Added resend reset code modal HTML and resend link
+- `public/js/landing.js` - Enhanced with resend reset code functionality
+- `public/css/landing.css` - Added professional styling
+
+**Code Quality Standards**:
+- **Type Safety**: Clear, descriptive variable names and function organization
+- **Error Handling**: Comprehensive error handling without ambiguous patterns
+- **Maintainability**: Clean code structure following MVC architecture
+- **Accessibility**: Proper ARIA labels and keyboard navigation support
+- **Performance**: Efficient DOM manipulation and event handling
+- **Backward Compatibility**: Maintains existing forgot password functionality
+
+## Resend Verification Modal Pattern
+
+**Purpose**: Professional modal interface for resending verification emails with improved user experience
+
+**Modal Structure**:
+- **HTML**: Bootstrap 5 modal with proper accessibility attributes
+- **Form Elements**: Label, input field, validation messages, action buttons
+- **Design**: Consistent with other system modals (login, signup, contact)
+- **Responsive**: Mobile-friendly layout with proper spacing
+
+**User Experience Features**:
+- **Input Validation**: Real-time validation for email/user ID format
+- **Loading States**: Professional spinner animations during API calls
+- **Error Handling**: Clear error messages with proper styling
+- **Keyboard Support**: Enter key submission, proper focus management
+- **Modal Management**: Clean open/close behavior with input clearing
+
+**Technical Implementation**:
+- **JavaScript**: Type-safe implementation with clear variable naming
+- **Validation**: Email regex and user ID format checking
+- **API Integration**: Existing `resend-verification-email` endpoint
+- **State Management**: Proper button state handling and cleanup
+- **Event Handling**: Comprehensive event listeners for all interactions
+
+**Files Modified**:
+- `app/Views/auth/verification_prompt.php` - Added resend verification modal HTML
+- `public/js/auth/verification_prompt.js` - Enhanced with modal functionality
+- `public/css/auth/verification_prompt.css` - Added professional styling
+
+**Code Quality Standards**:
+- **Type Safety**: Clear, descriptive variable names and function organization
+- **Error Handling**: Comprehensive error handling without ambiguous patterns
+- **Maintainability**: Clean code structure following MVC architecture
+- **Accessibility**: Proper ARIA labels and keyboard navigation support
+- **Performance**: Efficient DOM manipulation and event handling
+
+## Automatic Email Notifications for Appointment Actions
+
+**Email Notification System:**
+- **Service Architecture**: Dedicated `AppointmentEmailService` class handles all appointment-related email notifications
+- **PHPMailer Integration**: Uses PHPMailer with Gmail SMTP for reliable email delivery
+- **Type-Safe Implementation**: Comprehensive error handling and logging for email operations
+- **Counselor Email Lookup**: Automatic counselor email retrieval using `counselors.counselor_id = users.user_id` relationship
+
+**Email Notification Triggers:**
+- **Appointment Booking**: When student books new appointment with counselor preference
+- **Appointment Editing**: When student updates pending appointment details
+- **Appointment Cancellation**: When student cancels pending appointment with reason
+- **Appointment Approval**: When counselor approves student's appointment
+- **Appointment Rejection**: When counselor rejects student's appointment with reason
+- **Appointment Cancellation by Counselor**: When counselor cancels approved appointment with reason
+- **Conditional Sending**: Email sent only when counselor preference is selected (not "No preference")
+
+**Email Content Features:**
+- **Professional HTML Templates**: Responsive email design with system branding
+- **Complete Appointment Details**: Date, time, consultation type, purpose, description
+- **Student Information**: Name, student ID, email address
+- **Counselor Information**: Name, email, counselor ID (for counselor action emails)
+- **Action-Specific Templates**: Different templates for booking, editing, cancellation, approval, rejection notifications
+- **Visual Design**: Color-coded sections with icons and professional styling
+- **Cancellation Details**: Special cancellation reason section with warning styling
+- **Rejection Details**: Special rejection reason section with warning styling
+- **Approval Confirmation**: Success-themed templates with confirmation messaging
+
+**Technical Implementation:**
+- **Non-Blocking Operations**: Email sending doesn't interfere with appointment operations
+- **Comprehensive Logging**: Detailed logging for debugging email delivery issues
+- **Error Handling**: Graceful handling of email failures with proper error messages
+- **Database Integration**: Seamless integration with existing appointment and user data
+- **Manila Timezone Support**: All appointment updates use Asia/Manila timezone with format 'Y-m-d H:i:s'
+- **Timezone Testing**: Built-in timezone verification functionality for debugging
+- **Follow-up Session Management**: Complete CRUD operations for follow-up sessions
+- **Conflict Detection**: Prevents scheduling conflicts between follow-up sessions
+- **Status-Based UI**: Edit functionality only available for pending sessions
+
+**Controller Integration:**
+- **Student Appointment Controller**: Enhanced `save()`, `update()`, and `cancel()` methods
+- **Counselor Appointment Controller**: Enhanced `updateAppointmentStatus()` method
+- **Counselor Follow-up Controller**: Enhanced with edit functionality and email notifications
+- **Helper Methods**: 
+  - `sendAppointmentNotificationToCounselor()` for booking/editing notifications
+  - `sendAppointmentCancellationNotificationToCounselor()` for cancellation notifications
+  - `sendAppointmentNotificationToStudent()` for counselor action notifications
+- **Data Flow**: Automatic student/counselor information retrieval for email content
+- **Loading States**: Professional loading animations for all modal interactions
+
+## Follow-up Session Management Pattern
+
+**Purpose**: Comprehensive follow-up session management with edit functionality and email notifications
+
+**Triggers**:
+- **Create**: Counselor creates new follow-up session for completed appointment
+- **Edit**: Counselor modifies pending follow-up session details
+- **Complete**: Counselor marks follow-up session as completed
+- **Cancel**: Counselor cancels follow-up session with reason
+
+**Email Notifications**:
+- **Created**: Student receives notification when follow-up session is created
+- **Edited**: Student receives notification when follow-up session is modified
+- **Completed**: Student receives notification when follow-up session is completed
+- **Cancelled**: Student receives notification when follow-up session is cancelled
+
+**Email Content**:
+- **Session Details**: Date, time, consultation type, description, reason
+- **Counselor Information**: Name, email, counselor ID
+- **Professional Templates**: HTML and text versions with proper branding
+- **Color Coding**: Blue (created), Yellow (edited), Green (completed), Red (cancelled)
+
+**Technical Implementation**:
+- **Edit Functionality**: Only available for pending sessions
+- **Conflict Detection**: Prevents scheduling conflicts between follow-up sessions
+- **Manila Timezone**: All updates use Asia/Manila timezone with proper format
+- **Form Validation**: Comprehensive validation for all edit operations
+- **Activity Tracking**: Updates counselor and student activity logs
+- **Status Management**: Smart button states based on session status
+
+**Controller Integration**:
+- **Follow-up Controller**: Enhanced with `editFollowUp()` method
+- **Email Service**: New methods for follow-up email notifications
+- **Email Templates**: Dedicated templates for follow-up actions
+- **Helper Methods**: 
+  - `sendFollowUpNotificationToStudent()` for all follow-up actions
+  - `getManilaDateTime()` for timezone handling
+  - `getStudentEmail()` for student information retrieval
+
+**Files Created/Modified:**
+- `app/Services/AppointmentEmailService.php` - Enhanced email service class with counselor methods
+- `app/Services/CounselorEmailTemplates.php` - New template class for counselor email notifications
+- `app/Controllers/Student/Appointment.php` - Enhanced with email notifications
+- `app/Controllers/Counselor/Appointments.php` - Enhanced with email notifications and loading states
+- `public/js/student/my_appointments.js` - Enhanced with loading animations
+- `public/js/counselor/appointments.js` - Enhanced with loading animations
+- `app/Config/Routes.php` - Added email testing route
+
 ## Student Schedule Appointment Counseling Consent Accordion
 
 **Counseling Consent Accordion System:**
@@ -623,6 +796,7 @@ flowchart TD
 - `/` → `Auth::index` (landing)
 - `POST /auth/login` → `Auth::login`
 - `POST /auth/signup` → `Auth::signup`
+  - Counselor branch: After success, counselor provides basic info via modal; no email verification step.
 - `POST /auth/verify-admin` → `Auth::verifyAdmin`
 - `GET /counselor/dashboard` → `Counselor\\Dashboard::index`
 - `GET /counselor/profile` → `Counselor\\Profile::profile`
@@ -644,6 +818,11 @@ flowchart TD
 - `POST /forgot-password/send-code` → `ForgotPassword::sendCode`
 - `POST /forgot-password/set-password` → `ForgotPassword::setPassword`
 - `POST /contact/send` → `EmailController::sendContactEmail`
+
+### Counselor Signup Flow
+- Counselors do not perform email token verification on signup. After account creation, a modal collects counselor basic info (counselor_id, name, degree, email, contact_number, address; optional civil_status, sex, birthdate) and saves to `counselors`.
+- Endpoint: `POST /counselor/save-basic-info` → `Counselor::saveBasicInfo` (sends email to admin from `users` where role='admin').
+- Login behavior when unverified: Counselors see an informational message only; students still see the verification modal (driven by presence of `redirect` in response).
 
 ### Messaging System Routes
 

@@ -567,6 +567,7 @@
     <script src="<?= base_url('js/admin/profile_sync.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 </body>
 
 </html>

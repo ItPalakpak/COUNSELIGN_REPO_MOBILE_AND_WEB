@@ -190,6 +190,7 @@
     <script src="<?= base_url('js/admin/follow_up_sessions.js') ?>" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 </body>
 
 </html>

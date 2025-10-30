@@ -460,7 +460,7 @@
 
     <?php echo view('modals/student_dashboard_modals'); ?>
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
-
+    <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/student/student_profile.js') ?>"></script>
     <script src="<?= base_url('js/student/logout.js') ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

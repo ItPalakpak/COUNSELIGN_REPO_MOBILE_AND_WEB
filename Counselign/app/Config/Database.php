@@ -33,13 +33,14 @@ class Database extends Config
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,  // Disable persistent connections for better transaction control
-        'DBDebug'      => true,
+        'DBDebug'      => false, // Disable debug in production for security
         'charset'      => 'utf8mb4',
         'DBCollat'     => 'utf8mb4_general_ci',
         'swapPre'      => '',
         'encrypt'      => false,
         'compress'     => false,
         'strictOn'     => true,   // Enable strict mode for better data integrity
+        'saveQueries'  => false,  // Disable query logging in production for security
         'failover'     => [],
         'port'         => 3306,
         'numberNative' => false,

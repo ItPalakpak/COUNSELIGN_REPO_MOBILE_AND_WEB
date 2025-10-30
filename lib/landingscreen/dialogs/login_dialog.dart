@@ -4,8 +4,6 @@ import '../../utils/async_button.dart';
 class LoginDialog extends StatefulWidget {
   final TextEditingController userIdController;
   final TextEditingController passwordController;
-  final String? role;
-  final ValueChanged<String?> onRoleChanged;
   final String error;
   final String userIdError;
   final String passwordError;
@@ -21,8 +19,6 @@ class LoginDialog extends StatefulWidget {
     super.key,
     required this.userIdController,
     required this.passwordController,
-    required this.role,
-    required this.onRoleChanged,
     required this.error,
     required this.userIdError,
     required this.passwordError,
@@ -179,40 +175,28 @@ class _LoginDialogState extends State<LoginDialog>
 
                         const SizedBox(height: 32),
 
-                        // Role dropdown
-                        DropdownButtonFormField<String>(
-                          initialValue: widget.role,
-                          decoration: InputDecoration(
-                            labelText: 'Select your role',
-                            labelStyle: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.person_outline,
-                              color: Color(0xFF060E57),
-                            ),
+                        // Identifier label
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Sign in with your User ID or Email',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'student',
-                              child: Text('Student'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'counselor',
-                              child: Text('Counselor'),
-                            ),
-                          ],
-                          onChanged: widget.onRoleChanged,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
 
-                        // User ID
+                        // Identifier input
                         TextField(
                           controller: widget.userIdController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
-                            labelText: 'User ID',
-                            hintText: 'Enter your ID',
+                            labelText: 'User ID or Email',
+                            hintText: 'Enter your 10-digit ID or your email',
                             prefixIcon: const Icon(
                               Icons.badge_outlined,
                               color: Color(0xFF060E57),
@@ -221,7 +205,6 @@ class _LoginDialogState extends State<LoginDialog>
                                 ? widget.userIdError
                                 : null,
                           ),
-                          maxLength: 10,
                         ),
                         const SizedBox(height: 20),
 
@@ -405,32 +388,43 @@ class _LoginDialogState extends State<LoginDialog>
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Visibility(
-                          visible: false, // Hidden for now
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: widget.onAdminLoginPressed,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: const Color(0xFF495057),
-                                side: const BorderSide(
-                                  color: Color(0xFFDEE2E6),
+                        // Show admin login button only on tablet/desktop (>=600px)
+                        Builder(
+                          builder: (context) {
+                            final screenWidth = MediaQuery.of(
+                              context,
+                            ).size.width;
+                            final isTabletOrDesktop = screenWidth >= 600;
+
+                            if (!isTabletOrDesktop) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: widget.onAdminLoginPressed,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: const Color(0xFF495057),
+                                  side: const BorderSide(
+                                    color: Color(0xFFDEE2E6),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 30,
+                                    vertical: 15,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 30,
-                                  vertical: 15,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                child: const Text(
+                                  'Admin Login',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
                                 ),
                               ),
-                              child: const Text(
-                                'Admin Login',
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),
