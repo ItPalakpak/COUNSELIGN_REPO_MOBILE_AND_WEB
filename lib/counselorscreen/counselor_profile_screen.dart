@@ -272,32 +272,29 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
   }
 
   Widget _buildAccountField(String label, String value) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 100,
-          child: Text(
-            '$label:',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF060E57),
-            ),
+        Text(
+          '$label:',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF060E57),
           ),
         ),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
         ),
       ],
@@ -401,32 +398,29 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
   Widget _buildPersonalInfoField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF060E57),
-              ),
+          Text(
+            '$label:',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF060E57),
             ),
           ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Text(
-                value.isEmpty ? 'N/A' : value,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-              ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Text(
+              value.isEmpty ? 'N/A' : value,
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
           ),
         ],
@@ -1464,6 +1458,13 @@ class _AvailabilityManagementDialogState
   final Map<String, List<TimeRange>> _timeRangesByDay = {};
   String _selectedFromTime = '7:00 AM';
   String _selectedToTime = '5:30 PM';
+  static const List<String> _allDays = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+  ];
 
   @override
   void initState() {
@@ -1478,7 +1479,21 @@ class _AvailabilityManagementDialogState
   }
 
   void _loadCurrentAvailability() {
-    // Load current availability from viewModel
+    final availability = widget.viewModel.availability;
+    if (availability == null) {
+      return;
+    }
+    setState(() {
+      _selectedDays.clear();
+      _timeRangesByDay.clear();
+      for (final day in availability.availableDays) {
+        _selectedDays.add(day);
+        final ranges = availability.getTimeRangesForDay(day);
+        _timeRangesByDay[day] = ranges
+            .map((r) => TimeRange(from: r.from, to: r.to))
+            .toList();
+      }
+    });
   }
 
   @override
@@ -1524,33 +1539,27 @@ class _AvailabilityManagementDialogState
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 12,
-                      children:
-                          [
-                                'Monday',
-                                'Tuesday',
-                                'Wednesday',
-                                'Thursday',
-                                'Friday',
-                              ]
-                              .map(
-                                (day) => FilterChip(
-                                  label: Text(day),
-                                  selected: _selectedDays.contains(day),
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        _selectedDays.add(day);
-                                      } else {
-                                        _selectedDays.remove(day);
-                                        _timeRangesByDay.remove(day);
-                                      }
-                                    });
-                                  },
-                                ),
-                              )
-                              .toList(),
+                      children: _allDays
+                          .map(
+                            (day) => FilterChip(
+                              label: Text(day),
+                              selected: _selectedDays.contains(day),
+                              onSelected: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedDays.add(day);
+                                  } else {
+                                    _selectedDays.remove(day);
+                                    // Do not remove existing time ranges when unchecking the day.
+                                  }
+                                });
+                              },
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 24),
+                    // --- Add Time Slot area: only show if at least one day checked
                     if (_selectedDays.isNotEmpty) ...[
                       const Text(
                         'Available Times (per selected day)',
@@ -1561,14 +1570,12 @@ class _AvailabilityManagementDialogState
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Responsive layout based on screen width
+                      // Responsive layout for adding time slot
                       Builder(
                         builder: (context) {
                           final screenWidth = MediaQuery.of(context).size.width;
                           final isMobile = screenWidth < 600;
-
                           if (isMobile) {
-                            // Mobile layout: dropdowns in one row, Add button below
                             return Column(
                               children: [
                                 Row(
@@ -1580,6 +1587,8 @@ class _AvailabilityManagementDialogState
                                           labelText: 'From',
                                           border: OutlineInputBorder(),
                                         ),
+                                        isExpanded: true,
+                                        isDense: true,
                                         items: _getTimeOptions()
                                             .map(
                                               (time) => DropdownMenuItem(
@@ -1593,7 +1602,7 @@ class _AvailabilityManagementDialogState
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: DropdownButtonFormField<String>(
                                         initialValue: _selectedToTime,
@@ -1601,6 +1610,8 @@ class _AvailabilityManagementDialogState
                                           labelText: 'To',
                                           border: OutlineInputBorder(),
                                         ),
+                                        isExpanded: true,
+                                        isDense: true,
                                         items: _getTimeOptions()
                                             .map(
                                               (time) => DropdownMenuItem(
@@ -1627,7 +1638,6 @@ class _AvailabilityManagementDialogState
                               ],
                             );
                           } else {
-                            // Desktop layout: everything in one row
                             return Row(
                               children: [
                                 Expanded(
@@ -1637,6 +1647,8 @@ class _AvailabilityManagementDialogState
                                       labelText: 'From',
                                       border: OutlineInputBorder(),
                                     ),
+                                    isExpanded: true,
+                                    isDense: true,
                                     items: _getTimeOptions()
                                         .map(
                                           (time) => DropdownMenuItem(
@@ -1650,7 +1662,7 @@ class _AvailabilityManagementDialogState
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedToTime,
@@ -1658,6 +1670,8 @@ class _AvailabilityManagementDialogState
                                       labelText: 'To',
                                       border: OutlineInputBorder(),
                                     ),
+                                    isExpanded: true,
+                                    isDense: true,
                                     items: _getTimeOptions()
                                         .map(
                                           (time) => DropdownMenuItem(
@@ -1682,8 +1696,13 @@ class _AvailabilityManagementDialogState
                         },
                       ),
                       const SizedBox(height: 20),
-                      ..._selectedDays.map((day) => _buildDayAvailability(day)),
                     ],
+                    // --- Always show time slots for any day that has ranges, even if nothing is selected!
+                    ..._allDays
+                        .where(
+                          (day) => (_timeRangesByDay[day]?.isNotEmpty ?? false),
+                        )
+                        .map((day) => _buildDayAvailability(day)),
                   ],
                 ),
               ),
@@ -1814,8 +1833,11 @@ class _AvailabilityManagementDialogState
   }
 
   Future<void> _saveAvailability() async {
+    // Ensure days that still have ranges are included even if currently unchecked
+    final Set<String> daysToSave = {..._selectedDays, ..._timeRangesByDay.keys};
+
     final success = await widget.viewModel.updateAvailability(
-      selectedDays: _selectedDays,
+      selectedDays: daysToSave.toList(),
       timeRangesByDay: _timeRangesByDay,
     );
 
