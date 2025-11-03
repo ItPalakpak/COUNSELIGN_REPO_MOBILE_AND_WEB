@@ -120,6 +120,14 @@
         </div>
     </main>
 
+    <footer>
+        <div class="footer-content">
+            <div class="copyright">
+                <b>© 2025 Counselign Team. All rights reserved.</b>
+            </div>
+        </div>
+    </footer>
+
     <!-- Follow-up Sessions Modal (Read-Only) -->
     <div class="modal fade" id="followUpSessionsModal" tabindex="-1" aria-labelledby="followUpSessionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -169,6 +177,7 @@
         // Set BASE_URL for JavaScript
         window.BASE_URL = '<?= base_url() ?>';
     </script>
+    <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
 </body>
 
 </html>

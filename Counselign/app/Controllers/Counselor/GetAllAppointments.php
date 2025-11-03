@@ -70,7 +70,7 @@ class GetAllAppointments extends BaseController
                         COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), NULL) AS student_name,
                         appointments.preferred_date as appointed_date,
                         appointments.preferred_time as appointed_time,
-                        appointments.consultation_type,
+                        appointments.method_type,
                         appointments.purpose,
                         c.name as counselor_name,
                         appointments.status, appointments.reason,
@@ -86,6 +86,38 @@ LEFT JOIN student_personal_info spi ON spi.student_id = appointments.student_id"
             log_message('debug', 'GetAllAppointments - Query: ' . $allAppointmentsQuery);
             
             $allAppointments = $db->query($allAppointmentsQuery)->getResultArray();
+
+            // Fetch completed/cancelled follow-up sessions for this counselor and map fields to align with base appointments
+            $followUpsQuery = "SELECT 
+                    f.student_id as user_id,
+                    COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), NULL) AS student_name,
+                    f.preferred_date as appointed_date,
+                    f.preferred_time as appointed_time,
+                    p.method_type as method_type,
+                    f.consultation_type as purpose,
+                    c.name as counselor_name,
+                    UPPER(f.status) as status,
+                    f.reason as reason,
+                    'Follow-up Session' as appointment_type,
+                    'follow_up' as record_kind
+                FROM follow_up_appointments f
+                LEFT JOIN appointments p ON p.id = f.parent_appointment_id
+                LEFT JOIN counselors c ON p.counselor_preference = c.counselor_id
+                LEFT JOIN student_personal_info spi ON spi.student_id = f.student_id
+                WHERE f.counselor_id = ? AND f.status IN ('pending','completed','cancelled')
+                ORDER BY f.preferred_date ASC, f.preferred_time ASC";
+
+            $followUps = $db->query($followUpsQuery, [$userId])->getResultArray();
+
+            // Normalize base appointments to include appointment_type and record_kind
+            foreach ($allAppointments as &$row) {
+                $row['appointment_type'] = 'First Session';
+                $row['record_kind'] = 'appointment';
+            }
+            unset($row);
+
+            // Merge lists
+            $allAppointments = array_merge($allAppointments, $followUps);
             
             log_message('debug', 'GetAllAppointments - Appointments found: ' . count($allAppointments));
             
@@ -131,6 +163,27 @@ LEFT JOIN student_personal_info spi ON spi.student_id = appointments.student_id"
 
             $query = $baseQuery . $counselorFilter . $dateFilter . " ORDER BY preferred_date ASC, preferred_time ASC";
             $chartAppointments = $db->query($query)->getResultArray();
+
+            // Include follow-up sessions (pending/completed/cancelled) in chart datasets
+            $fuChartQuery = "SELECT 
+                    f.preferred_date as appointed_date,
+                    UPPER(f.status) as status
+                FROM follow_up_appointments f
+                WHERE f.counselor_id = ? AND f.status IN ('pending','completed','cancelled')";
+            // Apply same date filter window to follow-ups
+            if ($timeRange === 'monthly') {
+                $fuChartQuery .= " AND YEAR(f.preferred_date) = YEAR(CURDATE())";
+            } elseif (!empty($startDateStr) && !empty($endDateStr)) {
+                $fuChartQuery .= " AND f.preferred_date >= " . $db->escape($startDateStr) . " AND f.preferred_date <= " . $db->escape($endDateStr);
+            }
+            $followUpForCharts = $db->query($fuChartQuery, [$userId])->getResultArray();
+            // Normalize into same structure fields as $chartAppointments
+            foreach ($followUpForCharts as $fu) {
+                $chartAppointments[] = [
+                    'appointed_date' => $fu['appointed_date'],
+                    'status' => $fu['status']
+                ];
+            }
 
             $dateFormat = ($timeRange === 'daily' || $timeRange === 'weekly') ? 'Y-m-d' : 'Y-m';
             $stats = [];

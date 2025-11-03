@@ -47,6 +47,11 @@ class HistoryReports extends Controller
     public function getHistoricalData()
     {
         $month = $this->request->getGet('month') ?? date('Y-m');
+        // Prevent access to future months
+        $currentMonth = date('Y-m');
+        if ($month > $currentMonth) {
+            $month = $currentMonth;
+        }
         $reportType = $this->request->getGet('type') ?? 'monthly';
 
         try {
@@ -85,6 +90,33 @@ class HistoryReports extends Controller
                     $rejected[] = (int)$row->rejected;
                     $pending[] = (int)$row->pending;
                     $cancelled[] = (int)$row->cancelled;
+                }
+
+                // Add follow-up sessions (pending/completed/cancelled)
+                $fu = $this->db->query("
+                    SELECT DATE(preferred_date) as date,
+                           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                           0 as approved,
+                           0 as rejected,
+                           SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                           SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+                    FROM follow_up_appointments
+                    WHERE preferred_date BETWEEN ? AND ?
+                    GROUP BY DATE(preferred_date)
+                    ORDER BY DATE(preferred_date)
+                ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')]);
+                // map day->index
+                $dayToIndex = [];
+                $i = 0; foreach ($query->getResult() as $row) { $dayToIndex[date('Y-m-d', strtotime($row->date))] = $i++; }
+                foreach ($fu->getResult() as $row) {
+                    $key = date('Y-m-d', strtotime($row->date));
+                    // find index by day number match if exact date not present
+                    $dayNum = (int)date('j', strtotime($row->date));
+                    $idx = array_search($dayNum, $labels);
+                    if ($idx === false) continue;
+                    $completed[$idx] += (int)$row->completed;
+                    $pending[$idx] += (int)$row->pending;
+                    $cancelled[$idx] += (int)$row->cancelled;
                 }
             } elseif ($reportType === 'weekly') {
                 $firstMonday = clone $firstDay;
@@ -130,6 +162,7 @@ class HistoryReports extends Controller
                 ", [$firstMonday->format('Y-m-d'), $lastSunday->format('Y-m-d')]);
 
                 $weekCount = 1;
+                $weekStarts = [];
                 foreach ($query->getResult() as $row) {
                     $weekStart = new \DateTime($row->week_start);
                     $weekEnd = new \DateTime($row->week_end);
@@ -144,7 +177,23 @@ class HistoryReports extends Controller
                     $pending[] = (int)$row->pending;
                     $cancelled[] = (int)$row->cancelled;
                     
+                    $weekStarts[] = $weekStart->format('Y-m-d');
                     $weekCount++;
+                }
+
+                // Add follow-ups by bucketing each date to its week start
+                $fuAll = $this->db->query("SELECT preferred_date, status FROM follow_up_appointments WHERE preferred_date BETWEEN ? AND ?",
+                    [$firstMonday->format('Y-m-d'), $lastSunday->format('Y-m-d')])->getResultArray();
+                foreach ($fuAll as $fuRow) {
+                    $d = new \DateTime($fuRow['preferred_date']);
+                    while ($d->format('N') != 1) { $d->modify('-1 day'); }
+                    $wkStart = $d->format('Y-m-d');
+                    $idx = array_search($wkStart, $weekStarts);
+                    if ($idx === false) continue;
+                    $st = strtolower($fuRow['status']);
+                    if ($st === 'completed') $completed[$idx]++;
+                    if ($st === 'pending') $pending[$idx]++;
+                    if ($st === 'cancelled') $cancelled[$idx]++;
                 }
             } elseif ($reportType === 'yearly') {
                 $query = $this->db->query("
@@ -168,6 +217,22 @@ class HistoryReports extends Controller
                     $rejected[] = (int)$row->rejected;
                     $pending[] = (int)$row->pending;
                     $cancelled[] = (int)$row->cancelled;
+                }
+
+                // Add follow-up yearly counts
+                $fuYears = $this->db->query("SELECT YEAR(preferred_date) as year,
+                           SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed,
+                           SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
+                           SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled
+                        FROM follow_up_appointments
+                        WHERE YEAR(preferred_date) BETWEEN 2023 AND 2025
+                        GROUP BY YEAR(preferred_date)")->getResult();
+                foreach ($fuYears as $row) {
+                    $idx = array_search($row->year, $labels);
+                    if ($idx === false) continue;
+                    $completed[$idx] += (int)$row->completed;
+                    $pending[$idx] += (int)$row->pending;
+                    $cancelled[$idx] += (int)$row->cancelled;
                 }
             } else {
                 $query = $this->db->query("
@@ -193,7 +258,7 @@ class HistoryReports extends Controller
                 }
             }
 
-            // Get total counts
+            // Get total counts (appointments + follow-ups)
             $totalQuery = $this->db->query("
                 SELECT
                     SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
@@ -206,6 +271,19 @@ class HistoryReports extends Controller
             ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')]);
 
             $totals = $totalQuery->getRow();
+
+            // Follow-up totals
+            $fuTotals = $this->db->query("
+                SELECT
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
+                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
+                FROM follow_up_appointments
+                WHERE preferred_date BETWEEN ? AND ?
+            ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')])->getRow();
+            $totals->total_completed += (int)($fuTotals->total_completed ?? 0);
+            $totals->total_pending += (int)($fuTotals->total_pending ?? 0);
+            $totals->total_cancelled += (int)($fuTotals->total_cancelled ?? 0);
 
             return $this->response->setJSON([
                 'labels' => $labels,

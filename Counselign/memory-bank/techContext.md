@@ -16,15 +16,6 @@
 - App config in `app/Config/*.php` (e.g., `App.php`, `Database.php`, `Routes.php`)
 - Base URL, database DSN, email settings via environment or config files
 
-### Password Reset Flow (Technical Note)
-- Endpoint: `POST forgot-password/send-code` (JSON body: `{ input: string }` where input is email or user_id)
-- Alias: `POST forgot-password/resend-code` mapped to the same logic
-- Behavior:
-  - When `input` is an email, backend resolves `users.user_id` and saves `password_resets.user_id` accordingly
-  - When `input` is a user_id, backend looks up destination email and sends there
-  - Old tokens for the same `user_id` are removed before insert to avoid duplicates
-  - Prevents `Data too long for column 'user_id'` by never inserting emails into `password_resets.user_id`
-
 ### Email Service Configuration
 **ENHANCED FEATURE**: Centralized email configuration with debugging capabilities for appointment notifications.
 

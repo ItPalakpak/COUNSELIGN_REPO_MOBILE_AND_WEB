@@ -212,6 +212,68 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
               Form(
                 child: Column(
                   children: [
+                    // Consultation Type (Individual / Group)
+                    _buildFormField(
+                      context: context,
+                      label: 'Consultation Type',
+                      child: DropdownButtonFormField<String>(
+                        initialValue:
+                            viewModel.consultationTypeController.text.isEmpty
+                            ? null
+                            : viewModel
+                                  .consultationTypeController
+                                  .text, // Fixed: using initialValue instead of value
+                        decoration: InputDecoration(
+                          hintText: 'Select consultation type',
+                          errorText: viewModel.consultationTypeError,
+                          filled:
+                              viewModel.hasLoginError ||
+                              viewModel.hasPendingAppointment ||
+                              viewModel.hasApprovedAppointment ||
+                              viewModel.hasPendingFollowUp,
+                          fillColor:
+                              (viewModel.hasLoginError ||
+                                  viewModel.hasPendingAppointment ||
+                                  viewModel.hasApprovedAppointment ||
+                                  viewModel.hasPendingFollowUp)
+                              ? const Color(0xFFF8FAFC)
+                              : null,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Individual Consultation',
+                            child: Text('Individual Consultation'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Group Consultation',
+                            child: Text('Group Consultation'),
+                          ),
+                        ],
+                        onChanged:
+                            (viewModel.hasLoginError ||
+                                viewModel.hasPendingAppointment ||
+                                viewModel.hasApprovedAppointment ||
+                                viewModel.hasPendingFollowUp)
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  viewModel.consultationTypeController.text =
+                                      value;
+                                  if (viewModel
+                                      .dateController
+                                      .text
+                                      .isNotEmpty) {
+                                    viewModel.refreshAvailableTimeSlotsForDate(
+                                      viewModel.dateController.text,
+                                    );
+                                  }
+                                  viewModel.validateForm();
+                                }
+                              },
+                      ),
+                    ),
+
+                    SizedBox(height: isMobile ? 20 : 25),
                     // Preferred Date
                     _buildFormField(
                       context: context,
@@ -279,94 +341,149 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
 
                     SizedBox(height: isMobile ? 20 : 25),
 
-                    // Preferred Time
+                    // Preferred Time (dynamic, 30-min slots)
                     _buildFormField(
                       context: context,
                       label: 'Preferred Time',
-                      child: DropdownButtonFormField<String>(
-                        initialValue: viewModel.timeController.text.isEmpty
-                            ? null
-                            : viewModel
-                                  .timeController
-                                  .text, // Fixed: using initialValue instead of value
-                        decoration: InputDecoration(
-                          hintText: 'Select a time slot',
-                          errorText: viewModel.timeError,
-                          filled:
-                              viewModel.hasLoginError ||
-                              viewModel.hasPendingAppointment ||
-                              viewModel.hasApprovedAppointment ||
-                              viewModel.hasPendingFollowUp,
-                          fillColor:
-                              (viewModel.hasLoginError ||
+                      child: Builder(
+                        builder: (_) {
+                          final List<String> timeItems =
+                              viewModel.isLoadingTimeSlots
+                              ? const []
+                              : viewModel.availableTimeSlots;
+                          final String? selectedValue =
+                              timeItems.contains(viewModel.timeController.text)
+                              ? viewModel.timeController.text
+                              : null;
+                          return DropdownButtonFormField<String>(
+                            initialValue: selectedValue,
+                            decoration: InputDecoration(
+                              hintText: 'Select a time slot',
+                              errorText: viewModel.timeError,
+                              filled:
+                                  viewModel.hasLoginError ||
                                   viewModel.hasPendingAppointment ||
                                   viewModel.hasApprovedAppointment ||
-                                  viewModel.hasPendingFollowUp)
-                              ? const Color(0xFFF8FAFC)
-                              : null,
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: '8:00 AM - 9:00 AM',
-                            child: Text('8:00 AM - 9:00 AM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '9:00 AM - 10:00 AM',
-                            child: Text('9:00 AM - 10:00 AM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '10:00 AM - 11:00 AM',
-                            child: Text('10:00 AM - 11:00 AM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '1:00 PM - 2:00 PM',
-                            child: Text('1:00 PM - 2:00 PM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '2:00 PM - 3:00 PM',
-                            child: Text('2:00 PM - 3:00 PM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '3:00 PM - 4:00 PM',
-                            child: Text('3:00 PM - 4:00 PM'),
-                          ),
-                          DropdownMenuItem(
-                            value: '4:00 PM - 5:00 PM',
-                            child: Text('4:00 PM - 5:00 PM'),
-                          ),
-                        ],
-                        onChanged:
-                            (viewModel.hasLoginError ||
-                                viewModel.hasPendingAppointment ||
-                                viewModel.hasApprovedAppointment ||
-                                viewModel.hasPendingFollowUp)
-                            ? null
-                            : (value) {
-                                if (value != null) {
-                                  viewModel.timeController.text = value;
-                                  viewModel.onTimeChanged(value);
-                                  viewModel.validateForm();
-                                }
-                              },
+                                  viewModel.hasPendingFollowUp,
+                              fillColor:
+                                  (viewModel.hasLoginError ||
+                                      viewModel.hasPendingAppointment ||
+                                      viewModel.hasApprovedAppointment ||
+                                      viewModel.hasPendingFollowUp)
+                                  ? const Color(0xFFF8FAFC)
+                                  : null,
+                            ),
+                            items: viewModel.isLoadingTimeSlots
+                                ? const []
+                                : (timeItems.isEmpty
+                                      ? const [
+                                          DropdownMenuItem(
+                                            value: null,
+                                            child: Text(
+                                              'No available time slots for this date',
+                                            ),
+                                          ),
+                                        ]
+                                      : timeItems
+                                            .map(
+                                              (s) => DropdownMenuItem(
+                                                value: s,
+                                                child: Text(s),
+                                              ),
+                                            )
+                                            .toList()),
+                            onChanged:
+                                (viewModel.hasLoginError ||
+                                    viewModel.hasPendingAppointment ||
+                                    viewModel.hasApprovedAppointment ||
+                                    viewModel.hasPendingFollowUp)
+                                ? null
+                                : (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      viewModel.timeController.text = value;
+                                      viewModel.onTimeChanged(value);
+                                      viewModel.validateForm();
+                                    }
+                                  },
+                          );
+                        },
                       ),
                     ),
 
                     SizedBox(height: isMobile ? 20 : 25),
 
-                    // Consultation Type
+                    // Counselor Preference
                     _buildFormField(
                       context: context,
-                      label: 'Consultation Type',
+                      label: 'Counselor Preference',
+                      child: viewModel.isLoadingCounselors
+                          ? const CircularProgressIndicator()
+                          : DropdownButtonFormField<String>(
+                              initialValue:
+                                  viewModel.counselorController.text.isEmpty
+                                  ? null
+                                  : viewModel
+                                        .counselorController
+                                        .text, // Fixed: using initialValue instead of value
+                              decoration: InputDecoration(
+                                hintText: 'Select a counselor',
+                                errorText: viewModel.counselorError,
+                                filled: viewModel.hasPendingAppointment,
+                                fillColor: viewModel.hasPendingAppointment
+                                    ? const Color(0xFFF8FAFC)
+                                    : null,
+                              ),
+                              items: viewModel.counselors.isEmpty
+                                  ? [
+                                      const DropdownMenuItem(
+                                        value: '',
+                                        child: Text('No counselors available'),
+                                      ),
+                                    ]
+                                  : viewModel.counselors.map((counselor) {
+                                      return DropdownMenuItem(
+                                        value: counselor.counselorId.toString(),
+                                        child: Text(
+                                          counselor
+                                              .displayName, // Remove specialization from display
+                                        ),
+                                      );
+                                    }).toList(),
+                              onChanged: viewModel.hasPendingAppointment
+                                  ? null
+                                  : (value) {
+                                      if (value != null) {
+                                        viewModel.counselorController.text =
+                                            value;
+                                        if (viewModel
+                                            .dateController
+                                            .text
+                                            .isNotEmpty) {
+                                          viewModel
+                                              .refreshAvailableTimeSlotsForDate(
+                                                viewModel.dateController.text,
+                                              );
+                                        }
+                                        viewModel.validateForm();
+                                      }
+                                    },
+                            ),
+                    ),
+
+                    SizedBox(height: isMobile ? 20 : 25),
+
+                    // Method Type (In-person / Online)
+                    _buildFormField(
+                      context: context,
+                      label: 'Method Type',
                       child: DropdownButtonFormField<String>(
                         initialValue:
-                            viewModel.consultationTypeController.text.isEmpty
+                            viewModel.methodTypeController.text.isEmpty
                             ? null
-                            : viewModel
-                                  .consultationTypeController
-                                  .text, // Fixed: using initialValue instead of value
+                            : viewModel.methodTypeController.text,
                         decoration: InputDecoration(
-                          hintText: 'Select a consultation type',
-                          errorText: viewModel.consultationTypeError,
+                          hintText: 'Select a method type',
+                          errorText: viewModel.methodTypeError,
                           filled:
                               viewModel.hasLoginError ||
                               viewModel.hasPendingAppointment ||
@@ -402,8 +519,7 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                             ? null
                             : (value) {
                                 if (value != null) {
-                                  viewModel.consultationTypeController.text =
-                                      value;
+                                  viewModel.methodTypeController.text = value;
                                   viewModel.validateForm();
                                 }
                               },
@@ -463,57 +579,6 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                                 }
                               },
                       ),
-                    ),
-
-                    SizedBox(height: isMobile ? 20 : 25),
-
-                    // Counselor Preference
-                    _buildFormField(
-                      context: context,
-                      label: 'Counselor Preference',
-                      child: viewModel.isLoadingCounselors
-                          ? const CircularProgressIndicator()
-                          : DropdownButtonFormField<String>(
-                              initialValue:
-                                  viewModel.counselorController.text.isEmpty
-                                  ? null
-                                  : viewModel
-                                        .counselorController
-                                        .text, // Fixed: using initialValue instead of value
-                              decoration: InputDecoration(
-                                hintText: 'Select a counselor',
-                                errorText: viewModel.counselorError,
-                                filled: viewModel.hasPendingAppointment,
-                                fillColor: viewModel.hasPendingAppointment
-                                    ? const Color(0xFFF8FAFC)
-                                    : null,
-                              ),
-                              items: viewModel.counselors.isEmpty
-                                  ? [
-                                      const DropdownMenuItem(
-                                        value: '',
-                                        child: Text('No counselors available'),
-                                      ),
-                                    ]
-                                  : viewModel.counselors.map((counselor) {
-                                      return DropdownMenuItem(
-                                        value: counselor.counselorId.toString(),
-                                        child: Text(
-                                          counselor
-                                              .displayName, // Remove specialization from display
-                                        ),
-                                      );
-                                    }).toList(),
-                              onChanged: viewModel.hasPendingAppointment
-                                  ? null
-                                  : (value) {
-                                      if (value != null) {
-                                        viewModel.counselorController.text =
-                                            value;
-                                        viewModel.validateForm();
-                                      }
-                                    },
-                            ),
                     ),
 
                     SizedBox(height: isMobile ? 20 : 25),
@@ -808,6 +873,7 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                     viewModel.currentCalendarDate.month - 1,
                   );
                   viewModel.setCalendarDate(newDate);
+                  viewModel.fetchCalendarStatsForMonth(newDate);
                 },
                 icon: const Icon(Icons.chevron_left),
               ),
@@ -825,6 +891,7 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                     viewModel.currentCalendarDate.month + 1,
                   );
                   viewModel.setCalendarDate(newDate);
+                  viewModel.fetchCalendarStatsForMonth(newDate);
                 },
                 icon: const Icon(Icons.chevron_right),
               ),
@@ -832,7 +899,6 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
           ),
 
           const SizedBox(height: 20),
-
           // Calendar grid
           Expanded(child: _buildCalendarGrid(context, viewModel)),
         ],
@@ -879,6 +945,14 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
           DateTime.now().subtract(const Duration(days: 1)),
         );
 
+        final stats = viewModel.getStatsForDate(date);
+        final int? approvedCount = stats != null
+            ? (stats['count'] as int?)
+            : null;
+        final bool fullyBooked = stats != null
+            ? (stats['fullyBooked'] == true)
+            : false;
+
         return GestureDetector(
           onTap: isPast
               ? null
@@ -890,25 +964,69 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                   ? Colors.grey[200]
                   : isToday
                   ? const Color(0xFF060E57)
-                  : Colors.white,
+                  : (fullyBooked ? const Color(0xFFFDE2E1) : Colors.white),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isToday ? const Color(0xFF060E57) : Colors.grey[300]!,
+                color: isToday
+                    ? const Color(0xFF060E57)
+                    : (fullyBooked
+                          ? const Color(0xFFF8B4B4)
+                          : Colors.grey[300]!),
                 width: 1,
               ),
             ),
-            child: Center(
-              child: Text(
-                day.toString(),
-                style: TextStyle(
-                  color: isPast
-                      ? Colors.grey[400]
-                      : isToday
-                      ? Colors.white
-                      : Colors.black,
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    day.toString(),
+                    style: TextStyle(
+                      color: isPast
+                          ? Colors.grey[400]
+                          : isToday
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ),
-              ),
+                if (approvedCount != null && approvedCount > 0)
+                  Positioned(
+                    top: 4,
+                    right: 6,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D6EFD),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        approvedCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (fullyBooked && !isToday)
+                  Positioned(
+                    bottom: 4,
+                    left: 0,
+                    right: 0,
+                    child: Text(
+                      'Fully booked',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFFB91C1C),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         );

@@ -2,6 +2,51 @@ let pendingSaveContext = null;
 let pendingCancelContext = null;
 let pendingDeleteId = null;
 
+// ---- Availability helpers (must be global for use outside DOMContentLoaded) ----
+function getDayOfWeek(dateString) {
+    const date = new Date(dateString);
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[date.getDay()];
+}
+
+function normalizePreferredTimeTo24hRange(rangeStr) {
+    if (!rangeStr || typeof rangeStr !== 'string') return null;
+    const parts = rangeStr.split('-').map(function (p) { return p.trim(); });
+    if (parts.length !== 2) return null;
+    function to24h(t) {
+        const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return null;
+        let hour = parseInt(match[1], 10);
+        const minute = match[2];
+        const ampm = match[3].toUpperCase();
+        if (ampm === 'AM') { if (hour === 12) hour = 0; } else { if (hour !== 12) hour += 12; }
+        return String(hour).padStart(2, '0') + ':' + minute;
+    }
+    const start = to24h(parts[0]);
+    const end = to24h(parts[1]);
+    if (!start || !end) return null;
+    return start + '-' + end;
+}
+
+function extractStartEnd24h(rangeStr) {
+    if (!rangeStr || typeof rangeStr !== 'string') return null;
+    const parts = rangeStr.split('-').map(function (p) { return p.trim(); });
+    if (parts.length !== 2) return null;
+    function to24h(t) {
+        const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return null;
+        let hour = parseInt(match[1], 10);
+        const minute = match[2];
+        const ampm = match[3].toUpperCase();
+        if (ampm === 'AM') { if (hour === 12) hour = 0; } else { if (hour !== 12) hour += 12; }
+        return String(hour).padStart(2, '0') + ':' + minute;
+    }
+    const start = to24h(parts[0]);
+    const end = to24h(parts[1]);
+    if (!start || !end) return null;
+    return { start: start, end: end };
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize variables
     let allAppointments = [];
@@ -29,130 +74,115 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!grid || !monthLabel) return;
 
         let calDate = new Date();
+        let monthStatsCache = {}; // key: YYYY-MM -> stats object
 
-        function formatISO(date){ return date.toISOString().split('T')[0]; }
-        function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
         function monthName(idx){ return ['January','February','March','April','May','June','July','August','September','October','November','December'][idx]; }
+        function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+        function iso(date){ return date.toISOString().split('T')[0]; }
 
-        function renderCalendar(){
+        async function fetchMonthStats(year, monthIndex){
+            const key = year + '-' + String(monthIndex+1).padStart(2,'0');
+            if (monthStatsCache[key]) return monthStatsCache[key];
+            try {
+                const url = new URL((window.BASE_URL || '/') + 'student/calendar/daily-stats');
+                url.searchParams.append('year', String(year));
+                url.searchParams.append('month', String(monthIndex+1));
+                const res = await fetch(url.toString(), { method:'GET', credentials:'include', headers:{ 'Accept':'application/json' }});
+                if (!res.ok) throw new Error('Failed to load calendar stats');
+                const data = await res.json();
+                if (data && data.status === 'success' && data.stats){
+                    monthStatsCache[key] = data.stats;
+                    return data.stats;
+                }
+            } catch(e){ /* noop: fallback to no stats */ }
+            monthStatsCache[key] = {};
+            return {};
+        }
+
+        async function render(){
             grid.innerHTML = '';
             monthLabel.textContent = monthName(calDate.getMonth()) + ' ' + calDate.getFullYear();
 
-            const dayHeaders = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            dayHeaders.forEach(d => { const el = document.createElement('div'); el.className='calendar-day-header'; el.textContent=d; grid.appendChild(el); });
+            // Fetch stats for this month
+            const stats = await fetchMonthStats(calDate.getFullYear(), calDate.getMonth());
+
+            const headers = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            headers.forEach(h => { const el=document.createElement('div'); el.className='calendar-day-header'; el.textContent=h; grid.appendChild(el); });
 
             const first = new Date(calDate.getFullYear(), calDate.getMonth(), 1);
             const last = new Date(calDate.getFullYear(), calDate.getMonth()+1, 0);
-            const startDow = first.getDay();
-            for (let i=0;i<startDow;i++){ const e=document.createElement('div'); e.className='calendar-day other-month'; grid.appendChild(e); }
+            for (let i=0;i<first.getDay();i++){ const pad=document.createElement('div'); pad.className='calendar-day other-month'; grid.appendChild(pad); }
 
-            for (let day=1; day<=last.getDate(); day++){
+            for (let d=1; d<=last.getDate(); d++){
                 const cell = document.createElement('div');
                 cell.className = 'calendar-day';
-                cell.textContent = String(day);
-                const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), day);
+                const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), d);
+                const y = thisDate.getFullYear();
+                const m = String(thisDate.getMonth()+1).padStart(2,'0');
+                const dd = String(d).padStart(2,'0');
+                const isoDate = y + '-' + m + '-' + dd;
+
+                // Layout container
+                cell.style.display = 'flex';
+                cell.style.flexDirection = 'column';
+                cell.style.alignItems = 'center';
+                cell.style.justifyContent = 'flex-start';
+                cell.style.position = 'relative'; // enable absolute overlay for badge
+
+                // Day number label
+                const dayNum = document.createElement('div');
+                dayNum.textContent = String(d);
+                dayNum.className = 'day-number';
+                dayNum.style.marginTop = '4px';
+                cell.appendChild(dayNum);
+
+                // Apply today highlight
                 if (sameDay(thisDate, new Date())) cell.classList.add('today');
 
-                cell.addEventListener('click', () => openCounselorsBubble(thisDate, cell));
+                // Stats badge and fully booked label (both appear below the day number)
+                const st = stats[isoDate];
+                if (st && typeof st.count === 'number' && st.count > 0){
+                    const badge = document.createElement('span');
+                    badge.className = 'appt-badge';
+                    badge.textContent = String(st.count);
+                    badge.title = 'Approved appointments';
+                    // Overlay above the day number (top-right)
+                    badge.style.position = 'absolute';
+                    badge.style.top = '4px';
+                    badge.style.right = '6px';
+                    badge.style.minWidth = '18px';
+                    badge.style.height = '18px';
+                    badge.style.borderRadius = '9px';
+                    badge.style.backgroundColor = '#0d6efd';
+                    badge.style.color = '#fff';
+                    badge.style.fontSize = '11px';
+                    badge.style.lineHeight = '18px';
+                    badge.style.textAlign = 'center';
+                    badge.style.pointerEvents = 'none';
+                    cell.appendChild(badge);
+                }
+
+                if (st && st.fullyBooked === true){
+                    // Red highlight only when fully booked
+                    cell.classList.add('fully-booked');
+                    cell.style.backgroundColor = '#fde2e1';
+                    cell.style.borderColor = '#f8b4b4';
+                    // Add a small "Fully booked" label under the badge/number
+                    const fb = document.createElement('div');
+                    fb.textContent = 'Fully booked';
+                    fb.style.marginTop = '4px';
+                    fb.style.fontSize = '11px';
+                    fb.style.color = '#b91c1c';
+                    cell.appendChild(fb);
+                }
+
                 grid.appendChild(cell);
             }
         }
 
-        async function openCounselorsBubble(dateObj, anchorEl){
-            closeCounselorsBubble();
-            const bubble = document.createElement('div');
-            bubble.className = 'counselors-bubble';
-            bubble.innerHTML = '<div class="bubble-header"><i class="fas fa-user-md me-2"></i>Available Counselors</div><div class="bubble-body">Loading...</div>';
-            document.body.appendChild(bubble);
-
-            // position near anchor
-            const rect = anchorEl.getBoundingClientRect();
-            const top = window.scrollY + rect.top - bubble.offsetHeight - 8;
-            const left = window.scrollX + rect.left + (rect.width/2) - 160;
-            bubble.style.top = Math.max(10, top) + 'px';
-            bubble.style.left = Math.max(10, left) + 'px';
-
-            // fetch counselors for that date using availability endpoint (broad day query)
-            const dateStr = formatISO(dateObj);
-            const dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dateObj.getDay()];
-            const url = new URL((window.BASE_URL || '/') + 'student/get-counselors-by-availability');
-            url.searchParams.append('date', dateStr);
-            url.searchParams.append('day', dayOfWeek);
-            // Use full-day overlap so backend returns day-available counselors
-            url.searchParams.append('time', '00:00-23:59');
-            url.searchParams.append('from', '00:00');
-            url.searchParams.append('to', '23:59');
-            url.searchParams.append('timeMode', 'overlap');
-
-            try{
-                const res = await fetch(url.toString(), { method:'GET', credentials:'include', headers:{ 'Accept':'application/json' } });
-                if (!res.ok) throw new Error('Availability request failed: ' + res.status);
-                const data = await res.json();
-                const body = bubble.querySelector('.bubble-body');
-                if (data.status === 'success' && Array.isArray(data.counselors) && data.counselors.length > 0){
-                    // Build list with time slots per counselor via a secondary fetch to profile availability if needed
-                    const list = document.createElement('div');
-                    list.className = 'counselors-list';
-                    for (const c of data.counselors){
-                        const item = document.createElement('div');
-                        item.className = 'counselor-item';
-                        item.innerHTML = `<div class="c-name"><i class="fas fa-user me-2"></i>${c.name}</div><div class="c-slots">Loading slots...</div>`;
-                        list.appendChild(item);
-
-                        // Try to get time slots for that day from a lightweight endpoint we already have on counselor side
-                        try {
-                        const availRes = await fetch((window.BASE_URL || '/') + 'counselor/profile/availability?counselorId=' + encodeURIComponent(c.counselor_id));
-                            const availData = await availRes.json();
-                            const slotsDiv = item.querySelector('.c-slots');
-                        const rows = (availData && availData.availability && availData.availability[dayOfWeek]) ? availData.availability[dayOfWeek] : [];
-                        const slotStrings = Array.isArray(rows) ? rows.map(r => r && r.time_scheduled).filter(Boolean) : [];
-                        if (slotStrings.length > 0){
-                            const unique = Array.from(new Set(slotStrings));
-                            const formattedSlots = formatTimeSlotsForBadges(unique);
-                            const slotBadges = formattedSlots.map(s => `<span class="slot-badge">${s}</span>`).join(' ');
-                                slotsDiv.innerHTML = slotBadges;
-                            } else {
-                                slotsDiv.textContent = 'Available (no specific time slots posted)';
-                            }
-                        } catch (e) {
-                            const slotsDiv = item.querySelector('.c-slots');
-                            slotsDiv.textContent = 'Available';
-                        }
-                    }
-                    body.innerHTML = '';
-                    body.appendChild(list);
-                } else {
-                    body.innerHTML = '<div class="text-muted small">No counselors available on this date.</div>';
-                }
-            } catch(e){
-                const body = bubble.querySelector('.bubble-body');
-                body.innerHTML = '<div class="text-danger small">Failed to load counselors.</div>';
-            }
-
-            // close when clicking outside
-            setTimeout(() => {
-                function handleDocClick(ev){
-                    if (!bubble.contains(ev.target)){
-                        closeCounselorsBubble();
-                        document.removeEventListener('mousedown', handleDocClick);
-                        window.removeEventListener('resize', closeCounselorsBubble);
-                        window.removeEventListener('scroll', closeCounselorsBubble, true);
-                    }
-                }
-                document.addEventListener('mousedown', handleDocClick);
-                window.addEventListener('resize', closeCounselorsBubble);
-                window.addEventListener('scroll', closeCounselorsBubble, true);
-            }, 0);
-        }
-
-        function closeCounselorsBubble(){
-            const existing = document.querySelector('.counselors-bubble');
-            if (existing) existing.remove();
-        }
-
-        if (prevBtn) prevBtn.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()-1); renderCalendar(); });
-        if (nextBtn) nextBtn.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()+1); renderCalendar(); });
-        renderCalendar();
+        if (prevBtn) prevBtn.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()-1); render(); });
+        if (nextBtn) nextBtn.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()+1); render(); });
+        render();
     })();
 
 
@@ -318,28 +348,41 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             form.innerHTML = `
                 <div class="row g-3 align-items-center">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Consultation Type</label>
+                        <select class="form-control" name="consultation_type" disabled>
+                            <option value="">Select consultation type</option>
+                            <option value="Individual Consultation"${appointment.consultation_type === 'Individual Consultation' ? ' selected' : ''}>Individual Consultation</option>
+                            <option value="Group Consultation"${appointment.consultation_type === 'Group Consultation' ? ' selected' : ''}>Group Consultation</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label mb-1">Preferred Date</label>
                         <input type="date" class="form-control" name="preferred_date" value="${appointment.preferred_date}" disabled>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label mb-1">Preferred Time</label>
                         <select class="form-control" name="preferred_time" disabled>
                             <option value="">Select a time slot</option>
-                            <option${appointment.preferred_time === '8:00 AM - 9:00 AM' ? ' selected' : ''}>8:00 AM - 9:00 AM</option>
-                            <option${appointment.preferred_time === '9:00 AM - 10:00 AM' ? ' selected' : ''}>9:00 AM - 10:00 AM</option>
-                            <option${appointment.preferred_time === '10:00 AM - 11:00 AM' ? ' selected' : ''}>10:00 AM - 11:00 AM</option>
-                            <option${appointment.preferred_time === '1:00 PM - 2:00 PM' ? ' selected' : ''}>1:00 PM - 2:00 PM</option>
-                            <option${appointment.preferred_time === '2:00 PM - 3:00 PM' ? ' selected' : ''}>2:00 PM - 3:00 PM</option>
-                            <option${appointment.preferred_time === '3:00 PM - 4:00 PM' ? ' selected' : ''}>3:00 PM - 4:00 PM</option>
-                            <option${appointment.preferred_time === '4:00 PM - 5:00 PM' ? ' selected' : ''}>4:00 PM - 5:00 PM</option>
+                            <option value="${appointment.preferred_time}" selected>${appointment.preferred_time}</option>
                         </select>
                     </div>
                 </div>
                 <div class="row g-3 align-items-center mt-1">
+
                     <div class="col-md-4">
-                        <label class="form-label mb-1">Consultation Type</label>
-                        <input type="text" class="form-control" name="consultation_type" value="${appointment.consultation_type || ''}" disabled>
+                        <label class="form-label mb-1">Counselor Preference</label>
+                        <select class="form-control" name="counselor_preference" disabled>${counselorOptions}</select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Method Type</label>
+                        <select class="form-control" name="method_type" disabled>
+                            <option value="">Select a method type</option>
+                            <option value="In-person"${appointment.method_type === 'In-person' ? ' selected' : ''}>In-person</option>
+                            <option value="Online (Video)"${appointment.method_type === 'Online (Video)' ? ' selected' : ''}>Online (Video)</option>
+                            <option value="Online (Audio only)"${appointment.method_type === 'Online (Audio only)' ? ' selected' : ''}>Online (Audio only)</option>
+                        </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label mb-1">Purpose</label>
@@ -350,11 +393,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="Initial Interview"${appointment.purpose === 'Initial Interview' ? ' selected' : ''}>Initial Interview</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label mb-1">Counselor Preference</label>
-                        <select class="form-control" name="counselor_preference" disabled>${counselorOptions}</select>
-                    </div>
                 </div>
+                
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <label class="form-label mb-1">Brief Description(Optional)</label>
@@ -382,11 +422,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const dateInput = form.querySelector('[name="preferred_date"]');
                 const timeSelect = form.querySelector('[name="preferred_time"]');
                 const counselorSelect = form.querySelector('[name="counselor_preference"]');
-                enableBtn.addEventListener('click', function() {
+                const consultationTypeSelect = form.querySelector('[name="consultation_type"]');
+                
+                enableBtn.addEventListener('click', async function() {
                     const editing = enableBtn.dataset.editing === 'true';
                     if (!editing) {
                         inputs.forEach(input => {
-                            if (input.name !== undefined && input.name !== '') {
+                            // Keep counselor preference disabled - it cannot be changed for pending appointments
+                            if (input.name === 'counselor_preference') {
+                                input.disabled = true;
+                                input.readOnly = true;
+                            } else if (input.name !== undefined && input.name !== '') {
                                 input.disabled = false;
                                 input.readOnly = false;
                             }
@@ -395,15 +441,38 @@ document.addEventListener('DOMContentLoaded', function () {
                         enableBtn.textContent = 'Cancel Edit';
                         enableBtn.dataset.editing = 'true';
 
-                        // When entering edit mode, load counselors by availability for current date/time
-                        if (dateInput && timeSelect && counselorSelect) {
-                            updateCounselorOptionsForForm(dateInput.value, timeSelect.value, counselorSelect, appointment.counselor_preference);
-                            // Update options when date/time changes
-                            dateInput.addEventListener('change', function() {
-                                updateCounselorOptionsForForm(dateInput.value, timeSelect.value, counselorSelect, counselorSelect.value);
+                        // When entering edit mode, load time slots for the selected counselor only
+                        if (dateInput && timeSelect && counselorSelect && consultationTypeSelect) {
+                            const currentDate = dateInput.value;
+                            // Use the original appointment's counselor preference (cannot be changed)
+                            const originalCounselor = appointment.counselor_preference || counselorSelect.value;
+                            const currentConsultationType = appointment.consultation_type || consultationTypeSelect.value;
+                            const currentTime = appointment.preferred_time;
+
+                            // Load time slots with 30-minute intervals for the selected counselor only
+                            await refreshPendingAppointmentTimeSlots(
+                                form, 
+                                currentDate, 
+                                currentTime, 
+                                originalCounselor, 
+                                currentConsultationType
+                            );
+
+                            // Add event listeners for dynamic updates (date and consultation type only)
+                            dateInput.addEventListener('change', async function() {
+                                const date = dateInput.value;
+                                const consultationType = consultationTypeSelect.value;
+                                const time = timeSelect.value;
+                                // Always use original counselor - cannot change
+                                await refreshPendingAppointmentTimeSlots(form, date, time, originalCounselor, consultationType);
                             });
-                            timeSelect.addEventListener('change', function() {
-                                updateCounselorOptionsForForm(dateInput.value, timeSelect.value, counselorSelect, counselorSelect.value);
+
+                            consultationTypeSelect.addEventListener('change', async function() {
+                                const date = dateInput.value;
+                                const consultationType = consultationTypeSelect.value;
+                                const time = timeSelect.value;
+                                // Always use original counselor - cannot change
+                                await refreshPendingAppointmentTimeSlots(form, date, time, originalCounselor, consultationType);
                             });
                         }
                     } else {
@@ -449,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ].includes(targetTableId);
 
         if (!appointments || appointments.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${showReason ? 6 : 5}" class="text-center">No appointments found</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${showReason ? 8 : 7}" class="text-center">No appointments found</td></tr>`;
             return;
         }
 
@@ -458,7 +527,8 @@ document.addEventListener('DOMContentLoaded', function () {
             row.innerHTML = `
                 <td>${formatDate(appointment.preferred_date)}</td>
                 <td>${appointment.preferred_time}</td>
-                <td>${appointment.consultation_type || ''}</td>
+                <td>${appointment.consultation_type || 'N/A'}</td>
+                <td>${appointment.method_type || 'N/A'}</td>
                 <td>${appointment.purpose || 'N/A'}</td>
                 <td>${appointment.counselor_name || 'Not assigned'}</td>
                 <td><span class="badge badge-${getStatusClass(appointment.status)}">${appointment.status || 'PENDING'}</span></td>
@@ -468,50 +538,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ---- Availability helpers copied (lightweight) from student_schedule_appointment.js ----
-    function getDayOfWeek(dateString) {
-        const date = new Date(dateString);
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return days[date.getDay()];
-    }
-
-    function normalizePreferredTimeTo24hRange(rangeStr) {
-        if (!rangeStr || typeof rangeStr !== 'string') return null;
-        const parts = rangeStr.split('-').map(function (p) { return p.trim(); });
-        if (parts.length !== 2) return null;
-        function to24h(t) {
-            const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-            if (!match) return null;
-            let hour = parseInt(match[1], 10);
-            const minute = match[2];
-            const ampm = match[3].toUpperCase();
-            if (ampm === 'AM') { if (hour === 12) hour = 0; } else { if (hour !== 12) hour += 12; }
-            return String(hour).padStart(2, '0') + ':' + minute;
-        }
-        const start = to24h(parts[0]);
-        const end = to24h(parts[1]);
-        if (!start || !end) return null;
-        return start + '-' + end;
-    }
-
-    function extractStartEnd24h(rangeStr) {
-        if (!rangeStr || typeof rangeStr !== 'string') return null;
-        const parts = rangeStr.split('-').map(function (p) { return p.trim(); });
-        if (parts.length !== 2) return null;
-        function to24h(t) {
-            const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-            if (!match) return null;
-            let hour = parseInt(match[1], 10);
-            const minute = match[2];
-            const ampm = match[3].toUpperCase();
-            if (ampm === 'AM') { if (hour === 12) hour = 0; } else { if (hour !== 12) hour += 12; }
-            return String(hour).padStart(2, '0') + ':' + minute;
-        }
-        const start = to24h(parts[0]);
-        const end = to24h(parts[1]);
-        if (!start || !end) return null;
-        return { start: start, end: end };
-    }
+    // ---- Availability helpers are now defined globally above DOMContentLoaded ----
 
     async function updateCounselorOptionsForForm(preferredDate, preferredTime, counselorSelect, currentValue) {
         if (!counselorSelect) return;
@@ -664,16 +691,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Edit appointment
-    window.editAppointment = function(appointmentId) {
+    window.editAppointment = async function(appointmentId) {
         const appointment = allAppointments.find(app => app.id === appointmentId);
         if (!appointment) return;
 
         document.getElementById('editAppointmentId').value = appointment.id;
         document.getElementById('editDate').value = appointment.preferred_date;
-        document.getElementById('editTime').value = appointment.preferred_time;
-        document.getElementById('editConsultationType').value = appointment.consultation_type;
-        document.getElementById('editPurpose').value = appointment.purpose;
+        document.getElementById('editConsultationType').value = appointment.consultation_type || '';
+        document.getElementById('editMethodType').value = appointment.method_type || '';
+        document.getElementById('editPurpose').value = appointment.purpose || '';
         document.getElementById('editDescription').value = appointment.description || '';
+        document.getElementById('editCounselorPreference').value = appointment.counselor_preference || '';
+
+        // Setup consultation type help text
+        const consultationTypeHelp = document.getElementById('editConsultationTypeHelp');
+        if (consultationTypeHelp) {
+            if (appointment.consultation_type === 'Group Consultation') {
+                consultationTypeHelp.textContent = 'Group consultation allows up to 5 students per time slot.';
+                consultationTypeHelp.style.color = '#2563EB';
+            } else {
+                consultationTypeHelp.textContent = 'One-on-one consultation with the counselor.';
+                consultationTypeHelp.style.color = '#6c757d';
+            }
+        }
+
+        // Load counselors for the counselor preference dropdown
+        await loadCounselorsForEditModal(appointment.counselor_preference || '');
+
+        // Load time slots based on selected date and counselor
+        await refreshEditModalTimeSlots(appointment.preferred_date, appointment.preferred_time, appointment.counselor_preference || '', appointment.consultation_type || '');
+
+        // Setup event listeners for dynamic updates
+        setupEditModalEventListeners();
 
         editModal.show();
     };
@@ -683,7 +732,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const date = document.getElementById('editDate').value;
         const time = document.getElementById('editTime').value;
         const consultationType = document.getElementById('editConsultationType').value;
+        const methodType = document.getElementById('editMethodType').value;
         const purpose = document.getElementById('editPurpose').value;
+        const counselorPreference = document.getElementById('editCounselorPreference').value;
         const description = document.getElementById('editDescription').value;
 
         try {
@@ -697,7 +748,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     preferred_date: date,
                     preferred_time: time,
                     consultation_type: consultationType,
+                    method_type: methodType,
                     purpose: purpose,
+                    counselor_preference: counselorPreference,
                     description: description
                 })
             });
@@ -787,6 +840,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const preferred_date = form.querySelector('[name="preferred_date"]').value;
         const preferred_time = form.querySelector('[name="preferred_time"]').value;
         const consultation_type = form.querySelector('[name="consultation_type"]').value;
+        const method_type = form.querySelector('[name="method_type"]').value;
         const purpose = form.querySelector('[name="purpose"]').value;
         const counselor_preference = form.querySelector('[name="counselor_preference"]').value;
         const description = form.querySelector('[name="description"]').value;
@@ -808,6 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     preferred_date,
                     preferred_time,
                     consultation_type,
+                    method_type,
                     purpose,
                     counselor_preference,
                     description,
@@ -996,6 +1051,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="detail-content">
                             <div class="detail-label">Consultation Type</div>
                             <p class="detail-value">${appointment.consultation_type || 'Not specified'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <i class="fas fa-laptop detail-icon"></i>
+                        <div class="detail-content">
+                            <div class="detail-label">Method Type</div>
+                            <p class="detail-value">${appointment.method_type || 'Not specified'}</p>
                         </div>
                     </div>
                     
@@ -1387,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', function () {
             currentY += detailBoxHeight + detailSpacing;
             
             // Row 3
-            // Purpose box
+            // Method Type box
             addRect(margin + 5, currentY, detailBoxWidth, detailBoxHeight, {
                 fillColor: lightGrayColor,
                 strokeColor: [255, 255, 255],
@@ -1397,17 +1460,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 fillColor: greenColor,
                 strokeColor: greenColor
             });
-            addText(margin + 8, currentY + 4, 'PURPOSE', {
+            addText(margin + 8, currentY + 4, 'METHOD TYPE', {
                 fontSize: 6,
                 color: darkGrayColor
             });
-            addText(margin + 8, currentY + 8, appointment.purpose || 'Not specified', {
+            addText(margin + 8, currentY + 8, appointment.method_type || 'Not specified', {
                 fontSize: 10,
                 fontStyle: 'bold',
                 color: [33, 37, 41]
             });
             
-            // Empty box for symmetry (or could add another field in the future)
+            // Purpose box (right side)
             addRect(margin + 5 + detailBoxWidth + detailSpacing, currentY, detailBoxWidth, detailBoxHeight, {
                 fillColor: lightGrayColor,
                 strokeColor: [255, 255, 255],
@@ -1417,14 +1480,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 fillColor: greenColor,
                 strokeColor: greenColor
             });
-            addText(margin + 8 + detailBoxWidth + detailSpacing, currentY + 4, 'STATUS', {
+            addText(margin + 8 + detailBoxWidth + detailSpacing, currentY + 4, 'PURPOSE', {
                 fontSize: 6,
                 color: darkGrayColor
             });
-            addText(margin + 8 + detailBoxWidth + detailSpacing, currentY + 8, 'APPROVED', {
+            addText(margin + 8 + detailBoxWidth + detailSpacing, currentY + 8, appointment.purpose || 'Not specified', {
                 fontSize: 10,
                 fontStyle: 'bold',
-                color: greenColor
+                color: [33, 37, 41]
             });
             
             currentY += detailBoxHeight + 10;
@@ -1895,6 +1958,123 @@ function formatTimeSlot(timeSlot) {
     return timeSlot;
 }
 
+// Refresh time slots for pending appointment form
+async function refreshPendingAppointmentTimeSlots(form, dateStr, selectedTime, counselorId, consultationType) {
+    const timeSelect = form.querySelector('[name="preferred_time"]');
+    if (!timeSelect || !dateStr) return;
+
+    timeSelect.disabled = true;
+    const originalValue = timeSelect.value;
+    timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
+
+    try {
+        const dayOfWeek = getDayOfWeek(dateStr);
+        // For pending appointments, we only get slots for the specific counselor (cannot change counselor)
+        const currentCounselorId = counselorId;
+        
+        if (!currentCounselorId || currentCounselorId === 'No preference') {
+            timeSelect.innerHTML = '<option value="">No counselor selected</option>';
+            timeSelect.disabled = false;
+            return;
+        }
+
+        let availableRanges = [];
+        
+        // Get time slots ONLY for the selected counselor
+        try {
+            const availRes = await fetch((window.BASE_URL || '/') + 'counselor/profile/availability?counselorId=' + encodeURIComponent(currentCounselorId));
+            const availData = await availRes.json();
+            const daySchedule = availData && availData.availability && availData.availability[dayOfWeek] 
+                ? availData.availability[dayOfWeek] 
+                : [];
+            const slotStrings = Array.isArray(daySchedule) ? daySchedule.map(r => r && r.time_scheduled).filter(Boolean) : [];
+            const ranges = generateHalfHourRangeUnion(slotStrings);
+            availableRanges = ranges;
+            availableRanges.sort();
+        } catch (e) {
+            console.error('Error fetching counselor availability:', e);
+            timeSelect.innerHTML = '<option value="">Error loading counselor availability</option>';
+            timeSelect.disabled = false;
+            return;
+        }
+
+        // Get booked times for the date
+        const bookedUrl = new URL((window.BASE_URL || '/') + 'student/appointments/booked-times');
+        bookedUrl.searchParams.append('date', dateStr);
+        if (currentCounselorId && currentCounselorId !== 'No preference') {
+            bookedUrl.searchParams.append('counselor_id', currentCounselorId);
+        }
+        if (consultationType) {
+            bookedUrl.searchParams.append('consultation_type', consultationType);
+        }
+
+        const bookedRes = await fetch(bookedUrl.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        let booked = [];
+        if (bookedRes.ok) {
+            const bookedData = await bookedRes.json();
+            if (bookedData && bookedData.status === 'success' && Array.isArray(bookedData.booked)) {
+                booked = bookedData.booked;
+            }
+        }
+
+        // Build options
+        const fragment = document.createDocumentFragment();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a time slot';
+        fragment.appendChild(placeholder);
+
+        const bookedSet = new Set(booked);
+        let availableCount = 0;
+        for (const slot of availableRanges) {
+            if (!bookedSet.has(slot)) {
+                const opt = document.createElement('option');
+                opt.value = slot;
+                opt.textContent = slot;
+                if ((selectedTime && slot === selectedTime) || (originalValue && slot === originalValue)) {
+                    opt.selected = true;
+                }
+                fragment.appendChild(opt);
+                availableCount++;
+            }
+        }
+
+        timeSelect.innerHTML = '';
+        timeSelect.appendChild(fragment);
+
+        if (availableCount === 0) {
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = 'No available time slots for this date';
+            none.disabled = true;
+            timeSelect.appendChild(none);
+        } else {
+            // Restore selected time if it's still available
+            if ((selectedTime && timeSelect.querySelector(`option[value="${selectedTime}"]`)) || 
+                (originalValue && timeSelect.querySelector(`option[value="${originalValue}"]`))) {
+                timeSelect.value = selectedTime || originalValue;
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing time slots:', error);
+        timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+        if (selectedTime) {
+            const opt = document.createElement('option');
+            opt.value = selectedTime;
+            opt.textContent = selectedTime;
+            opt.selected = true;
+            timeSelect.appendChild(opt);
+        }
+    } finally {
+        timeSelect.disabled = false;
+    }
+}
+
 // Show error message for counselor schedules
 function showCounselorSchedulesError(message) {
     const container = document.getElementById('counselorSchedulesContainer');
@@ -1910,4 +2090,355 @@ function showCounselorSchedulesError(message) {
 
     container.innerHTML = '';
     container.appendChild(errorDiv);
+}
+
+// ===== Edit Modal Functions =====
+// Load counselors for edit modal
+async function loadCounselorsForEditModal(selectedCounselorId) {
+    const counselorSelect = document.getElementById('editCounselorPreference');
+    if (!counselorSelect) return;
+
+    counselorSelect.disabled = true;
+    counselorSelect.innerHTML = '<option value="">Loading counselors...</option>';
+
+    try {
+        const counselors = await fetchCounselors();
+        counselorSelect.innerHTML = '<option value="">Select a counselor</option>';
+        counselorSelect.insertAdjacentHTML('beforeend', '<option value="No preference">No preference</option>');
+        
+        counselors.forEach(counselor => {
+            const option = document.createElement('option');
+            option.value = counselor.counselor_id;
+            option.textContent = counselor.name;
+            if (selectedCounselorId && counselor.counselor_id == selectedCounselorId) {
+                option.selected = true;
+            }
+            counselorSelect.appendChild(option);
+        });
+
+        if (selectedCounselorId) {
+            counselorSelect.value = selectedCounselorId;
+        }
+    } catch (error) {
+        console.error('Error loading counselors:', error);
+        counselorSelect.innerHTML = '<option value="">Error loading counselors</option>';
+    } finally {
+        counselorSelect.disabled = false;
+    }
+}
+
+// Refresh time slots in edit modal based on date, counselor, and consultation type
+async function refreshEditModalTimeSlots(dateStr, selectedTime, counselorId, consultationType) {
+    const timeSelect = document.getElementById('editTime');
+    if (!timeSelect || !dateStr) return;
+
+    timeSelect.disabled = true;
+    timeSelect.innerHTML = '<option value="">Loading time slots...</option>';
+
+    try {
+        const dayOfWeek = getDayOfWeek(dateStr);
+        const counselorSelect = document.getElementById('editCounselorPreference');
+        const currentCounselorId = counselorId || (counselorSelect ? counselorSelect.value : '');
+
+        // Build URL to get available counselors for the date
+        const url = new URL((window.BASE_URL || '/') + 'student/get-counselors-by-availability');
+        url.searchParams.append('date', dateStr);
+        url.searchParams.append('day', dayOfWeek);
+        url.searchParams.append('time', '00:00-23:59');
+        url.searchParams.append('from', '00:00');
+        url.searchParams.append('to', '23:59');
+        url.searchParams.append('timeMode', 'overlap');
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        let availableRanges = [];
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status === 'success' && Array.isArray(data.counselors)) {
+                // Filter to selected counselor or get all
+                const relevantCounselors = currentCounselorId && currentCounselorId !== 'No preference'
+                    ? data.counselors.filter(c => c.counselor_id == currentCounselorId)
+                    : data.counselors;
+
+                // Get counselor schedules and generate 30-min slots
+                for (const counselor of relevantCounselors) {
+                    try {
+                        const availRes = await fetch((window.BASE_URL || '/') + 'counselor/profile/availability?counselorId=' + encodeURIComponent(counselor.counselor_id));
+                        const availData = await availRes.json();
+                        const daySchedule = availData && availData.availability && availData.availability[dayOfWeek] 
+                            ? availData.availability[dayOfWeek] 
+                            : [];
+                        const slotStrings = Array.isArray(daySchedule) ? daySchedule.map(r => r && r.time_scheduled).filter(Boolean) : [];
+                        const ranges = generateHalfHourRangeUnion(slotStrings);
+                        availableRanges = availableRanges.concat(ranges);
+                    } catch (e) {
+                        console.error('Error fetching counselor availability:', e);
+                    }
+                }
+                // Remove duplicates
+                availableRanges = Array.from(new Set(availableRanges));
+                availableRanges.sort();
+            }
+        }
+
+        // Get booked times for the date
+        const bookedUrl = new URL((window.BASE_URL || '/') + 'student/appointments/booked-times');
+        bookedUrl.searchParams.append('date', dateStr);
+        if (currentCounselorId && currentCounselorId !== 'No preference') {
+            bookedUrl.searchParams.append('counselor_id', currentCounselorId);
+        }
+        if (consultationType) {
+            bookedUrl.searchParams.append('consultation_type', consultationType);
+        }
+
+        const bookedRes = await fetch(bookedUrl.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        let booked = [];
+        if (bookedRes.ok) {
+            const bookedData = await bookedRes.json();
+            if (bookedData && bookedData.status === 'success' && Array.isArray(bookedData.booked)) {
+                booked = bookedData.booked;
+            }
+        }
+
+        // Build options
+        const fragment = document.createDocumentFragment();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a time slot';
+        fragment.appendChild(placeholder);
+
+        const bookedSet = new Set(booked);
+        let availableCount = 0;
+        for (const slot of availableRanges) {
+            if (!bookedSet.has(slot)) {
+                const opt = document.createElement('option');
+                opt.value = slot;
+                opt.textContent = slot;
+                if (selectedTime && slot === selectedTime) {
+                    opt.selected = true;
+                }
+                fragment.appendChild(opt);
+                availableCount++;
+            }
+        }
+
+        timeSelect.innerHTML = '';
+        timeSelect.appendChild(fragment);
+
+        if (availableCount === 0) {
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = 'No available time slots for this date';
+            none.disabled = true;
+            timeSelect.appendChild(none);
+        }
+
+        // Restore selected time if it's still available
+        if (selectedTime && timeSelect.querySelector(`option[value="${selectedTime}"]`)) {
+            timeSelect.value = selectedTime;
+        }
+    } catch (error) {
+        console.error('Error refreshing time slots:', error);
+        timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+    } finally {
+        timeSelect.disabled = false;
+    }
+}
+
+// Setup event listeners for edit modal
+function setupEditModalEventListeners() {
+    // Remove existing listeners to avoid duplicates
+    const dateInput = document.getElementById('editDate');
+    const timeSelect = document.getElementById('editTime');
+    const counselorSelect = document.getElementById('editCounselorPreference');
+    const consultationTypeSelect = document.getElementById('editConsultationType');
+    const consultationTypeHelp = document.getElementById('editConsultationTypeHelp');
+
+    // Clone and replace to remove all event listeners
+    if (dateInput) {
+        const newDateInput = dateInput.cloneNode(true);
+        dateInput.parentNode.replaceChild(newDateInput, dateInput);
+        newDateInput.addEventListener('change', async function() {
+            const date = newDateInput.value;
+            const counselor = counselorSelect ? counselorSelect.value : '';
+            const consultationType = consultationTypeSelect ? consultationTypeSelect.value : '';
+            const currentTime = timeSelect ? timeSelect.value : '';
+            if (date) {
+                await refreshEditModalTimeSlots(date, currentTime, counselor, consultationType);
+                // Also update counselor options based on availability
+                if (counselorSelect) {
+                    await updateCounselorOptionsForEditModal(date, timeSelect ? timeSelect.value : '', counselor);
+                }
+            }
+        });
+    }
+
+    if (counselorSelect) {
+        const newCounselorSelect = counselorSelect.cloneNode(true);
+        counselorSelect.parentNode.replaceChild(newCounselorSelect, counselorSelect);
+        newCounselorSelect.addEventListener('change', async function() {
+            const date = dateInput ? dateInput.value : '';
+            const counselor = newCounselorSelect.value;
+            const consultationType = consultationTypeSelect ? consultationTypeSelect.value : '';
+            const currentTime = timeSelect ? timeSelect.value : '';
+            if (date) {
+                await refreshEditModalTimeSlots(date, currentTime, counselor, consultationType);
+            }
+        });
+    }
+
+    if (consultationTypeSelect) {
+        const newConsultationTypeSelect = consultationTypeSelect.cloneNode(true);
+        consultationTypeSelect.parentNode.replaceChild(newConsultationTypeSelect, consultationTypeSelect);
+        newConsultationTypeSelect.addEventListener('change', function() {
+            const selectedType = newConsultationTypeSelect.value;
+            if (consultationTypeHelp) {
+                if (selectedType === 'Group Consultation') {
+                    consultationTypeHelp.textContent = 'Group consultation allows up to 5 students per time slot.';
+                    consultationTypeHelp.style.color = '#2563EB';
+                } else if (selectedType === 'Individual Consultation') {
+                    consultationTypeHelp.textContent = 'One-on-one consultation with the counselor.';
+                    consultationTypeHelp.style.color = '#6c757d';
+                } else {
+                    consultationTypeHelp.textContent = '';
+                }
+            }
+            // Refresh time slots when consultation type changes
+            const date = dateInput ? dateInput.value : '';
+            const counselor = counselorSelect ? counselorSelect.value : '';
+            const currentTime = timeSelect ? timeSelect.value : '';
+            if (date) {
+                refreshEditModalTimeSlots(date, currentTime, counselor, selectedType);
+            }
+        });
+    }
+}
+
+// Update counselor options for edit modal based on availability
+async function updateCounselorOptionsForEditModal(preferredDate, preferredTime, currentValue) {
+    const counselorSelect = document.getElementById('editCounselorPreference');
+    if (!counselorSelect || !preferredDate) return;
+
+    counselorSelect.disabled = true;
+    const originalValue = counselorSelect.value;
+
+    try {
+        const dayOfWeek = getDayOfWeek(preferredDate);
+        const normalizedTimeRange = normalizePreferredTimeTo24hRange(preferredTime);
+        const timeBounds = extractStartEnd24h(preferredTime);
+
+        const url = new URL((window.BASE_URL || '/') + 'student/get-counselors-by-availability');
+        url.searchParams.append('date', preferredDate);
+        url.searchParams.append('day', dayOfWeek);
+        if (preferredTime) {
+            url.searchParams.append('time', normalizedTimeRange || preferredTime);
+            if (timeBounds) {
+                url.searchParams.append('from', timeBounds.start);
+                url.searchParams.append('to', timeBounds.end);
+                url.searchParams.append('timeMode', 'overlap');
+            }
+        } else {
+            url.searchParams.append('time', '00:00-23:59');
+            url.searchParams.append('from', '00:00');
+            url.searchParams.append('to', '23:59');
+            url.searchParams.append('timeMode', 'overlap');
+        }
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+        });
+
+        if (!response.ok) throw new Error('Network error');
+        const data = await response.json();
+        
+        counselorSelect.innerHTML = '<option value="">Select a counselor</option>';
+        counselorSelect.insertAdjacentHTML('beforeend', '<option value="No preference">No preference</option>');
+        
+        if (data.status === 'success' && Array.isArray(data.counselors)) {
+            data.counselors.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.counselor_id;
+                opt.textContent = c.name;
+                counselorSelect.appendChild(opt);
+            });
+            
+            if (currentValue || originalValue) {
+                counselorSelect.value = currentValue || originalValue;
+            }
+            
+            if (data.counselors.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No counselors available for the selected date/time.';
+                opt.disabled = true;
+                counselorSelect.appendChild(opt);
+            }
+        }
+    } catch (e) {
+        console.error('Error loading counselors by availability:', e);
+        counselorSelect.innerHTML = '<option value="">Error loading counselors</option>';
+    } finally {
+        counselorSelect.disabled = false;
+    }
+}
+
+// Helper function to generate half-hour ranges from time slots (copied from student_schedule_appointment.js)
+function generateHalfHourRangeUnion(slotStrings) {
+    const set = new Set();
+    slotStrings.forEach(s => {
+        const str = String(s).trim();
+        if (!str) return;
+        if (str.includes('-')) {
+            const parts = str.split('-');
+            if (parts.length !== 2) return;
+            const start = parseTime12ToMinutes_student(parts[0].trim());
+            const end = parseTime12ToMinutes_student(parts[1].trim());
+            if (start === null || end === null || end <= start) return;
+            for (let t = start; t + 30 <= end; t += 30) {
+                const from = formatMinutesTo12h_student(t);
+                const to = formatMinutesTo12h_student(t + 30);
+                set.add(`${from} - ${to}`);
+            }
+        }
+    });
+    const arr = Array.from(set);
+    arr.sort((a, b) => {
+        const [af] = a.split('-').map(x => x.trim());
+        const [bf] = b.split('-').map(x => x.trim());
+        return parseTime12ToMinutes_student(af) - parseTime12ToMinutes_student(bf);
+    });
+    return arr;
+}
+
+function parseTime12ToMinutes_student(t) {
+    if (!t) return null;
+    const m = String(t).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return null;
+    let h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    const ampm = m[3].toUpperCase();
+    if (h === 12) h = 0;
+    if (ampm === 'PM') h += 12;
+    return h * 60 + min;
+}
+
+function formatMinutesTo12h_student(total) {
+    let minutes = total % 60;
+    let h24 = Math.floor(total / 60) % 24;
+    const ampm = h24 >= 12 ? 'PM' : 'AM';
+    let h12 = h24 % 12;
+    if (h12 === 0) h12 = 12;
+    const mm = String(minutes).padStart(2, '0');
+    return `${h12}:${mm} ${ampm}`;
 } 

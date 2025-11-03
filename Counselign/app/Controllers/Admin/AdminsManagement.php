@@ -104,10 +104,20 @@ class AdminsManagement extends BaseController
                 }
             }
 
-            // Sort counselors by name within each day
+            // Sort counselors by earliest start time within each day
             foreach ($scheduleData as $day => &$counselors) {
                 usort($counselors, function($a, $b) {
-                    return strcmp($a['name'], $b['name']);
+                    $aTime = $this->getEarliestStartTime($a['time_slots']);
+                    $bTime = $this->getEarliestStartTime($b['time_slots']);
+                    
+                    // If both have no time or same time, sort by name
+                    if ($aTime === null && $bTime === null) {
+                        return strcmp($a['name'], $b['name']);
+                    }
+                    if ($aTime === null) return 1; // No time goes to end
+                    if ($bTime === null) return -1; // No time goes to end
+                    
+                    return $aTime <=> $bTime;
                 });
             }
 
@@ -319,5 +329,53 @@ class AdminsManagement extends BaseController
         }
         
         return null;
+    }
+
+    /**
+     * Get the earliest start time from an array of time slots
+     * Returns minutes since midnight for comparison, or null if no valid time found
+     * 
+     * @param array $timeSlots Array of time slot strings
+     * @return int|null Minutes since midnight, or null
+     */
+    private function getEarliestStartTime(array $timeSlots): ?int
+    {
+        if (empty($timeSlots)) {
+            return null;
+        }
+
+        $earliestTime = null;
+
+        foreach ($timeSlots as $slot) {
+            if (empty($slot)) {
+                continue;
+            }
+
+            $startTime = null;
+
+            // Handle time range format (e.g., "1:00 PM-4:00 PM", "09:00-17:00")
+            if (strpos($slot, '-') !== false) {
+                $parts = explode('-', $slot, 2);
+                $startTime = trim($parts[0]);
+            } elseif (strpos($slot, ',') !== false) {
+                // Handle comma-separated times - get first one
+                $parts = explode(',', $slot);
+                $startTime = trim($parts[0]);
+            } else {
+                // Single time format
+                $startTime = trim($slot);
+            }
+
+            if ($startTime) {
+                $minutes = $this->timeToMinutes($startTime);
+                if ($minutes !== null) {
+                    if ($earliestTime === null || $minutes < $earliestTime) {
+                        $earliestTime = $minutes;
+                    }
+                }
+            }
+        }
+
+        return $earliestTime;
     }
 }

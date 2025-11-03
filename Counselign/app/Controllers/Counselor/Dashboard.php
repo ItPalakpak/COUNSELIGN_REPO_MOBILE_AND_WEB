@@ -18,16 +18,16 @@ class Dashboard extends BaseController
         $loggedIn = $session->get('logged_in');
         $role = $session->get('role');
         $userId = $session->get('user_id');
-        
+
         // Log session data for debugging
         log_message('debug', 'Counselor Dashboard - Session check: logged_in=' . ($loggedIn ? 'true' : 'false') . ', role=' . $role . ', user_id=' . $userId);
-        
+
         // Ensure user is logged in
         if (!$loggedIn) {
             log_message('debug', 'Counselor Dashboard - User not logged in, redirecting to landing page');
             return redirect()->to('/');
         }
-        
+
         // Check if user has counselor role, if not redirect to appropriate dashboard
         if ($role !== 'counselor') {
             log_message('debug', 'Counselor Dashboard - User role is ' . $role . ', redirecting to appropriate dashboard');
@@ -65,35 +65,55 @@ class Dashboard extends BaseController
         }
 
         try {
-            // Use user_id_display which contains the actual counselor ID (e.g., "2023303610")
-            // that matches the counselor_preference field in appointments table
+            // Use user_id_display which contains the actual counselor ID
             $counselor_id = session()->get('user_id_display') ?? session()->get('user_id');
+
+            if (!$counselor_id) {
+                log_message('error', '[Counselor Dashboard] No counselor ID found in session');
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Counselor ID not found',
+                    'appointments' => []
+                ], 400);
+            }
+
             $db = \Config\Database::connect();
 
             // Query to get recent pending appointments for this counselor
-            // Only fetch appointments where counselor_preference matches the logged-in counselor
             $query = "SELECT
-                        a.id,
-                        a.student_id,
-                        a.preferred_date,
-                        a.preferred_time,
-                        a.consultation_type,
-                        a.purpose,
-                        a.counselor_preference,
-                        a.status,
-                        a.created_at,
-                        u.username,
-                        u.email as user_email,
-                        CONCAT(sai.course, ' - ', sai.year_level) as course_year
-                      FROM appointments a
-                      LEFT JOIN users u ON a.student_id = u.user_id
-                      LEFT JOIN student_academic_info sai ON sai.student_id = u.user_id
-                      WHERE a.status = 'pending'
-                      AND a.counselor_preference = ?
-                      ORDER BY a.created_at DESC
-                      LIMIT 2";
+                    a.id,
+                    a.student_id,
+                    a.preferred_date,
+                    a.preferred_time,
+                    a.method_type,
+                    a.purpose,
+                    a.counselor_preference,
+                    a.status,
+                    a.created_at,
+                    COALESCE(CONCAT(spi.first_name, ' ', spi.last_name), u.username, a.student_id) as student_name,
+                    u.email as user_email,
+                    COALESCE(CONCAT(sai.course, ' - ', sai.year_level), 'N/A') as course_year
+                  FROM appointments a
+                  LEFT JOIN users u ON a.student_id = u.user_id
+                  LEFT JOIN student_personal_info spi ON spi.student_id = u.user_id
+                  LEFT JOIN student_academic_info sai ON sai.student_id = u.user_id
+                  WHERE a.status = 'pending'
+                  AND a.counselor_preference = ?
+                  ORDER BY a.created_at DESC
+                  LIMIT 2";
 
-            $appointments = $db->query($query, [$counselor_id])->getResultArray();
+            $result = $db->query($query, [$counselor_id]);
+
+            if (!$result) {
+                log_message('error', '[Counselor Dashboard] Query failed: ' . $db->error());
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Database query failed',
+                    'appointments' => []
+                ], 500);
+            }
+
+            $appointments = $result->getResultArray();
 
             log_message('info', '[Counselor Dashboard] Fetched ' . count($appointments) . ' pending appointments for counselor: ' . $counselor_id);
 
@@ -102,16 +122,16 @@ class Dashboard extends BaseController
                 'appointments' => $appointments,
                 'count' => count($appointments)
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '[Counselor Dashboard] Error fetching pending appointments: ' . $e->getMessage());
+            log_message('error', '[Counselor Dashboard] Stack trace: ' . $e->getTraceAsString());
+
             return $this->respond([
                 'status' => 'error',
                 'message' => 'An error occurred while fetching appointments',
-                'appointments' => []
+                'appointments' => [],
+                'debug' => ENVIRONMENT === 'development' ? $e->getMessage() : null
             ], 500);
         }
     }
 }
-
-

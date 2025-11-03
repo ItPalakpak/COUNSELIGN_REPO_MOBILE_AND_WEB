@@ -227,7 +227,7 @@ class Appointments extends BaseController
                     <ul>
                         <li><strong>Date:</strong> {$date}</li>
                         <li><strong>Time:</strong> {$time}</li>
-                        <li><strong>Consultation Type:</strong> {$appointment_details['consultation_type']}</li>
+                        <li><strong>Consultation Type:</strong> {$appointment_details['method_type']}</li>
                         <li><strong>Counselor:</strong> {$appointment_details['counselor_name']}</li>
                     </ul>
                     <p>Please arrive 10 minutes before your scheduled time. If you need to reschedule or cancel, please do so at least 24 hours in advance.</p>
@@ -241,7 +241,7 @@ class Appointments extends BaseController
                     <ul>
                         <li><strong>Date:</strong> {$date}</li>
                         <li><strong>Time:</strong> {$time}</li>
-                        <li><strong>Consultation Type:</strong> {$appointment_details['consultation_type']}</li>
+                        <li><strong>Consultation Type:</strong> {$appointment_details['method_type']}</li>
                     </ul>
                     <p><strong>Reason for Rejection:</strong><br>{$rejection_reason}</p>
                     <p>Please feel free to schedule another appointment with different details.</p>
@@ -255,7 +255,7 @@ class Appointments extends BaseController
                     <ul>
                         <li><strong>Date:</strong> {$date}</li>
                         <li><strong>Time:</strong> {$time}</li>
-                        <li><strong>Consultation Type:</strong> {$appointment_details['consultation_type']}</li>
+                        <li><strong>Consultation Type:</strong> {$appointment_details['method_type']}</li>
                         <li><strong>Counselor:</strong> {$appointment_details['counselor_name']}</li>
                     </ul>
                     <p><strong>Reason for Cancellation:</strong><br>{$rejection_reason}</p>

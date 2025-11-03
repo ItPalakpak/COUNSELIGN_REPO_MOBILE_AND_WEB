@@ -19,7 +19,7 @@
 **Technical Implementation**:
 - **JavaScript**: Type-safe implementation with clear variable naming
 - **Validation**: Email regex and user ID format checking
-- **API Integration**: Uses `forgot-password/send-code`; alias `forgot-password/resend-code` supported
+- **API Integration**: Uses existing `forgot-password/send-code` endpoint
 - **State Management**: Proper button state handling and cleanup
 - **Event Handling**: Comprehensive event listeners for all interactions
 - **Data Format**: JSON format matching backend expectations
@@ -796,7 +796,6 @@ flowchart TD
 - `/` → `Auth::index` (landing)
 - `POST /auth/login` → `Auth::login`
 - `POST /auth/signup` → `Auth::signup`
-  - Counselor branch: After success, counselor provides basic info via modal; no email verification step.
 - `POST /auth/verify-admin` → `Auth::verifyAdmin`
 - `GET /counselor/dashboard` → `Counselor\\Dashboard::index`
 - `GET /counselor/profile` → `Counselor\\Profile::profile`
@@ -818,11 +817,6 @@ flowchart TD
 - `POST /forgot-password/send-code` → `ForgotPassword::sendCode`
 - `POST /forgot-password/set-password` → `ForgotPassword::setPassword`
 - `POST /contact/send` → `EmailController::sendContactEmail`
-
-### Counselor Signup Flow
-- Counselors do not perform email token verification on signup. After account creation, a modal collects counselor basic info (counselor_id, name, degree, email, contact_number, address; optional civil_status, sex, birthdate) and saves to `counselors`.
-- Endpoint: `POST /counselor/save-basic-info` → `Counselor::saveBasicInfo` (sends email to admin from `users` where role='admin').
-- Login behavior when unverified: Counselors see an informational message only; students still see the verification modal (driven by presence of `redirect` in response).
 
 ### Messaging System Routes
 

@@ -6,6 +6,8 @@ import 'studentscreen/schedule_appointment_screen.dart';
 import 'studentscreen/student_profile_screen.dart';
 import 'studentscreen/announcements_screen.dart';
 import 'studentscreen/follow_up_sessions_screen.dart';
+import 'studentscreen/counselor_selection_screen.dart';
+import 'studentscreen/conversation_screen.dart';
 import 'adminscreen/admin_dashboard_screen.dart';
 import 'adminscreen/view_users_screen.dart';
 import 'adminscreen/view_all_appointments_screen.dart';
@@ -34,6 +36,8 @@ class AppRoutes {
   static const String studentProfile = '/student/profile';
   static const String announcements = '/student/announcements';
   static const String followUpSessions = '/student/follow-up-sessions';
+  static const String counselorSelection = '/student/counselor-selection';
+  static const String conversation = '/student/conversation';
 
   // Admin routes
   static const String adminDashboard = '/admin/dashboard';
@@ -70,6 +74,8 @@ class AppRoutes {
       studentProfile: (context) => const StudentProfileScreen(),
       announcements: (context) => const AnnouncementsScreen(),
       followUpSessions: (context) => const FollowUpSessionsScreen(),
+      counselorSelection: (context) => const CounselorSelectionScreen(),
+      conversation: (context) => const ConversationScreen(),
 
       // Admin routes
       adminDashboard: (context) => const AdminDashboardScreen(),

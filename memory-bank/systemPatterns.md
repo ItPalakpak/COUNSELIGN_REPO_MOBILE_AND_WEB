@@ -53,6 +53,15 @@ The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure
   - `AppRoutes.counselorAppointments` → `CounselorAppointmentsScreen`
   - `AppRoutes.counselorAppointmentsViewAll` → `CounselorAppointmentsScreen`
 
+### Student messaging flow (Updated Nov 3, 2025)
+- Counselor selection and conversation are now dedicated screens (replacing modals):
+  - `AppRoutes.counselorSelection` → `CounselorSelectionScreen` (`/student/counselor-selection`)
+  - `AppRoutes.conversation` → `ConversationScreen` (`/student/conversation`)
+- Entry from `StudentDashboard` action buttons:
+  - People icon → navigates to CounselorSelectionScreen
+  - Message icon → navigates to ConversationScreen if a counselor is selected, otherwise to CounselorSelectionScreen
+- Messaging retains original view model logic (polling, send, formatting) with UI migrated from modals to full screens.
+
 ## State Management
 - `provider` listed; screens and state files exist per feature directories.
 - `shared_preferences` for lightweight persistence.

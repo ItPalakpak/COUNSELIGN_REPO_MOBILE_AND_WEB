@@ -18,7 +18,7 @@ body {
     padding: 20px;
     margin-top: 20px;
     margin-bottom: 5px;
-    max-width: 1300px;
+    max-width: 1500px;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
@@ -254,7 +254,7 @@ body {
     font-weight: 500;
 }
 
-/* Table Styles - Updated to match scheduled appointments */
+/* Updated Table Styles for Consistency */
 .table-responsive {
     margin: 20px 0;
     overflow-x: auto;
@@ -265,7 +265,7 @@ body {
 }
 
 .table {
-    width: 110%;
+    width: 100%;
     border-collapse: collapse;
     margin: 0;
     border: none !important;
@@ -278,11 +278,13 @@ body {
 
 .table th,
 .table td {
-    padding: 10px 15px;
+    padding: 12px 10px;
     vertical-align: middle;
     border-top: none;
     border-left: none;
     white-space: nowrap;
+    font-size: 0.875rem;
+    line-height: 1.4;
 }
 
 .table thead {
@@ -297,11 +299,12 @@ body {
     border-bottom: 1px solid #1a365d;
     border-right: 1px solid #4a69a0;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     letter-spacing: 0.5px;
     position: sticky;
     top: 0;
     z-index: 1;
+    padding: 12px 10px;
 }
 
 .table th:last-child {
@@ -310,6 +313,7 @@ body {
 
 .table tbody {
     border: none;
+    
 }
 
 .table tbody tr:nth-child(even) {
@@ -324,6 +328,107 @@ body {
     border-bottom: none;
 }
 
+/* Specific column width constraints for consistency */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+    min-width: 100px;
+    max-width: 120px;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    min-width: 180px;
+    max-width: 230px;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+    min-width: 100px;
+    max-width: 120px;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    min-width: 130px;
+    max-width: 170px;
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+    min-width: 100px;
+    max-width: 130px;
+}
+
+.table th:nth-child(6),
+.table td:nth-child(6) {
+    min-width: 160px;
+    max-width: 200px;
+}
+
+.table th:nth-child(7),
+.table td:nth-child(7) {
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.table th:nth-child(8),
+.table td:nth-child(8) {
+    min-width: 150px;
+    max-width: 200px;
+}
+
+.table th:nth-child(9),
+.table td:nth-child(9) {
+    min-width: 100px;
+    max-width: 120px;
+}
+
+/* Reason column (last column) */
+.table th:nth-child(10),
+.table td:nth-child(10) {
+    min-width: 200px;
+    max-width: 350px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Status Badge Styles - consistent sizing */
+.badge {
+    padding: 0.4em 0.65em;
+    font-size: 0.8em;
+    font-weight: 500;
+    border-radius: 20px;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+    text-transform: lowercase;
+}
+
+.badge-completed {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.badge-approved {
+    background-color: #198754;
+    color: white;
+}
+
+.badge-rejected {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-pending {
+    background-color: #ffc107;
+    color: #060E57;
+}
+
+.badge-cancelled {
+    background-color: #6c757d;
+    color: white;
+}
+
 /* Mobile Responsive Adjustments */
 @media screen and (max-width: 768px) {
     .table-responsive {
@@ -333,84 +438,30 @@ body {
 
     .table th,
     .table td {
-        padding: 8px 12px;
-        font-size: 14px;
+        padding: 8px 6px;
+        font-size: 0.75rem;
     }
 
-    .appointment-container {
-        padding: 10px;
-    }
-
-    /* Adjust button sizes for mobile */
-    .btn-group .btn {
-        padding: 6px 12px;
-        font-size: 14px;
-    }
-
-    /* Chart Container Responsive */
-    .chart-container {
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-
-    .chart-container h4 {
-        font-size: 1.1rem;
-        margin-bottom: 15px;
-    }
-
-    /* Chart wrapper for mobile responsiveness */
-    .chart-wrapper {
-        height: 350px;
-    }
-
-    /* Pie chart mobile responsiveness */
-    .pie-chart {
-        height: 350px;
-    }
-
-    .pie-chart canvas {
-        max-height: 250px;
-    }
-
-    /* Ensure chart canvas is fully visible */
-    .chart-wrapper canvas {
-        max-width: 100% !important;
-        height: 100% !important;
-    }
-
-    /* Tab navigation responsive - show only icons on mobile */
-    .nav-tabs .nav-link {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-    }
-
-    .nav-tabs .nav-link .tab-text {
-        display: none;
-    }
-
-    .nav-tabs .nav-link i {
-        font-size: 1.2rem;
-        margin-right: 0;
-    }
-
-    .nav-tabs .nav-item {
-        flex: 1;
-        text-align: center;
+    .badge {
+        padding: 0.3em 0.5em;
+        font-size: 0.7em;
+        min-width: 70px;
     }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar for table */
 .table-responsive::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
     background: #f1f1f1;
+    border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
     background: #888;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
@@ -442,7 +493,7 @@ body {
 
 .badge-pending {
     background-color: #ffc107;
-    color: black;
+    color: #060E57;
 }
 
 .badge-cancelled {

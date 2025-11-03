@@ -133,7 +133,7 @@ function displayCompletedAppointments(appointments, searchTerm = '') {
                 </div>
                 <div class="appointment-type">
                     <i class="fas fa-comments"></i>
-                    <span>${appointment.consultation_type}</span>
+                    <span>${appointment.method_type}</span>
                 </div>
                 ${appointment.purpose ? `
                 <div class="appointment-purpose">
@@ -200,7 +200,12 @@ async function openFollowUpSessionsModal(parentAppointmentId, studentId) {
                 }
             } catch (_) {}
             // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('followUpSessionsModal'));
+            const modalEl = document.getElementById('followUpSessionsModal');
+            if (modalEl) {
+                modalEl.setAttribute('data-parent-appointment-id', parentAppointmentId);
+                modalEl.setAttribute('data-student-id', studentId);
+            }
+            const modal = new bootstrap.Modal(modalEl);
             modal.show();
         } else {
             showError(data.message || 'Failed to load follow-up sessions');
@@ -229,19 +234,35 @@ function displayFollowUpSessions(sessions) {
         return;
     }
 
+    // Sort sessions: pending first, then by sequence number
+    const sortedSessions = [...sessions].sort((a, b) => {
+        // Pending status comes first
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        
+        // Otherwise sort by sequence number
+        return a.follow_up_sequence - b.follow_up_sequence;
+    });
+
     // Ensure grid layout for desktop (CSS sets columns)
     container.style.display = 'grid';
     noDataMessage.style.display = 'none';
+
+    // Check if there's a pending session
+    const hasPendingSession = sortedSessions.some(s => s.status === 'pending');
+
+    // Show/hide create button based on pending status
     if (createBtn) {
-        createBtn.disabled = true;
-        createBtn.classList.add('d-none');
+        if (hasPendingSession) {
+            createBtn.disabled = true;
+            createBtn.classList.add('d-none');
+        } else {
+            createBtn.disabled = false;
+            createBtn.classList.remove('d-none');
+        }
     }
 
-    const lastSession = sessions[sessions.length - 1];
-    const lastIsPending = lastSession && lastSession.status === 'pending';
-    const lastIsEligibleForNext = lastSession && (lastSession.status === 'completed' || lastSession.status === 'cancelled');
-
-    container.innerHTML = sessions.map(session => `
+    container.innerHTML = sortedSessions.map(session => `
         <div class="follow-up-session-card">
             <div class="session-header">
                 <div class="session-sequence">Follow-up #${session.follow_up_sequence}</div>
@@ -263,29 +284,28 @@ function displayFollowUpSessions(sessions) {
                 ${session.description ? `<div class="session-description"><strong>Description:</strong> ${session.description}</div>` : ''}
                 ${session.reason ? `<div class="session-reason"><strong>${session.status === 'cancelled' ? 'Reason For Cancellation:' : 'Reason For Follow-up:'}</strong> ${session.reason}</div>` : ''}
             </div>
+            ${session.status === 'pending' ? `
             <div class="session-actions d-flex gap-2 flex-wrap">
-                <button class="btn btn-success btn-sm" ${(session.status === 'completed' || session.status === 'cancelled') ? 'disabled' : ''} onclick="markFollowUpCompleted(${session.id})">
+                <button class="btn btn-success btn-sm" onclick="markFollowUpCompleted(${session.id})">
                     <i class="fas fa-check"></i> Mark as Completed
                 </button>
-                <button class="btn btn-warning btn-sm" ${session.status !== 'pending' ? 'disabled' : ''} onclick="openEditFollowUpModal(${session.id})">
+                <button class="btn btn-warning btn-sm" onclick="openEditFollowUpModal(${session.id})">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="btn btn-danger btn-sm" ${session.status !== 'pending' ? 'disabled' : ''} onclick="openCancelFollowUpModal(${session.id})">
+                <button class="btn btn-danger btn-sm" onclick="openCancelFollowUpModal(${session.id})">
                     <i class="fas fa-ban"></i> Cancel
                 </button>
-                <button class="btn btn-primary btn-sm" ${((!lastIsEligibleForNext) || session.id !== lastSession.id) ? 'disabled' : ''} onclick="createNewFollowUpFromSession(${session.id}, ${session.follow_up_sequence})">
-                    <i class="fas fa-plus"></i> Create Next Follow-up
-                </button>
             </div>
+            ` : ''}
         </div>
     `).join('');
 }
 
 // Create new follow-up from existing session
-function createNewFollowUpFromSession(sessionId, currentSequence) {
-    currentFollowUpSequence = currentSequence + 1;
-    openCreateFollowUpModal();
-}
+//function createNewFollowUpFromSession(sessionId, currentSequence) {
+ //   currentFollowUpSequence = currentSequence + 1;
+ //   openCreateFollowUpModal();
+//}
 
 // Mark follow-up as completed
 async function markFollowUpCompleted(id) {
@@ -319,9 +339,14 @@ async function markFollowUpCompleted(id) {
         const data = await response.json();
         if (data.status === 'success') {
             showSuccess(data.message || 'Follow-up marked as completed');
+            
+            // Refresh the follow-up sessions modal
             if (currentParentAppointmentId) {
-                openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
+                await openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
             }
+            
+            // Refresh the completed appointments list to update the badge
+            await loadCompletedAppointments();
         } else {
             showError(data.message || 'Failed to complete follow-up');
         }
@@ -367,9 +392,6 @@ async function confirmCancelFollowUp() {
         const csrfName = csrfMeta?.getAttribute('name') || 'csrf_test_name';
         const csrfHash = csrfMeta?.getAttribute('content') || '';
 
-        // Append default text prefix to the cancellation reason
-        //const formattedReason = `${reason}`;
-
         const form = new URLSearchParams();
         form.append('id', String(id));
         form.append('reason', reason);
@@ -391,9 +413,14 @@ async function confirmCancelFollowUp() {
             const modalEl = document.getElementById('cancelFollowUpModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
+            
+            // Refresh the follow-up sessions modal
             if (currentParentAppointmentId) {
-                openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
+                await openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
             }
+            
+            // Refresh the completed appointments list to update the badge
+            await loadCompletedAppointments();
         } else {
             showError(data.message || 'Failed to cancel follow-up');
         }
@@ -412,6 +439,9 @@ function openCreateFollowUpModal() {
     document.getElementById('parentAppointmentId').value = currentParentAppointmentId;
     document.getElementById('studentId').value = currentStudentId;
 
+    // Reset form
+    document.getElementById('createFollowUpForm').reset();
+    
     // Set minimum date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -450,7 +480,23 @@ async function loadCounselorAvailability(date) {
         const data = await response.json();
         
         if (data.status === 'success') {
-            populateTimeOptions(data.time_slots);
+            // Also load already-booked ranges for this counselor/date to filter options
+            let booked = [];
+            try {
+                const bookedRes = await fetch((window.BASE_URL || '/') + `counselor/follow-up/booked-times?date=${date}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+                });
+                if (bookedRes.ok) {
+                    const bookedData = await bookedRes.json();
+                    if (bookedData.status === 'success' && Array.isArray(bookedData.booked)) {
+                        booked = bookedData.booked;
+                    }
+                }
+            } catch (_) {}
+
+            populateTimeOptions(data.time_slots, booked);
             } else {
             showError(data.message || 'Failed to load counselor availability');
         }
@@ -461,7 +507,7 @@ async function loadCounselorAvailability(date) {
 }
 
 // Populate time options based on counselor availability
-function populateTimeOptions(timeSlots) {
+function populateTimeOptions(timeSlots, bookedTimes = []) {
     const timeSelect = document.getElementById('preferredTime');
     
     if (timeSlots.length === 0) {
@@ -469,12 +515,21 @@ function populateTimeOptions(timeSlots) {
         return;
     }
 
+    // Generate 30-minute increment range labels from provided slots
+    const incrementTimes = generateHalfHourRangeLabelsFromSlots(timeSlots);
+
+    if (incrementTimes.length === 0) {
+        timeSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+        return;
+    }
+
     timeSelect.innerHTML = '<option value="">Select a time</option>';
-    
-    timeSlots.forEach(slot => {
+
+    const bookedSet = new Set(bookedTimes);
+    incrementTimes.filter(t => !bookedSet.has(t)).forEach(t => {
         const option = document.createElement('option');
-        option.value = slot;
-        option.textContent = slot;
+        option.value = t;
+        option.textContent = t;
         timeSelect.appendChild(option);
     });
 }
@@ -485,6 +540,17 @@ function setupModalEventListeners() {
     const createNewFollowUpBtn = document.getElementById('createNewFollowUpBtn');
     if (createNewFollowUpBtn) {
         createNewFollowUpBtn.addEventListener('click', () => {
+            // ENSURE IDs ARE SET IF NOT
+            if (!currentParentAppointmentId || !currentStudentId) {
+                // Try to read IDs from data attributes on the button or modal parent as fallback
+                const modal = document.getElementById('followUpSessionsModal');
+                if (modal) {
+                    const parentId = modal.getAttribute('data-parent-appointment-id');
+                    const studentId = modal.getAttribute('data-student-id');
+                    if (parentId) currentParentAppointmentId = parentId;
+                    if (studentId) currentStudentId = studentId;
+                }
+            }
             currentFollowUpSequence = 1;
             openCreateFollowUpModal();
         });
@@ -512,21 +578,23 @@ function setupModalEventListeners() {
         });
     }
 
-    // Edit date change listener for availability loading
-    const editPreferredDateInput = document.getElementById('editPreferredDate');
-    if (editPreferredDateInput) {
-        editPreferredDateInput.addEventListener('change', function() {
-            if (this.value) {
-                loadCounselorAvailabilityForEdit(this.value);
-            }
-        });
-    }
+    // Edit date field is read-only, so no event listener needed
 }
+
 
 // Save follow-up appointment
 async function saveFollowUp() {
     const form = document.getElementById('createFollowUpForm');
     const formData = new FormData(form);
+    
+    // Get parent appointment ID and student ID from the form
+    const parentAppointmentId = formData.get('parent_appointment_id');
+    const studentId = formData.get('student_id');
+    
+    // LOG formData for debug
+    const dataObj = {};
+    for (const [k, v] of formData.entries()) dataObj[k] = v;
+    console.log('Submitting follow-up data:', dataObj);
     const saveBtn = document.getElementById('saveFollowUpBtn');
 
     // Validate required fields
@@ -554,8 +622,20 @@ async function saveFollowUp() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Network response was not ok');
+            let errorMessage = 'Network response was not ok';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (jsonErr) {
+                try {
+                    // Fallback: get plain text
+                    const errorText = await response.text();
+                    errorMessage = errorText || errorMessage;
+                } catch (txtErr) {}
+            }
+            showError(errorMessage);
+            console.error('Server response error (raw):', errorMessage, response);
+            return;
         }
 
         const data = await response.json();
@@ -563,16 +643,24 @@ async function saveFollowUp() {
         if (data.status === 'success') {
             showSuccess(data.message || 'Follow-up appointment created successfully');
             
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('createFollowUpModal'));
-            if (modal) {
-                modal.hide();
+            // Close the create modal
+            const createModal = bootstrap.Modal.getInstance(document.getElementById('createFollowUpModal'));
+            if (createModal) {
+                createModal.hide();
             }
             
-            // Refresh the follow-up sessions
-            if (currentParentAppointmentId) {
-                openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
-            }
+            // Update global variables with values from form
+            currentParentAppointmentId = parentAppointmentId;
+            currentStudentId = studentId;
+            
+            // Refresh the completed appointments list to update the badge count
+            await loadCompletedAppointments();
+            
+            // Refresh the follow-up sessions modal
+            // Use setTimeout to ensure the create modal is fully hidden before showing sessions
+            setTimeout(() => {
+                openFollowUpSessionsModal(parentAppointmentId, studentId);
+            }, 300);
         } else {
             showError(data.message || 'Failed to create follow-up appointment');
         }
@@ -617,6 +705,105 @@ function formatDate(dateString) {
         month: 'long',
         day: 'numeric'
     });
+}
+
+// Time utilities for 12-hour format and 30-minute increments
+function parseTime12ToMinutes(timeStr) {
+    if (!timeStr) return null;
+    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return null;
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const meridian = match[3].toUpperCase();
+    if (hours === 12) hours = 0;
+    if (meridian === 'PM') hours += 12;
+    return hours * 60 + minutes;
+}
+
+function formatMinutesTo12h(totalMinutes) {
+    let minutes = totalMinutes % 60;
+    let hours24 = Math.floor(totalMinutes / 60) % 24;
+    const meridian = hours24 >= 12 ? 'PM' : 'AM';
+    let hours12 = hours24 % 12;
+    if (hours12 === 0) hours12 = 12;
+    const mm = minutes.toString().padStart(2, '0');
+    return `${hours12}:${mm} ${meridian}`;
+}
+
+function generateHalfHourTimesFromSlots(timeSlots) {
+    const unique = new Set();
+    const pushIfValid = (t) => {
+        if (!t) return;
+        const mins = parseTime12ToMinutes(t);
+        if (mins !== null) unique.add(formatMinutesTo12h(mins));
+    };
+
+    timeSlots.forEach(slot => {
+        if (typeof slot !== 'string') return;
+        const s = slot.trim();
+        if (s.includes('-')) {
+            const [startStr, endStr] = s.split('-').map(p => p.trim());
+            const start = parseTime12ToMinutes(startStr);
+            const end = parseTime12ToMinutes(endStr);
+            if (start !== null && end !== null && end > start) {
+                // Generate every 30 minutes from start up to but not including end
+                for (let t = start; t + 30 <= end; t += 30) {
+                    unique.add(formatMinutesTo12h(t));
+                }
+            } else {
+                // Fallback: try to add startStr as a single time
+                pushIfValid(startStr);
+            }
+        } else {
+            // Single time value
+            pushIfValid(s);
+        }
+    });
+
+    // Sort ascending by minutes
+    const arr = Array.from(unique);
+    arr.sort((a, b) => parseTime12ToMinutes(a) - parseTime12ToMinutes(b));
+    return arr;
+}
+
+// Build 30-minute RANGE labels (e.g., "10:00 AM - 10:30 AM") from availability slots
+function generateHalfHourRangeLabelsFromSlots(timeSlots) {
+    const rangeSet = new Set();
+
+    timeSlots.forEach(slot => {
+        if (typeof slot !== 'string') return;
+        const s = slot.trim();
+        if (!s) return;
+        if (s.includes('-')) {
+            const [startStr, endStr] = s.split('-').map(p => p.trim());
+            const start = parseTime12ToMinutes(startStr);
+            const end = parseTime12ToMinutes(endStr);
+            if (start !== null && end !== null && end > start) {
+                for (let t = start; t + 30 <= end; t += 30) {
+                    const from = formatMinutesTo12h(t);
+                    const to = formatMinutesTo12h(t + 30);
+                    rangeSet.add(`${from} - ${to}`);
+                }
+            }
+        } else {
+            // Single timestamp: create 30-min range from this time
+            const fromMin = parseTime12ToMinutes(s);
+            if (fromMin !== null) {
+                const from = formatMinutesTo12h(fromMin);
+                const to = formatMinutesTo12h(fromMin + 30);
+                rangeSet.add(`${from} - ${to}`);
+            }
+        }
+    });
+
+    const arr = Array.from(rangeSet);
+    // Sort by start minutes
+    arr.sort((a, b) => {
+        const [aFrom] = a.split('-').map(x => x.trim());
+        const [bFrom] = b.split('-').map(x => x.trim());
+        return parseTime12ToMinutes(aFrom) - parseTime12ToMinutes(bFrom);
+    });
+    return arr;
 }
 
 function showError(message) {
@@ -791,11 +978,8 @@ function openEditFollowUpModal(sessionId) {
     document.getElementById('editDescription').value = sessionDescription;
     document.getElementById('editReason').value = sessionReason;
 
-    // Load availability for the selected date
-    const selectedDate = document.getElementById('editPreferredDate').value;
-    if (selectedDate) {
-        loadCounselorAvailabilityForEdit(selectedDate);
-    }
+    // Date and time fields are read-only, so we don't need to load availability
+    // They will display the original values chosen by the counselor
 
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('editFollowUpModal'));
@@ -821,7 +1005,19 @@ async function loadCounselorAvailabilityForEdit(date) {
         const data = await response.json();
         
         if (data.status === 'success') {
-            populateTimeOptionsForEdit(data.time_slots);
+            // Also fetch booked ranges to filter out
+            let booked = [];
+            try {
+                const bookedRes = await fetch((window.BASE_URL || '/') + `counselor/follow-up/booked-times?date=${date}`, {
+                    method: 'GET', credentials: 'include', headers: { 'Accept':'application/json','Cache-Control':'no-cache' }
+                });
+                if (bookedRes.ok) {
+                    const bookedData = await bookedRes.json();
+                    if (bookedData.status === 'success' && Array.isArray(bookedData.booked)) booked = bookedData.booked;
+                }
+            } catch(_) {}
+
+            populateTimeOptionsForEdit(data.time_slots, booked);
         } else {
             showError(data.message || 'Failed to load counselor availability');
         }
@@ -832,7 +1028,7 @@ async function loadCounselorAvailabilityForEdit(date) {
 }
 
 // Populate time options for edit modal
-function populateTimeOptionsForEdit(timeSlots) {
+function populateTimeOptionsForEdit(timeSlots, bookedTimes = []) {
     const timeSelect = document.getElementById('editPreferredTime');
     const currentValue = timeSelect.value;
     
@@ -841,13 +1037,34 @@ function populateTimeOptionsForEdit(timeSlots) {
         return;
     }
 
+    // Generate 30-minute increment range labels from provided slots
+    const incrementTimes = generateHalfHourRangeLabelsFromSlots(timeSlots);
+
+    if (incrementTimes.length === 0) {
+        timeSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+        return;
+    }
+
     timeSelect.innerHTML = '<option value="">Select a time</option>';
     
-    timeSlots.forEach(slot => {
+    // If current value isn't part of availability anymore, keep it selectable and selected
+    const bookedSet = new Set(bookedTimes);
+    const filtered = incrementTimes.filter(t => !bookedSet.has(t) || t === currentValue);
+    const hasCurrent = currentValue && filtered.includes(currentValue);
+    
+    if (!hasCurrent && currentValue) {
+        const currentOpt = document.createElement('option');
+        currentOpt.value = currentValue;
+        currentOpt.textContent = currentValue + ' (current)';
+        currentOpt.selected = true;
+        timeSelect.appendChild(currentOpt);
+    }
+
+    filtered.forEach(t => {
         const option = document.createElement('option');
-        option.value = slot;
-        option.textContent = slot;
-        if (slot === currentValue) {
+        option.value = t;
+        option.textContent = t;
+        if (t === currentValue) {
             option.selected = true;
         }
         timeSelect.appendChild(option);
@@ -859,6 +1076,12 @@ async function updateFollowUp() {
     const form = document.getElementById('editFollowUpForm');
     const formData = new FormData(form);
     const updateBtn = document.getElementById('updateFollowUpBtn');
+
+    // Since preferred_time select is disabled, manually include its value
+    const preferredTime = document.getElementById('editPreferredTime').value;
+    if (preferredTime) {
+        formData.set('preferred_time', preferredTime);
+    }
 
     // Validate required fields
     const requiredFields = ['id', 'preferred_date', 'preferred_time', 'consultation_type'];
@@ -900,9 +1123,12 @@ async function updateFollowUp() {
                 modal.hide();
             }
             
+            // Refresh the completed appointments list to update the badge
+            await loadCompletedAppointments();
+            
             // Refresh the follow-up sessions
             if (currentParentAppointmentId) {
-                openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
+                await openFollowUpSessionsModal(currentParentAppointmentId, currentStudentId);
             }
         } else {
             showError(data.message || 'Failed to update follow-up session');

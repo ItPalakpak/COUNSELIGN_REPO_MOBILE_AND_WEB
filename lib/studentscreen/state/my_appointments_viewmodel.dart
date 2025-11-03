@@ -52,6 +52,14 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   DateTime _currentCalendarDate = DateTime.now();
   DateTime get currentCalendarDate => _currentCalendarDate;
 
+  // Calendar stats cache keyed by YYYY-MM
+  final Map<String, Map<String, dynamic>> _calendarStatsCache = {};
+  Map<String, dynamic> _currentMonthStats = {};
+  Map<String, dynamic> get currentMonthStats => _currentMonthStats;
+
+  // Memoized schedules future to avoid refetch loop in UI
+  Future<Map<String, List<CounselorSchedule>>>? _schedulesFuture;
+
   // Modal states
   bool _showEditModal = false;
   bool get showEditModal => _showEditModal;
@@ -324,7 +332,17 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   }
 
   void updateDateFilter(String date) {
-    _dateFilter = date;
+    if (date.isEmpty) {
+      _dateFilter = '';
+    } else {
+      // Normalize to YYYY-MM only
+      final normalized = date.length >= 7 ? date.substring(0, 7) : date;
+      _dateFilter = normalized;
+      // Also normalize the controller text if it was set externally
+      if (dateFilterController.text != normalized) {
+        dateFilterController.text = normalized;
+      }
+    }
     _safeNotifyListeners();
   }
 
@@ -334,55 +352,82 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   }
 
   List<Appointment> getFilteredAppointments() {
-    List<Appointment> filtered = _allAppointments;
-
-    // Apply search filter
-    if (_searchTerm.isNotEmpty) {
-      filtered = filtered.where((appointment) {
-        return appointment.consultationType?.toLowerCase().contains(
-                  _searchTerm.toLowerCase(),
-                ) ==
-                true ||
-            appointment.counselorName?.toLowerCase().contains(
-                  _searchTerm.toLowerCase(),
-                ) ==
-                true ||
-            appointment.description?.toLowerCase().contains(
-                  _searchTerm.toLowerCase(),
-                ) ==
-                true;
-      }).toList();
-    }
-
-    // Apply date filter
-    if (_dateFilter.isNotEmpty) {
-      filtered = filtered.where((appointment) {
-        return appointment.preferredDate?.startsWith(_dateFilter) == true;
-      }).toList();
-    }
-
-    // Apply status filter based on selected tab
+    // 1) Apply status scope first (tab)
+    List<Appointment> filtered;
     switch (_selectedTabIndex) {
       case 1: // Completed
-        filtered = filtered
+        filtered = _allAppointments
             .where((a) => a.status?.toUpperCase() == 'COMPLETED')
             .toList();
         break;
       case 2: // Cancelled
-        filtered = filtered
+        filtered = _allAppointments
             .where((a) => a.status?.toUpperCase() == 'CANCELLED')
             .toList();
         break;
       case 3: // Rejected
-        filtered = filtered
+        filtered = _allAppointments
             .where((a) => a.status?.toUpperCase() == 'REJECTED')
             .toList();
         break;
       default: // All
+        filtered = List<Appointment>.from(_allAppointments);
         break;
     }
 
+    // 2) Apply monthly date filter (YYYY-MM)
+    if (_dateFilter.isNotEmpty) {
+      filtered = filtered.where((appointment) {
+        final String ym = _extractYearMonth(appointment.preferredDate);
+        return ym == _dateFilter;
+      }).toList();
+    }
+
+    // 3) Apply search filter within the already-scoped set
+    if (_searchTerm.isNotEmpty) {
+      final term = _searchTerm.toLowerCase();
+      filtered = filtered.where((appointment) {
+        final type = appointment.consultationType?.toLowerCase() ?? '';
+        final counselor = appointment.counselorName?.toLowerCase() ?? '';
+        final desc = appointment.description?.toLowerCase() ?? '';
+        final method = appointment.methodType?.toLowerCase() ?? '';
+        final purpose = appointment.purpose?.toLowerCase() ?? '';
+        return type.contains(term) ||
+            counselor.contains(term) ||
+            desc.contains(term) ||
+            method.contains(term) ||
+            purpose.contains(term);
+      }).toList();
+    }
+
     return filtered;
+  }
+
+  // Extract YYYY-MM from a date string robustly
+  String _extractYearMonth(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '';
+    final String s = dateStr.trim();
+    // Try ISO parse first
+    try {
+      final dt = DateTime.parse(s);
+      return '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}';
+    } catch (_) {
+      // Fallback to substring if looks like YYYY-MM-...
+      if (s.length >= 7 && RegExp(r'^\d{4}-\d{2}').hasMatch(s)) {
+        return s.substring(0, 7);
+      }
+      // Try common MM/DD/YYYY
+      final mdY = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$');
+      final m = mdY.firstMatch(s);
+      if (m != null) {
+        final int year = int.tryParse(m.group(3) ?? '') ?? 0;
+        final int month = int.tryParse(m.group(1) ?? '') ?? 0;
+        if (year > 0 && month > 0) {
+          return '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
+        }
+      }
+      return '';
+    }
   }
 
   List<Appointment> getPendingAppointments() {
@@ -400,12 +445,71 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   // Calendar functionality
   void toggleCalendar() {
     _isCalendarVisible = !_isCalendarVisible;
+    if (_isCalendarVisible) {
+      // Prefetch month stats when opening
+      fetchCalendarStatsForMonth(_currentCalendarDate);
+      _schedulesFuture ??= fetchCounselorSchedules();
+    }
     _safeNotifyListeners();
   }
 
   void setCalendarDate(DateTime date) {
     _currentCalendarDate = date;
     _safeNotifyListeners();
+  }
+
+  // ===== Calendar daily stats =====
+  Future<void> fetchCalendarStatsForMonth(DateTime date) async {
+    try {
+      final String key =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      if (_calendarStatsCache.containsKey(key)) {
+        _currentMonthStats = _calendarStatsCache[key]!;
+        _safeNotifyListeners();
+        return;
+      }
+      final uri =
+          Uri.parse(
+            '${ApiConfig.currentBaseUrl}/student/calendar/daily-stats',
+          ).replace(
+            queryParameters: {
+              'year': date.year.toString(),
+              'month': date.month.toString(),
+            },
+          );
+      final resp = await _session.get(
+        uri.toString(),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+      if (resp.statusCode == 200) {
+        final data = json.decode(resp.body);
+        if (data?['status'] == 'success' && data?['stats'] is Map) {
+          final Map<String, dynamic> stats = Map<String, dynamic>.from(
+            data['stats'] as Map,
+          );
+          _calendarStatsCache[key] = stats;
+          _currentMonthStats = stats;
+        } else {
+          _currentMonthStats = {};
+        }
+      } else {
+        _currentMonthStats = {};
+      }
+    } catch (e) {
+      debugPrint('Error fetching calendar stats: $e');
+      _currentMonthStats = {};
+    } finally {
+      _safeNotifyListeners();
+    }
+  }
+
+  Map<String, dynamic>? getStatsForDate(DateTime date) {
+    final String iso =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return _currentMonthStats[iso] as Map<String, dynamic>?;
   }
 
   void setUpdatingAppointment(bool value) {
@@ -602,6 +706,12 @@ class MyAppointmentsViewModel extends ChangeNotifier {
     }
   }
 
+  // Expose memoized schedules future for UI
+  Future<Map<String, List<CounselorSchedule>>> getCounselorSchedulesFuture() {
+    _schedulesFuture ??= fetchCounselorSchedules();
+    return _schedulesFuture!;
+  }
+
   // Modal management
   void openEditModal(Appointment appointment) {
     _currentAppointment = appointment;
@@ -707,6 +817,141 @@ class MyAppointmentsViewModel extends ChangeNotifier {
     if (dateController.text.isNotEmpty) {
       fetchCounselorsByAvailability(dateController.text, time);
     }
+  }
+
+  // ===== Available time slots (30-minute intervals) for pending/editing =====
+  Future<List<String>> fetchAvailableHalfHourSlots({
+    required String date,
+    required String counselorId,
+    required String consultationType,
+    String? selectedTime,
+  }) async {
+    try {
+      if (counselorId.isEmpty || counselorId == 'No preference') {
+        return selectedTime != null && selectedTime.isNotEmpty
+            ? [selectedTime]
+            : <String>[];
+      }
+
+      final dayOfWeek = _getDayOfWeek(date);
+
+      // Fetch counselor availability for day
+      final availabilityResp = await _session.get(
+        Uri.parse(
+          '${ApiConfig.currentBaseUrl}/counselor/profile/availability?counselorId=$counselorId',
+        ).toString(),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+
+      List<String> ranges = [];
+      if (availabilityResp.statusCode == 200) {
+        final data = json.decode(availabilityResp.body);
+        final daySchedule = (data?['availability']?[dayOfWeek] as List?) ?? [];
+        final slotStrings = daySchedule
+            .map((s) => s?['time_scheduled'])
+            .where((v) => v != null && (v as String).isNotEmpty)
+            .cast<String>()
+            .toList();
+        ranges = _generateHalfHourRangeUnion(slotStrings);
+      }
+
+      // Fetch booked times for date (and counselor)
+      final bookedUri =
+          Uri.parse(
+            '${ApiConfig.currentBaseUrl}/student/appointments/booked-times',
+          ).replace(
+            queryParameters: {
+              'date': date,
+              'counselor_id': counselorId,
+              if (consultationType.isNotEmpty)
+                'consultation_type': consultationType,
+            },
+          );
+      final bookedResp = await _session.get(
+        bookedUri.toString(),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+
+      final booked = <String>{};
+      if (bookedResp.statusCode == 200) {
+        final bookedData = json.decode(bookedResp.body);
+        final bookedList = (bookedData?['booked'] as List?) ?? [];
+        for (final b in bookedList) {
+          if (b is String && b.isNotEmpty) booked.add(b);
+        }
+      }
+
+      // Filter out booked
+      final available = ranges.where((slot) => !booked.contains(slot)).toList();
+      if (selectedTime != null && selectedTime.isNotEmpty) {
+        if (!available.contains(selectedTime)) {
+          available.insert(0, selectedTime);
+        }
+      }
+      return available;
+    } catch (e) {
+      debugPrint('Error fetching half-hour slots: $e');
+      return selectedTime != null && selectedTime.isNotEmpty
+          ? [selectedTime]
+          : <String>[];
+    }
+  }
+
+  List<String> _generateHalfHourRangeUnion(List<String> slotStrings) {
+    final Set<String> set = {};
+    for (final s in slotStrings) {
+      final str = s.trim();
+      if (str.isEmpty) continue;
+      if (str.contains('-')) {
+        final parts = str.split('-');
+        if (parts.length != 2) continue;
+        final int? start = _parseTime12ToMinutes(parts[0].trim());
+        final int? end = _parseTime12ToMinutes(parts[1].trim());
+        if (start == null || end == null || end <= start) continue;
+        for (int t = start; t + 30 <= end; t += 30) {
+          final from = _formatMinutesTo12h(t);
+          final to = _formatMinutesTo12h(t + 30);
+          set.add('$from - $to');
+        }
+      }
+    }
+    final arr = set.toList();
+    arr.sort((a, b) {
+      final af = a.split('-').first.trim();
+      final bf = b.split('-').first.trim();
+      return (_parseTime12ToMinutes(af) ?? 0) -
+          (_parseTime12ToMinutes(bf) ?? 0);
+    });
+    return arr;
+  }
+
+  int? _parseTime12ToMinutes(String t) {
+    final m = RegExp(
+      r'^(\d{1,2}):(\d{2})\s*(AM|PM)\$',
+    ).firstMatch(t.trim().toUpperCase());
+    if (m == null) return null;
+    int h = int.parse(m.group(1)!);
+    final min = int.parse(m.group(2)!);
+    final ampm = m.group(3)!;
+    if (h == 12) h = 0;
+    if (ampm == 'PM') h += 12;
+    return h * 60 + min;
+  }
+
+  String _formatMinutesTo12h(int total) {
+    final minutes = total % 60;
+    final h24 = (total ~/ 60) % 24;
+    final ampm = h24 >= 12 ? 'PM' : 'AM';
+    int h12 = h24 % 12;
+    if (h12 == 0) h12 = 12;
+    final mm = minutes.toString().padLeft(2, '0');
+    return '$h12:$mm $ampm';
   }
 
   // API operations

@@ -127,14 +127,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function openAppointmentDetails(appointment){
         const modal = document.getElementById('appointmentDetailsModal');
         modal.querySelector('.modal-title').textContent = `Appointment Details - ${appointment.student_id || 'N/A'}`;
+        
         const set = (sel, val) => { const el = modal.querySelector(sel); if (el) el.textContent = val || 'N/A'; };
         set('#modalStudentId', appointment.student_id);
         set('#modalEmail', appointment.user_email);
         set('#modalStudentName', appointment.student_name || appointment.username);
         set('#modalDate', formatDate(appointment.preferred_date));
         set('#modalTime', appointment.preferred_time);
-        set('#modalConsultationType', appointment.consultation_type || 'In-person');
-        set('#modalPurpose', appointment.purpose || 'N/A');
+        
+        // Consultation Type: Individual Consultation or Group Consultation
+        const consultationType = appointment.consultation_type;
+        set('#modalConsultationType', (consultationType && consultationType.trim() !== '') ? consultationType : null);
+        
+        // Method Type: In-person, Online (Video), Online (Audio only)
+        const methodType = appointment.method_type;
+        set('#modalMethodType', (methodType && methodType.trim() !== '') ? methodType : null);
+        
+        // Purpose: Counseling, Psycho-Social Support, Initial Interview
+        const purpose = appointment.purpose;
+        set('#modalPurpose', (purpose && purpose.trim() !== '') ? purpose : null);
         set('#modalCounselorPreference', appointment.counselor_name || 'No Preference');
         const modalStatus = modal.querySelector('#modalStatus');
         if (modalStatus) { modalStatus.textContent = capitalizeFirstLetter(appointment.status); modalStatus.className = `badge ${getStatusBadgeClass(appointment.status)}`; }

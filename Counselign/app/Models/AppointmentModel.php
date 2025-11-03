@@ -20,6 +20,7 @@ class AppointmentModel extends BaseModel
         'student_id',
         'preferred_date',
         'preferred_time',
+        'method_type',
         'consultation_type',
         'counselor_preference',
         'description',
@@ -43,7 +44,8 @@ class AppointmentModel extends BaseModel
         'student_id' => 'required|max_length[10]',
         'preferred_date' => 'required|valid_date[Y-m-d]',
         'preferred_time' => 'required|max_length[50]',
-        'consultation_type' => 'required|max_length[50]',
+        'method_type' => 'required|max_length[50]',
+        'consultation_type' => 'permit_empty|in_list[Individual Consultation,Group Consultation]',
         'counselor_preference' => 'permit_empty|max_length[100]',
         'description' => 'permit_empty',
         'reason' => 'permit_empty',
@@ -65,7 +67,7 @@ class AppointmentModel extends BaseModel
         'preferred_time' => [
             'required' => 'Preferred time is required'
         ],
-        'consultation_type' => [
+        'method_type' => [
             'required' => 'Consultation type is required'
         ],
         'status' => [
@@ -393,14 +395,11 @@ class AppointmentModel extends BaseModel
     }
 
     /**
-     * Get appointments by consultation type
-     * 
-     * @param string $consultationType
-     * @return array
+     * Get appointments by method type (formerly consultation_type)
      */
-    public function getByConsultationType(string $consultationType): array
+    public function getByMethodType(string $methodType): array
     {
-        return $this->where('consultation_type', $consultationType)
+        return $this->where('method_type', $methodType)
                     ->orderBy('preferred_date', 'DESC')
                     ->findAll();
     }
@@ -417,7 +416,7 @@ class AppointmentModel extends BaseModel
                     ->join('users', 'appointments.student_id = users.user_id', 'left')
                     ->groupStart()
                         ->like('appointments.student_id', $searchTerm)
-                        ->orLike('appointments.consultation_type', $searchTerm)
+                        ->orLike('appointments.method_type', $searchTerm)
                         ->orLike('appointments.counselor_preference', $searchTerm)
                         ->orLike('appointments.description', $searchTerm)
                         ->orLike('users.username', $searchTerm)

@@ -517,7 +517,8 @@ function initAvailabilityUi() {
             const from = document.getElementById('time-from')?.value;
             const to = document.getElementById('time-to')?.value;
             if (!from || !to) { openAlertModal('Select both From and To time.', 'warning'); return; }
-            if (from >= to) { openAlertModal('From must be earlier than To.', 'warning'); return; }
+            // Use timeToMinutes() for proper time comparison instead of string comparison
+            if (timeToMinutes(from) >= timeToMinutes(to)) { openAlertModal('From must be earlier than To.', 'warning'); return; }
             const days = getSelectedDays();
             if (days.length === 0) { openAlertModal('Select at least one day.', 'warning'); return; }
             days.forEach(day => addRangeForDay(day, { from, to }));
@@ -743,21 +744,30 @@ function loadAvailabilityFromServer() {
 }
 
 function saveAvailability() {
-    const days = getSelectedDays();
-    if (days.length === 0) { openAlertModal('Please select at least one day.', 'warning'); return; }
+    // Save based on days that actually have time ranges added, not on checkbox state
+    const daysToSave = [];
     const timesByDay = {};
-    days.forEach(day => {
+    
+    DAYS_ORDER.forEach(day => {
         const ranges = availabilityState.rangesByDay[day] || [];
-        // Convert ranges to 12-hour format time strings for server
-        const timeStrings = ranges.map(range => `${range.from}-${range.to}`);
-        timesByDay[day] = timeStrings.length ? timeStrings : [null];
+        if (ranges.length > 0) {
+            daysToSave.push(day);
+            // Convert ranges to 12-hour format time strings for server
+            const timeStrings = ranges.map(range => `${range.from}-${range.to}`);
+            timesByDay[day] = timeStrings;
+        }
     });
+    
+    if (daysToSave.length === 0) { 
+        openAlertModal('Please add at least one time slot before saving.', 'warning'); 
+        return; 
+    }
 
     fetch((window.BASE_URL || '/') + 'counselor/profile/availability', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ days, timesByDay })
+        body: JSON.stringify({ days: daysToSave, timesByDay })
     })
     .then(r => r.json())
     .then(d => {

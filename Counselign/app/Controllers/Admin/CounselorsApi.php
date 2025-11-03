@@ -5,7 +5,6 @@ namespace App\Controllers\Admin;
 
 use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
-use App\Helpers\SecureLogHelper;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class CounselorsApi extends BaseController
@@ -15,7 +14,18 @@ class CounselorsApi extends BaseController
     {
         $log = date('Y-m-d H:i:s') . " - " . $message;
         if ($data !== null) {
-            $log .= "\nData: " . /* Debug statement removed for security */;
+            // Safely stringify additional data without exposing sensitive details
+            $stringified = '';
+            if (is_string($data)) {
+                $stringified = $data;
+            } elseif (is_scalar($data)) {
+                $stringified = (string) $data;
+            } else {
+                // Limit size to avoid huge logs
+                $encoded = json_encode($data, JSON_PARTIAL_OUTPUT_ON_ERROR);
+                $stringified = $encoded !== false ? substr($encoded, 0, 2000) : '[unserializable data]';
+            }
+            $log .= "\nData: " . $stringified;
         }
         file_put_contents(ROOTPATH . 'writable/debug.log', $log . "\n\n", FILE_APPEND);
     }
@@ -113,8 +123,13 @@ class CounselorsApi extends BaseController
                 ADD COLUMN IF NOT EXISTS time_scheduled VARCHAR(50),
                 ADD COLUMN IF NOT EXISTS available_days TEXT");
 
-            $builder = $db->table('counselors');
-            $builder->orderBy('name');
+            // Join with users table to include verification status
+            $builder = $db->table('counselors c');
+            $builder->select('c.*, u.is_verified, u.username, u.email, u.profile_picture');
+            $builder->join('users u', 'u.user_id = c.counselor_id', 'left');
+            // Pending verification first, then by name (avoid identifier escaping on SQL function)
+            $builder->orderBy('COALESCE(u.is_verified, 0) ASC', '', false);
+            $builder->orderBy('c.name', 'ASC');
             $counselors = $builder->get()->getResultArray();
 
             return $this->response->setJSON([
@@ -123,6 +138,104 @@ class CounselorsApi extends BaseController
             ]);
         } catch (\Exception $e) {
             $this->debug_log("Error occurred: " . $e->getMessage(), $e->getTraceAsString());
+            return $this->response->setStatusCode(400)
+                ->setJSON(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // POST: Approve counselor account (set users.is_verified = 1) and notify via email
+    public function approve()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $data = $this->request->getJSON(true) ?: $this->request->getPost();
+            if (empty($data['counselor_id'])) {
+                throw new \InvalidArgumentException('counselor_id is required');
+            }
+
+            $counselorId = $data['counselor_id'];
+
+            // Fetch counselor email
+            $counselor = $db->table('counselors')->where('counselor_id', $counselorId)->get()->getRowArray();
+            if (!$counselor) {
+                throw new \RuntimeException('Counselor not found');
+            }
+
+            // Update users.is_verified
+            $db->table('users')->where('user_id', $counselorId)->update(['is_verified' => 1]);
+
+            // Send approval email
+            $email = \Config\Services::email();
+            $email->setTo($counselor['email']);
+            $email->setSubject('Counselign Account Approved');
+            $email->setMessage(
+                'Dear Counselor ' . ($counselor['name'] ?? 'Counselor') . ',<br><br>' .
+                'Your counselor account has been approved. You can now log in and use the system.<br><br>' .
+                'Best regards,<br>Counselign Team'
+            );
+            // Errors from email sending should not block approval; log instead
+            if (!$email->send(false)) {
+                $this->debug_log('Email send failed on approval', $email->printDebugger(['headers']));
+            }
+
+            return $this->response->setJSON(['success' => true, 'message' => 'Counselor approved successfully']);
+        } catch (\Throwable $e) {
+            $this->debug_log('Approve error: ' . $e->getMessage());
+            return $this->response->setStatusCode(400)
+                ->setJSON(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // POST: Reject counselor (email reason, then force-delete counselor and user records)
+    public function reject()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $data = $this->request->getJSON(true) ?: $this->request->getPost();
+            if (empty($data['counselor_id'])) {
+                throw new \InvalidArgumentException('counselor_id is required');
+            }
+            $reason = isset($data['reason']) ? trim((string)$data['reason']) : '';
+            if ($reason === '') {
+                throw new \InvalidArgumentException('Rejection reason is required');
+            }
+
+            $counselorId = $data['counselor_id'];
+            $counselor = $db->table('counselors')->where('counselor_id', $counselorId)->get()->getRowArray();
+            if (!$counselor) {
+                throw new \RuntimeException('Counselor not found');
+            }
+
+            // Send rejection email first
+            $email = \Config\Services::email();
+            $email->setTo($counselor['email']);
+            $email->setSubject('Counselign Account Rejected');
+            $email->setMessage(
+                'Dear' . ($counselor['name'] ?? 'Counselor') . ',<br><br>' .
+                'We are sorry to inform you that your account registration has been rejected for the following reason:<br><br>' .
+                nl2br(htmlspecialchars($reason)) . '<br><br>' .
+                'If you believe this is a mistake or wish to re-apply, please contact the administrator.<br><br>' .
+                'Regards,<br>Counselign Team'
+            );
+            if (!$email->send(false)) {
+                $this->debug_log('Email send failed on rejection', $email->printDebugger(['headers']));
+            }
+
+            // Force delete records (delete counselor first, then user)
+            $db->transStart();
+            $db->query('SET FOREIGN_KEY_CHECKS=0');
+            $db->table('counselors')->where('counselor_id', $counselorId)->delete();
+            $db->table('users')->where('user_id', $counselorId)->delete();
+            $db->query('SET FOREIGN_KEY_CHECKS=1');
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Failed to delete counselor account');
+            }
+
+            return $this->response->setJSON(['success' => true, 'message' => 'Counselor account rejected and removed']);
+        } catch (\Throwable $e) {
+            $this->debug_log('Reject error: ' . $e->getMessage());
             return $this->response->setStatusCode(400)
                 ->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -196,7 +309,7 @@ class CounselorsApi extends BaseController
                 if (!empty($uploadResult['path'])) {
                     $params['profile_picture'] = $uploadResult['path'];
                 } elseif ($removeProfile) {
-                    $params['profile_picture'] = '/UGCSystem/public/Photos/profile.png';
+                    $params['profile_picture'] = 'Photos/profile_pictures/profile.png';
                 }
                 $builder->where('counselor_id', $post['counselorId']);
                 $builder->update($params);
@@ -254,8 +367,8 @@ class CounselorsApi extends BaseController
             }
 
             // Delete profile picture if it's not the default
-            if (!empty($counselor['profile_picture']) && $counselor['profile_picture'] !== '/UGCSystem/public/Photos/profile.png') {
-                $picturePath = FCPATH . ltrim(str_replace('/UGCSystem/public', '', $counselor['profile_picture']), '/');
+            if (!empty($counselor['profile_picture']) && $counselor['profile_picture'] !== 'Photos/profile_pictures/profile.png') {
+                $picturePath = FCPATH . ltrim(str_replace('/Counselign/public', '', $counselor['profile_picture']), '/');
                 if (file_exists($picturePath)) {
                     $this->debug_log("Deleting profile picture: " . $picturePath);
                     @unlink($picturePath);

@@ -37,7 +37,8 @@ class Appointments extends BaseController
         // Query to get all appointments with user and counselor information
         // Filtered by counselor_id
         $query = "SELECT
-                    a.*,
+                    a.*, 
+                    a.method_type, -- formerly consultation_type
                     u.email as user_email,
                     u.username,
                     COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), u.username) AS student_name,
@@ -124,9 +125,8 @@ class Appointments extends BaseController
         $db = \Config\Database::connect();
 
         $query = $db->table('appointments')
-            ->select('appointments.*, users.email as user_email, users.username, 
-                     CONCAT(sai.course, " - ", sai.year_level) as course_year,
-                     sai.course, sai.year_level, CONCAT(spi.first_name, " ", spi.last_name) as student_name, c.name as counselor_name')
+            ->select('appointments.*, appointments.method_type as method_type, users.email as user_email, users.username, 
+                     CONCAT(sai.course, " - ", sai.year_level) as course_year, sai.course, sai.year_level, CONCAT(spi.first_name, " ", spi.last_name) as student_name, c.name as counselor_name')
             ->join('users', 'users.user_id = appointments.student_id', 'left')
             ->join('student_academic_info sai', 'sai.student_id = appointments.student_id', 'left')
             ->join('student_personal_info spi', 'spi.student_id = appointments.student_id', 'left')
@@ -314,25 +314,60 @@ class Appointments extends BaseController
             $counselor_id = session()->get('user_id_display') ?? session()->get('user_id');
             $db = \Config\Database::connect();
 
-            $query = "SELECT
-                        a.*, a.updated_at,
-                        u.email, u.username, 
+            // 1) Approved regular appointments (treated as "New")
+            $appointmentsQuery = "SELECT
+                        a.*, a.method_type, a.updated_at,
+                        u.email, u.username,
                         CONCAT(sai.course, ' - ', sai.year_level) as course_year,
                         sai.course, sai.year_level,
                         CONCAT(spi.first_name, ' ', spi.last_name) as student_name,
-                        COALESCE(c.name, 'No Preference') as counselorPreference
+                        COALESCE(c.name, 'No Preference') as counselorPreference,
+                        'New' as schedule_type,
+                        'appointment' as record_kind
                       FROM appointments a
                       LEFT JOIN users u ON a.student_id = u.user_id
                       LEFT JOIN student_academic_info sai ON sai.student_id = u.user_id
                       LEFT JOIN student_personal_info spi ON spi.student_id = u.user_id
                       LEFT JOIN counselors c ON c.counselor_id = a.counselor_preference
-                      WHERE a.status = 'approved' 
-                      AND (a.counselor_preference = ? OR a.counselor_preference IS NULL)
-                      ORDER BY a.preferred_date ASC, a.preferred_time ASC";
+                      WHERE a.status = 'approved'
+                      AND (a.counselor_preference = ? OR a.counselor_preference IS NULL)";
 
-            $appointments = $db->query($query, [$counselor_id])->getResultArray();
+            $appointments = $db->query($appointmentsQuery, [$counselor_id])->getResultArray();
 
-            if (empty($appointments)) {
+            // 2) Pending/approved follow-up sessions (treated as scheduled items and shown as "Follow-up")
+            $followUpsQuery = "SELECT
+                        f.id,
+                        f.student_id,
+                        f.preferred_date,
+                        f.preferred_time,
+                        f.consultation_type,
+                        f.consultation_type as purpose,
+                        'approved' as status,
+                        u.email,
+                        u.username,
+                        CONCAT(spi.first_name, ' ', spi.last_name) as student_name,
+                        'Follow-up' as schedule_type,
+                        'follow_up' as record_kind
+                      FROM follow_up_appointments f
+                      LEFT JOIN users u ON f.student_id = u.user_id
+                      LEFT JOIN student_personal_info spi ON spi.student_id = u.user_id
+                      WHERE f.counselor_id = ?
+                      AND f.status IN ('pending','approved')";
+
+            $followUps = $db->query($followUpsQuery, [$counselor_id])->getResultArray();
+
+            // Merge and sort by date/time ascending
+            $merged = array_merge($appointments, $followUps);
+            usort($merged, function ($a, $b) {
+                $dateA = strtotime($a['preferred_date'] ?? $a['appointed_date'] ?? '1970-01-01');
+                $dateB = strtotime($b['preferred_date'] ?? $b['appointed_date'] ?? '1970-01-01');
+                if ($dateA === $dateB) {
+                    return strcmp((string)($a['preferred_time'] ?? ''), (string)($b['preferred_time'] ?? ''));
+                }
+                return $dateA <=> $dateB;
+            });
+
+            if (empty($merged)) {
                 return $this->respond([
                     'status' => 'success',
                     'message' => 'No approved appointments found',
@@ -342,7 +377,7 @@ class Appointments extends BaseController
 
             return $this->respond([
                 'status' => 'success',
-                'appointments' => $appointments
+                'appointments' => $merged
             ]);
 
         } catch (\Exception $e) {

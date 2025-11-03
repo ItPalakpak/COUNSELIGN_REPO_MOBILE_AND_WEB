@@ -191,50 +191,130 @@
     </main>
 
     <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-labelledby="appointmentDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="appointmentDetailsModalLabel">Appointment Details</h5>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content appointment-modal-content">
+                <div class="modal-header appointment-modal-header">
+                    <h5 class="modal-title" id="appointmentDetailsModalLabel">
+                        <i class="fas fa-calendar-check me-2"></i>Appointment Details
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p><strong>User ID:</strong> <span id="modalStudentId"></span></p>
-                            <p><strong>Student Name:</strong> <span id="modalStudentName"></span></p>
-                            <p><strong>Email:</strong> <span id="modalEmail"></span></p>
-                            <p><strong>Date:</strong> <span id="modalDate"></span></p>
-                            <p><strong>Time:</strong> <span id="modalTime"></span></p>
+                <div class="modal-body appointment-modal-body">
+                    <div class="appointment-info-grid">
+                        <div class="info-section">
+                            <div class="info-item">
+                                <i class="fas fa-user-circle info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">User ID</span>
+                                    <span class="info-value" id="modalStudentId"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Student Name</span>
+                                    <span class="info-value" id="modalStudentName"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-envelope info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value" id="modalEmail"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Consultation Type:</strong> <span id="modalConsultationType"></span></p>
-                            <p><strong>Purpose:</strong> <span id="modalPurpose"></span></p>
-                            <p><strong>Counselor Preference:</strong> <span id="modalCounselorPreference"></span></p>
-                            <p><strong>Status:</strong> <span id="modalStatus" class="badge"></span></p>
-                            <p><strong>Created:</strong> <span id="modalCreated"></span></p>
-                            <p style="display: none;"><strong>Last Updated:</strong> <span id="modalUpdated"></span></p>
+                        <div class="info-section">
+                            <div class="info-item">
+                                <i class="fas fa-calendar-alt info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Date</span>
+                                    <span class="info-value" id="modalDate"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Time</span>
+                                    <span class="info-value" id="modalTime"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-check-circle info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Status</span>
+                                    <span id="modalStatus" class="badge"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <p><strong>Description:</strong></p>
-                        <div id="modalDescription" class="p-3 bg-light rounded"></div>
+                    <div class="appointment-info-grid mt-3">
+                        <div class="info-section">
+                            <div class="info-item">
+                                <i class="fas fa-users info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Consultation Type</span>
+                                    <span class="info-value" id="modalConsultationType"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-laptop info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Method Type</span>
+                                    <span class="info-value" id="modalMethodType"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-section">
+                            <div class="info-item">
+                                <i class="fas fa-bullseye info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Purpose</span>
+                                    <span class="info-value" id="modalPurpose"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user-md info-icon"></i>
+                                <div class="info-content">
+                                    <span class="info-label">Counselor Preference</span>
+                                    <span class="info-value" id="modalCounselorPreference"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="modalReasonContainer" class="mb-3" style="display: none;">
-                        <p><strong>Reason:</strong></p>
-                        <div id="modalReason" class="p-3 bg-light rounded"></div>
+                    <div class="description-section mt-3">
+                        <div class="description-header">
+                            <i class="fas fa-file-alt me-2"></i>
+                            <span>Description</span>
+                        </div>
+                        <div id="modalDescription" class="description-content"></div>
+                    </div>
+                    <div id="modalReasonContainer" class="description-section mt-3" style="display: none;">
+                        <div class="description-header">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span>Reason</span>
+                        </div>
+                        <div id="modalReason" class="description-content"></div>
+                    </div>
+                    <div class="timestamp-info mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Created: <span id="modalCreated"></span>
+                        </small>
+                        <span id="modalUpdated" style="display: none;"></span>
                     </div>
                     <input type="hidden" id="modalAppointmentId">
                 </div>
-                <div class="modal-footer justify-content-between">
+                <div class="modal-footer appointment-modal-footer justify-content-between">
                     <div>
-                        <button type="button" class="btn btn-danger" id="rejectAppointmentBtn">
-                            <i class="fas fa-times me-1"></i> Reject Appointment
+                        <button type="button" class="btn btn-danger btn-sm" id="rejectAppointmentBtn">
+                            <i class="fas fa-times me-1"></i> Reject
                         </button>
                     </div>
                     <div>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="approveAppointmentBtn">
-                            <i class="fas fa-check me-1"></i> Approve Appointment
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="approveAppointmentBtn">
+                            <i class="fas fa-check me-1"></i> Approve
                         </button>
                     </div>
                 </div>

@@ -358,7 +358,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="upi-email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="upi-email">
+                            <input type="email" class="form-control" id="upi-email" readonly>
                         </div>
                         <div class="mb-3">
                             <label for="upi-contact" class="form-label">Contact Number</label>

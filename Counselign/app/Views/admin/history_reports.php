@@ -72,7 +72,7 @@
                     <div class="col-md-4">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                            <input type="month" class="form-control" id="monthFilter">
+                            <input type="month" class="form-control" id="monthFilter" max="<?= date('Y-m') ?>">
                         </div>
                     </div>
                     <div class="col-md-4">

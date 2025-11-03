@@ -3,12 +3,14 @@ class Appointment {
   final String? preferredDate;
   final String? preferredTime;
   final String? consultationType;
+  final String? methodType;
   final String? counselorPreference;
   final String? counselorName;
   final String? description;
   final String? status;
   final String? reason;
   final String? purpose;
+  final int? studentId;
   final int? followUpCount;
   final int? pendingFollowUpCount;
   final String? nextPendingDate;
@@ -18,12 +20,14 @@ class Appointment {
     this.preferredDate,
     this.preferredTime,
     this.consultationType,
+    this.methodType,
     this.counselorPreference,
     this.counselorName,
     this.description,
     this.status,
     this.reason,
     this.purpose,
+    this.studentId,
     this.followUpCount,
     this.pendingFollowUpCount,
     this.nextPendingDate,
@@ -35,12 +39,14 @@ class Appointment {
       preferredDate: json['preferred_date'],
       preferredTime: json['preferred_time'],
       consultationType: json['consultation_type'],
+      methodType: json['method_type'],
       counselorPreference: json['counselor_preference'],
       counselorName: json['counselor_name'],
       description: json['description'],
       status: json['status'],
       reason: json['reason'],
       purpose: json['purpose'],
+      studentId: _parseInt(json['student_id']),
       followUpCount: _parseInt(json['follow_up_count']),
       pendingFollowUpCount: _parseInt(json['pending_follow_up_count']),
       nextPendingDate: json['next_pending_date'],
@@ -60,12 +66,14 @@ class Appointment {
       'preferred_date': preferredDate,
       'preferred_time': preferredTime,
       'consultation_type': consultationType,
+      'method_type': methodType,
       'counselor_preference': counselorPreference,
       'counselor_name': counselorName,
       'description': description,
       'status': status,
       'reason': reason,
       'purpose': purpose,
+      'student_id': studentId,
       'follow_up_count': followUpCount,
       'pending_follow_up_count': pendingFollowUpCount,
       'next_pending_date': nextPendingDate,

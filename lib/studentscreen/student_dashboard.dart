@@ -136,13 +136,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
               ),
               if (viewModel.showNotifications)
                 StudentNotificationsDropdown(viewModel: viewModel),
-              if (viewModel.showCounselorSelection)
-                CounselorSelectionDialog(viewModel: viewModel),
-              if (viewModel.showChat)
-                StudentChatPopup(
-                  viewModel: viewModel,
-                  onSendMessage: () => viewModel.sendMessage(context),
-                ),
+              // Modals replaced by dedicated screens; keep imports for backward compatibility
               // PDS Reminder Modal
               if (_showPdsReminder)
                 Positioned(
@@ -334,7 +328,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                       viewModel.navigateToProfile(context);
                     },
                     icon: const Icon(Icons.edit, size: 16),
-                    
+
                     label: const Text(
                       'Update Now',
                       style: TextStyle(fontSize: 12),
@@ -536,19 +530,16 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildActionButton(
-                icon: Icons.people_rounded,
-                isActive: viewModel.showCounselorSelection,
-                onPressed: viewModel.showCounselorSelectionDialog,
-                tooltip: 'Select a Counselor',
-                isMobile: isMobile,
-              ),
-              SizedBox(width: isMobile ? 20 : 24),
-              _buildActionButton(
                 icon: Icons.message_rounded,
-                isActive: viewModel.showChat,
+                isActive: false,
                 onPressed: viewModel.selectedCounselor != null
-                    ? viewModel.toggleChat
-                    : viewModel.showCounselorSelectionDialog,
+                    ? () => Navigator.of(context).pushNamed(
+                        '/student/conversation',
+                        arguments: viewModel.selectedCounselor,
+                      )
+                    : () => Navigator.of(
+                        context,
+                      ).pushNamed('/student/counselor-selection'),
                 tooltip: viewModel.selectedCounselor != null
                     ? 'Message ${viewModel.selectedCounselor!.displayName}'
                     : 'Select a Counselor First',
@@ -947,7 +938,8 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
 
           // Change counselor button
           GestureDetector(
-            onTap: viewModel.showCounselorSelectionDialog,
+            onTap: () =>
+                Navigator.of(context).pushNamed('/student/counselor-selection'),
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(

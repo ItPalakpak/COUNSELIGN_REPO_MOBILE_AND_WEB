@@ -70,7 +70,7 @@ class FollowUpSessions extends BaseController
                     ->orLike('spi.last_name', $searchTerm)
                     ->orLike('appointments.preferred_date', $searchTerm)
                     ->orLike('appointments.preferred_time', $searchTerm)
-                    ->orLike('appointments.consultation_type', $searchTerm)
+                    ->orLike('appointments.method_type', $searchTerm)
                     ->orLike('appointments.purpose', $searchTerm)
                     ->orLike('appointments.reason', $searchTerm)
                     ->orLike('counselors.name', $searchTerm)

@@ -194,6 +194,13 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup"
+                    type="button">
+                    <i class="fas fa-calendar-plus"></i>
+                    <span class="tab-text">Follow-up</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved"
                     type="button">
                     <i class="fas fa-check-circle"></i>
@@ -273,9 +280,12 @@
                             <thead class="table-light sticky-top">
                             <tr>
                                 <th>User ID</th>
+                                <th>Full Name</th>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Method Type</th>
                                 <th>Consultation Type</th>
+                                <th>Session Type</th>
                                 <th>Purpose</th>
                                 <th>Counselor</th>
                                 <th>Status</th>
@@ -296,9 +306,12 @@
                             <thead class="table-light sticky-top">
                             <tr>
                                 <th>User ID</th>
+                                <th>Full Name</th>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Method Type</th>
                                 <th>Consultation Type</th>
+                                <th>Session Type</th>
                                 <th>Purpose</th>
                                 <th>Counselor</th>
                                 <th>Status</th>
@@ -321,6 +334,7 @@
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>Consultation Type</th>
+                                <th>Session Type</th>
                                 <th>Purpose</th>
                                 <th>Counselor</th>
                                 <th>Status</th>
@@ -341,9 +355,12 @@
                             <thead class="table-light sticky-top">
                             <tr>
                                 <th>User ID</th>
+                                <th>Full Name</th>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Method Type</th>
                                 <th>Consultation Type</th>
+                                <th>Session Type</th>
                                 <th>Purpose</th>
                                 <th>Counselor</th>
                                 <th>Status</th>
@@ -363,13 +380,40 @@
                         <thead class="table-light sticky-top">
                         <tr>
                             <th>User ID</th>
+                            <th>Full Name</th>
                             <th>Date</th>
                             <th>Time</th>
+                            <th>Method Type</th>
                             <th>Consultation Type</th>
+                            <th>Session Type</th>
+                            <th>Purpose</th>
                             <th>Counselor</th>
                             <th>Status</th>
                             <th style="width: 60%;">Reason for Status</th>
                         </tr>
+            <div class="tab-pane fade" id="followup" role="tabpanel">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                    <table class="table table-hover mb-0" style="min-width: 1100px;">
+                        <thead class="table-light sticky-top">
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Method Type</th>
+                            <th>Consultation Type</th>
+                            <th>Session Type</th>
+                            <th>Purpose</th>
+                            <th>Counselor</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="followUpAppointmentsTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
                         </thead>
                         <tbody id="cancelledAppointmentsTable">
                             <!-- Data will be populated by JavaScript -->

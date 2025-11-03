@@ -11,17 +11,27 @@ body {
     position: relative;
 }
 
-
 /* Main content styling */
 main {
-    padding: 40px 10px;
-    max-width: 1200px;
+    padding: 40px 20px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+}
+
+/* Side-by-Side Layout Container */
+.schedule-container {
+    display: grid;
+    grid-template-columns: 1fr 400px;
     gap: 30px;
+    width: 100%;
+    align-items: start;
+}
+
+/* Left Side: Appointment Form Container */
+.appointment-form-container {
+    width: 100%;
 }
 
 /* Enhanced appointment form styling */
@@ -30,8 +40,6 @@ main {
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0, 14, 87, 0.08);
     padding: 40px;
-    margin: 0 auto;
-    max-width: 1000px;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -63,58 +71,77 @@ main {
     display: inline-block;
 }
 
-/* Form elements styling */
+/* Right Side: Counselor's Schedule Sidebar */
+.counselors-schedule-sidebar {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 14, 87, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-sidebar-header {
+    background: linear-gradient(145deg, #191970, #0f0f5c);
+    color: white;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.schedule-sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.schedule-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
 form {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 25px;
 }
 
-/* Ensure each form group takes full width and stacks nicely */
+/* Add these NEW sections right after */
+.form-section {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+}
+
+.form-section:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.form-section-title {
+    color: #060E57;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section-title i {
+    color: #4169E1;
+}
+
 .form-group { width: 100%; }
 .form-group.full-width { grid-column: 1 / -1; }
-
-@media (min-width: 768px) {
-    form {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .full-width {
-        grid-column: span 2;
-    }
-}
-
-/* Breakpoint refinements for better stacking on smaller screens */
-@media (max-width: 992px) {
-    .appointment-form { padding: 32px 28px; }
-    .appointment-form h4 { font-size: 24px; margin-bottom: 24px; }
-    form { gap: 20px; }
-}
-
-@media (max-width: 768px) {
-    /* Single column layout */
-    form { grid-template-columns: 1fr; gap: 18px; }
-    /* Force the schedule form to stack regardless of other styles */
-    #consultationForm { display: grid; grid-template-columns: 1fr !important; gap: 18px; }
-    #consultationForm > .form-group { grid-column: 1 / -1 !important; }
-    .full-width { grid-column: 1 / -1; }
-    .button-group { grid-column: 1 / -1; justify-content: stretch; }
-    .button-group button { width: 100%; }
-    .appointment-form { padding: 26px 20px; }
-    .appointment-form h4 { font-size: 22px; }
-}
-
-@media (max-width: 576px) {
-    .appointment-form { padding: 20px 16px; }
-    label { font-size: 14px; }
-    input, select, textarea { font-size: 14px; padding: 10px 14px; }
-}
-
-@media (max-width: 420px) {
-    .appointment-form h4 { font-size: 20px; }
-    label { font-size: 13px; }
-    input, select, textarea { font-size: 13px; }
-}
 
 label {
     display: block;
@@ -127,7 +154,7 @@ label {
 input, select, textarea {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #482727;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-size: 15px;
     color: #2d3748;
@@ -147,20 +174,26 @@ textarea {
     min-height: 120px;
 }
 
+/* Small helper text under inputs */
 small {
     display: block;
     color: #718096;
     font-size: 12px;
-    margin-top: 5px;
+    margin-top: 6px;
+    line-height: 1.4;
 }
 
-/* Button styling */
+
+
+/* Button group at the end */
 .button-group {
+    grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    gap: 2px;
-    margin-top: 2px;
-    grid-column: span 2;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
 }
 
 button {
@@ -213,404 +246,148 @@ button[type="button"]:hover {
     color: #276749;
 }
 
-/* New Events Section styling */
-.events-section {
-    max-width: 1000px;
-    margin: 0 auto 40px auto;
-    width: 100%;
+.bg-danger-outline {
+    border: 1px solid rgba(220, 53, 69, 0.2) !important;
+    background-color: rgba(228, 189, 194, 0.2) !important;
 }
 
-.events-container {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0, 14, 87, 0.06);
-    padding: 30px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.events-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(to right, #4169E1, #87CEFA);
-}
-
-.events-container:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0, 14, 87, 0.09);
-}
-
-.events-container h4 {
-    color: #060E57;
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 25px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.events-container h4 i {
-    color: #4169E1;
-}
-
-.events-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.event-card {
-    display: flex;
-    background-color: #f8fafc;
-    border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s ease;
-    border: 1px solid #e2e8f0;
-    height: 100%;
-}
-
-.event-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.event-date {
-    background: linear-gradient(to bottom, #060E57, #4169E1);
-    color: white;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    min-width: 70px;
-    height: fit-content;
-    margin-right: 20px;
-    box-shadow: 0 4px 10px rgba(6, 14, 87, 0.15);
-}
-
-.event-date div:first-child {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.event-date div:last-child {
-    font-size: 22px;
-    font-weight: 700;
-}
-
-.event-details h5 {
-    color: #060E57;
-    font-size: 18px;
-    margin: 0 0 8px 0;
-}
-
-.event-time {
-    color: #718096;
-    font-size: 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.event-time::before {
-    content: '\f017';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 400;
-    font-size: 12px;
-    color: #4169E1;
-}
-
-.event-details p {
-    color: #4a5568;
-    margin: 0;
-    line-height: 1.5;
-    font-size: 14px;
-}
-
-/* Confirmation popup styles */
-.confirmation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-}
-
-.confirmation-popup {
-    background-color: white;
-    border-radius: 15px;
-    padding: 30px;
-    width: 400px;
-    max-width: 90%;
-    text-align: center;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-}
-
-.confirmation-popup i {
-    font-size: 60px;
-    color: #4CAF50;
+/* Calendar Styles */
+.calendar-container {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
     margin-bottom: 20px;
 }
 
-.confirmation-popup h3 {
-    font-size: 24px;
-    margin-bottom: 15px;
-    color: #333;
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ecef;
 }
 
-.confirmation-popup p {
-    color: #666;
-    margin-bottom: 25px;
-    line-height: 1.5;
+.calendar-month {
+    margin: 0;
+    font-weight: 700;
+    color: #060E57;
+    font-size: 16px;
 }
 
-.confirmation-popup button {
-    background-color: #22d3ee;
-    color: black;
-    padding: 12px 30px;
+.calendar-nav-btn {
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    background: #f1f3f5;
+    border-radius: 6px;
+    padding: 6px 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
-.confirmation-popup button:hover {
-    background-color: #06b6d4;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+.calendar-nav-btn:hover {
+    background: #e9ecef;
 }
 
-footer {
-    background-color: #060E57;
-    padding: 30px 0;
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day-header {
+    padding: 8px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
     text-align: center;
-    color: #ffffff;
-    width: 100%;
-    margin-top: auto;
+    font-weight: 600;
+    font-size: 11px;
+    color: #495057;
 }
 
-.footer-content {
+.calendar-day {
+    padding: 8px;
+    min-height: 50px;
+    border-right: 1px solid #f1f3f5;
+    border-bottom: 1px solid #f1f3f5;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+    justify-content: flex-start;
+    gap: 4px;
 }
 
-.copyright {
-    margin-bottom: 15px;
-    font-weight: 500;
-}
-.team-members {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 15px;
-    font-style: italic;
+.calendar-day:hover {
+    background: #f8f9fa;
 }
 
-.team-members span {
-    position: relative;
+.calendar-day.other-month {
+    background: #fcfcfd;
+    color: #adb5bd;
+    cursor: default;
 }
 
-.team-members span:not(:last-child):after {
-    content: "•";
-    position: absolute;
-    right: -12px;
+.calendar-day.today {
+    background: #eef2ff;
+    border: 2px solid #4c6ef5;
+    font-weight: 700;
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-    
-
-    .appointment-container {
-        padding: 20px;
-        margin-left: 15px;
-        margin-right: 15px;
-        width: calc(100% - 30px);
-    }
-
-    .table th,
-    .table td { padding: 8px 12px; font-size: 14px; }
-
-    .action-btn { padding: 0.2rem 0.4rem; font-size: 0.8rem; }
-
-    .team-members { flex-direction: column; gap: 8px; }
-    .team-members span:not(:last-child):after { display: none; }
+.calendar-day.fully-booked {
+    background: #fee;
+    border: 2px solid #ff4444;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    
-
-    .appointment-container {
-        padding: 20px;
-        margin-left: 15px;
-        margin-right: 15px;
-        width: calc(100% - 30px);
-    }
-
-    .table th,
-    .table td { padding: 8px 12px; font-size: 14px; }
-
-    .action-btn { padding: 0.2rem 0.4rem; font-size: 0.8rem; }
-
-    .team-members { flex-direction: column; gap: 8px; }
-    .team-members span:not(:last-child):after { display: none; }
+.calendar-day.fully-booked:hover {
+    background: #fdd;
 }
 
-@media (max-width: 576px) {
-    
-
-    .appointment-container {
-        padding: 20px;
-        margin-left: 15px;
-        margin-right: 15px;
-        width: calc(100% - 30px);
-    }
-
-    .table th,
-    .table td { padding: 8px 12px; font-size: 14px; }
-
-    .action-btn { padding: 0.2rem 0.4rem; font-size: 0.8rem; }
-
-    .team-members { flex-direction: column; gap: 8px; }
-    .team-members span:not(:last-child):after { display: none; }
-}
-
-
-
-/* Hidden class for toggling visibility */
-.hidden {
-    display: none !important;
-}
-
-/* Loading button states */
-#loadingIndicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-#loadingIndicator i {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-
-/* Remove this animation entirely */
-@keyframes slideDown {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(0); }
-}
-
-.bg-danger-outline {
-    border: 1px solid rgba(220, 53, 69, 0.2) !important;
-    background-color: rgba(228, 189, 194, 0.2) !important; /* Bootstrap's danger color with 20% opacity */
-}
-
-/* Calendar Toggle Button (reused style from announcements) */
-.calendar-toggle-btn {
-    position: fixed;
-    top: 120px;
-    right: 5px;
-    width: 180px;
-    background: linear-gradient(145deg, #191970, #0f0f5c);
+/* Appointment Count Badge */
+.appointment-badge {
+    background: linear-gradient(135deg, #4169E1, #87CEFA);
     color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 10px 12px;
-    box-shadow: 0 8px 20px rgba(25, 25, 112, 0.3);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-size: 10px;
     font-weight: 600;
-    transition: all 0.3s ease;
-    z-index: 1000;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(65, 105, 225, 0.3);
 }
-.calendar-toggle-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(25, 25, 112, 0.4); }
-.calendar-toggle-btn i:last-child { transition: transform 0.3s ease; }
-.calendar-toggle-btn.active i:last-child { transform: rotate(180deg); }
 
-/* Calendar Drawer */
-.calendar-drawer { position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: white; box-shadow: -5px 0 20px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1001; display: flex; flex-direction: column; }
-.calendar-drawer.open { right: 0; }
-.calendar-drawer-header { background: linear-gradient(145deg, #191970, #0f0f5c); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.calendar-drawer-title { margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; }
-.calendar-close-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 6px; padding: 6px; cursor: pointer; }
-.calendar-drawer-content { padding: 16px; overflow-y: auto; }
-.calendar-container { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; }
-.calendar-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #e9ecef; }
-.calendar-month { margin: 0; font-weight: 700; color: #060E57; }
-.calendar-nav-btn { border: none; background: #f1f3f5; border-radius: 6px; padding: 6px 8px; cursor: pointer; }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
-.calendar-day-header { padding: 8px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; text-align: center; font-weight: 600; font-size: 12px; color: #495057; }
-.calendar-day { padding: 10px; min-height: 54px; border-right: 1px solid #f1f3f5; border-bottom: 1px solid #f1f3f5; position: relative; cursor: pointer; }
-.calendar-day.other-month { background: #fcfcfd; cursor: default; }
-.calendar-day.today { background: #eef2ff; border-left: 3px solid #4c6ef5; }
+.calendar-day.fully-booked .appointment-badge {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    box-shadow: 0 2px 4px rgba(255, 68, 68, 0.3);
+}
 
-/* Overlay */
-.calendar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 1000; }
-.calendar-overlay.active { opacity: 1; visibility: visible; }
-
-/* Floating bubble for counselors list */
-.counselors-bubble { position: absolute; width: 320px; background: #ffffff; border: 1px solid #e9ecef; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); z-index: 1100; padding: 10px; }
-.counselors-bubble .bubble-header { font-weight: 700; color: #060E57; margin-bottom: 8px; display: flex; align-items: center; }
-.counselors-bubble .counselors-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
-.counselors-bubble .counselor-item { padding: 8px; border: 1px solid #f1f3f5; border-radius: 8px; background: #fafbff; }
-.counselors-bubble .c-name { font-weight: 600; margin-bottom: 6px; color: #0f172a; }
-.counselors-bubble .slot-badge { display: inline-block; background: #e7f5ff; color: #0b7285; border: 1px solid #d0ebff; border-radius: 999px; padding: 3px 8px; font-size: 11px; margin: 2px; }
-
-/* Counselor Schedules Display Section - Inside Calendar Drawer */
+/* Counselor Schedules Section */
 .counselor-schedules-section {
-    padding: 20px 0;
-    border-top: 1px solid #e9ecef;
     margin-top: 20px;
 }
 
 .counselor-schedules-section .section-header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
 }
 
 .counselor-schedules-section .section-header h4 {
     color: #060E57;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .counselor-schedules-section .section-header p {
     color: #6c757d;
-    font-size: 14px;
+    font-size: 12px;
     margin: 0;
 }
 
 .schedules-container {
-    padding: 0 10px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .loading-schedules {
@@ -621,29 +398,27 @@ footer {
 
 .schedules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 12px;
 }
 
 .day-schedule-card {
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .day-schedule-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .day-header {
-    padding: 12px 15px;
+    padding: 10px 12px;
     color: white;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     text-align: center;
 }
 
@@ -654,16 +429,16 @@ footer {
 .day-header.friday { background: linear-gradient(135deg, #4facfe, #00f2fe); }
 
 .counselors-list {
-    padding: 15px;
-    max-height: 200px;
+    padding: 12px;
+    max-height: 180px;
     overflow-y: auto;
 }
 
 .counselor-item {
     background: #f8f9fa;
     border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
     border-left: 3px solid #060E57;
     transition: all 0.3s ease;
 }
@@ -680,7 +455,7 @@ footer {
 .counselor-name {
     font-weight: 600;
     color: #060E57;
-    font-size: 14px;
+    font-size: 13px;
     margin-bottom: 6px;
     display: flex;
     align-items: center;
@@ -689,29 +464,28 @@ footer {
 
 .counselor-name i {
     color: #4169E1;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .time-slots {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
 }
 
 .time-slot-badge {
     background: linear-gradient(135deg, #4169E1, #87CEFA);
     color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    font-size: 9px;
     font-weight: 500;
-    border: none;
-    box-shadow: 0 1px 4px rgba(65, 105, 225, 0.3);
+    box-shadow: 0 1px 3px rgba(65, 105, 225, 0.3);
 }
 
 .no-counselors {
     text-align: center;
-    padding: 20px 15px;
+    padding: 15px;
     color: #6c757d;
     background: #f8f9fa;
     border-radius: 6px;
@@ -719,25 +493,25 @@ footer {
 }
 
 .no-counselors i {
-    font-size: 32px;
+    font-size: 28px;
     color: #adb5bd;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .no-counselors h4 {
     color: #6c757d;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: 6px;
+    font-size: 13px;
 }
 
 .no-counselors p {
     margin: 0;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .error-message {
     text-align: center;
-    padding: 20px 15px;
+    padding: 15px;
     color: #dc3545;
     background: #f8d7da;
     border-radius: 6px;
@@ -745,91 +519,20 @@ footer {
 }
 
 .error-message i {
-    font-size: 32px;
-    margin-bottom: 10px;
+    font-size: 28px;
+    margin-bottom: 8px;
 }
 
 .error-message h4 {
     color: #721c24;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: 6px;
+    font-size: 13px;
 }
 
 .error-message p {
     margin: 0;
-    font-size: 12px;
+    font-size: 11px;
     color: #721c24;
-}
-
-/* Responsive Design for Counselor Schedules in Drawer */
-@media (max-width: 768px) {
-    .schedules-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .day-header {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-    
-    .counselors-list {
-        padding: 12px;
-        max-height: 150px;
-    }
-    
-    .counselor-item {
-        padding: 10px;
-        margin-bottom: 8px;
-    }
-    
-    .counselor-name {
-        font-size: 13px;
-    }
-    
-    .time-slot-badge {
-        padding: 3px 6px;
-        font-size: 9px;
-    }
-}
-
-@media (max-width: 576px) {
-    .counselor-schedules-section {
-        padding: 15px 0;
-        margin-top: 15px;
-    }
-    
-    .counselor-schedules-section .section-header h4 {
-        font-size: 16px;
-    }
-    
-    .schedules-container {
-        padding: 0 5px;
-    }
-    
-    .day-header {
-        padding: 8px 10px;
-        font-size: 12px;
-    }
-    
-    .counselors-list {
-        padding: 10px;
-        max-height: 120px;
-    }
-    
-    .counselor-item {
-        padding: 8px;
-        margin-bottom: 6px;
-    }
-    
-    .counselor-name {
-        font-size: 12px;
-    }
-    
-    .time-slot-badge {
-        padding: 2px 5px;
-        font-size: 8px;
-    }
 }
 
 /* Counseling Informed Consent Accordion Styles */
@@ -1013,55 +716,6 @@ footer {
     font-weight: 600;
 }
 
-/* Mobile responsive styles for consent accordion */
-@media (max-width: 768px) {
-    .consent-accordion-container {
-        margin: 15px 0;
-    }
-
-    .consent-accordion-container .accordion-button {
-        padding: 12px 16px;
-        font-size: 14px;
-    }
-
-    .consent-accordion-container .accordion-body {
-        padding: 16px;
-    }
-
-    .consent-description {
-        font-size: 14px;
-    }
-
-    .consent-note {
-        font-size: 13px;
-        padding: 10px 12px;
-    }
-
-    .consent-section-title {
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-    .consent-section p {
-        font-size: 13px;
-    }
-
-    .consent-terms-list li {
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-
-    .consent-sub-list li {
-        font-size: 12px;
-    }
-
-    .consent-exemptions-list li {
-        font-size: 13px;
-        padding: 10px 12px;
-        margin-bottom: 12px;
-    }
-}
-
 /* Acknowledgment Section Styles */
 .acknowledgment-section {
     margin: 20px 0;
@@ -1157,37 +811,387 @@ footer {
     display: none;
 }
 
-/* Mobile responsive styles for acknowledgment section */
+/* Confirmation popup styles */
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.confirmation-popup {
+    background-color: white;
+    border-radius: 15px;
+    padding: 30px;
+    width: 400px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.confirmation-popup i {
+    font-size: 60px;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+.confirmation-popup h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.confirmation-popup p {
+    color: #666;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.confirmation-popup button {
+    background-color: #22d3ee;
+    color: black;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.confirmation-popup button:hover {
+    background-color: #06b6d4;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
+/* Hidden class */
+.hidden {
+    display: none !important;
+}
+
+/* Loading button states */
+#loadingIndicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#loadingIndicator i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Footer */
+footer {
+    background-color: #060E57;
+    padding: 30px 0;
+    text-align: center;
+    color: #ffffff;
+    width: 100%;
+    margin-top: auto;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.copyright {
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .schedule-container {
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+    }
+    
+    .counselors-schedule-sidebar {
+        max-height: calc(100vh - 60px);
+    }
+}
+
+@media (max-width: 992px) {
+    main {
+        padding: 30px 15px;
+    }
+    
+    .schedule-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .counselors-schedule-sidebar {
+        position: relative;
+        top: 0;
+        max-height: none;
+    }
+    
+    .appointment-form {
+        padding: 32px 28px;
+    }
+    
+    .appointment-form h4 {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+    
+    form {
+        gap: 20px;
+    }
+}
+
 @media (max-width: 768px) {
+    form {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+    
+    #consultationForm {
+        display: grid;
+        grid-template-columns: 1fr !important;
+        gap: 18px;
+    }
+    
+    #consultationForm > .form-group {
+        grid-column: 1 / -1 !important;
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .button-group {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+    }
+    
+    .button-group button {
+        width: 100%;
+    }
+    
+    .appointment-form {
+        padding: 26px 20px;
+    }
+    
+    .appointment-form h4 {
+        font-size: 22px;
+    }
+    
+    .consent-accordion-container .accordion-button {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .consent-accordion-container .accordion-body {
+        padding: 16px;
+    }
+    
+    .consent-description {
+        font-size: 14px;
+    }
+    
+    .consent-note {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+    
+    .consent-section-title {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .consent-section p {
+        font-size: 13px;
+    }
+    
+    .consent-terms-list li {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    
+    .consent-sub-list li {
+        font-size: 12px;
+    }
+    
+    .consent-exemptions-list li {
+        font-size: 13px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+    }
+    
     .acknowledgment-section {
         margin: 15px 0;
     }
-
+    
     .acknowledgment-title {
         font-size: 14px;
         margin-bottom: 12px;
     }
-
+    
     .acknowledgment-checkboxes {
         padding: 16px;
     }
-
+    
     .acknowledgment-checkbox {
         margin-bottom: 12px;
     }
-
+    
     .acknowledgment-checkbox .form-check-input {
         width: 16px;
         height: 16px;
     }
-
+    
     .acknowledgment-checkbox .form-check-label {
         font-size: 13px;
         margin-left: 6px;
     }
-
+    
     .acknowledgment-error {
         padding: 10px 12px;
         font-size: 13px;
+    }
+    
+    .schedule-sidebar-header h3 {
+        font-size: 16px;
+    }
+    
+    .calendar-month {
+        font-size: 14px;
+    }
+    
+    .counselor-schedules-section .section-header h4 {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    main {
+        padding: 20px 10px;
+    }
+    
+    .appointment-form {
+        padding: 20px 16px;
+    }
+    
+    label {
+        font-size: 14px;
+    }
+    
+    input, select, textarea {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+    
+    .schedule-sidebar-content {
+        padding: 15px;
+    }
+    
+    .calendar-day {
+        min-height: 45px;
+        padding: 6px;
+    }
+    
+    .appointment-badge {
+        font-size: 9px;
+        padding: 1px 5px;
+    }
+}
+
+@media (max-width: 420px) {
+    .appointment-form h4 {
+        font-size: 20px;
+    }
+    
+    label {
+        font-size: 13px;
+    }
+    
+    input, select, textarea {
+        font-size: 13px;
+    }
+    
+    .calendar-day {
+        min-height: 40px;
+        font-size: 12px;
+    }
+}
+
+/* Group slots info styling */
+#groupSlotsInfo .alert {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    transition: all 0.3s ease;
+}
+
+#groupSlotsInfo .alert i {
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+#consultationTypeHelp {
+    display: block;
+    line-height: 1.5;
+    margin-top: 6px;
+}
+
+/* Consultation type select styling */
+#consultationType {
+    font-weight: 500;
+}
+
+#consultationType option {
+    padding: 8px;
+}
+
+/* Label styling */
+label .required-asterisk {
+    color: #dc2626;
+    margin-left: 3px;
+}
+
+/* Consultation type select special styling */
+#consultationType option[value="individual"] {
+    color: #000;
+}
+
+#consultationType option[value="group"] {
+    color: #000;
+}
+
+/* Smooth transitions */
+#consultationTypeHelp,
+#groupSlotsInfo {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

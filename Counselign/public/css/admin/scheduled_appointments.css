@@ -578,11 +578,63 @@ header.sticky-header {
 .schedule-row:last-child { border-bottom: 0; }
 
 /* Table styling close to mock */
-.csq-table-wrap { background: #fff; border: 1px solid #6aa2c6; overflow: auto; }
-.csq-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.csq-table thead th { background: #e9f3fb; color: #123b63; font-weight: 600; border: 1px solid #6aa2c6; padding: 10px; }
-.csq-table tbody td { border: 1px solid #6aa2c6; padding: 10px; background: #fff; }
+.csq-table-wrap { 
+    background: #fff; 
+    border: 1px solid #6aa2c6; 
+    overflow-x: auto; 
+    overflow-y: auto;
+    max-width: 100%;
+    max-height: calc(100vh - 250px);
+}
+.csq-table { 
+    width: 100%; 
+    min-width: 1000px;
+    border-collapse: collapse; 
+    font-size: 14px;
+    table-layout: fixed; /* Makes columns equal width */
+}
+.csq-table thead th { 
+    background: #e9f3fb; 
+    color: #123b63; 
+    font-weight: 600; 
+    border: 1px solid #6aa2c6; 
+    padding: 10px;
+    white-space: nowrap;
+    text-align: center;
+}
+.csq-table tbody td { 
+    border: 1px solid #6aa2c6; 
+    padding: 10px; 
+    background: #fff;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
 .csq-table tbody tr:nth-child(odd) td { background: #f7fbff; }
+
+/* Column width adjustments for better balance */
+.csq-table th:nth-child(1), /* Student ID */
+.csq-table td:nth-child(1) { width: 11%; }
+
+.csq-table th:nth-child(2), /* Student Name */
+.csq-table td:nth-child(2) { width: 14%; }
+
+.csq-table th:nth-child(3), /* Appointed Date */
+.csq-table td:nth-child(3) { width: 14%; }
+
+.csq-table th:nth-child(4), /* Time */
+.csq-table td:nth-child(4) { width: 11%; }
+
+.csq-table th:nth-child(5), /* Consultation Type */
+.csq-table td:nth-child(5) { width: 14%; }
+
+.csq-table th:nth-child(6), /* Purpose */
+.csq-table td:nth-child(6) { width: 13%; }
+
+.csq-table th:nth-child(7), /* Appointed Counselor */
+.csq-table td:nth-child(7) { width: 16%; }
+
+.csq-table th:nth-child(8), /* Status */
+.csq-table td:nth-child(8) { width: 11%; }
 
 /* Mini calendar styles */
 .mini-calendar-card { padding: 12px; }

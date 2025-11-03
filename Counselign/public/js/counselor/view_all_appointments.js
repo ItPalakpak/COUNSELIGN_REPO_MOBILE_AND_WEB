@@ -172,6 +172,7 @@ function updateReports() {
         });
 }
 
+// Updated updateCharts function with correct counting logic
 function updateCharts(data) {
     // Validate data
     if (!data || !Array.isArray(data.labels)) {
@@ -190,13 +191,11 @@ function updateCharts(data) {
             'September', 'October', 'November', 'December'
         ];
     } else if (timeRange === 'daily') {
-        // For daily view, use the weekInfo to show days
         if (data.weekInfo && Array.isArray(data.weekInfo.weekDays)) {
             labels = data.weekInfo.weekDays.map(day =>
-                `${day.shortDayName}, ${day.dayMonth}` // e.g., "Mon, Apr 22"
+                `${day.shortDayName}, ${day.dayMonth}`
             );
         } else {
-            // Fallback if weekInfo not available
             labels = labels.map(date => {
                 const d = new Date(date);
                 return d.toLocaleDateString('en-US', {
@@ -207,7 +206,6 @@ function updateCharts(data) {
             });
         }
     } else if (timeRange === 'weekly') {
-        // For weekly view, format as "MMM DD - MMM DD" using the weekRanges
         if (data.weekRanges) {
             labels = data.weekRanges.map(week => {
                 const start = new Date(week.start);
@@ -221,7 +219,6 @@ function updateCharts(data) {
                 })}`;
             });
         } else {
-            // Fallback if weekRanges not available
             labels = labels.map(date => {
                 const start = new Date(date);
                 const end = new Date(date);
@@ -237,8 +234,10 @@ function updateCharts(data) {
         }
     }
 
-    // Update trend chart
+    // Update trend chart - FIXED: Use correct data based on timeRange
     trendChart.data.labels = labels;
+    
+    // For monthly, use monthlyXXX arrays, otherwise use the regular arrays
     trendChart.data.datasets[0].data = timeRange === 'monthly' ? 
         (data.monthlyCompleted || Array(12).fill(0)) : 
         (data.completed || Array(labels.length).fill(0));
@@ -255,13 +254,12 @@ function updateCharts(data) {
         (data.monthlyCancelled || Array(12).fill(0)) : 
         (data.cancelled || Array(labels.length).fill(0));
 
-    // Update chart title based on time range
+    // Update chart title
     let titleText = `Appointment Trends - ${timeRange.charAt(0).toUpperCase() + timeRange.slice(1)} Report`;
     if (timeRange === 'daily' && data.weekInfo) {
         const startDate = new Date(data.weekInfo.startDate);
-        const endDate = new Date(data.weekInfo.endDate);
         const monthYear = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        titleText;
+        titleText += ` (${monthYear})`;
     } else if (timeRange === 'weekly' && data.startDate && data.endDate) {
         const monthDate = new Date(data.startDate);
         const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -287,7 +285,6 @@ function updateCharts(data) {
             }
         };
     } else if (timeRange === 'daily') {
-        // Configure y-axis for daily reports (0 to 8 by 2)
         trendChart.options.scales.y = {
             beginAtZero: true,
             max: 8,
@@ -304,7 +301,6 @@ function updateCharts(data) {
             }
         };
     } else if (timeRange === 'weekly') {
-        // Configure y-axis for weekly reports (0 to 40 by 10)
         trendChart.options.scales.y = {
             beginAtZero: true,
             max: 40,
@@ -321,7 +317,6 @@ function updateCharts(data) {
             }
         };
     } else {
-        // Default y-axis configuration for other views
         trendChart.options.scales.y = {
             beginAtZero: true,
             ticks: {
@@ -354,13 +349,13 @@ function updateCharts(data) {
     
     trendChart.update();
 
-    // Update pie chart
+    // Update pie chart - CRITICAL: Use totalXXX for aggregate counts
     const pieData = [
-        data.totalCompleted || 0,
-        data.totalApproved || 0,
-        data.totalRejected || 0,
-        data.totalPending || 0,
-        data.totalCancelled || 0
+        parseInt(data.totalCompleted) || 0,
+        parseInt(data.totalApproved) || 0,
+        parseInt(data.totalRejected) || 0,
+        parseInt(data.totalPending) || 0,
+        parseInt(data.totalCancelled) || 0
     ];
     pieChart.data.datasets[0].data = pieData;
 
@@ -375,12 +370,13 @@ function updateCharts(data) {
     pieChart.update();
 }
 
+// Updated updateStatistics function - ensure proper integer conversion
 function updateStatistics(data) {
-    document.getElementById('completedCount').textContent = data.totalCompleted || 0;
-    document.getElementById('approvedCount').textContent = data.totalApproved || 0;
-    document.getElementById('rejectedCount').textContent = data.totalRejected || 0;
-    document.getElementById('pendingCount').textContent = data.totalPending || 0;
-    document.getElementById('cancelledCount').textContent = data.totalCancelled || 0;
+    document.getElementById('completedCount').textContent = parseInt(data.totalCompleted) || 0;
+    document.getElementById('approvedCount').textContent = parseInt(data.totalApproved) || 0;
+    document.getElementById('rejectedCount').textContent = parseInt(data.totalRejected) || 0;
+    document.getElementById('pendingCount').textContent = parseInt(data.totalPending) || 0;
+    document.getElementById('cancelledCount').textContent = parseInt(data.totalCancelled) || 0;
 }
 
 function updateCounselorName(data) {
@@ -530,8 +526,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Export buttons
     const exportPDFBtn = document.getElementById('exportPDF');
     const exportExcelBtn = document.getElementById('exportExcel');
-    if (exportPDFBtn) exportPDFBtn.addEventListener('click', showExportFiltersModal);
-    if (exportExcelBtn) exportExcelBtn.addEventListener('click', showExportFiltersModal);
+    if (exportPDFBtn) exportPDFBtn.addEventListener('click', function(e){
+        if (exportFiltersModalEl) exportFiltersModalEl.setAttribute('data-export-type', 'PDF');
+        if (exportFiltersModal) exportFiltersModal.show();
+        e.stopPropagation();
+    });
+    if (exportExcelBtn) exportExcelBtn.addEventListener('click', function(e){
+        if (exportFiltersModalEl) exportFiltersModalEl.setAttribute('data-export-type', 'Excel');
+        if (exportFiltersModal) exportFiltersModal.show();
+        e.stopPropagation();
+    });
 
     // Enhanced filter elements
     const exportFiltersModalEl = document.getElementById('exportFiltersModal');
@@ -563,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tableBody.innerHTML = '';
     
         if (!appointments || appointments.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No appointments found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No appointments found</td></tr>';
             return;
         }
 
@@ -591,7 +595,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${appointment.student_name || ''}</td>
                 <td>${appointment.appointed_date ? new Date(appointment.appointed_date).toLocaleDateString() : ''}</td>
                 <td>${appointment.appointed_time || ''}</td>
-                <td>${appointment.consultation_type || ''}</td>
+                <td>${appointment.method_type || ''}</td>
+                <td>${appointment.consultation_type || 'Individual Consultation'}</td>
+                <td>${appointment.appointment_type || (appointment.record_kind === 'follow_up' ? 'Follow-up Session' : 'First Session') || ''}</td>
                 <td>${appointment.purpose || 'N/A'}</td>
                 <td><span class="badge badge-${getStatusClass(appointment.status)}">${appointment.status || 'PENDING'}</span></td>
                 ${showReason ? `<td>${formatReason(appointment.reason)}</td>` : ''}
@@ -624,15 +630,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 status = 'CANCELLED';
                 targetTableId = 'cancelledAppointmentsTable';
                 break;
+            case 'followup':
+                status = 'FOLLOWUP';
+                targetTableId = 'followUpAppointmentsTable';
+                break;
             case 'all':
             default:
                 status = 'all';
                 targetTableId = 'allAppointmentsTable';
         }
 
-        const filteredAppointments = status === 'all' 
-            ? allAppointments 
-            : allAppointments.filter(app => app.status && app.status.toUpperCase() === status);
+        let filteredAppointments = [];
+        if (status === 'all') {
+            filteredAppointments = allAppointments;
+        } else if (status === 'FOLLOWUP') {
+            // Follow-up tab shows follow-up sessions that are pending, completed, or cancelled
+            filteredAppointments = allAppointments.filter(app => (app.record_kind === 'follow_up') && (app.status && ['PENDING','COMPLETED','CANCELLED'].includes(app.status.toUpperCase())));
+        } else {
+            filteredAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === status);
+        }
 
         SecureLogger.info(`Tab changed to ${targetTabId}, filtering ${status} appointments. Found: ${filteredAppointments.length}`);
         displayAppointments(filteredAppointments, targetTableId);
@@ -661,6 +677,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const cancelledAppointments = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED');
         SecureLogger.info(`Found ${cancelledAppointments.length} cancelled appointments`);
         displayAppointments(cancelledAppointments, 'cancelledAppointmentsTable');
+
+        const followUpAppointments = allAppointments.filter(app => (app.record_kind === 'follow_up') && (app.status && ['PENDING','COMPLETED','CANCELLED'].includes(app.status.toUpperCase())));
+        SecureLogger.info(`Found ${followUpAppointments.length} follow-up appointments (completed/cancelled)`);
+        displayAppointments(followUpAppointments, 'followUpAppointmentsTable');
     }
 
     // Update fetchAppointments to call updateInitialDisplay
@@ -765,13 +785,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     status = 'CANCELLED';
                     targetTableId = 'cancelledAppointmentsTable';
                     break;
+                case 'followup-tab':
+                    status = 'FOLLOWUP';
+                    targetTableId = 'followUpAppointmentsTable';
+                    break;
                 case 'all-tab':
                 default:
                     status = 'all';
                     targetTableId = 'allAppointmentsTable';
             }
             
-            if (status !== 'all') {
+            if (status === 'FOLLOWUP') {
+                filtered = filtered.filter(app => (app.record_kind === 'follow_up') && (app.status && ['PENDING','COMPLETED','CANCELLED'].includes(app.status.toUpperCase())));
+            } else if (status !== 'all') {
                 filtered = filtered.filter(app => app.status && app.status.toUpperCase() === status);
             }
             
@@ -783,7 +809,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Enhanced filter functions
     function showExportFiltersModal(event) {
-        const exportType = event.target.id === 'exportPDF' ? 'PDF' : 'Excel';
+        const sourceId = (event && event.currentTarget && event.currentTarget.id) ? event.currentTarget.id : (event && event.target && event.target.id) ? event.target.id : '';
+        const exportType = sourceId === 'exportPDF' ? 'PDF' : 'Excel';
         if (exportFiltersModalEl) exportFiltersModalEl.setAttribute('data-export-type', exportType);
         if (exportFiltersModal) exportFiltersModal.show();
     }
@@ -961,252 +988,35 @@ document.addEventListener('DOMContentLoaded', function () {
         return parts.join(' | ');
     }
 
-    // Export to PDF
-    async function exportToPDF(filters = {}) {
-        try {
-            // Show loading indicator or message if you have one
-
-            // Make sure both jsPDF and autoTable are loaded
-            if (typeof window.jspdf === 'undefined') {
-                throw new Error('jsPDF is not loaded');
-            }
-
-            // Create new jsPDF instance
-            const doc = new window.jspdf.jsPDF();
-
-            // Check if autoTable plugin is available and load it if needed
-            if (typeof doc.autoTable !== 'function') {
-                // If you're using a CDN, you might need to load it dynamically
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
-                    script.onload = resolve;
-                    script.onerror = () => reject(new Error('Failed to load autoTable plugin'));
-                    document.head.appendChild(script);
-                });
-
-                // Initialize the plugin on the document if needed
-                if (typeof doc.autoTable !== 'function') {
-                    throw new Error('AutoTable plugin could not be initialized');
-                }
-            }
-
-            // Get current active tab and month filter
-            const activeTab = document.querySelector('.nav-link.active');
-            const selectedMonth = dateFilter.value;
-            
-            // Get appointments based on active tab
-            let appointmentsToExport = [...allAppointments];
-            let reportTitle = 'All Consultation Records';
-            
-            if (activeTab) {
-                const tabId = activeTab.getAttribute('data-bs-target').replace('#', '');
-                switch (tabId) {
-                    case 'approved':
-                        appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'APPROVED');
-                        reportTitle = 'Approved Consultation Records';
-                        break;
-                    case 'rejected':
-                        appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'REJECTED');
-                        reportTitle = 'Rejected Consultation Records';
-                        break;
-                    case 'completed':
-                        appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'COMPLETED');
-                        reportTitle = 'Completed Consultation Records';
-                        break;
-                    case 'cancelled':
-                        appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED');
-                        reportTitle = 'Cancelled Consultation Records';
-                        break;
-                }
-            }
-
-            // Get counselor name from the data (assuming it's available in the global scope or from the last API call)
-            const counselorName = document.getElementById('counselorName')?.textContent || 'Unknown Counselor';
-            reportTitle += ` - Counselor: ${counselorName}`;
-
-            // Apply enhanced filters
-            appointmentsToExport = applyEnhancedFilters(appointmentsToExport, filters, reportTitle);
-            reportTitle = appointmentsToExport.reportTitle || reportTitle;
-            appointmentsToExport = appointmentsToExport.appointments || appointmentsToExport;
-
-            // Sort appointments from oldest to newest
-            appointmentsToExport.sort((a, b) => {
-                const dateTimeA = a.appointed_date + ' ' + a.appointed_time;
-                const dateTimeB = b.appointed_date + ' ' + b.appointed_time;
-                return dateTimeA < dateTimeB ? -1 : dateTimeA > dateTimeB ? 1 : 0;
-            });
-
-            // Add header with logo
-            const logoImg = new Image();
-            logoImg.src = (window.BASE_URL || '/') + 'Photos/ticket_logo_blue.png';
-            
-            await new Promise((resolve, reject) => {
-                logoImg.onload = resolve;
-                logoImg.onerror = reject;
-            });
-
-            // Add logo
-            doc.addImage(logoImg, 'PNG', 15, 15, 25, 19);
-
-            // Add header text
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Counselign - The USTP Guidance Counseling Sanctuary', 45, 25);
-
-            // Add horizontal line
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.line(15, 35, doc.internal.pageSize.getWidth() - 15, 35);
-
-            // Add report title with adjusted Y position to account for header
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const titleWidth = doc.getStringUnitWidth(reportTitle) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-            const titleX = (pageWidth - titleWidth) / 2;
-            doc.text(reportTitle, titleX, 50);
-            
-            const tableHeaders = ['User ID', 'Full Name', 'Date', 'Time', 'Type', 'Purpose', 'Status', 'Reason for Status'];
-            const tableData = appointmentsToExport.map(app => [
-                (app.student_id || app.user_id || ''),
-                app.student_name || '',
-                formatDate(app.appointed_date) || '',
-                app.appointed_time || '',
-                app.consultation_type || '',
-                app.purpose || 'N/A',
-                app.status || '',
-                app.reason || ''
-            ]);
-
-            // Create table configuration with adjusted starting Y position
-            const tableConfig = {
-                startY: 60,
-                head: [tableHeaders],
-                body: tableData,
-                margin: { top: 60, bottom: 30 }, // Increased bottom margin for footer
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 2
-                },
-                headStyles: {
-                    fillColor: [0, 51, 102],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold'
-                },
-                alternateRowStyles: {
-                    fillColor: [245, 245, 245]
-                },
-                columnStyles: {
-                    5: { // Purpose column
-                        cellWidth: 30,
-                        overflow: 'linebreak',
-                        cellPadding: 2,
-                        minCellHeight: 8,
-                        valign: 'middle'
-                    },
-                    7: { // Reason column
-                        cellWidth: 40,
-                        overflow: 'linebreak',
-                        cellPadding: 2,
-                        minCellHeight: 8,
-                        valign: 'middle'
-                    }
-                },
-                didDrawPage: function(data) {
-                    // Add header
-                    doc.addImage(logoImg, 'PNG', 15, 15, 25, 19);
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Counselign - The USTP Guidance Counseling Sanctuary', 45, 25);
-                    doc.setDrawColor(0, 0, 0);
-                    doc.setLineWidth(0.5);
-                    doc.line(15, 35, doc.internal.pageSize.getWidth() - 15, 35);
-
-                    // Footer
-                    const pageHeight = doc.internal.pageSize.getHeight();
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const margin = 15;
-                    doc.setDrawColor(0, 0, 0);
-                    doc.setLineWidth(0.3);
-                    doc.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
-
-                    doc.setFontSize(8);
-                    doc.setFont('helvetica', 'normal');
-
-                    // Footer texts
-                    const leftText = 'Confidential Document';
-                    const centerText = 'Prepared by the University Guidance Counseling Office';
-                    const currentDate = new Date();
-                    const dateStr = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                    const timeStr = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                    const rightText = `Generated: ${dateStr} | ${timeStr} PST | Page ${data.pageNumber} of ${data.pageCount}`;
-
-                    // Calculate text widths
-                    const leftWidth = doc.getStringUnitWidth(leftText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-                    const centerWidth = doc.getStringUnitWidth(centerText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-                    const rightWidth = doc.getStringUnitWidth(rightText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-
-                    const y = pageHeight - 25;
-
-                    // Draw left text
-                    doc.text(leftText, margin, y, { align: 'left' });
-
-                    // Draw right text (right-aligned)
-                    doc.text(rightText, pageWidth - margin, y, { align: 'right' });
-
-                    // Draw center text (centered between margins, but only if it doesn't overlap left/right)
-                    const centerX = pageWidth / 2;
-                    const leftEdge = margin + leftWidth + 5;
-                    const rightEdge = pageWidth - margin - rightWidth - 5;
-                    if (centerX - centerWidth / 2 > leftEdge && centerX + centerWidth / 2 < rightEdge) {
-                        doc.text(centerText, centerX, y, { align: 'center' });
-                    } else {
-                        // If not enough space, reduce font size or skip center text
-                        // (Here, we reduce font size for center text)
-                        doc.setFontSize(7);
-                        const newCenterWidth = doc.getStringUnitWidth(centerText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-                        if (centerX - newCenterWidth / 2 > leftEdge && centerX + newCenterWidth / 2 < rightEdge) {
-                            doc.text(centerText, centerX, y, { align: 'center' });
-                        }
-                        doc.setFontSize(8); // Reset font size
-                    }
-
-                    // Reset font for table content
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                }
-            };
-
-            // Generate table
-            doc.autoTable(tableConfig);
-
-            // Footer: list filter summary
-            try {
-                const filterSummary = buildFilterSummary(filters);
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const footerY = doc.internal.pageSize.getHeight() - 10;
-                doc.setFontSize(9);
-                doc.text(filterSummary || 'No additional filters applied', pageWidth / 2, footerY, { align: 'center' });
-            } catch (e) {
-                console.warn('Failed to render export footer:', e);
-            }
-
-            // Generate filename and save
-            const today = new Date().toISOString().split('T')[0];
-            const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '_')}_${today}.pdf`;
-            doc.save(filename);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('Error generating PDF. Please try again. Error: ' + error.message);
+// Export to PDF 
+async function exportToPDF(filters = {}) {
+    try {
+        if (typeof window.jspdf === 'undefined') {
+            throw new Error('jsPDF is not loaded');
         }
-    }
 
-    // Export to Excel
-    function exportToExcel(filters = {}) {
-        // Get current active tab and month filter
+        const doc = new window.jspdf.jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        if (typeof doc.autoTable !== 'function') {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load autoTable plugin'));
+                document.head.appendChild(script);
+            });
+
+            if (typeof doc.autoTable !== 'function') {
+                throw new Error('AutoTable plugin could not be initialized');
+            }
+        }
+
+        // Get current active tab
         const activeTab = document.querySelector('.nav-link.active');
-        const selectedMonth = dateFilter.value;
         
         // Get appointments based on active tab
         let appointmentsToExport = [...allAppointments];
@@ -1231,12 +1041,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED');
                     reportTitle = 'Cancelled Consultation Records';
                     break;
+                case 'followup':
+                    // Filter for follow-up appointments only
+                    appointmentsToExport = allAppointments.filter(app => {
+                        const isFollowUp = (app.record_kind === 'follow_up') || 
+                                         (app.appointment_type && String(app.appointment_type).toLowerCase().includes('follow-up'));
+                        const st = (app.status || '').toString().toUpperCase();
+                        return isFollowUp && (st === 'PENDING' || st === 'COMPLETED' || st === 'CANCELLED');
+                    });
+                    reportTitle = 'Follow-up Consultation Records';
+                    break;
             }
         }
-
-        // Get counselor name from the data
-        const counselorName = document.getElementById('counselorName')?.textContent || 'Unknown Counselor';
-        reportTitle += ` - Counselor: ${counselorName}`;
 
         // Apply enhanced filters
         appointmentsToExport = applyEnhancedFilters(appointmentsToExport, filters, reportTitle);
@@ -1250,59 +1066,324 @@ document.addEventListener('DOMContentLoaded', function () {
             return dateTimeA < dateTimeB ? -1 : dateTimeA > dateTimeB ? 1 : 0;
         });
 
-        // Prepare the data with headers
-        const headerRow = ['User ID', 'Full Name', 'Date', 'Time', 'Consultation Type', 'Purpose', 'Status', 'Reason for Status'];
-        const filterSummary = buildFilterSummary(filters) || 'No additional filters applied';
-        const excelData = [
-            [reportTitle],              // Title row
-            [filterSummary],            // Filters summary row (one row after title)
-            [],                         // Empty row for spacing before headers
-            headerRow                   // Headers
-        ];
-
-        // Add the appointment data
-        appointmentsToExport.forEach(app => {
-            excelData.push([
-                (app.student_id || app.user_id || ''),
-                app.student_name || '',
-                formatDate(app.appointed_date),
-                app.appointed_time,
-                app.consultation_type,
-                app.purpose || 'N/A',
-                (app.status ? String(app.status).toLowerCase() : ''),
-                app.reason || ''
-            ]);
+        // Add header with logo
+        const logoImg = new Image();
+        logoImg.src = (window.BASE_URL || '/') + 'Photos/ticket_logo_blue.png';
+        
+        await new Promise((resolve, reject) => {
+            logoImg.onload = resolve;
+            logoImg.onerror = reject;
         });
 
-        // Create a new workbook and worksheet
-        const workbook = XLSX.utils.book_new();
-        const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+        // Add logo
+        doc.addImage(logoImg, 'PNG', 12, 10, 20, 15);
 
-        // Set column widths
-        const cols = [
-            { wch: 12 },    // User ID
-            { wch: 24 },    // Full Name
-            { wch: 10 },    // Date
-            { wch: 18 },    // Time
-            { wch: 15 },    // Consultation Type
-            { wch: 10 },    // Status
-            { wch: 40 }     // Reason
-        ];
-        worksheet['!cols'] = cols;
+        // Add header text
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Counselign: USTP Guidance Counseling Sanctuary', 37, 17);
 
-        // Set title merge
-        worksheet['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
-        ];
+        // Add horizontal line
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(12, 27, doc.internal.pageSize.getWidth() - 12, 27);
 
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Appointments');
+        // Add report title
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const titleWidth = doc.getStringUnitWidth(reportTitle) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+        const titleX = (pageWidth - titleWidth) / 2;
+        doc.text(reportTitle, titleX, 35);
+        
+        // Define table headers
+        const tableHeaders = ['User ID', 'Full Name', 'Date', 'Time', 'Method Type', 'Consultation Type', 'Session', 'Purpose', 'Counselor', 'Status'];
+        
+        const tableData = appointmentsToExport.map(app => {
+            const appointmentType = app.appointment_type || (app.record_kind === 'follow_up' ? 'Follow-up' : 'First Session');
+            const baseData = [
+                (app.student_id || app.user_id || ''),
+                app.student_name || '',
+                formatDate(app.appointed_date) || '',
+                app.appointed_time || '',
+                app.method_type || '',
+                app.consultation_type || 'Individual Consultation',
+                appointmentType,
+                app.purpose || 'N/A',
+                app.counselor_name || '',
+                (app.status ? String(app.status).toLowerCase() : '')
+            ];
+            
+            return baseData;
+        });
+
+        // Create table configuration
+        const tableConfig = {
+            startY: 40,
+            head: [tableHeaders],
+            body: tableData,
+            margin: { top: 40, bottom: 25, left: 12, right: 12 },
+            tableWidth: 'wrap',
+            styles: {
+                fontSize: 7,
+                cellPadding: 1.5,
+                overflow: 'linebreak',
+                cellWidth: 'wrap'
+            },
+            headStyles: {
+                fillColor: [0, 51, 102],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                fontSize: 7
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245]
+            },
+            columnStyles: {
+                0: { cellWidth: 17 },  // User ID
+                1: { cellWidth: 26 },  // Full Name
+                2: { cellWidth: 14 },  // Date
+                3: { cellWidth: 16 },  // Time
+                4: { cellWidth: 14 },  // Method Type
+                5: { cellWidth: 20 },  // Consultation Type
+                6: { cellWidth: 16 },  // Session
+                7: { cellWidth: 24 },  // Purpose
+                8: { cellWidth: 22 },  // Counselor
+                9: { cellWidth: 15 },  // Status
+            },
+            didDrawPage: function(data) {
+                // Add header
+                doc.addImage(logoImg, 'PNG', 12, 10, 20, 15);
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Counselign: USTP Guidance Counseling Sanctuary', 37, 17);
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.5);
+                doc.line(12, 27, doc.internal.pageSize.getWidth() - 12, 27);
+
+                // Footer
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const margin = 12;
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(margin, pageHeight - 22, pageWidth - margin, pageHeight - 22);
+
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+
+                const leftText = 'Confidential Document';
+                const centerText = 'Prepared by the University Guidance Counseling Office';
+                const currentDate = new Date();
+                const dateStr = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const timeStr = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const rightText = `Generated: ${dateStr} | ${timeStr} PST | Page ${data.pageNumber}`;
+
+                const y = pageHeight - 17;
+                doc.text(leftText, margin, y, { align: 'left' });
+                doc.text(centerText, pageWidth / 2, y, { align: 'center' });
+                doc.text(rightText, pageWidth - margin, y, { align: 'right' });
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+            }
+        };
+
+        // Generate table
+        doc.autoTable(tableConfig);
+
+        // Footer: list filter summary
+        try {
+            const filterSummary = buildFilterSummary(filters);
+            const pageWidth2 = doc.internal.pageSize.getWidth();
+            const footerY2 = doc.internal.pageSize.getHeight() - 10;
+            doc.setFontSize(8);
+            doc.text(filterSummary || 'No additional filters applied', pageWidth2 / 2, footerY2, { align: 'center' });
+        } catch (e) {
+            console.warn('Failed to render export footer:', e);
+        }
 
         // Generate filename and save
         const today = new Date().toISOString().split('T')[0];
-        const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '_')}_${today}.xlsx`;
-        XLSX.writeFile(workbook, filename);
+        const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '_')}_${today}.pdf`;
+        doc.save(filename);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again. Error: ' + error.message);
     }
+}
+
+// Export to Excel
+function exportToExcel(filters = {}) {
+    // Get current active tab
+    const activeTab = document.querySelector('.nav-link.active');
+    
+    // Get appointments based on active tab
+    let appointmentsToExport = [...allAppointments];
+    let reportTitle = 'All Consultation Records';
+    
+    if (activeTab) {
+        const tabId = activeTab.getAttribute('data-bs-target').replace('#', '');
+        switch (tabId) {
+            case 'approved':
+                appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'APPROVED');
+                reportTitle = 'Approved Consultation Records';
+                break;
+            case 'rejected':
+                appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'REJECTED');
+                reportTitle = 'Rejected Consultation Records';
+                break;
+            case 'completed':
+                appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'COMPLETED');
+                reportTitle = 'Completed Consultation Records';
+                break;
+            case 'cancelled':
+                appointmentsToExport = allAppointments.filter(app => app.status && app.status.toUpperCase() === 'CANCELLED');
+                reportTitle = 'Cancelled Consultation Records';
+                break;
+            case 'followup':
+                // Filter for follow-up appointments only
+                appointmentsToExport = allAppointments.filter(app => {
+                    const isFollowUp = (app.record_kind === 'follow_up') || 
+                                     (app.appointment_type && String(app.appointment_type).toLowerCase().includes('follow-up'));
+                    const st = (app.status || '').toString().toUpperCase();
+                    return isFollowUp && (st === 'PENDING' || st === 'COMPLETED' || st === 'CANCELLED');
+                });
+                reportTitle = 'Follow-up Consultation Records';
+                break;
+        }
+    }
+
+    // Apply enhanced filters
+    appointmentsToExport = applyEnhancedFilters(appointmentsToExport, filters, reportTitle);
+    reportTitle = appointmentsToExport.reportTitle || reportTitle;
+    appointmentsToExport = appointmentsToExport.appointments || appointmentsToExport;
+
+    // Sort appointments from oldest to newest
+    appointmentsToExport.sort((a, b) => {
+        const dateTimeA = a.appointed_date + ' ' + a.appointed_time;
+        const dateTimeB = b.appointed_date + ' ' + b.appointed_time;
+        return dateTimeA < dateTimeB ? -1 : dateTimeA > dateTimeB ? 1 : 0;
+    });
+
+    // Determine if we need to show "Reason for Status" column
+    const showReason = reportTitle.includes('Rejected') || reportTitle.includes('Cancelled') || reportTitle.includes('All');
+
+    // Prepare the data with headers
+    const headerRow = showReason 
+        ? ['User ID', 'Full Name', 'Date', 'Time', 'Method Type', 'Consultation Type', 'Session', 'Purpose', 'Counselor', 'Status', 'Reason for Status']
+        : ['User ID', 'Full Name', 'Date', 'Time', 'Method Type', 'Consultation Type', 'Session', 'Purpose', 'Counselor', 'Status'];
+    
+    const filterSummary = buildFilterSummary(filters) || 'No additional filters applied';
+    const excelData = [
+        [reportTitle],              // Title row
+        [filterSummary],            // Filters summary row
+        [],                         // Empty row for spacing
+        headerRow                   // Headers
+    ];
+
+    // Add the appointment data
+    appointmentsToExport.forEach(app => {
+        const appointmentType = app.appointment_type || (app.record_kind === 'follow_up' ? 'Follow-up Session' : 'First Session');
+        const baseData = [
+            (app.student_id || app.user_id || ''),
+            app.student_name || '',
+            formatDate(app.appointed_date),
+            app.appointed_time,
+            app.method_type,
+            app.consultation_type || 'Individual Consultation',
+            appointmentType,
+            app.purpose || 'N/A',
+            app.counselor_name,
+            (app.status ? String(app.status).toLowerCase() : '')
+        ];
+        
+        if (showReason) {
+            baseData.push(app.reason || '');
+        }
+        
+        excelData.push(baseData);
+    });
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+    // Set column widths
+    const cols = [
+        { wch: 12 },    // User ID
+        { wch: 25 },    // Full Name
+        { wch: 12 },    // Date
+        { wch: 15 },    // Time
+        { wch: 15 },    // Method Type
+        { wch: 22 },    // Consultation Type
+        { wch: 18 },    // Session
+        { wch: 30 },    // Purpose
+        { wch: 25 },    // Counselor
+        { wch: 12 },    // Status
+        ...(showReason ? [{ wch: 40 }] : []) // Reason (if shown)
+    ];
+    worksheet['!cols'] = cols;
+
+    // Set title merge
+    const mergeEnd = showReason ? 10 : 9;
+    worksheet['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: mergeEnd } }
+    ];
+
+    // Apply styles: title (row 1), headers (row 4), and Status column
+    (function applyExcelStyles(){
+        // Helper to get A1 reference
+        function addr(r, c) {
+            return XLSX.utils.encode_cell({ r: r - 1, c }); // convert to 0-based
+        }
+        // Title: row 1, col 1
+        const titleCellRef = addr(1, 0);
+        if (!worksheet[titleCellRef]) worksheet[titleCellRef] = { t: 's', v: reportTitle };
+        worksheet[titleCellRef].s = {
+            font: { bold: true, sz: 14 },
+            alignment: { horizontal: 'center' }
+        };
+
+        // Header row is row 4 (after title, filter summary, and empty row)
+        const headerRow = 4;
+        const totalCols = mergeEnd + 1;
+        for (let c = 0; c < totalCols; c++) {
+            const ref = addr(headerRow, c);
+            if (worksheet[ref]) {
+                worksheet[ref].s = Object.assign({}, worksheet[ref].s || {}, {
+                    font: { bold: true },
+                    alignment: { horizontal: 'center' }
+                });
+            }
+        }
+
+        // Make Status column bold and centered
+        const headerLabels = showReason 
+            ? ['User ID', 'Full Name', 'Date', 'Time', 'Method Type', 'Session', 'Purpose', 'Counselor', 'Status', 'Reason for Status']
+            : ['User ID', 'Full Name', 'Date', 'Time', 'Method Type', 'Session', 'Purpose', 'Counselor', 'Status'];
+        const statusColIdx = headerLabels.indexOf('Status');
+        if (statusColIdx >= 0) {
+            for (let r = headerRow + 1; r < excelData.length + 1; r++) { // data rows start after header
+                const ref = addr(r, statusColIdx);
+                if (worksheet[ref]) {
+                    worksheet[ref].s = Object.assign({}, worksheet[ref].s || {}, {
+                        font: { bold: true },
+                        alignment: { horizontal: 'center' }
+                    });
+                }
+            }
+        }
+    })();
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Appointments');
+
+    // Generate filename and save
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '_')}_${today}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+}
 
     // View appointment details
     window.viewDetails = function (appointmentId) {
@@ -1321,7 +1402,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p><strong>Time:</strong> ${formatTime(appointment.appointed_time)}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Consultation Type:</strong> ${appointment.consultation_type}</p>
+                    <p><strong>Consultation Type:</strong> ${appointment.method_type}</p>
                     <p><strong>Counselor:</strong> ${appointment.counselor_name}</p>
                     <p><strong>Status:</strong> <span class="badge badge-${getStatusClass(appointment.status)}">${appointment.status}</span></p>
                 </div>

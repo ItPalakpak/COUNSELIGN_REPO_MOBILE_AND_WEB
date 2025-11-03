@@ -262,6 +262,12 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup"
+                            type="button">
+                            <i class="fas fa-calendar-plus"></i><span class="tab-text"> Follow-up</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved"
                             type="button">
                             <i class="fas fa-thumbs-up"></i><span class="tab-text"> Approved</span>
@@ -451,14 +457,16 @@
                     <!-- All Appointments Tab -->
                     <div class="tab-pane fade show active" id="all" role="tabpanel">
                         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-hover mb-0" style="min-width: 1100px;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>User ID</th>
                                         <th>Full Name</th>
                                         <th>Date</th>
                                         <th>Time</th>
+                                        <th>Method Type</th>
                                         <th>Consultation Type</th>
+                                        <th>Session Type</th>
                                         <th>Purpose</th>
                                         <th>Counselor</th>
                                         <th>Status</th>
@@ -474,14 +482,16 @@
                     <!-- Approved Appointments Tab -->
                     <div class="tab-pane fade" id="approved" role="tabpanel">
                         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-hover mb-0" style="min-width: 1100px;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>User ID</th>
                                         <th>Full Name</th>
                                         <th>Date</th>
                                         <th>Time</th>
+                                        <th>Method Type</th>
                                         <th>Consultation Type</th>
+                                        <th>Session Type</th>
                                         <th>Purpose</th>
                                         <th>Counselor</th>
                                         <th>Status</th>
@@ -496,14 +506,16 @@
                     <!-- Rejected Appointments Tab -->
                     <div class="tab-pane fade" id="rejected" role="tabpanel">
                         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-hover mb-0" style="min-width: 1100px;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>User ID</th>
                                         <th>Full Name</th>
                                         <th>Date</th>
                                         <th>Time</th>
+                                        <th>Method Type</th>
                                         <th>Consultation Type</th>
+                                        <th>Session Type</th>
                                         <th>Purpose</th>
                                         <th>Counselor</th>
                                         <th>Status</th>
@@ -519,14 +531,16 @@
                     <!-- Completed Appointments Tab -->
                     <div class="tab-pane fade" id="completed" role="tabpanel">
                         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-hover mb-0" style="min-width: 1100px;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>User ID</th>
                                         <th>Full Name</th>
                                         <th>Date</th>
                                         <th>Time</th>
+                                        <th>Method Type</th>
                                         <th>Consultation Type</th>
+                                        <th>Session Type</th>
                                         <th>Purpose</th>
                                         <th>Counselor</th>
                                         <th>Status</th>
@@ -541,14 +555,16 @@
                     <!-- Cancelled Appointments Tab -->
                     <div class="tab-pane fade" id="cancelled" role="tabpanel">
                         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-hover mb-0" style="min-width: 1100px;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>User ID</th>
                                         <th>Full Name</th>
                                         <th>Date</th>
                                         <th>Time</th>
+                                        <th>Method Type</th>
                                         <th>Consultation Type</th>
+                                        <th>Session Type</th>
                                         <th>Purpose</th>
                                         <th>Counselor</th>
                                         <th>Status</th>
@@ -556,6 +572,29 @@
                                     </tr>
                                 </thead>
                                 <tbody id="cancelledAppointmentsTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Follow-up Appointments Tab -->
+                    <div class="tab-pane fade" id="followup" role="tabpanel">
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                            <table class="table table-hover mb-0" style="min-width: 1250px;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>Full Name</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Method Type</th>
+                                        <th>Consultation Type</th>
+                                        <th>Session Type</th>
+                                        <th>Purpose</th>
+                                        <th>Counselor</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="followUpAppointmentsTable">
                                 </tbody>
                             </table>
                         </div>

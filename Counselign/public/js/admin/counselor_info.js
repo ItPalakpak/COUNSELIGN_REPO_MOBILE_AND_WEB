@@ -107,19 +107,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // Update counselor list
-                counselorList.innerHTML = counselors.map((counselor, index) => `
-                    <div class="counselor-item ${index === 0 ? 'active' : ''}" data-id="${counselor.counselor_id}" data-index="${index}">
-                        <img src="${counselor.profile_picture ? (window.BASE_URL || '/') + 'Photos/profile_pictures/' + counselor.profile_picture.split('/').pop() : (window.BASE_URL || '/') + 'Photos/profile.png'}" alt="${counselor.name}" class="counselor-avatar">
+                // Separate pending vs verified
+                const pending = counselors.filter(c => String(c.is_verified || 0) === '0');
+                const verified = counselors.filter(c => String(c.is_verified || 0) === '1');
+
+                const renderItem = (counselor, index, isPending) => `
+                    <div class="counselor-item ${index === 0 && pending.length > 0 ? 'active' : ''} ${isPending ? 'pending' : ''}" data-id="${counselor.counselor_id}" data-index="${counselors.indexOf(counselor)}" style="${isPending ? 'border-left:4px solid #f1c40f;' : ''}">
+                        <img src="${counselor.profile_picture ? (window.BASE_URL || '/') + 'Photos/profile_pictures/' + counselor.profile_picture.split('/').pop() : (window.BASE_URL || '/') + 'Photos/profile.png'}" alt="${counselor.name}" class="counselor-avatar" onerror="this.onerror=null;this.src='${(window.BASE_URL || '/') + 'Photos/profile.png'}'">
                         <div class="counselor-info">
-                            <h3>${counselor.name}</h3>
+                            <h3 style="display:flex;align-items:center;gap:6px;">${counselor.name}${isPending ? '<span title="Pending verification" style="display:inline-block;width:8px;height:8px;background:#f1c40f;border-radius:50%;"></span>' : ''}</h3>
                             <p>${counselor.counselor_id}</p>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
 
-                // Show the main content with the first counselor's info
-                displayCounselorInfo(counselors[0]);
+                let html = '';
+                if (pending.length) {
+                    html += '<div class="counselor-section-title" style="padding:6px 10px;color:#aa8400;font-weight:600;">Pending Verification</div>';
+                    html += pending.map((c, i) => renderItem(c, i, true)).join('');
+                }
+                if (verified.length) {
+                    html += '<div class="counselor-section-title" style="padding:6px 10px;color:#555;font-weight:600;margin-top:6px;">Verified</div>';
+                    html += verified.map((c) => renderItem(c, 0, false)).join('');
+                }
+                counselorList.innerHTML = html;
+
+                // Show the main content with the first pending else first verified
+                const initial = pending[0] || verified[0] || null;
+                displayCounselorInfo(initial);
                 
                 // Show update button
                 if (updateBtn) updateBtn.style.display = 'block';
@@ -255,55 +269,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update main content profile section
         mainContent.innerHTML = `
+        <div class="counselor-details">
             <div class="profile-image-container text-center">
-                <img src="${counselor.profile_picture ? (window.BASE_URL || '/') + 'Photos/profile_pictures/' + counselor.profile_picture.split('/').pop() : (window.BASE_URL || '/') + 'Photos/profile.png'}" alt="Counselor Profile" class="profile-image" id="main-profile-image">
+                <img src="${counselor.profile_picture ? (window.BASE_URL || '/') + 'Photos/profile_pictures/' + counselor.profile_picture.split('/').pop() : (window.BASE_URL || '/') + 'Photos/profile.png'}" alt="Counselor Profile" class="profile-image" id="main-profile-image" onerror="this.onerror=null;this.src='${(window.BASE_URL || '/') + 'Photos/profile.png'}'">
             </div>
 
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Counselor's ID:</label>
-                    <div class="info-display" id="counselorId">${counselor.counselor_id || ''}</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Name:</label>
-                    <div class="info-display" id="name">${counselor.name || ''}</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Degree:</label>
-                    <div class="info-display" id="degree">${counselor.degree || ''}</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Email:</label>
-                    <div class="info-display" id="email">${counselor.email || ''}</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Contact Number:</label>
-                    <div class="info-display" id="contactNumber">${counselor.contact_number || ''}</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Address:</label>
-                    <div class="info-display" id="address">${counselor.address || ''}</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Time Scheduled:</label>
-                    <div class="info-display" id="timeScheduled">Loading...</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Available Days:</label>
-                    <div class="info-display" id="availableDays">Loading...</div>
+            <div class="details-right">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Counselor's ID:</label>
+                        <div class="info-display" id="counselorId">${counselor.counselor_id || ''}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <div class="info-display" id="name">${counselor.name || ''}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Degree:</label>
+                        <div class="info-display" id="degree">${counselor.degree || ''}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <div class="info-display" id="email">${counselor.email || ''}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Contact Number:</label>
+                        <div class="info-display" id="contactNumber">${counselor.contact_number || ''}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Address:</label>
+                        <div class="info-display" id="address">${counselor.address || ''}</div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+            <div class="form-group">
+                    <label>Availability:</label>
+                    <div id="availabilityCards" class="availability-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,2fr));gap:8px;">Loading...</div>
+            </div>
+
+            ${String(counselor.is_verified || 0) === '0' ? `
+            <div class="actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+                <button id="approveCounselorBtn" class="btn btn-success" style="padding:8px 12px;"><i class="fas fa-check"></i> Approve</button>
+                <button id="rejectCounselorBtn" class="btn btn-danger" style="padding:8px 12px;"><i class="fas fa-times"></i> Reject</button>
+            </div>` : ''}
         `;
 
         // Load counselor schedule
         loadCounselorSchedule(counselor.counselor_id);
+
+        // Approve/Reject handlers when pending
+        if (String(counselor.is_verified || 0) === '0') {
+            const approveBtn = document.getElementById('approveCounselorBtn');
+            const rejectBtn = document.getElementById('rejectCounselorBtn');
+            if (approveBtn) {
+                approveBtn.addEventListener('click', () => approveCounselor(counselor.counselor_id, approveBtn));
+            }
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', () => openRejectModal(counselor));
+            }
+        }
 
         // Re-attach event listeners
         const newUpdateBtn = document.querySelector('.update-btn');
@@ -861,12 +892,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayCounselorSchedule(data.schedule);
             } else {
                 console.error('Failed to load counselor schedule:', data.message);
-                displayScheduleError(data.message || 'Failed to load schedule');
+                displayScheduleError('No Available Schedule Defined yet');
             }
         })
         .catch(error => {
             console.error('Error loading counselor schedule:', error);
-            displayScheduleError('Error loading schedule');
+            displayScheduleError('No Available Schedule Defined yet');
         });
     }
 
@@ -875,67 +906,36 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {Array} schedule - Array of schedule objects with day and time properties
      */
     function displayCounselorSchedule(schedule) {
-        const timeScheduledElement = document.getElementById('timeScheduled');
-        const availableDaysElement = document.getElementById('availableDays');
-        
-        if (!timeScheduledElement || !availableDaysElement) {
-            console.warn('Schedule display elements not found');
-            return;
-        }
+        const container = document.getElementById('availabilityCards');
+        if (!container) return;
 
         if (!schedule || schedule.length === 0) {
-            timeScheduledElement.textContent = 'No schedule set';
-            availableDaysElement.textContent = 'No schedule set';
+            container.textContent = 'No Availability Scheduled Yet.';
             return;
         }
 
-        // Group schedule by day to handle multiple time slots per day
-        const groupedSchedule = {};
-        
+        // Group schedule by day with multiple time slots
+        const grouped = {};
         schedule.forEach(item => {
             const day = item.day;
-            const time = item.time;
-            
-            // Initialize day array if it doesn't exist
-            if (!groupedSchedule[day]) {
-                groupedSchedule[day] = [];
-            }
-            
-            // Add time slot if it exists and is not already in the array
-            if (time && time.trim() !== '' && !groupedSchedule[day].includes(time.trim())) {
-                groupedSchedule[day].push(time.trim());
-            }
+            const time = (item.time || '').trim();
+            if (!grouped[day]) grouped[day] = [];
+            if (time && !grouped[day].includes(time)) grouped[day].push(time);
         });
 
-        // Sort days in chronological order
         const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const sortedDays = Object.keys(groupedSchedule).sort((a, b) => {
-            return dayOrder.indexOf(a) - dayOrder.indexOf(b);
-        });
+        const sortedDays = Object.keys(grouped).sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
 
-        // Format time scheduled display
-        const timeSlots = [];
-        const availableDays = [];
-        
+        container.innerHTML = '';
         sortedDays.forEach(day => {
-            const times = groupedSchedule[day];
-            
-            if (times.length > 0) {
-                // Format time slots to 12-hour format
-                const formattedTimes = formatTimeSlotsForBadges(times);
-                const timeString = formattedTimes.join(', ');
-                timeSlots.push(`${day}: ${timeString}`);
-                availableDays.push(day);
-            } else {
-                // Day without specific time (all day availability)
-                timeSlots.push(`${day}: All day`);
-                availableDays.push(day);
-            }
+            const times = grouped[day];
+            const formattedTimes = times.length ? formatTimeSlotsForBadges(times).join(', ') : 'All day';
+            const card = document.createElement('div');
+            card.className = 'availability-card';
+            card.style.cssText = 'border:1px solid #e0e0e0;border-radius:6px;padding:6px 10px;background:#fff;';
+            card.textContent = `${day}: ${formattedTimes}`;
+            container.appendChild(card);
         });
-
-        // Display the schedule
-        timeScheduledElement.textContent = timeSlots.length > 0 ? timeSlots.join(' | ') : 'No schedule set';
-        availableDaysElement.textContent = availableDays.length > 0 ? availableDays.join(', ') : 'No schedule set';
     }
 
     /**
@@ -943,14 +943,91 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {string} message - Error message to display
      */
     function displayScheduleError(message) {
-        const timeScheduledElement = document.getElementById('timeScheduled');
-        const availableDaysElement = document.getElementById('availableDays');
-        
-        if (timeScheduledElement) {
-            timeScheduledElement.textContent = message;
+        const container = document.getElementById('availabilityCards');
+        if (container) container.textContent = message;
+    }
+
+    // Approve counselor
+    function approveCounselor(counselorId, buttonEl) {
+        // Loading state
+        const originalHtml = buttonEl ? buttonEl.innerHTML : '';
+        if (buttonEl) {
+            buttonEl.disabled = true;
+            buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Approving...';
         }
-        if (availableDaysElement) {
-            availableDaysElement.textContent = message;
-        }
+
+        fetch((window.BASE_URL || '/') + 'admin/counselors/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ counselor_id: counselorId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) throw new Error(data.message || 'Approval failed');
+            showNotification('Counselor approved successfully', 'success');
+            setTimeout(() => loadCounselors(), 300);
+        })
+        .catch(err => {
+            console.error(err);
+            showNotification(err.message || 'Approval error', 'error');
+        })
+        .finally(() => {
+            if (buttonEl) {
+                buttonEl.disabled = false;
+                buttonEl.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    // Reject counselor with reason
+    function openRejectModal(counselor) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:8px;max-width:420px;width:100%;padding:16px;">
+                <h4 style="margin:0 0 8px 0;">Reject Counselor</h4>
+                <p style="margin:0 0 8px 0;">Provide a reason to include in the email.</p>
+                <textarea id="rejectReason" rows="4" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;"></textarea>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+                    <button id="rejectCancel" class="btn btn-secondary">Cancel</button>
+                    <button id="rejectConfirm" class="btn btn-danger">Reject</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        const cancelBtn = overlay.querySelector('#rejectCancel');
+        const confirmBtn = overlay.querySelector('#rejectConfirm');
+        cancelBtn.onclick = () => document.body.removeChild(overlay);
+        confirmBtn.onclick = () => {
+            const reason = overlay.querySelector('#rejectReason').value.trim();
+            if (!reason) { showNotification('Rejection reason is required', 'error'); return; }
+            const originalHtml = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
+            fetch((window.BASE_URL || '/') + 'admin/counselors/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ counselor_id: counselor.counselor_id, reason })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.message || 'Rejection failed');
+                document.body.removeChild(overlay);
+                showNotification('Counselor rejected and removed', 'success');
+                setTimeout(() => loadCounselors(), 300);
+            })
+            .catch(err => {
+                console.error(err);
+                showNotification(err.message || 'Rejection error', 'error');
+            })
+            .finally(() => {
+                // If overlay still exists (i.e., on error), restore button states
+                if (document.body.contains(overlay)) {
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    confirmBtn.innerHTML = originalHtml;
+                }
+            });
+        };
     }
 });

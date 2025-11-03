@@ -36,6 +36,20 @@ class FollowUp extends BaseController
 
         try {
             $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            // Normalize counselor ID to match DB constraint (VARCHAR(10)) for create
+            if (is_string($counselorId)) {
+                $counselorId = trim($counselorId);
+                if (strlen($counselorId) > 10) {
+                    $counselorId = substr($counselorId, 0, 10);
+                }
+            }
+            // Normalize counselor ID to match DB constraint (VARCHAR(10))
+            if (is_string($counselorId)) {
+                $counselorId = trim($counselorId);
+                if (strlen($counselorId) > 10) {
+                    $counselorId = substr($counselorId, 0, 10);
+                }
+            }
             
             if (!$counselorId) {
                 return $this->fail('Invalid session data');
@@ -69,7 +83,7 @@ class FollowUp extends BaseController
                     ->orLike('spi.last_name', $searchTerm)
                     ->orLike('appointments.preferred_date', $searchTerm)
                     ->orLike('appointments.preferred_time', $searchTerm)
-                    ->orLike('appointments.consultation_type', $searchTerm)
+                    ->orLike('appointments.method_type', $searchTerm)
                     ->orLike('appointments.purpose', $searchTerm)
                     ->orLike('appointments.reason', $searchTerm)
                     ->groupEnd();
@@ -176,137 +190,215 @@ class FollowUp extends BaseController
     }
 
     /**
-     * Create a new follow-up appointment
+     * Get booked time ranges for the counselor for a specific date (approved regular appointments and pending/approved follow-ups)
+     * Returns an array of strings matching the preferred_time values (e.g., "10:00 AM - 10:30 AM").
      */
-    public function createFollowUp()
+    public function getBookedTimesForDate()
     {
-        // Log the request for debugging
-        SecureLogHelper::debug('Creating follow-up appointment');
-        
-        // Check if user is logged in and is counselor
-        if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
-            SecureLogHelper::error('Follow-up creation failed - authentication failed');
-            return $this->failUnauthorized('User not logged in or not authorized');
-        }
-
         try {
-            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
-            
-            if (!$counselorId) {
-                SecureLogHelper::error('Follow-up creation failed - invalid session data');
-                return $this->fail('Invalid session data');
-            }
-
-            // Log counselor ID length
-            log_message('debug', 'FollowUp::createFollowUp - Counselor ID: ' . $counselorId . ' (length: ' . strlen($counselorId) . ')');
-
-            // Get form data
-            $parentAppointmentId = $this->request->getPost('parent_appointment_id');
-            $studentId = $this->request->getPost('student_id');
-            $preferredDate = $this->request->getPost('preferred_date');
-            $preferredTime = $this->request->getPost('preferred_time');
-            $consultationType = $this->request->getPost('consultation_type');
-            $description = $this->request->getPost('description');
-            $reason = $this->request->getPost('reason');
-
-            // Log received data for debugging
-            log_message('debug', 'FollowUp::createFollowUp - Received data: ' . json_encode([
-                'counselor_id' => $counselorId,
-                'parent_appointment_id' => $parentAppointmentId,
-                'student_id' => $studentId,
-                'preferred_date' => $preferredDate,
-                'preferred_time' => $preferredTime,
-                'consultation_type' => $consultationType
-            ]));
-
-            // Validate required fields
-            if (!$parentAppointmentId || !$studentId || !$preferredDate || !$preferredTime || !$consultationType) {
-                $missingFields = [];
-                if (!$parentAppointmentId) $missingFields[] = 'parent_appointment_id';
-                if (!$studentId) $missingFields[] = 'student_id';
-                if (!$preferredDate) $missingFields[] = 'preferred_date';
-                if (!$preferredTime) $missingFields[] = 'preferred_time';
-                if (!$consultationType) $missingFields[] = 'consultation_type';
-                
-                log_message('error', 'FollowUp::createFollowUp - Missing required fields: ' . implode(', ', $missingFields));
-                return $this->fail('Missing required fields: ' . implode(', ', $missingFields));
-            }
-
-            // Check counselor ID length against database constraint
-            if (strlen($counselorId) > 10) {
-                log_message('error', 'FollowUp::createFollowUp - Counselor ID too long: ' . $counselorId . ' (length: ' . strlen($counselorId) . ', max: 10)');
-                return $this->fail('Counselor ID is too long for database constraint');
-            }
-
-            $followUpModel = new FollowUpAppointmentModel();
-            
-            // Get next sequence number for this parent appointment
-            $nextSequence = $followUpModel->getNextSequence($parentAppointmentId);
-
-            // Set Manila timezone for database operations
-            $originalTimezone = $this->setManilaTimezone();
-            
-            // Prepare data for insertion
-            $followUpData = [
-                'counselor_id' => $counselorId,
-                'student_id' => $studentId,
-                'parent_appointment_id' => $parentAppointmentId,
-                'preferred_date' => $preferredDate,
-                'preferred_time' => $preferredTime,
-                'consultation_type' => $consultationType,
-                'follow_up_sequence' => $nextSequence,
-                'description' => $description ?? '',
-                'reason' => $reason ?? '',
-                'status' => 'pending'
-            ];
-
-            log_message('debug', 'FollowUp::createFollowUp - Attempting to insert: ' . json_encode($followUpData));
-
-            // Insert the follow-up appointment
-            if ($followUpModel->insert($followUpData)) {
-                $insertId = $followUpModel->getInsertID();
-                log_message('info', 'FollowUp::createFollowUp - Successfully created follow-up appointment with ID: ' . $insertId);
-                
-                // Get the created follow-up data for email notification
-                $createdFollowUp = $followUpModel->find($insertId);
-                
-                // Send email notification to student
-                $this->sendFollowUpNotificationToStudent($createdFollowUp, 'created');
-                
-                // Update last_activity for creating follow-up appointment
-                $activityHelper = new UserActivityHelper();
-                $activityHelper->updateCounselorActivity($counselorId, 'create_follow_up');
-                $activityHelper->updateStudentActivity($studentId, 'follow_up_created');
-                
-                // Restore original timezone
-                $this->restoreTimezone($originalTimezone);
-                
+            if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
                 return $this->respond([
-                    'status' => 'success',
-                    'message' => 'Follow-up appointment created successfully',
-                    'follow_up_id' => $insertId
-                ]);
-            } else {
-                $errors = $followUpModel->errors();
-                log_message('error', 'FollowUp::createFollowUp - Model validation failed: ' . json_encode($errors));
-                
-                // Restore original timezone
-                $this->restoreTimezone($originalTimezone);
-                
-                return $this->fail('Validation failed: ' . implode(', ', $errors));
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 401);
             }
 
-        } catch (\Exception $e) {
-            log_message('error', 'FollowUp::createFollowUp - Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            
-            // Restore original timezone in case of exception
-            if (isset($originalTimezone)) {
-                $this->restoreTimezone($originalTimezone);
+            $date = trim((string) $this->request->getGet('date'));
+            if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Invalid or missing date'
+                ], 400);
             }
-            
-            return $this->fail('Failed to create follow-up appointment: ' . $e->getMessage());
+
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            $db = \Config\Database::connect();
+
+            // Approved regular appointments for this counselor
+            $appointments = $db->table('appointments')
+                ->select('preferred_time')
+                ->where('preferred_date', $date)
+                ->where('status', 'approved')
+                ->where('counselor_preference', $counselorId)
+                ->get()->getResultArray();
+
+            // Pending/approved follow-ups for this counselor
+            $followUps = $db->table('follow_up_appointments')
+                ->select('preferred_time')
+                ->where('preferred_date', $date)
+                ->where('counselor_id', $counselorId)
+                ->whereIn('status', ['pending','approved'])
+                ->get()->getResultArray();
+
+            $times = [];
+            foreach (array_merge($appointments, $followUps) as $r) {
+                $t = trim((string) ($r['preferred_time'] ?? ''));
+                if ($t !== '') { $times[] = $t; }
+            }
+
+            $times = array_values(array_unique($times));
+
+            return $this->respond([
+                'status' => 'success',
+                'date' => $date,
+                'booked' => $times
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error in counselor getBookedTimesForDate: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Server error'
+            ], 500);
         }
     }
+
+/**
+ * Create a new follow-up appointment
+ */
+public function createFollowUp()
+{
+    // Log the request for debugging
+    SecureLogHelper::debug('Creating follow-up appointment');
+    
+    // Check if user is logged in and is counselor
+    if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+        SecureLogHelper::error('Follow-up creation failed - authentication failed');
+        return $this->failUnauthorized('User not logged in or not authorized');
+    }
+
+    try {
+        $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+        
+        // Normalize counselor ID to match DB constraint (VARCHAR(10))
+        if (is_string($counselorId)) {
+            $counselorId = trim($counselorId);
+            if (strlen($counselorId) > 10) {
+                $counselorId = substr($counselorId, 0, 10);
+            }
+        }
+        
+        if (!$counselorId) {
+            log_message('error', 'FollowUp::createFollowUp - Invalid session data');
+            return $this->fail('Invalid session data');
+        }
+
+        // Log counselor ID
+        log_message('debug', 'FollowUp::createFollowUp - Counselor ID: ' . $counselorId . ' (length: ' . strlen($counselorId) . ')');
+
+        // Get form data
+        $parentAppointmentId = $this->request->getPost('parent_appointment_id');
+        $studentId = $this->request->getPost('student_id');
+        $preferredDate = $this->request->getPost('preferred_date');
+        $preferredTime = $this->request->getPost('preferred_time');
+        $consultationType = $this->request->getPost('consultation_type');
+        $description = $this->request->getPost('description');
+        $reason = $this->request->getPost('reason');
+
+        // Log received data for debugging
+        log_message('debug', 'FollowUp::createFollowUp - Received data: ' . json_encode([
+            'counselor_id' => $counselorId,
+            'parent_appointment_id' => $parentAppointmentId,
+            'student_id' => $studentId,
+            'preferred_date' => $preferredDate,
+            'preferred_time' => $preferredTime,
+            'consultation_type' => $consultationType
+        ]));
+
+        // Validate required fields
+        if (!$parentAppointmentId || !$studentId || !$preferredDate || !$preferredTime || !$consultationType) {
+            $missingFields = [];
+            if (!$parentAppointmentId) $missingFields[] = 'parent_appointment_id';
+            if (!$studentId) $missingFields[] = 'student_id';
+            if (!$preferredDate) $missingFields[] = 'preferred_date';
+            if (!$preferredTime) $missingFields[] = 'preferred_time';
+            if (!$consultationType) $missingFields[] = 'consultation_type';
+            
+            log_message('error', 'FollowUp::createFollowUp - Missing required fields: ' . implode(', ', $missingFields));
+            return $this->fail('Missing required fields: ' . implode(', ', $missingFields));
+        }
+
+        // Validate counselor ID length
+        if (!is_string($counselorId) || strlen($counselorId) === 0 || strlen($counselorId) > 10) {
+            log_message('error', 'FollowUp::createFollowUp - Invalid counselor ID length: ' . strlen($counselorId));
+            return $this->fail('Invalid counselor session data');
+        }
+
+        $followUpModel = new FollowUpAppointmentModel();
+        
+        // Check for time slot conflicts before creating
+        if ($followUpModel->hasCounselorFollowUpConflict($counselorId, $preferredDate, $preferredTime)) {
+            log_message('warning', 'FollowUp::createFollowUp - Time slot conflict detected');
+            return $this->fail('Time slot conflicts with another follow-up session or appointment');
+        }
+
+        // Get next sequence number for this parent appointment
+        $nextSequence = $followUpModel->getNextSequence($parentAppointmentId);
+
+        // Set Manila timezone for database operations
+        $originalTimezone = $this->setManilaTimezone();
+        
+        // Prepare data for insertion
+        $followUpData = [
+            'counselor_id' => $counselorId,
+            'student_id' => $studentId,
+            'parent_appointment_id' => $parentAppointmentId,
+            'preferred_date' => $preferredDate,
+            'preferred_time' => $preferredTime,
+            'consultation_type' => $consultationType,
+            'follow_up_sequence' => $nextSequence,
+            'description' => $description ?? '',
+            'reason' => $reason ?? '',
+            'status' => 'pending'
+        ];
+
+        log_message('debug', 'FollowUp::createFollowUp - Attempting to insert: ' . json_encode($followUpData));
+
+        // Insert the follow-up appointment
+        if ($followUpModel->insert($followUpData)) {
+            $insertId = $followUpModel->getInsertID();
+            log_message('info', 'FollowUp::createFollowUp - Successfully created follow-up appointment with ID: ' . $insertId);
+            
+            // Get the created follow-up data for email notification
+            $createdFollowUp = $followUpModel->find($insertId);
+            
+            // Send email notification to student
+            $this->sendFollowUpNotificationToStudent($createdFollowUp, 'created');
+            
+            // Update last_activity for creating follow-up appointment
+            $activityHelper = new UserActivityHelper();
+            $activityHelper->updateCounselorActivity($counselorId, 'create_follow_up');
+            $activityHelper->updateStudentActivity($studentId, 'follow_up_created');
+            
+            // Restore original timezone
+            $this->restoreTimezone($originalTimezone);
+            
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Follow-up appointment created successfully',
+                'follow_up_id' => $insertId
+            ]);
+        } else {
+            $errors = $followUpModel->errors();
+            log_message('error', 'FollowUp::createFollowUp - Model validation failed: ' . json_encode($errors));
+            
+            // Restore original timezone
+            $this->restoreTimezone($originalTimezone);
+            
+            return $this->fail('Validation failed: ' . implode(', ', $errors));
+        }
+
+    } catch (\Exception $e) {
+        log_message('error', 'FollowUp::createFollowUp - Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        log_message('error', 'FollowUp::createFollowUp - Stack trace: ' . $e->getTraceAsString());
+        
+        // Restore original timezone in case of exception
+        if (isset($originalTimezone)) {
+            $this->restoreTimezone($originalTimezone);
+        }
+        
+        return $this->fail('Failed to create follow-up appointment: ' . $e->getMessage());
+    }
+}
 
     /**
      * Mark a follow-up session as completed

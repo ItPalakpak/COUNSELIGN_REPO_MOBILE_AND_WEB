@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${appointment.student_name || "N/A"}</td>
                 <td>${formattedDate || "Invalid Date"}</td>
                 <td>${formattedTime || "N/A"}</td>
-                <td>${appointment.consultation_type || "In-person"}</td>
+                <td>${appointment.consultation_type || "Individual Consultation"}</td>
                 <td>${appointment.purpose || "N/A"}</td>
                 <td>${appointment.counselorPreference || "No Preference"}</td>
                 <td class="text-center">

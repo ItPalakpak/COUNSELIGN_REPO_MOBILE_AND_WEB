@@ -75,49 +75,48 @@
 
         <!-- Main Content - Counselor Form -->
         <div class="counselor-form-container">
-            <div class="profile-image-container text-center">
-                <img src="<?= base_url('Photos/profile.png') ?>" alt="Counselor Profile" class="profile-image" id="main-profile-image">
-            </div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Counselor's ID:</label>
-                    <div class="info-display" id="counselorId">-</div>
+            <div class="counselor-details">
+                <div class="profile-image-container text-center">
+                    <img src="<?= base_url('Photos/profile.png') ?>" alt="Counselor Profile" class="profile-image" id="main-profile-image">
                 </div>
 
-                <div class="form-group">
-                    <label>Name:</label>
-                    <div class="info-display" id="name">-</div>
-                </div>
+                <div class="details-right">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Counselor's ID:</label>
+                            <div class="info-display" id="counselorId">-</div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Degree:</label>
-                    <div class="info-display" id="degree">-</div>
-                </div>
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <div class="info-display" id="name">-</div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Email:</label>
-                    <div class="info-display" id="email">-</div>
-                </div>
+                        <div class="form-group">
+                            <label>Degree:</label>
+                            <div class="info-display" id="degree">-</div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Contact Number:</label>
-                    <div class="info-display" id="contactNumber">-</div>
-                </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <div class="info-display" id="email">-</div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Address:</label>
-                    <div class="info-display" id="address">-</div>
-                </div>
+                        <div class="form-group">
+                            <label>Contact Number:</label>
+                            <div class="info-display" id="contactNumber">-</div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Time Scheduled:</label>
-                    <div class="info-display" id="timeScheduled">-</div>
-                </div>
+                        <div class="form-group">
+                            <label>Address:</label>
+                            <div class="info-display" id="address">-</div>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label>Available Days:</label>
-                    <div class="info-display" id="availableDays">-</div>
+                    <div class="form-group">
+                        <label>Availability:</label>
+                        <div class="info-display" id="availableDays">-</div>
+                    </div>
                 </div>
             </div>
         </div>

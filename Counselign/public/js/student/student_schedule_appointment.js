@@ -41,9 +41,11 @@ document.addEventListener('DOMContentLoaded', function () {
         loadCounselors();
         setupFormSubmission();
         setupCounselorAvailabilityFiltering();
+        setupConsultationTypeHandling();
         checkForUrlMessage();
         initializeCounselorsCalendarDrawer();
-        setupCounselorSchedulesInDrawer();
+        // Directly load counselor schedules since the toggle/drawer was removed
+        loadCounselorSchedules();
         setupAcknowledgmentValidation();
     });
 });
@@ -154,6 +156,8 @@ function setMinimumAppointmentDate() {
     if (dateInput) {
         dateInput.setAttribute('min', minDate);
         dateInput.setAttribute('value', minDate);
+        // Also refresh available time slots on initial set
+        refreshTimeSlotsForDate(minDate);
     }
 }
 
@@ -326,13 +330,172 @@ function setupCounselorAvailabilityFiltering() {
     }
 
     // Add event listeners for date and time changes
-    preferredDateInput.addEventListener('change', filterCounselorsByAvailability);
+    preferredDateInput.addEventListener('change', () => { refreshTimeSlotsForDate(preferredDateInput.value); filterCounselorsByAvailability(); });
     preferredTimeSelect.addEventListener('change', filterCounselorsByAvailability);
 
     // Initial load - if both date and time are already selected, filter immediately
-    if (preferredDateInput.value && preferredTimeSelect.value) {
-        filterCounselorsByAvailability();
+    if (preferredDateInput.value) { refreshTimeSlotsForDate(preferredDateInput.value); }
+    if (preferredDateInput.value && preferredTimeSelect.value) { filterCounselorsByAvailability(); }
+}
+
+// Refresh the Preferred Time <select> to show only counselor-available 30-min ranges for the selected date,
+// and exclude already-booked ranges based on consultation type
+async function refreshTimeSlotsForDate(dateStr){
+    try {
+        const select = document.getElementById('preferredTime');
+        if (!select || !dateStr) return;
+
+        // Determine weekday to derive counselor availability for that date
+        const dayOfWeek = getDayOfWeek(dateStr); // e.g., 'Monday'
+
+        // Determine currently selected counselor (if any)
+        const counselorSelect = document.getElementById('counselorPreference');
+        const selectedCounselorId = counselorSelect ? counselorSelect.value : '';
+
+        // Get selected consultation type
+        const consultationTypeSelect = document.getElementById('consultationType');
+        const selectedConsultationType = consultationTypeSelect ? consultationTypeSelect.value : '';
+
+        // 1) Load counselors' schedules and build the UNION of 30-min ranges for the selected day
+        let availableRanges = [];
+        try {
+            if (selectedCounselorId && selectedCounselorId !== 'No preference') {
+                // Fetch specific counselor availability
+                const availRes = await fetch((window.BASE_URL || '/') + 'counselor/profile/availability?counselorId=' + encodeURIComponent(selectedCounselorId), {
+                    method: 'GET', credentials: 'include', headers: { 'Accept':'application/json','Cache-Control':'no-cache' }
+                });
+                if (availRes.ok) {
+                    const availData = await availRes.json();
+                    const rows = (availData && availData.availability && availData.availability[dayOfWeek]) ? availData.availability[dayOfWeek] : [];
+                    const slotStrings = Array.isArray(rows) ? rows.map(r => r && r.time_scheduled).filter(Boolean) : [];
+                    availableRanges = generateHalfHourRangeUnion(slotStrings);
+                }
+            } else {
+                // Union of all counselors for that day
+                const res = await fetch((window.BASE_URL || '/') + 'student/get-counselor-schedules', {
+                    method: 'GET', credentials: 'include', headers: { 'Accept':'application/json','Cache-Control':'no-cache' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const schedules = data && data.schedules ? data.schedules : null;
+                    const counselorsForDay = schedules && schedules[dayOfWeek] ? schedules[dayOfWeek] : [];
+                    const slotStrings = [];
+                    counselorsForDay.forEach(item => {
+                        const ts = (item && item.time_scheduled) ? String(item.time_scheduled) : '';
+                        if (ts) {
+                            ts.split(',').forEach(s => { const v = s.trim(); if (v) slotStrings.push(v); });
+                        }
+                    });
+                    availableRanges = generateHalfHourRangeUnion(slotStrings);
+                }
+            }
+        } catch (_) {}
+
+        // 2) Fetch booked time ranges for this date - filtered by consultation type
+        const url = new URL((window.BASE_URL || '/') + 'student/appointments/booked-times');
+        url.searchParams.append('date', dateStr);
+        if (selectedCounselorId && selectedCounselorId !== 'No preference') {
+            url.searchParams.append('counselor_id', selectedCounselorId);
+        }
+        // Pass consultation type to filter booked times appropriately
+        if (selectedConsultationType) {
+            url.searchParams.append('consultation_type', selectedConsultationType);
+        }
+        const res = await fetch(url.toString(), { method:'GET', credentials:'include', headers:{ 'Accept':'application/json' }});
+        let booked = [];
+        if (res.ok){
+            const data = await res.json();
+            if (data && data.status === 'success' && Array.isArray(data.booked)) booked = data.booked;
+        }
+
+        // 3) Build new options: only counselor-available ranges, minus booked ones
+        const fragment = document.createDocumentFragment();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a time slot';
+        fragment.appendChild(placeholder);
+
+        const bookedSet = new Set(booked);
+        const slots = availableRanges && availableRanges.length ? availableRanges : [];
+        let availableCount = 0;
+        for (const s of slots){
+            if (!bookedSet.has(s)){
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                fragment.appendChild(opt);
+                availableCount++;
+            }
+        }
+
+        // Replace options
+        select.innerHTML = '';
+        select.appendChild(fragment);
+
+        // If none available, add a disabled notice
+        if (availableCount === 0){
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = 'No available time slots for this date';
+            none.disabled = true;
+            select.appendChild(none);
+        }
+
+        // Trigger change in case downstream logic relies on time value
+        const event = new Event('change');
+        select.dispatchEvent(event);
+    } catch(e){
+        // Fail silently; do not block user
     }
+}
+
+// ===== Utilities to compute 30-min ranges from counselor availability =====
+function parseTime12ToMinutes_student(t){
+    if (!t) return null;
+    const m = String(t).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return null;
+    let h = parseInt(m[1],10);
+    const min = parseInt(m[2],10);
+    const ampm = m[3].toUpperCase();
+    if (h === 12) h = 0;
+    if (ampm === 'PM') h += 12;
+    return h*60 + min;
+}
+
+function formatMinutesTo12h_student(total){
+    let minutes = total % 60;
+    let h24 = Math.floor(total/60) % 24;
+    const ampm = h24 >= 12 ? 'PM' : 'AM';
+    let h12 = h24 % 12; if (h12 === 0) h12 = 12;
+    const mm = String(minutes).padStart(2,'0');
+    return `${h12}:${mm} ${ampm}`;
+}
+
+function generateHalfHourRangeUnion(slotStrings){
+    const set = new Set();
+    slotStrings.forEach(s => {
+        const str = String(s).trim();
+        if (!str) return;
+        if (str.includes('-')) {
+            const parts = str.split('-');
+            if (parts.length !== 2) return;
+            const start = parseTime12ToMinutes_student(parts[0].trim());
+            const end = parseTime12ToMinutes_student(parts[1].trim());
+            if (start === null || end === null || end <= start) return;
+            for (let t = start; t + 30 <= end; t += 30){
+                const from = formatMinutesTo12h_student(t);
+                const to = formatMinutesTo12h_student(t+30);
+                set.add(`${from} - ${to}`);
+            }
+        }
+    });
+    const arr = Array.from(set);
+    arr.sort((a,b) => {
+        const [af] = a.split('-').map(x=>x.trim());
+        const [bf] = b.split('-').map(x=>x.trim());
+        return parseTime12ToMinutes_student(af) - parseTime12ToMinutes_student(bf);
+    });
+    return arr;
 }
 
 // ==================== Counselors' Schedules Calendar (Schedule Page) ====================
@@ -344,14 +507,37 @@ function initializeCounselorsCalendarDrawer() {
     if (!grid || !monthLabel) return;
 
     let calDate = new Date();
+    let monthStatsCache = {}; // key: YYYY-MM -> stats object
 
     function monthName(idx){ return ['January','February','March','April','May','June','July','August','September','October','November','December'][idx]; }
     function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
     function iso(date){ return date.toISOString().split('T')[0]; }
 
-    function render(){
+    async function fetchMonthStats(year, monthIndex){
+        const key = year + '-' + String(monthIndex+1).padStart(2,'0');
+        if (monthStatsCache[key]) return monthStatsCache[key];
+        try {
+            const url = new URL((window.BASE_URL || '/') + 'student/calendar/daily-stats');
+            url.searchParams.append('year', String(year));
+            url.searchParams.append('month', String(monthIndex+1));
+            const res = await fetch(url.toString(), { method:'GET', credentials:'include', headers:{ 'Accept':'application/json' }});
+            if (!res.ok) throw new Error('Failed to load calendar stats');
+            const data = await res.json();
+            if (data && data.status === 'success' && data.stats){
+                monthStatsCache[key] = data.stats;
+                return data.stats;
+            }
+        } catch(e){ /* noop: fallback to no stats */ }
+        monthStatsCache[key] = {};
+        return {};
+    }
+
+    async function render(){
         grid.innerHTML = '';
         monthLabel.textContent = monthName(calDate.getMonth()) + ' ' + calDate.getFullYear();
+
+        // Fetch stats for this month
+        const stats = await fetchMonthStats(calDate.getFullYear(), calDate.getMonth());
 
         const headers = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         headers.forEach(h => { const el=document.createElement('div'); el.className='calendar-day-header'; el.textContent=h; grid.appendChild(el); });
@@ -363,9 +549,66 @@ function initializeCounselorsCalendarDrawer() {
         for (let d=1; d<=last.getDate(); d++){
             const cell = document.createElement('div');
             cell.className = 'calendar-day';
-            cell.textContent = String(d);
             const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), d);
+            const y = thisDate.getFullYear();
+            const m = String(thisDate.getMonth()+1).padStart(2,'0');
+            const dd = String(d).padStart(2,'0');
+            const isoDate = y + '-' + m + '-' + dd;
+
+            // Layout container
+            cell.style.display = 'flex';
+            cell.style.flexDirection = 'column';
+            cell.style.alignItems = 'center';
+            cell.style.justifyContent = 'flex-start';
+            cell.style.position = 'relative'; // enable absolute overlay for badge
+
+            // Day number label
+            const dayNum = document.createElement('div');
+            dayNum.textContent = String(d);
+            dayNum.className = 'day-number';
+            dayNum.style.marginTop = '4px';
+            cell.appendChild(dayNum);
+
+            // Apply today highlight
             if (sameDay(thisDate, new Date())) cell.classList.add('today');
+
+            // Stats badge and fully booked label (both appear below the day number)
+            const st = stats[isoDate];
+            if (st && typeof st.count === 'number' && st.count > 0){
+                const badge = document.createElement('span');
+                badge.className = 'appt-badge';
+                badge.textContent = String(st.count);
+                badge.title = 'Approved appointments';
+                // Overlay above the day number (top-right)
+                badge.style.position = 'absolute';
+                badge.style.top = '4px';
+                badge.style.right = '6px';
+                badge.style.minWidth = '18px';
+                badge.style.height = '18px';
+                badge.style.borderRadius = '9px';
+                badge.style.backgroundColor = '#0d6efd';
+                badge.style.color = '#fff';
+                badge.style.fontSize = '11px';
+                badge.style.lineHeight = '18px';
+                badge.style.textAlign = 'center';
+                badge.style.pointerEvents = 'none';
+                cell.appendChild(badge);
+            }
+
+            if (st && st.fullyBooked === true){
+                // Red highlight only when fully booked
+                cell.classList.add('fully-booked');
+                cell.style.backgroundColor = '#fde2e1';
+                cell.style.borderColor = '#f8b4b4';
+                // Add a small "Fully booked" label under the badge/number
+                const fb = document.createElement('div');
+                fb.textContent = 'Fully booked';
+                fb.style.marginTop = '4px';
+                fb.style.fontSize = '11px';
+                fb.style.color = '#b91c1c';
+                cell.appendChild(fb);
+            }
+
             cell.addEventListener('click', () => openCounselorsBubbleSchedule(thisDate, cell));
             grid.appendChild(cell);
         }
@@ -524,12 +767,42 @@ function setupFormSubmission() {
                 return;
             }
 
-            // Check for counselor conflicts before submission
-            checkCounselorConflicts().then(hasConflict => {
-                if (hasConflict) {
-                    return; // Conflict modal will be shown, don't proceed with submission
-                }
-
+            // Check for counselor conflicts and group slot availability before submission
+            const consultationType = document.getElementById('consultationType').value;
+            const date = document.getElementById('preferredDate').value;
+            const time = document.getElementById('preferredTime').value;
+            
+            // For group consultation, check slot availability first
+            if (consultationType === 'Group Consultation') {
+                const counselorId = document.getElementById('counselorPreference').value;
+                checkGroupSlotAvailability(date, time, counselorId).then(availabilityInfo => {
+                    if (!availabilityInfo || !availabilityInfo.isAvailable) {
+                        showMessage('error', 'Group consultation slots are full for this time slot (maximum 5 participants). Please select a different time or date.');
+                        toggleLoadingState(false);
+                        return;
+                    }
+                    proceedWithSubmission();
+                }).catch(error => {
+                    console.error('Error checking group slots:', error);
+                    showMessage('error', 'Error checking group slot availability. Please try again.');
+                    toggleLoadingState(false);
+                });
+            } else {
+                // For individual consultation, use existing conflict check
+                checkCounselorConflicts().then(hasConflict => {
+                    if (hasConflict) {
+                        toggleLoadingState(false);
+                        return; // Conflict modal will be shown, don't proceed with submission
+                    }
+                    proceedWithSubmission();
+                }).catch(error => {
+                    console.error('Error checking conflicts:', error);
+                    showMessage('error', 'Error checking counselor availability. Please try again.');
+                    toggleLoadingState(false);
+                });
+            }
+            
+            function proceedWithSubmission() {
                 // Show loading state
                 toggleLoadingState(true);
 
@@ -580,10 +853,7 @@ function setupFormSubmission() {
                 // Always hide loading state, regardless of success or error
                 toggleLoadingState(false);
             });
-            }).catch(error => {
-                console.error('Error checking conflicts:', error);
-                showMessage('error', 'Error checking counselor availability. Please try again.');
-            });
+            }
         });
     }
 }
@@ -647,6 +917,7 @@ function validateForm() {
     const preferredDate = document.getElementById('preferredDate').value;
     const preferredTime = document.getElementById('preferredTime').value;
     const consultationType = document.getElementById('consultationType').value;
+    const methodType = document.getElementById('methodType').value;
     const purpose = document.getElementById('purpose').value;
 
     if (!preferredDate) {
@@ -661,6 +932,11 @@ function validateForm() {
 
     if (!consultationType) {
         showMessage('error', 'Please select a consultation type.');
+        return false;
+    }
+
+    if (!methodType) {
+        showMessage('error', 'Please select a method type.');
         return false;
     }
 
@@ -1068,6 +1344,142 @@ function formatTimeSlot(timeSlot) {
     }
     
     return timeSlot;
+}
+
+// Setup consultation type handling
+function setupConsultationTypeHandling() {
+    const consultationTypeSelect = document.getElementById('consultationType');
+    const consultationTypeHelp = document.getElementById('consultationTypeHelp');
+    const preferredDateInput = document.getElementById('preferredDate');
+    const preferredTimeSelect = document.getElementById('preferredTime');
+    const counselorSelect = document.getElementById('counselorPreference');
+
+    if (!consultationTypeSelect || !consultationTypeHelp) return;
+
+    function updateHelpText() {
+        const selectedType = consultationTypeSelect.value;
+        if (selectedType === 'Group Consultation') {
+            consultationTypeHelp.textContent = 'Group consultation allows up to 5 students per time slot.';
+            consultationTypeHelp.style.color = '#2563EB';
+            // Check slot availability when date/time changes for group consultation
+            checkGroupSlotAvailabilityForCurrentSelection();
+        } else if (selectedType === 'Individual Consultation') {
+            consultationTypeHelp.textContent = 'One-on-one consultation with the counselor.';
+            consultationTypeHelp.style.color = '#6B7280';
+        } else {
+            consultationTypeHelp.textContent = '';
+        }
+    }
+
+    function checkGroupSlotAvailabilityForCurrentSelection() {
+        const date = preferredDateInput.value;
+        const time = preferredTimeSelect.value;
+        const counselorId = counselorSelect.value;
+
+        if (consultationTypeSelect.value === 'Group Consultation' && date && time) {
+            checkGroupSlotAvailability(date, time, counselorId).then(hasSlots => {
+                if (hasSlots !== null) {
+                    updateSlotAvailabilityDisplay(hasSlots);
+                }
+            });
+        } else {
+            clearSlotAvailabilityDisplay();
+        }
+    }
+
+    consultationTypeSelect.addEventListener('change', () => {
+        updateHelpText();
+        // Refresh time slots when consultation type changes (different logic for individual vs group)
+        const selectedDate = preferredDateInput ? preferredDateInput.value : '';
+        if (selectedDate) {
+            refreshTimeSlotsForDate(selectedDate);
+        }
+        checkGroupSlotAvailabilityForCurrentSelection();
+    });
+
+    if (preferredDateInput) {
+        preferredDateInput.addEventListener('change', checkGroupSlotAvailabilityForCurrentSelection);
+    }
+    if (preferredTimeSelect) {
+        preferredTimeSelect.addEventListener('change', checkGroupSlotAvailabilityForCurrentSelection);
+    }
+    if (counselorSelect) {
+        counselorSelect.addEventListener('change', checkGroupSlotAvailabilityForCurrentSelection);
+    }
+
+    // Initial help text update
+    updateHelpText();
+}
+
+// Check group slot availability
+async function checkGroupSlotAvailability(date, time, counselorId = '') {
+    try {
+        const url = new URL((window.BASE_URL || '/') + 'student/appointments/check-group-slots');
+        url.searchParams.append('date', date);
+        url.searchParams.append('time', time);
+        if (counselorId && counselorId !== 'No preference') {
+            url.searchParams.append('counselor_id', counselorId);
+        }
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            return {
+                isAvailable: data.isAvailable,
+                bookedSlots: data.bookedSlots,
+                availableSlots: data.availableSlots
+            };
+        }
+
+        return null;
+    } catch (error) {
+        SecureLogger.info('Error checking group slot availability:', error.message);
+        return null;
+    }
+}
+
+// Update slot availability display
+function updateSlotAvailabilityDisplay(availabilityInfo) {
+    const consultationTypeHelp = document.getElementById('consultationTypeHelp');
+    if (!consultationTypeHelp || !availabilityInfo) return;
+
+    if (availabilityInfo.availableSlots > 0) {
+        consultationTypeHelp.innerHTML = `Group consultation: <strong>${availabilityInfo.availableSlots}</strong> slot(s) available (${availabilityInfo.bookedSlots}/5 booked).`;
+        consultationTypeHelp.style.color = '#059669';
+    } else {
+        consultationTypeHelp.innerHTML = `Group consultation: <strong>No slots available</strong> (${availabilityInfo.bookedSlots}/5 booked). Please choose another time.`;
+        consultationTypeHelp.style.color = '#DC2626';
+    }
+}
+
+// Clear slot availability display
+function clearSlotAvailabilityDisplay() {
+    const consultationTypeHelp = document.getElementById('consultationTypeHelp');
+    if (!consultationTypeHelp) return;
+
+    const consultationTypeSelect = document.getElementById('consultationType');
+    if (consultationTypeSelect && consultationTypeSelect.value === 'Group Consultation') {
+        consultationTypeHelp.textContent = 'Group consultation allows up to 5 students per time slot.';
+        consultationTypeHelp.style.color = '#2563EB';
+    } else if (consultationTypeSelect && consultationTypeSelect.value === 'Individual Consultation') {
+        consultationTypeHelp.textContent = 'One-on-one consultation with the counselor.';
+        consultationTypeHelp.style.color = '#6B7280';
+    } else {
+        consultationTypeHelp.textContent = '';
+    }
 }
 
 // Setup acknowledgment validation

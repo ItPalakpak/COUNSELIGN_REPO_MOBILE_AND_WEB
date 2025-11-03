@@ -1,4 +1,18 @@
 # Active Context
+## Nov 3, 2025
+### Current focus
+- Replace student counselor selection and conversation modals with dedicated screens while preserving messaging functions and counselor status/profile visuals.
+
+### Recent changes
+- Added `lib/studentscreen/counselor_selection_screen.dart` and `lib/studentscreen/conversation_screen.dart`.
+- Wired routes in `lib/routes.dart`:
+  - `/student/counselor-selection` → `CounselorSelectionScreen`
+  - `/student/conversation` → `ConversationScreen`
+- Updated `lib/studentscreen/student_dashboard.dart` action buttons to navigate to the new screens.
+- Left original dialog widgets in place but removed their overlay usage from dashboard.
+
+### Next steps
+- Monitor UX; consider extracting a dedicated student messaging view model if we need shared state across multiple student screens.
 
 ## Current Focus
 

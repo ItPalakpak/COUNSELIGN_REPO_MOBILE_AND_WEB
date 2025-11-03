@@ -147,6 +147,7 @@
                                     <th>Date</th>
                                     <th>Time</th>
                                     <th>Consultation Type</th>
+                                    <th>Method Type</th>
                                     <th>Purpose</th>
                                     <th>Counselor</th>
                                     <th>Status</th>
@@ -170,6 +171,7 @@
                                     <th>Date</th>
                                     <th>Time</th>
                                     <th>Consultation Type</th>
+                                    <th>Method Type</th>
                                     <th>Purpose</th>
                                     <th>Counselor</th>
                                     <th>Status</th>
@@ -192,6 +194,7 @@
                                     <th>Date</th>
                                     <th>Time</th>
                                     <th>Consultation Type</th>
+                                    <th>Method Type</th>
                                     <th>Purpose</th>
                                     <th>Counselor</th>
                                     <th>Status</th>
@@ -213,6 +216,7 @@
                                     <th>Date</th>
                                     <th>Time</th>
                                     <th>Consultation Type</th>
+                                    <th>Method Type</th>
                                     <th>Purpose</th>
                                     <th>Counselor</th>
                                     <th>Status</th>
@@ -298,24 +302,36 @@
                     <form id="editAppointmentForm">
                         <input type="hidden" id="editAppointmentId">
                         <div class="mb-3">
-                            <label for="editDate" class="form-label">Date</label>
+                            <label for="editDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="editDate" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editTime" class="form-label">Time</label>
-                            <input type="time" class="form-control" id="editTime" required>
+                            <label for="editTime" class="form-label">Preferred Time <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editTime" required>
+                                <option value="">Select a time slot</option>
+                            </select>
+                            <small class="form-text text-muted">Time slots will be filtered based on counselor availability</small>
                         </div>
                         <div class="mb-3">
-                            <label for="editConsultationType" class="form-label">Consultation Type</label>
+                            <label for="editConsultationType" class="form-label">Consultation Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="editConsultationType" required>
-                                <option value="">Select type...</option>
-                                <option value="Academic">Academic</option>
-                                <option value="Personal">Personal</option>
-                                <option value="Career">Career</option>
+                                <option value="">Select consultation type</option>
+                                <option value="Individual Consultation">Individual Consultation</option>
+                                <option value="Group Consultation">Group Consultation</option>
+                            </select>
+                            <small id="editConsultationTypeHelp" class="form-text text-muted"></small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMethodType" class="form-label">Method Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editMethodType" required>
+                                <option value="">Select a method type</option>
+                                <option value="In-person">In-person</option>
+                                <option value="Online (Video)">Online (Video)</option>
+                                <option value="Online (Audio only)">Online (Audio only)</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="editPurpose" class="form-label">Purpose</label>
+                            <label for="editPurpose" class="form-label">Purpose <span class="text-danger">*</span></label>
                             <select class="form-select" id="editPurpose" required>
                                 <option value="">Select purpose...</option>
                                 <option value="Counseling">Counseling</option>
@@ -324,7 +340,14 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="editDescription" class="form-label">Description</label>
+                            <label for="editCounselorPreference" class="form-label">Counselor Preference <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editCounselorPreference" required>
+                                <option value="">Select a counselor</option>
+                                <option value="No preference">No preference</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">Description (Optional)</label>
                             <textarea class="form-control" id="editDescription" rows="3"></textarea>
                         </div>
                     </form>

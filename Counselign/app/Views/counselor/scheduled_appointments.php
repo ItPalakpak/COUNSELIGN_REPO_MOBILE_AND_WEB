@@ -87,7 +87,7 @@
                             <i class="fas fa-info-circle me-2"></i> No scheduled appointments found.
                         </div>
 
-                        <div class="table-bordered csq-table-wrap" id="appointments-table-container">
+                        <div class="table-bordered csq-table-wrap overflow-auto" id="appointments-table-container" style="overflow-x: auto;">
                             <table class="table csq-table" id="appointments-table">
                                 <thead>
                                     <tr>
@@ -95,7 +95,9 @@
                                         <th scope="col">Name</th>
                                         <th scope="col">Appointed Date</th>
                                         <th scope="col">Time</th>
+                                        <th scope="col">Method</th>
                                         <th scope="col">Consultation Type</th>
+                                        <th scope="col">Appointment Type</th>
                                         <th scope="col">Purpose</th>
                                         <th scope="col" class="text-center">Status</th>
                                         <th scope="col" class="text-center">Action</th>

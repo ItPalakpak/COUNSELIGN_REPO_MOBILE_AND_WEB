@@ -60,7 +60,7 @@ class GetAllAppointments extends BaseController
                         COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), NULL) AS student_name,
                         appointments.preferred_date as appointed_date,
                         appointments.preferred_time as appointed_time,
-                        appointments.consultation_type,
+                        appointments.method_type,
                         appointments.purpose,
                         c.name as counselor_name,
                         appointments.status, appointments.reason,
@@ -72,7 +72,37 @@ class GetAllAppointments extends BaseController
             // All appointments for the list view
             $allAppointmentsQuery = $baseQuery . " ORDER BY preferred_date ASC, preferred_time ASC";
             $allAppointments = $db->query($allAppointmentsQuery)->getResultArray();
-            $response['appointments'] = $allAppointments;
+
+            // Normalize and tag base appointments
+            foreach ($allAppointments as &$row) {
+                $row['appointment_type'] = 'First Session';
+                $row['record_kind'] = 'appointment';
+            }
+            unset($row);
+
+            // Include completed/cancelled follow-up sessions, mapped to list schema
+            $followUpsQuery = "SELECT 
+                    f.student_id as student_id,
+                    COALESCE(CONCAT(spi.last_name, ', ', spi.first_name), NULL) AS student_name,
+                    f.preferred_date as appointed_date,
+                    f.preferred_time as appointed_time,
+                    p.method_type as method_type,
+                    f.consultation_type as purpose,
+                    COALESCE(c.name, p.counselor_preference, 'No Preference') as counselor_name,
+                    UPPER(f.status) as status,
+                    f.reason as reason,
+                    'Follow-up Session' as appointment_type,
+                    'follow_up' as record_kind
+                FROM follow_up_appointments f
+                LEFT JOIN appointments p ON p.id = f.parent_appointment_id
+                LEFT JOIN counselors c ON p.counselor_preference = c.counselor_id
+                LEFT JOIN student_personal_info spi ON spi.student_id = f.student_id
+                WHERE f.status IN ('pending','completed','cancelled')
+                ORDER BY f.preferred_date ASC, f.preferred_time ASC";
+
+            $followUps = $db->query($followUpsQuery)->getResultArray();
+
+            $response['appointments'] = array_merge($allAppointments, $followUps);
 
             // Now get filtered appointments for charts
             $dateFilter = "";
@@ -108,6 +138,25 @@ class GetAllAppointments extends BaseController
 
             $query = $baseQuery . $dateFilter . " ORDER BY preferred_date ASC, preferred_time ASC";
             $chartAppointments = $db->query($query)->getResultArray();
+
+            // Include follow-up sessions (pending/completed/cancelled) in chart datasets
+            $fuChartQuery = "SELECT 
+                    f.preferred_date as appointed_date,
+                    UPPER(f.status) as status
+                FROM follow_up_appointments f
+                WHERE f.status IN ('pending','completed','cancelled')";
+            if ($timeRange === 'monthly') {
+                $fuChartQuery .= " AND YEAR(f.preferred_date) = YEAR(CURDATE())";
+            } elseif (!empty($startDateStr) && !empty($endDateStr)) {
+                $fuChartQuery .= " AND f.preferred_date >= " . $db->escape($startDateStr) . " AND f.preferred_date <= " . $db->escape($endDateStr);
+            }
+            $followUpForCharts = $db->query($fuChartQuery)->getResultArray();
+            foreach ($followUpForCharts as $fu) {
+                $chartAppointments[] = [
+                    'appointed_date' => $fu['appointed_date'],
+                    'status' => $fu['status']
+                ];
+            }
 
             // Process appointments for statistics
             $dateFormat = ($timeRange === 'daily' || $timeRange === 'weekly') ? 'Y-m-d' : 'Y-m';

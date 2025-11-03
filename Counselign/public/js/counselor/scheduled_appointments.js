@@ -74,19 +74,32 @@ document.addEventListener('DOMContentLoaded', function () {
             const dateObj = new Date(appointment.appointed_date || appointment.preferred_date);
             const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             const formattedTime = formatTime(appointment.time || appointment.preferred_time);
+            let scheduleType = appointment.schedule_type || (appointment.parent_appointment_id ? 'Follow-up session' : 'New');
+            if (scheduleType === 'New') scheduleType = 'First Session';
+            if (scheduleType === 'Follow-up session' || scheduleType === 'Follow-up') scheduleType = 'Follow-up Session';
+            const recordKind = appointment.record_kind || 'appointment';
+            const actionHtml = (recordKind === 'follow_up')
+                ? '<span class="text-muted">Manage in Follow-up Sessions</span>'
+                : (appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED'
+                    ? '<span class="text-muted">No actions available</span>'
+                    : `<div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-success mark-complete-btn" data-id="${appointment.id}"><i class="fas fa-check me-1"></i>Mark Complete</button>
+                        <button class="btn btn-sm btn-danger cancel-appointment-btn" data-id="${appointment.id}"><i class="fas fa-times me-1"></i>Cancel</button>
+                       </div>`);
+
             row.innerHTML = `
                 <td>${appointment.student_id || 'N/A'}</td>
                 <td>${appointment.student_name || 'N/A'}</td>
                 <td>${formattedDate || 'Invalid Date'}</td>
                 <td>${formattedTime || 'N/A'}</td>
-                <td>${appointment.consultation_type || 'In-person'}</td>
+                <td>${appointment.method_type || 'In-person'}</td>
+                <td>${appointment.consultation_type || 'Individual Consultation'}</td>
+                <td>${scheduleType}</td>
                 <td>${appointment.purpose || 'N/A'}</td>
                 <td class="text-center">
                     ${appointment.status === 'COMPLETED' ? '<span class="badge bg-success">Completed</span>' : appointment.status === 'CANCELLED' ? '<span class="badge bg-danger">Cancelled</span>' : '<span class="badge bg-primary">Approved</span>'}
                 </td>
-                <td class="text-center">
-                    ${appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED' ? '<span class="text-muted">No actions available</span>' : `<div class="btn-group" role="group"><button class="btn btn-sm btn-success mark-complete-btn" data-id="${appointment.id}"><i class="fas fa-check me-1"></i>Mark Complete</button><button class="btn btn-sm btn-danger cancel-appointment-btn" data-id="${appointment.id}"><i class="fas fa-times me-1"></i>Cancel</button></div>`}
-                </td>`;
+                <td class="text-center">${actionHtml}</td>`;
             appointmentsBody.appendChild(row);
         });
 

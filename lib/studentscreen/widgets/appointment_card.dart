@@ -113,6 +113,12 @@ class AppointmentCard extends StatelessWidget {
           ),
           SizedBox(height: isMobile ? 8 : 12),
           _buildInfoRow(
+            icon: Icons.laptop,
+            label: 'Method Type',
+            value: appointment.methodType ?? 'N/A',
+          ),
+          SizedBox(height: isMobile ? 8 : 12),
+          _buildInfoRow(
             icon: Icons.description,
             label: 'Purpose',
             value: appointment.purpose ?? 'N/A',

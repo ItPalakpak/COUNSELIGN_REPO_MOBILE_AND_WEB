@@ -770,30 +770,55 @@ header.sticky-header {
 /* Pending Follow-up Section Styling */
 .pending-follow-up-section {
     margin-bottom: 40px;
-    padding: 25px;
-    background: linear-gradient(135deg, #fff5f0, #ffe8e0);
-    border-radius: 15px;
-    border: 2px solid #ff6b35;
-    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #fff8f5, #ffeef0);
+    border-radius: 12px;
+    border: 1.5px solid rgba(255, 107, 53, 0.3);
+    box-shadow: 0 2px 12px rgba(255, 107, 53, 0.08);
+    max-width: 800px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.pending-follow-up-section:hover {
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.12);
+    border-color: rgba(255, 107, 53, 0.4);
 }
 
 .pending-follow-up-section .subsection-title {
     color: #ff6b35;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #ff6b35;
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid rgba(255, 107, 53, 0.2);
+}
+
+.pending-follow-up-section #pendingFollowUpContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+@media (min-width: 680px) {
+    .pending-follow-up-section #pendingFollowUpContainer {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
 }
 
 .pending-follow-up-section .appointment-card {
-    border: 2px solid #ff6b35;
-    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.15);
+    border: 1.5px solid rgba(255, 107, 53, 0.25);
+    box-shadow: 0 3px 12px rgba(255, 107, 53, 0.1);
+    max-width: 100%;
 }
 
 .pending-follow-up-section .appointment-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.2);
+    border-color: rgba(255, 107, 53, 0.4);
 }
 
 .appointment-student {

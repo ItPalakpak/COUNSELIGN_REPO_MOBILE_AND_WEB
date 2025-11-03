@@ -46,7 +46,7 @@ class Notifications extends \CodeIgniter\Controller
             // Add pending appointments for this counselor as notifications
             $db = \Config\Database::connect();
             $pendingAppointments = $db->table('appointments a')
-                ->select('a.id, a.student_id, a.preferred_date, a.preferred_time, a.status, a.updated_at, a.created_at, a.consultation_type, a.counselor_preference, u.username')
+                ->select('a.id, a.student_id, a.preferred_date, a.preferred_time, a.status, a.updated_at, a.created_at, a.method_type, a.counselor_preference, u.username')
                 ->join('users u', 'u.user_id = a.student_id', 'left')
                 ->where('a.status', 'pending')
                 ->where('a.counselor_preference', $userId)

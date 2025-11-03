@@ -75,16 +75,39 @@ function loadCounselorSchedules() {
 function displayCounselorSchedules(scheduleData) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     
-    // Enhanced color palette with gradients
-    const colors = [
-        'linear-gradient(135deg, #FFB86F 0%, #FFDFBA 100%)',  // Warm Orange
-        'linear-gradient(135deg, #64B5F6 0%, #AED8E6 100%)',  // Cool Blue
-        'linear-gradient(135deg, #81C784 0%, #90EE90 100%)',  // Fresh Green
-        'linear-gradient(135deg, #F06292 0%, #FFB6C1 100%)',  // Soft Pink
-        'linear-gradient(135deg, #BA68C8 0%, #DDA0DD 100%)',  // Royal Purple
-        'linear-gradient(135deg, #009688 0%, #80CBC4 100%)',  // Teal
-        'linear-gradient(135deg, #7986CB 0%, #9DA6D9 100%)'   // Indigo
-    ];
+    // Deterministic color assignment per counselor ID
+    const __counselorColorCache = new Map();
+    function hashStringToInt(str) {
+        let hash = 0;
+        for (let i = 0; i < String(str).length; i++) {
+            hash = (hash << 5) - hash + String(str).charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
+    }
+    function hslToHex(h, s, l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        const toHex = x => Math.round(255 * x).toString(16).padStart(2, '0');
+        return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+    }
+    function getCounselorGradient(counselorId, counselorName) {
+        if (__counselorColorCache.has(counselorId)) return __counselorColorCache.get(counselorId);
+        const key = counselorId || counselorName || 'default';
+        const hash = hashStringToInt(key);
+        const hue = hash % 360; // 0..359 full spectrum
+        // Bright pastel tuning
+        const sat = 45 + (hash % 21); // 45..66
+        const light1 = 82 + (hash % 9); // 82..90
+        const light2 = 94 + (hash % 5); // 94..98
+        const c1 = hslToHex(hue, sat, light1);
+        const c2 = hslToHex(hue, Math.max(40, sat - 8), light2);
+        const gradient = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+        __counselorColorCache.set(counselorId, gradient);
+        return gradient;
+    }
 
     SecureLogger.info('Processing counselor schedules...', scheduleData);
 
@@ -112,9 +135,9 @@ function displayCounselorSchedules(scheduleData) {
         // Clear container
         container.innerHTML = '';
 
-        // Create cards for each counselor
-        counselors.forEach((counselor, index) => {
-            const gradient = colors[index % colors.length];
+        // Create cards for each counselor with a unique, consistent gradient
+        counselors.forEach((counselor) => {
+            const gradient = getCounselorGradient(counselor.counselor_id, counselor.name);
             const card = createCounselorCard(counselor, gradient, day);
             container.appendChild(card);
         });

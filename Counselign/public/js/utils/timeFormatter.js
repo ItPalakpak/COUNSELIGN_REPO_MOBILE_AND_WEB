@@ -44,20 +44,24 @@ function formatTimeSlotsForDisplay(timeSlots) {
     const formattedSlots = timeSlots.map(slot => {
         // Handle different time slot formats
         if (slot.includes('-')) {
-            // Handle time range format (e.g., "09:00-17:00", "7:30-10 AM")
+            // Handle time range format (e.g., "09:00-17:00", "7:30-10 AM", "1:00 PM-4:00 PM")
             const parts = slot.split('-');
             if (parts.length === 2) {
                 const startTime = parts[0].trim();
                 const endTime = parts[1].trim();
                 
-                // Check if end time already has AM/PM
-                if (endTime.includes('AM') || endTime.includes('PM')) {
-                    // Format: "7:30-10 AM" - convert to consistent format
+                // Check if both times already have AM/PM (12-hour format from database)
+                if ((startTime.includes('AM') || startTime.includes('PM')) && 
+                    (endTime.includes('AM') || endTime.includes('PM'))) {
+                    // Format: "1:00 PM-4:00 PM" or "9:00 AM-11:30 AM" - already in 12-hour format, format with space
+                    return `${formatTimeForDisplay(startTime)} - ${formatTimeForDisplay(endTime)}`;
+                } else if (endTime.includes('AM') || endTime.includes('PM')) {
+                    // Format: "7:30-10 AM" - convert start to 12-hour format
                     const startFormatted = formatTimeForDisplay(startTime);
-                    const endFormatted = formatTimeForDisplay(endTime.replace(/AM|PM/g, '').trim());
+                    const endFormatted = formatTimeForDisplay(endTime);
                     return `${startFormatted} - ${endFormatted}`;
                 } else {
-                    // Format: "09:00-17:00" - both times need formatting
+                    // Format: "09:00-17:00" - both times need formatting to 12-hour
                     const startFormatted = formatTimeForDisplay(startTime);
                     const endFormatted = formatTimeForDisplay(endTime);
                     return `${startFormatted} - ${endFormatted}`;

@@ -18,7 +18,7 @@ class OptimizedAppointmentModel extends Model
         'student_id',
         'preferred_date',
         'preferred_time',
-        'consultation_type',
+        'method_type',
         'counselor_preference',
         'description',
         'reason',

@@ -65,7 +65,7 @@
                 $userInfo = $userDisplayHelper->getUserDisplayInfo(session()->get('user_id_display'), session()->get('role'));
                 ?>
                 <div class="fs-12 fw-bold" style="color: #003366;">
-                    Hello! 
+                    Hello!
                     <span class="text-primary">
                         <i><?= $userInfo['display_name'] ?></i>
                     </span>
@@ -165,7 +165,14 @@
         <div class="chat-footer">
             <form id="messageForm" class="message-form">
                 <div class="message-input-wrapper">
-                    <textarea id="messageInput" class="message-input" placeholder="Type your message here..." rows="2" required></textarea>
+                    <textarea
+                        id="messageInput"
+                        name="messageInput"
+                        class="message-input"
+                        placeholder="Type your message here..."
+                        rows="2"
+                        required>
+                    </textarea>
                 </div>
                 <button type="submit" class="send-button" id="sendMessage">
                     <i class="fas fa-paper-plane"></i>
@@ -204,7 +211,7 @@
         </div>
     </div>
 
-     <!-- Shared Confirmation Modal (used for logout and other confirms) -->
+    <!-- Shared Confirmation Modal (used for logout and other confirms) -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -220,7 +227,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Shared Alert Modal (utility compatible) -->
     <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -239,7 +246,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Shared Notice Modal (utility compatible) -->
     <div class="modal fade" id="noticeModal" tabindex="-1" aria-labelledby="noticeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -266,8 +273,8 @@
     <script>
         window.BASE_URL = "<?= base_url() ?>";
     </script>
-    
-   
+
+
 </body>
 
 </html>

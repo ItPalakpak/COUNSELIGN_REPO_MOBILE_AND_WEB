@@ -1,13 +1,11 @@
-- Implemented counselor-specific signup flow:
-  - Added `counselor/save-basic-info` route and frontend modal to capture counselor details after signup (no email verification for counselors at signup).
-  - Updated `public/js/landing.js` to open the Counselor Info modal on counselor signup, validate inputs, and submit to backend; kept student flow unchanged.
-  - Adjusted unverified login handling to show verification modal only for students; counselors receive an informational pending-approval message.
-  - `Counselor::saveBasicInfo` already sends notification email to the admin account.
-
-Next steps:
-- Admin approval flow (future): endpoints and UI to approve counselor accounts and set `is_verified = 1`.
 - Focus: Enhanced Resend Reset Code Modal Implementation with Professional UI/UX Design and Type-Safe Coding Standards
 Recent Changes:
+ - ADMIN ACCOUNT SEED: Added `AdminSeeder` and seeded default admin user
+   - ✅ User ID: `0000000001`
+   - ✅ Role: `admin`
+   - ✅ Email: `systemsample13@gmail.com`
+   - ✅ Password: securely hashed for "Counselign@2025"
+   - ✅ Idempotent: updates existing admin if present
 - **RESEND RESET CODE MODAL IMPLEMENTATION**: Added professional resend functionality for forgot password flow
   - ✅ **Modal HTML Structure**: Created dedicated resend reset code modal in `landing.php`
     - ✅ Professional modal design matching other system modals
@@ -21,13 +19,7 @@ Recent Changes:
     - ✅ Proper error handling and user feedback
     - ✅ Enter key support for form submission
     - ✅ Modal cleanup on hide/cancel events
-    - ✅ Uses `forgot-password/send-code`; alias `forgot-password/resend-code` supported
-  - ✅ **Backend Fix (Critical)**: Resolved reset code persistence when input is email
-    - ✅ If input is an email, backend now resolves `user_id` from `users.email` and saves token with the correct `user_id` into `password_resets`
-    - ✅ If input is a user_id, backend resolves email and uses that as destination
-    - ✅ Prevents DB errors like "Data too long for column 'user_id'" by never inserting email into `password_resets.user_id`
-    - ✅ Ensures verify step no longer yields False "Invalid or expired code" after email-based requests
-    - ✅ Added alias route `forgot-password/resend-code` which reuses the same logic
+    - ✅ Uses existing `forgot-password/send-code` endpoint
   - ✅ **CSS Styling**: Added professional styling in `landing.css`
     - ✅ Consistent design matching other modals
     - ✅ Responsive design for mobile devices

@@ -108,9 +108,9 @@
                 <div class="pds-container card shadow-sm">
                     <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pds-acad" type="button"><i class="fas fa-graduation-cap me-2"></i>A. Academic</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pds-personal" type="button"><i class="fas fa-user me-2"></i>B. Personal</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pds-other-info" type="button"><i class="fas fa-info-circle me-2"></i>C. Other Information</button></li>
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pds-acad" type="button"><i class="fas fa-graduation-cap me-2"></i> Academic</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pds-personal" type="button"><i class="fas fa-user me-2"></i> Personal</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pds-other-info" type="button"><i class="fas fa-info-circle me-2"></i> Other Information</button></li>
                         </ul>
 
                     </div>

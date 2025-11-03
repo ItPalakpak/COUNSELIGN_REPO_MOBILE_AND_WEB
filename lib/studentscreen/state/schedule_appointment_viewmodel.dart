@@ -17,6 +17,8 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   final TextEditingController timeController = TextEditingController();
   final TextEditingController consultationTypeController =
       TextEditingController();
+  // Method Type controller (In-person / Online ...)
+  final TextEditingController methodTypeController = TextEditingController();
   final TextEditingController purposeController = TextEditingController();
   final TextEditingController counselorController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -34,6 +36,13 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   // Data
   List<Counselor> _counselors = [];
   List<Counselor> get counselors => _counselors;
+
+  // Time slots
+  bool _isLoadingTimeSlots = false;
+  bool get isLoadingTimeSlots => _isLoadingTimeSlots;
+
+  List<String> _availableTimeSlots = [];
+  List<String> get availableTimeSlots => _availableTimeSlots;
 
   bool _hasPendingAppointment = false;
   bool get hasPendingAppointment => _hasPendingAppointment;
@@ -60,6 +69,11 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
   DateTime _currentCalendarDate = DateTime.now();
   DateTime get currentCalendarDate => _currentCalendarDate;
 
+  // Calendar stats cache keyed by YYYY-MM -> { 'YYYY-MM-DD': {count:int, fullyBooked:bool} }
+  final Map<String, Map<String, dynamic>> _calendarStatsCache = {};
+  Map<String, dynamic> _currentMonthStats = {};
+  Map<String, dynamic> get currentMonthStats => _currentMonthStats;
+
   // Form validation
   String? _dateError;
   String? get dateError => _dateError;
@@ -69,6 +83,9 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
 
   String? _consultationTypeError;
   String? get consultationTypeError => _consultationTypeError;
+
+  String? _methodTypeError;
+  String? get methodTypeError => _methodTypeError;
 
   String? _purposeError;
   String? get purposeError => _purposeError;
@@ -105,6 +122,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     dateController.dispose();
     timeController.dispose();
     consultationTypeController.dispose();
+    methodTypeController.dispose();
     purposeController.dispose();
     counselorController.dispose();
     descriptionController.dispose();
@@ -122,6 +140,8 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     final formattedDate =
         '${tomorrow.year}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
     dateController.text = formattedDate;
+    // Load initial time slots for default date
+    refreshAvailableTimeSlotsForDate(formattedDate);
     _safeNotifyListeners();
   }
 
@@ -187,6 +207,10 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
               !_hasApprovedAppointment &&
               !_hasPendingFollowUp) {
             await fetchCounselors();
+            // Refresh time slots for current date
+            if (dateController.text.isNotEmpty) {
+              await refreshAvailableTimeSlotsForDate(dateController.text);
+            }
           }
         } else {
           // If API returns error, show login message and disable form
@@ -406,6 +430,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     _dateError = null;
     _timeError = null;
     _consultationTypeError = null;
+    _methodTypeError = null;
     _purposeError = null;
     _counselorError = null;
 
@@ -445,6 +470,12 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
       isValid = false;
     }
 
+    // Validate method type
+    if (methodTypeController.text.isEmpty) {
+      _methodTypeError = 'Please select a method type.';
+      isValid = false;
+    }
+
     // Validate purpose
     if (purposeController.text.isEmpty) {
       _purposeError = 'Please select the purpose of your consultation.';
@@ -476,6 +507,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
         'preferredDate': dateController.text,
         'preferredTime': timeController.text,
         'consultationType': consultationTypeController.text,
+        'methodType': methodTypeController.text,
         'purpose': purposeController.text,
         'counselorPreference': counselorController.text.isEmpty
             ? 'No preference'
@@ -537,6 +569,7 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     _setMinimumDate();
     timeController.clear();
     consultationTypeController.clear();
+    methodTypeController.clear();
     purposeController.clear();
     counselorController.clear();
     descriptionController.clear();
@@ -552,6 +585,11 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     debugPrint(
       'Current appointment status - Pending: $_hasPendingAppointment, Approved: $_hasApprovedAppointment, Follow-up: $_hasPendingFollowUp',
     );
+    // When opening the calendar, fetch stats for the current month once
+    if (_isCalendarVisible) {
+      // Do not await here to keep toggle responsive
+      fetchCalendarStatsForMonth(_currentCalendarDate);
+    }
     _safeNotifyListeners();
   }
 
@@ -565,12 +603,267 @@ class ScheduleAppointmentViewModel extends ChangeNotifier {
     if (timeController.text.isNotEmpty) {
       fetchCounselorsByAvailability(date, timeController.text);
     }
+    refreshAvailableTimeSlotsForDate(date);
   }
 
   void onTimeChanged(String time) {
     if (dateController.text.isNotEmpty) {
       fetchCounselorsByAvailability(dateController.text, time);
     }
+  }
+
+  // ===== Time slots (30-min ranges) =====
+  Future<void> refreshAvailableTimeSlotsForDate(String dateStr) async {
+    try {
+      _isLoadingTimeSlots = true;
+      _availableTimeSlots = [];
+      _safeNotifyListeners();
+
+      // Derive weekday
+      final dayOfWeek = _getDayOfWeek(dateStr);
+
+      // Determine selected counselor (optional)
+      final String selectedCounselorId = counselorController.text;
+
+      // Determine selected consultation type (affects booked-time filtering)
+      final String selectedConsultationType = consultationTypeController.text;
+
+      final List<String> unionRanges = await _loadCounselorUnionRanges(
+        dayOfWeek: dayOfWeek,
+        counselorId: selectedCounselorId,
+      );
+
+      final List<String> bookedRanges = await _loadBookedRanges(
+        dateStr: dateStr,
+        counselorId: selectedCounselorId,
+        consultationType: selectedConsultationType,
+      );
+
+      final Set<String> bookedSet = bookedRanges.toSet();
+      final List<String> available = unionRanges
+          .where((r) => !bookedSet.contains(r))
+          .toList(growable: false);
+
+      _availableTimeSlots = available;
+    } catch (e) {
+      debugPrint('Error refreshing time slots: $e');
+      _availableTimeSlots = [];
+    } finally {
+      _isLoadingTimeSlots = false;
+      _safeNotifyListeners();
+    }
+  }
+
+  Future<List<String>> _loadCounselorUnionRanges({
+    required String dayOfWeek,
+    String? counselorId,
+  }) async {
+    try {
+      // If a specific counselor is selected (and not "No preference"), query their availability
+      if (counselorId != null &&
+          counselorId.isNotEmpty &&
+          counselorId.toLowerCase() != 'no preference') {
+        final uri = Uri.parse(
+          '${ApiConfig.currentBaseUrl}/counselor/profile/availability',
+        ).replace(queryParameters: {'counselorId': counselorId});
+
+        final resp = await _session.get(
+          uri.toString(),
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        );
+        if (resp.statusCode == 200) {
+          final data = json.decode(resp.body);
+          final List<dynamic> rows =
+              ((data?['availability'] ?? const {})[dayOfWeek] as List?) ?? [];
+          final List<String> slotStrings = rows
+              .map((r) => r?['time_scheduled'])
+              .where((t) => t != null && t.toString().isNotEmpty)
+              .map<String>((t) => t.toString())
+              .toList();
+          return _generateHalfHourRangeUnion(slotStrings);
+        }
+      }
+
+      // Else, union all counselors schedules for that day
+      final resp = await _session.get(
+        '${ApiConfig.currentBaseUrl}/student/get-counselor-schedules',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+      if (resp.statusCode == 200) {
+        final data = json.decode(resp.body);
+        final schedules = (data?['schedules'] ?? const {});
+        final List<dynamic> counselorsForDay =
+            (schedules[dayOfWeek] as List?) ?? [];
+        final List<String> slotStrings = <String>[];
+        for (final item in counselorsForDay) {
+          final String ts = (item?['time_scheduled'] ?? '').toString();
+          if (ts.isEmpty) continue;
+          for (final s in ts.split(',')) {
+            final v = s.trim();
+            if (v.isNotEmpty) slotStrings.add(v);
+          }
+        }
+        return _generateHalfHourRangeUnion(slotStrings);
+      }
+    } catch (e) {
+      debugPrint('Error loading counselor union ranges: $e');
+    }
+    return [];
+  }
+
+  Future<List<String>> _loadBookedRanges({
+    required String dateStr,
+    String? counselorId,
+    String? consultationType,
+  }) async {
+    try {
+      final uri =
+          Uri.parse(
+            '${ApiConfig.currentBaseUrl}/student/appointments/booked-times',
+          ).replace(
+            queryParameters: {
+              'date': dateStr,
+              if (counselorId != null &&
+                  counselorId.isNotEmpty &&
+                  counselorId.toLowerCase() != 'no preference')
+                'counselor_id': counselorId,
+              if (consultationType != null && consultationType.isNotEmpty)
+                'consultation_type': consultationType,
+            },
+          );
+
+      final resp = await _session.get(
+        uri.toString(),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+      if (resp.statusCode == 200) {
+        final data = json.decode(resp.body);
+        final List<dynamic> booked = (data?['booked'] as List?) ?? [];
+        return booked.map<String>((e) => e.toString()).toList(growable: false);
+      }
+    } catch (e) {
+      debugPrint('Error loading booked ranges: $e');
+    }
+    return [];
+  }
+
+  // Utilities for 12h parsing and generating half-hour ranges
+  int? _parseTime12ToMinutes(String t) {
+    final String str = t.trim();
+    final RegExp re = RegExp(
+      r'^(\d{1,2}):(\d{2})\s*(AM|PM) ?$',
+      caseSensitive: false,
+    );
+    final Match? m = re.firstMatch(str);
+    if (m == null) return null;
+    int h = int.parse(m.group(1)!);
+    final int min = int.parse(m.group(2)!);
+    final String ampm = (m.group(3)!).toUpperCase();
+    if (h == 12) h = 0;
+    if (ampm == 'PM') h += 12;
+    return h * 60 + min;
+  }
+
+  String _formatMinutesTo12h(int total) {
+    final int minutes = total % 60;
+    final int h24 = (total ~/ 60) % 24;
+    final String ampm = h24 >= 12 ? 'PM' : 'AM';
+    int h12 = h24 % 12;
+    if (h12 == 0) h12 = 12;
+    final String mm = minutes.toString().padLeft(2, '0');
+    return '$h12:$mm $ampm';
+  }
+
+  List<String> _generateHalfHourRangeUnion(List<String> slotStrings) {
+    final Set<String> set = <String>{};
+    for (final s in slotStrings) {
+      final String str = s.trim();
+      if (str.isEmpty) continue;
+      if (str.contains('-')) {
+        final List<String> parts = str.split('-');
+        if (parts.length != 2) continue;
+        final int? start = _parseTime12ToMinutes(parts[0].trim());
+        final int? end = _parseTime12ToMinutes(parts[1].trim());
+        if (start == null || end == null || end <= start) continue;
+        for (int t = start; t + 30 <= end; t += 30) {
+          final String from = _formatMinutesTo12h(t);
+          final String to = _formatMinutesTo12h(t + 30);
+          set.add('$from - $to');
+        }
+      }
+    }
+    final List<String> arr = set.toList(growable: false);
+    arr.sort((a, b) {
+      final String af = a.split('-').first.trim();
+      final String bf = b.split('-').first.trim();
+      final int? am = _parseTime12ToMinutes(af);
+      final int? bm = _parseTime12ToMinutes(bf);
+      return (am ?? 0) - (bm ?? 0);
+    });
+    return arr;
+  }
+
+  // ===== Calendar daily stats =====
+  Future<void> fetchCalendarStatsForMonth(DateTime date) async {
+    try {
+      final String key =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      if (_calendarStatsCache.containsKey(key)) {
+        _currentMonthStats = _calendarStatsCache[key]!;
+        _safeNotifyListeners();
+        return;
+      }
+      final uri =
+          Uri.parse(
+            '${ApiConfig.currentBaseUrl}/student/calendar/daily-stats',
+          ).replace(
+            queryParameters: {
+              'year': date.year.toString(),
+              'month': date.month.toString(),
+            },
+          );
+      final resp = await _session.get(
+        uri.toString(),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+      if (resp.statusCode == 200) {
+        final data = json.decode(resp.body);
+        if (data?['status'] == 'success' && data?['stats'] is Map) {
+          final Map<String, dynamic> stats = Map<String, dynamic>.from(
+            data['stats'] as Map,
+          );
+          _calendarStatsCache[key] = stats;
+          _currentMonthStats = stats;
+        } else {
+          _currentMonthStats = {};
+        }
+      } else {
+        _currentMonthStats = {};
+      }
+    } catch (e) {
+      debugPrint('Error fetching calendar stats: $e');
+      _currentMonthStats = {};
+    } finally {
+      _safeNotifyListeners();
+    }
+  }
+
+  Map<String, dynamic>? getStatsForDate(DateTime date) {
+    final String iso =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return _currentMonthStats[iso] as Map<String, dynamic>?;
   }
 
   // Fetch counselor availability with time schedule for calendar modal

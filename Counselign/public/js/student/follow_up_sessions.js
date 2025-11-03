@@ -86,20 +86,15 @@ function displayCompletedAppointments(appointments, searchTerm = '') {
 
     if (!container) return;
 
-    // Separate pending and non-pending appointments
+    // Identify appointments with pending follow-ups (but still show ALL completed appointments below)
     const pendingAppointments = appointments.filter(appointment => {
         const pendingCount = parseInt(appointment.pending_follow_up_count) || 0;
         return pendingCount > 0;
-    });
-    const regularAppointments = appointments.filter(appointment => {
-        const pendingCount = parseInt(appointment.pending_follow_up_count) || 0;
-        return pendingCount === 0;
     });
     
     // Debug logging
     SecureLogger.info('Total appointments:', appointments.length);
     SecureLogger.info('Pending appointments:', pendingAppointments.length);
-    SecureLogger.info('Regular appointments:', regularAppointments.length);
     SecureLogger.info('Appointments data:', appointments);
 
     // Handle pending appointments section
@@ -110,8 +105,8 @@ function displayCompletedAppointments(appointments, searchTerm = '') {
         pendingSection.style.display = 'none';
     }
 
-    // Handle regular appointments
-    if (regularAppointments.length === 0) {
+    // Show all completed appointments regardless of pending status
+    if (appointments.length === 0) {
         container.style.display = 'none';
         if (searchTerm) {
             noDataMessage.style.display = 'none';
@@ -124,7 +119,7 @@ function displayCompletedAppointments(appointments, searchTerm = '') {
         container.style.display = 'grid';
         noDataMessage.style.display = 'none';
         noSearchResults.style.display = 'none';
-        container.innerHTML = regularAppointments.map(appointment => createAppointmentCard(appointment)).join('');
+        container.innerHTML = appointments.map(appointment => createAppointmentCard(appointment)).join('');
     }
 }
 
@@ -240,10 +235,20 @@ function displayFollowUpSessions(sessions) {
         return;
     }
 
+    // Sort sessions: pending first, then by sequence number
+    const sortedSessions = [...sessions].sort((a, b) => {
+        // Pending status comes first
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        
+        // Otherwise sort by sequence number
+        return a.follow_up_sequence - b.follow_up_sequence;
+    });
+
     container.style.display = 'grid';
     noDataMessage.style.display = 'none';
 
-    container.innerHTML = sessions.map(session => `
+    container.innerHTML = sortedSessions.map(session => `
         <div class="follow-up-session-card">
             <div class="session-header">
                 <div class="session-sequence">Follow-up #${session.follow_up_sequence}</div>

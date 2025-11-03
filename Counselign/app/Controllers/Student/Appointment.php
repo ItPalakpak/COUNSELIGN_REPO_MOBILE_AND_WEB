@@ -419,6 +419,7 @@ class Appointment extends BaseController
         if ($this->request->getMethod() === 'POST') {
             $preferred_date = trim($this->request->getPost('preferredDate'));
             $preferred_time = trim($this->request->getPost('preferredTime'));
+            $method_type = trim($this->request->getPost('methodType'));
             $consultation_type = trim($this->request->getPost('consultationType'));
             $purpose = trim($this->request->getPost('purpose'));
             $counselor_preference = trim($this->request->getPost('counselorPreference') ?? 'No preference');
@@ -436,23 +437,98 @@ class Appointment extends BaseController
                 $response['message'] = 'Please select a consultation type.';
                 return $this->response->setJSON($response);
             }
+            if (empty($method_type)) {
+                $response['message'] = 'Please select a method type.';
+                return $this->response->setJSON($response);
+            }
             if (empty($purpose)) {
                 $response['message'] = 'Please select the purpose of your consultation.';
                 return $this->response->setJSON($response);
             }
 
             $db = \Config\Database::connect();
-            $builder = $db->table('appointments');
-            $builder->where([
-                'preferred_date' => $preferred_date,
-                'preferred_time' => $preferred_time
-            ]);
-            $builder->where('status', 'approved');
-            $exists = $builder->countAllResults();
 
-            if ($exists > 0) {
-                $response['message'] = 'This time slot is already booked. Please select a different time or date.';
-                return $this->response->setJSON($response);
+            // Check for conflicts based on consultation type
+            if ($consultation_type === 'Individual Consultation') {
+                // For individual consultation: check if time slot is already booked
+                // Individual consultations cannot book times with:
+                // 1. ANY individual consultation (pending or approved)
+                // 2. ANY group consultation (even if slots available)
+                
+                // Check for individual consultations
+                $builder = $db->table('appointments');
+                $builder->where([
+                    'preferred_date' => $preferred_date,
+                    'preferred_time' => $preferred_time
+                ]);
+                if ($counselor_preference !== 'No preference') {
+                    $builder->where('counselor_preference', $counselor_preference);
+                }
+                $builder->whereIn('status', ['pending', 'approved']);
+                $builder->where('consultation_type', 'Individual Consultation');
+                $hasIndividual = $builder->countAllResults() > 0;
+
+                // Check for group consultations
+                $groupBuilder = $db->table('appointments');
+                $groupBuilder->where([
+                    'preferred_date' => $preferred_date,
+                    'preferred_time' => $preferred_time
+                ]);
+                if ($counselor_preference !== 'No preference') {
+                    $groupBuilder->where('counselor_preference', $counselor_preference);
+                }
+                $groupBuilder->whereIn('status', ['pending', 'approved']);
+                $groupBuilder->where('consultation_type', 'Group Consultation');
+                $hasGroup = $groupBuilder->countAllResults() > 0;
+
+                if ($hasIndividual) {
+                    $response['message'] = 'This time slot is already booked for individual consultation. Please select a different time or date.';
+                    return $this->response->setJSON($response);
+                }
+                if ($hasGroup) {
+                    $response['message'] = 'This time slot has group consultation bookings. Individual consultations cannot book time slots reserved for group consultations. Please select a different time or date.';
+                    return $this->response->setJSON($response);
+                }
+            } else if ($consultation_type === 'Group Consultation') {
+                // For group consultation: check if there are available slots (max 5)
+                // Group consultations cannot book times with:
+                // 1. ANY individual consultation (individual blocks the slot)
+                // 2. 5+ group consultations (full capacity)
+                
+                // Check for individual consultations (blocks group)
+                $individualBuilder = $db->table('appointments');
+                $individualBuilder->where([
+                    'preferred_date' => $preferred_date,
+                    'preferred_time' => $preferred_time
+                ]);
+                if ($counselor_preference !== 'No preference') {
+                    $individualBuilder->where('counselor_preference', $counselor_preference);
+                }
+                $individualBuilder->whereIn('status', ['pending', 'approved']);
+                $individualBuilder->where('consultation_type', 'Individual Consultation');
+                $hasIndividual = $individualBuilder->countAllResults() > 0;
+
+                // Check for group consultation capacity
+                $groupBuilder = $db->table('appointments');
+                $groupBuilder->where([
+                    'preferred_date' => $preferred_date,
+                    'preferred_time' => $preferred_time
+                ]);
+                if ($counselor_preference !== 'No preference') {
+                    $groupBuilder->where('counselor_preference', $counselor_preference);
+                }
+                $groupBuilder->whereIn('status', ['pending', 'approved']);
+                $groupBuilder->where('consultation_type', 'Group Consultation');
+                $groupCount = $groupBuilder->countAllResults();
+
+                if ($hasIndividual) {
+                    $response['message'] = 'This time slot is already booked for individual consultation. Please select a different time or date.';
+                    return $this->response->setJSON($response);
+                }
+                if ($groupCount >= 5) {
+                    $response['message'] = 'Group consultation slots are full for this time slot (maximum 5 participants). Please select a different time or date.';
+                    return $this->response->setJSON($response);
+                }
             }
 
             log_message('error', 'Trying to insert appointment for user_id: ' . $user_id);
@@ -461,6 +537,7 @@ class Appointment extends BaseController
                 'student_id' => $user_id,
                 'preferred_date' => $preferred_date,
                 'preferred_time' => $preferred_time,
+                'method_type' => $method_type,
                 'consultation_type' => $consultation_type,
                 'purpose' => $purpose,
                 'counselor_preference' => $counselor_preference,
@@ -468,21 +545,39 @@ class Appointment extends BaseController
                 'status' => 'pending'
             ];
 
-            if ($builder->insert($data)) {
-                // Update last_activity for creating appointment
-                $activityHelper = new UserActivityHelper();
-                $activityHelper->updateStudentActivity($user_id, 'create_appointment');
+            try {
+                $insertBuilder = $db->table('appointments');
+                if ($insertBuilder->insert($data)) {
+                    // Update last_activity for creating appointment
+                    $activityHelper = new UserActivityHelper();
+                    $activityHelper->updateStudentActivity($user_id, 'create_appointment');
 
-                // Send email notification to counselor if counselor preference is selected
-                if (!empty($counselor_preference) && $counselor_preference !== 'No preference') {
-                    $this->sendAppointmentNotificationToCounselor($counselor_preference, $data, $user_id, 'booking');
+                    // Send email notification to counselor if counselor preference is selected
+                    if (!empty($counselor_preference) && $counselor_preference !== 'No preference') {
+                        $this->sendAppointmentNotificationToCounselor($counselor_preference, $data, $user_id, 'booking');
+                    }
+
+                    $response['status'] = 'success';
+                    $response['message'] = 'Your appointment has been scheduled successfully. Please wait for admin approval.';
+                    $response['appointment_id'] = $db->insertID();
+                } else {
+                    $error = $db->error();
+                    log_message('error', 'Database insert failed: ' . json_encode($error));
+                    $response['message'] = 'Database error. Please try again later.';
                 }
-
-                $response['status'] = 'success';
-                $response['message'] = 'Your appointment has been scheduled successfully. Please wait for admin approval.';
-                $response['appointment_id'] = $db->insertID();
-            } else {
-                $response['message'] = 'Database error. Please try again later.';
+            } catch (\Exception $e) {
+                log_message('error', 'Exception during appointment insert: ' . $e->getMessage());
+                log_message('error', 'Exception trace: ' . $e->getTraceAsString());
+                
+                // Check if it's a trigger error about double booking
+                $errorMessage = $e->getMessage();
+                if (strpos($errorMessage, 'Counselor already has an appointment') !== false) {
+                    // This is from the prevent_double_booking trigger
+                    // The trigger doesn't account for consultation_type, so we need to handle it in PHP
+                    $response['message'] = 'This time slot conflicts with an existing appointment. Please select a different time or date.';
+                } else {
+                    $response['message'] = 'Database error: ' . $errorMessage;
+                }
             }
             return $this->response->setJSON($response);
         } else {
@@ -519,6 +614,229 @@ class Appointment extends BaseController
         ]);
     }
 
+    /**
+     * Check group consultation slot availability
+     * GET params: date (YYYY-MM-DD), time, counselor_id (optional)
+     */
+    public function checkGroupSlotAvailability()
+    {
+        try {
+            $session = session();
+            if (!$session->get('logged_in') || $session->get('role') !== 'student') {
+                return $this->response->setStatusCode(401)
+                    ->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+            }
+
+            $date = trim((string) $this->request->getGet('date'));
+            $time = trim((string) $this->request->getGet('time'));
+            $counselorId = trim((string) $this->request->getGet('counselor_id'));
+
+            if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['status' => 'error', 'message' => 'Invalid or missing date']);
+            }
+            if ($time === '') {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['status' => 'error', 'message' => 'Invalid or missing time']);
+            }
+
+            $db = \Config\Database::connect();
+            $builder = $db->table('appointments')
+                ->where('preferred_date', $date)
+                ->where('preferred_time', $time)
+                ->where('consultation_type', 'Group Consultation')
+                ->whereIn('status', ['pending', 'approved']);
+
+            if ($counselorId !== '' && $counselorId !== 'No preference') {
+                $builder->where('counselor_preference', $counselorId);
+            }
+
+            $bookedSlots = $builder->countAllResults();
+            $availableSlots = 5 - $bookedSlots;
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'date' => $date,
+                'time' => $time,
+                'bookedSlots' => $bookedSlots,
+                'availableSlots' => max(0, $availableSlots),
+                'isAvailable' => $availableSlots > 0
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error checking group slot availability: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON(['status' => 'error', 'message' => 'Server error']);
+        }
+    }
+
+    /**
+     * Return approved booked time ranges for a given date.
+     * GET params: date (YYYY-MM-DD), consultation_type (optional), counselor_id (optional)
+     * 
+     * Logic:
+     * - For Individual Consultation: returns times that have individual consultations booked (blocks those times completely)
+     * - For Group Consultation: returns times that have 5+ group consultations (only blocks when full capacity reached)
+     */
+    public function getBookedTimesForDate()
+    {
+        try {
+            $session = session();
+            if (!$session->get('logged_in') || $session->get('role') !== 'student') {
+                return $this->response->setStatusCode(401)
+                    ->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+            }
+
+            $date = trim((string) $this->request->getGet('date'));
+            $consultationType = trim((string) $this->request->getGet('consultation_type'));
+            $counselorId = trim((string) $this->request->getGet('counselor_id'));
+            
+            if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['status' => 'error', 'message' => 'Invalid or missing date']);
+            }
+
+            $db = \Config\Database::connect();
+            $times = [];
+
+            // Handle based on consultation type
+            if ($consultationType === 'Individual Consultation') {
+                // For Individual: block times that have:
+                // 1. ANY individual consultation (pending or approved) - individual blocks the slot
+                // 2. ANY group consultation (even if slots available) - individual cannot see group slots
+                
+                // Get times with individual consultations
+                $individualBuilder = $db->table('appointments')
+                    ->select('preferred_time')
+                    ->where('preferred_date', $date)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('consultation_type', 'Individual Consultation');
+                
+                if ($counselorId !== '' && $counselorId !== 'No preference') {
+                    $individualBuilder->where('counselor_preference', $counselorId);
+                }
+                $individualRows = $individualBuilder->get()->getResultArray();
+                
+                // Get times with ANY group consultations (even 1 group booking blocks it for individual)
+                $groupBuilder = $db->table('appointments')
+                    ->select('preferred_time')
+                    ->where('preferred_date', $date)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('consultation_type', 'Group Consultation');
+                
+                if ($counselorId !== '' && $counselorId !== 'No preference') {
+                    $groupBuilder->where('counselor_preference', $counselorId);
+                }
+                $groupRows = $groupBuilder->get()->getResultArray();
+                
+                // Combine both - individual cannot see times with group consultations
+                foreach ($individualRows as $r) {
+                    $t = trim((string) ($r['preferred_time'] ?? ''));
+                    if ($t !== '') { $times[] = $t; }
+                }
+                foreach ($groupRows as $r) {
+                    $t = trim((string) ($r['preferred_time'] ?? ''));
+                    if ($t !== '') { $times[] = $t; }
+                }
+                
+            } else if ($consultationType === 'Group Consultation') {
+                // For Group: block times that have:
+                // 1. ANY individual consultation - individual blocks the slot
+                // 2. 5+ group consultations (full capacity) - group blocks when full
+                
+                // Get times with individual consultations (blocks group)
+                $individualBuilder = $db->table('appointments')
+                    ->select('preferred_time')
+                    ->where('preferred_date', $date)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('consultation_type', 'Individual Consultation');
+                
+                if ($counselorId !== '' && $counselorId !== 'No preference') {
+                    $individualBuilder->where('counselor_preference', $counselorId);
+                }
+                $individualRows = $individualBuilder->get()->getResultArray();
+                
+                // Get times with group consultations to count capacity
+                $groupBuilder = $db->table('appointments')
+                    ->select('preferred_time')
+                    ->where('preferred_date', $date)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('consultation_type', 'Group Consultation');
+                
+                if ($counselorId !== '' && $counselorId !== 'No preference') {
+                    $groupBuilder->where('counselor_preference', $counselorId);
+                }
+                $groupRows = $groupBuilder->get()->getResultArray();
+                
+                // Add individual consultation times (always block group)
+                foreach ($individualRows as $r) {
+                    $t = trim((string) ($r['preferred_time'] ?? ''));
+                    if ($t !== '') { $times[] = $t; }
+                }
+                
+                // Count group consultations per time slot
+                $groupCountByTime = [];
+                foreach ($groupRows as $r) {
+                    $t = trim((string) ($r['preferred_time'] ?? ''));
+                    if ($t !== '') {
+                        if (!isset($groupCountByTime[$t])) {
+                            $groupCountByTime[$t] = 0;
+                        }
+                        $groupCountByTime[$t]++;
+                    }
+                }
+                
+                // Only add times that have 5 or more group bookings (full capacity)
+                foreach ($groupCountByTime as $time => $count) {
+                    if ($count >= 5) {
+                        $times[] = $time;
+                    }
+                }
+                
+            } else {
+                // No consultation type specified - use old logic (backward compatibility)
+                $builder = $db->table('appointments')
+                    ->select('preferred_time')
+                    ->where('preferred_date', $date)
+                    ->where('status', 'approved');
+                if ($counselorId !== '' && $counselorId !== 'No preference') {
+                    $builder->where('counselor_preference', $counselorId);
+                }
+                $rows = $builder->get()->getResultArray();
+                foreach ($rows as $r) {
+                    $t = trim((string) ($r['preferred_time'] ?? ''));
+                    if ($t !== '') { $times[] = $t; }
+                }
+            }
+
+            // Include counselor follow-up sessions that should block availability (always blocks regardless of consultation type)
+            $fuBuilder = $db->table('follow_up_appointments')
+                ->select('preferred_time')
+                ->where('preferred_date', $date)
+                ->whereIn('status', ['pending','approved']);
+            if ($counselorId !== '' && $counselorId !== 'No preference') {
+                $fuBuilder->where('counselor_id', $counselorId);
+            }
+            $fuRows = $fuBuilder->get()->getResultArray();
+            foreach ($fuRows as $r) {
+                $t = trim((string) ($r['preferred_time'] ?? ''));
+                if ($t !== '') { $times[] = $t; }
+            }
+            
+            // Return unique values
+            $times = array_values(array_unique($times));
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'date' => $date,
+                'booked' => $times
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error in getBookedTimesForDate: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON(['status' => 'error', 'message' => 'Server error']);
+        }
+    }
+
     public function viewAppointments()
     {
         // Check if user is logged in and is a student
@@ -541,6 +859,7 @@ class Appointment extends BaseController
         $updateData = [
             'preferred_date' => $data['preferred_date'] ?? null,
             'preferred_time' => $data['preferred_time'] ?? null,
+            'method_type' => $data['method_type'] ?? null,
             'consultation_type' => $data['consultation_type'] ?? null,
             'purpose' => $data['purpose'] ?? null,
             'counselor_preference' => $data['counselor_preference'] ?? null,
@@ -871,10 +1190,21 @@ class Appointment extends BaseController
                 }
             }
             
-            // Sort counselors alphabetically within each day
+            // Sort counselors by earliest scheduled time (early to latest) within each day
             foreach ($schedulesByDay as $day => $counselors) {
                 usort($schedulesByDay[$day], function($a, $b) {
-                    return strcmp($a['counselor_name'], $b['counselor_name']);
+                    // Get earliest time from time_scheduled string for comparison
+                    $timeA = $this->getEarliestTimeFromSchedule($a['time_scheduled']);
+                    $timeB = $this->getEarliestTimeFromSchedule($b['time_scheduled']);
+                    
+                    // Compare times (null times go to the end)
+                    if ($timeA === null && $timeB === null) {
+                        return strcmp($a['counselor_name'], $b['counselor_name']);
+                    }
+                    if ($timeA === null) return 1;
+                    if ($timeB === null) return -1;
+                    
+                    return $timeA - $timeB;
                 });
             }
             
@@ -889,6 +1219,169 @@ class Appointment extends BaseController
                 'status' => 'error',
                 'message' => 'Error fetching counselor schedules'
             ]);
+        }
+    }
+
+    /**
+     * Return approved appointment counts and fully-booked flag per day for a given month.
+     * Query params: year (YYYY), month (1-12)
+     */
+    public function getCalendarDailyStats()
+    {
+        try {
+            // Require logged in student
+            $session = session();
+            if (!$session->get('logged_in') || $session->get('role') !== 'student') {
+                return $this->response->setStatusCode(401)
+                    ->setJSON([
+                        'status' => 'error',
+                        'message' => 'Unauthorized'
+                    ]);
+            }
+
+            $year = (int) ($this->request->getGet('year') ?? date('Y'));
+            $month = (int) ($this->request->getGet('month') ?? date('n'));
+            if ($year < 1970 || $month < 1 || $month > 12) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['status' => 'error', 'message' => 'Invalid year or month']);
+            }
+
+            $firstDay = sprintf('%04d-%02d-01', $year, $month);
+            $daysInMonth = (int) date('t', strtotime($firstDay));
+
+            $db = \Config\Database::connect();
+
+            // Fetch approved appointments counts grouped by date for the month
+            $appointments = $db->table('appointments')
+                ->select('preferred_date, COUNT(*) as cnt')
+                ->where('status', 'approved')
+                ->where('preferred_date >=', $firstDay)
+                ->where('preferred_date <=', sprintf('%04d-%02d-%02d', $year, $month, $daysInMonth))
+                ->groupBy('preferred_date')
+                ->get()->getResultArray();
+
+            // Fetch counselor follow-up sessions (pending/approved) grouped by date for the month
+            $followUps = $db->table('follow_up_appointments')
+                ->select('preferred_date, COUNT(*) as cnt')
+                ->whereIn('status', ['pending', 'approved'])
+                ->where('preferred_date >=', $firstDay)
+                ->where('preferred_date <=', sprintf('%04d-%02d-%02d', $year, $month, $daysInMonth))
+                ->groupBy('preferred_date')
+                ->get()->getResultArray();
+
+            $countByDate = [];
+            foreach ($appointments as $row) {
+                $countByDate[$row['preferred_date']] = (int) $row['cnt'];
+            }
+            foreach ($followUps as $row) {
+                $date = $row['preferred_date'];
+                $cnt = (int) $row['cnt'];
+                if (!isset($countByDate[$date])) {
+                    $countByDate[$date] = 0;
+                }
+                $countByDate[$date] += $cnt;
+            }
+
+            // Preload counselor availability for weekdays used in the month
+            $weekdayMap = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
+            $weekdaysInMonth = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $ts = strtotime(sprintf('%04d-%02d-%02d', $year, $month, $d));
+                $weekdaysInMonth[$weekdayMap[(int) date('w', $ts)]] = true;
+            }
+            $weekdayList = array_keys($weekdaysInMonth);
+
+            $availabilityByWeekday = [];
+            if (!empty($weekdayList)) {
+                $availabilityRows = $db->table('counselor_availability ca')
+                    ->select('ca.available_days, ca.time_scheduled')
+                    ->whereIn('ca.available_days', $weekdayList)
+                    ->get()->getResultArray();
+                foreach ($availabilityRows as $r) {
+                    $day = trim((string) $r['available_days']);
+                    if (!isset($availabilityByWeekday[$day])) {
+                        $availabilityByWeekday[$day] = [];
+                    }
+                    $availabilityByWeekday[$day][] = (string) $r['time_scheduled'];
+                }
+            }
+
+            // Build stats per date
+            $stats = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                $dayName = $weekdayMap[(int) date('w', strtotime($dateStr))];
+                $count = $countByDate[$dateStr] ?? 0;
+
+                // Determine available capacity in minutes across all counselors for this weekday
+                $availableMinutes = 0;
+                if (!empty($availabilityByWeekday[$dayName])) {
+                    foreach ($availabilityByWeekday[$dayName] as $slotStr) {
+                        $slotStr = (string) $slotStr;
+                        if ($slotStr === '' || strtolower(trim($slotStr)) === 'null') {
+                            // Unbounded availability cannot be quantified — treat as very large capacity
+                            // To avoid marking fully booked incorrectly, set capacity to PHP_INT_MAX
+                            $availableMinutes = PHP_INT_MAX;
+                            break;
+                        }
+                        // Multiple ranges separated by commas
+                        $parts = array_filter(array_map('trim', explode(',', $slotStr)), function ($p) { return $p !== ''; });
+                        foreach ($parts as $range) {
+                            $pieces = array_map('trim', explode('-', $range));
+                            if (count($pieces) === 2) {
+                                $startMin = $this->toMinutes($pieces[0]);
+                                $endMin = $this->toMinutes($pieces[1]);
+                                if ($startMin !== null && $endMin !== null && $endMin > $startMin) {
+                                    $availableMinutes += ($endMin - $startMin);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Compute booked minutes for approved appointments on this date
+                $bookedMinutes = 0;
+                if ($count > 0) {
+                    $apptRows = $db->table('appointments')
+                        ->select('preferred_time')
+                        ->where('status', 'approved')
+                        ->where('preferred_date', $dateStr)
+                        ->get()->getResultArray();
+                    foreach ($apptRows as $ar) {
+                        $timeRange = (string) ($ar['preferred_time'] ?? '');
+                        $parts = array_map('trim', explode('-', $timeRange));
+                        if (count($parts) === 2) {
+                            $s = $this->toMinutes($parts[0]);
+                            $e = $this->toMinutes($parts[1]);
+                            if ($s !== null && $e !== null && $e > $s) {
+                                $bookedMinutes += ($e - $s);
+                            }
+                        }
+                    }
+                }
+
+                $fullyBooked = ($availableMinutes > 0 && $availableMinutes !== PHP_INT_MAX) ? ($bookedMinutes >= $availableMinutes) : false;
+                // Only include badgeCount if >0 as per requirement
+                $stats[$dateStr] = [
+                    'count' => $count,
+                    'fullyBooked' => $fullyBooked
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'year' => $year,
+                'month' => $month,
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error in getCalendarDailyStats: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Error fetching calendar stats'
+                ]);
         }
     }
 
@@ -1043,6 +1536,51 @@ class Appointment extends BaseController
             log_message('error', 'Error sending appointment cancellation notification: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Get the earliest time in minutes from a time_scheduled string
+     * Handles formats like:
+     * - "8:00 AM - 9:00 AM"
+     * - "8:00 AM - 9:00 AM, 2:00 PM - 3:00 PM"
+     * - "08:00-09:00"
+     * 
+     * @param string|null $timeScheduled The time scheduled string
+     * @return int|null Returns minutes since midnight, or null if invalid
+     */
+    private function getEarliestTimeFromSchedule(?string $timeScheduled): ?int
+    {
+        if (empty($timeScheduled)) {
+            return null;
+        }
+
+        $earliestTime = null;
+        
+        // Split by comma to handle multiple time ranges
+        $timeRanges = explode(',', $timeScheduled);
+        
+        foreach ($timeRanges as $range) {
+            $range = trim($range);
+            if (empty($range)) {
+                continue;
+            }
+            
+            // Split by dash to get start and end times
+            $parts = explode('-', $range);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            
+            $startTime = trim($parts[0]);
+            $timeInMinutes = $this->toMinutes($startTime);
+            
+            // Track the earliest time found
+            if ($timeInMinutes !== null) {
+                if ($earliestTime === null || $timeInMinutes < $earliestTime) {
+                    $earliestTime = $timeInMinutes;
+                }
+            }
+        }
+        
+        return $earliestTime;
+    }
 }
-
-

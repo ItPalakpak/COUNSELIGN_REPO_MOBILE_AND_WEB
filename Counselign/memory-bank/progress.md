@@ -1,15 +1,3 @@
-- 2025-10-29: Fixed password reset code persistence when input is email
-  - Updated `App\Controllers\ForgotPassword::sendCode` to resolve `user_id` from email and save into `password_resets`
-  - Added alias endpoint `forgot-password/resend-code` routed to `ForgotPassword::resendCode` (delegates to `sendCode`)
-  - Deletes existing tokens for the same `user_id` before inserting a new one
-  - Prevents DB error: `Data too long for column 'user_id'` and false "Invalid or expired code" during verification
-  - No linter errors introduced
-- Done (Oct 29, 2025): Counselor signup flow
-  - Added Counselor Info modal in `app/Views/landing.php`
-  - Updated `public/js/landing.js` to branch counselor vs student signup
-  - Added AJAX submission to `counselor/save-basic-info` and improved unverified-login UX
-  - Route present in `app/Config/Routes.php`
-
 - **COMPLETED**: Comprehensive Last Activity Tracking Implementation
   - **Feature**: Implemented comprehensive last_activity tracking across all student and counselor activities
   - **Functionality**: Centralized UserActivityHelper class for consistent activity tracking
@@ -46,6 +34,12 @@
     - Type-safe coding with clear variable names and proper error handling
     - No ambiguous or spaghetti code patterns
     - Maintains existing functionality while adding comprehensive tracking
+
+ - **COMPLETED**: Added default admin account via seeder
+   - Implemented `app/Database/Seeds/AdminSeeder.php` to create/update admin user
+   - Admin details: user_id `0000000001`, role `admin`, email `systemsample13@gmail.com`
+   - Password stored as secure hash for "Counselign@2025"; user marked verified
+   - Executed seeder with `php spark db:seed AdminSeeder`
 
 - **COMPLETED**: Counselor Personal Info Default Values and INSERT Function
   - **Feature**: Fixed counselor personal info default values and INSERT functionality for first-time users

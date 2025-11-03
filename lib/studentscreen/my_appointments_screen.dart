@@ -192,9 +192,9 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                 ],
               ),
               const SizedBox(height: 15),
-              ...approvedAppointments.map(
-                (appointment) =>
-                    _buildApprovedAppointmentTicket(context, appointment),
+              _buildApprovedAppointmentTicket(
+                context,
+                approvedAppointments.first,
               ),
             ],
           ),
@@ -382,6 +382,16 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                 decoration: InputDecoration(
                   labelText: 'Filter by month',
                   prefixIcon: const Icon(Icons.calendar_today),
+                  suffixIcon: viewModel.dateFilter.isNotEmpty
+                      ? IconButton(
+                          tooltip: 'Clear month filter',
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            viewModel.dateFilterController.clear();
+                            viewModel.updateDateFilter('');
+                          },
+                        )
+                      : null,
                   border: const OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -530,6 +540,44 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
               // Form fields
               if (isMobile) ...[
                 _buildMobileFormField(
+                  label: 'Consultation Type',
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _getValidDropdownValue(
+                      appointment.consultationType,
+                      const ['Individual Consultation', 'Group Consultation'],
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Select consultation type',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Individual Consultation',
+                        child: Text('Individual Consultation'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Group Consultation',
+                        child: Text('Group Consultation'),
+                      ),
+                    ],
+                    onChanged: isEditing
+                        ? (value) {
+                            if (value != null) {
+                              viewModel
+                                      .getPendingController(
+                                        appointment.id,
+                                        'consultation_type',
+                                        '',
+                                      )
+                                      .text =
+                                  value;
+                            }
+                          }
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                _buildMobileFormField(
                   label: 'Preferred Date',
                   child: TextFormField(
                     controller: viewModel.getPendingController(
@@ -581,77 +629,132 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                 const SizedBox(height: 16),
                 _buildMobileFormField(
                   label: 'Preferred Time',
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _getValidDropdownValue(
-                      appointment.preferredTime,
-                      const [
-                        '8:00 AM - 9:00 AM',
-                        '9:00 AM - 10:00 AM',
-                        '10:00 AM - 11:00 AM',
-                        '1:00 PM - 2:00 PM',
-                        '2:00 PM - 3:00 PM',
-                        '3:00 PM - 4:00 PM',
-                        '4:00 PM - 5:00 PM',
-                      ],
-                    ),
-                    decoration: const InputDecoration(hintText: 'Select time'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: '8:00 AM - 9:00 AM',
-                        child: Text('8:00 AM - 9:00 AM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '9:00 AM - 10:00 AM',
-                        child: Text('9:00 AM - 10:00 AM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '10:00 AM - 11:00 AM',
-                        child: Text('10:00 AM - 11:00 AM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '1:00 PM - 2:00 PM',
-                        child: Text('1:00 PM - 2:00 PM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '2:00 PM - 3:00 PM',
-                        child: Text('2:00 PM - 3:00 PM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '3:00 PM - 4:00 PM',
-                        child: Text('3:00 PM - 4:00 PM'),
-                      ),
-                      DropdownMenuItem(
-                        value: '4:00 PM - 5:00 PM',
-                        child: Text('4:00 PM - 5:00 PM'),
-                      ),
-                    ],
-                    onChanged: isEditing
-                        ? (value) {
-                            if (value != null) {
-                              viewModel
-                                      .getPendingController(
+                  child: Builder(
+                    builder: (context) {
+                      final date = viewModel
+                          .getPendingController(
+                            appointment.id,
+                            'preferred_date',
+                            appointment.preferredDate ?? '',
+                          )
+                          .text;
+                      final selectedTime = viewModel
+                          .getPendingController(
+                            appointment.id,
+                            'preferred_time',
+                            appointment.preferredTime ?? '',
+                          )
+                          .text;
+                      final counselorId =
+                          appointment.counselorPreference ?? 'No preference';
+                      final consultationType = viewModel
+                          .getPendingController(
+                            appointment.id,
+                            'consultation_type',
+                            appointment.consultationType ?? '',
+                          )
+                          .text;
+                      return FutureBuilder<List<String>>(
+                        future: isEditing && date.isNotEmpty
+                            ? viewModel.fetchAvailableHalfHourSlots(
+                                date: date,
+                                counselorId: counselorId,
+                                consultationType: consultationType,
+                                selectedTime: selectedTime,
+                              )
+                            : Future.value(
+                                selectedTime.isNotEmpty
+                                    ? [selectedTime]
+                                    : <String>[],
+                              ),
+                        builder: (context, snapshot) {
+                          final items = snapshot.data ?? <String>[];
+                          return DropdownButtonFormField<String>(
+                            initialValue:
+                                items.contains(selectedTime) &&
+                                    selectedTime.isNotEmpty
+                                ? selectedTime
+                                : null,
+                            decoration: const InputDecoration(
+                              hintText: 'Select time',
+                            ),
+                            items: [
+                              const DropdownMenuItem(
+                                value: '',
+                                child: Text('Select a time slot'),
+                              ),
+                              ...items.map(
+                                (slot) => DropdownMenuItem(
+                                  value: slot,
+                                  child: Text(slot),
+                                ),
+                              ),
+                            ],
+                            onChanged: isEditing
+                                ? (value) {
+                                    if (value != null) {
+                                      viewModel
+                                              .getPendingController(
+                                                appointment.id,
+                                                'preferred_time',
+                                                '',
+                                              )
+                                              .text =
+                                          value;
+                                      viewModel.onPendingTimeChanged(
                                         appointment.id,
-                                        'preferred_time',
-                                        '',
-                                      )
-                                      .text =
-                                  value;
-                              // Trigger counselor filtering based on new time
-                              viewModel.onPendingTimeChanged(
-                                appointment.id,
-                                value,
-                              );
-                            }
-                          }
-                        : null,
+                                        value,
+                                      );
+                                    }
+                                  }
+                                : null,
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
+
                 _buildMobileFormField(
-                  label: 'Consultation Type',
+                  label: 'Counselor Preference',
+                  child: viewModel.isLoadingCounselors
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : DropdownButtonFormField<String>(
+                          initialValue: _getValidCounselorDropdownValue(
+                            appointment.counselorPreference,
+                            viewModel.counselors,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Select counselor',
+                          ),
+                          items: [
+                            const DropdownMenuItem(
+                              value: 'No preference',
+                              child: Text('No preference'),
+                            ),
+                            ...viewModel.counselors.map(
+                              (counselor) => DropdownMenuItem(
+                                value: counselor.counselorId.toString(),
+                                child: Text(counselor.displayName),
+                              ),
+                            ),
+                          ],
+                          onChanged: null,
+                        ),
+                ),
+                const SizedBox(height: 16),
+
+                _buildMobileFormField(
+                  label: 'Method Type',
                   child: DropdownButtonFormField<String>(
                     initialValue: _getValidDropdownValue(
-                      appointment.consultationType,
+                      appointment.methodType,
                       const [
                         'In-person',
                         'Online (Video)',
@@ -659,7 +762,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                       ],
                     ),
                     decoration: const InputDecoration(
-                      hintText: 'Select consultation type',
+                      hintText: 'Select a method type',
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -681,8 +784,8 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                               viewModel
                                       .getPendingController(
                                         appointment.id,
-                                        'consultation_type',
-                                        '',
+                                        'method_type',
+                                        appointment.methodType ?? '',
                                       )
                                       .text =
                                   value;
@@ -737,52 +840,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildMobileFormField(
-                  label: 'Counselor Preference',
-                  child: viewModel.isLoadingCounselors
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : DropdownButtonFormField<String>(
-                          initialValue: _getValidCounselorDropdownValue(
-                            appointment.counselorPreference,
-                            viewModel.counselors,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Select counselor',
-                          ),
-                          items: [
-                            const DropdownMenuItem(
-                              value: 'No preference',
-                              child: Text('No preference'),
-                            ),
-                            ...viewModel.counselors.map(
-                              (counselor) => DropdownMenuItem(
-                                value: counselor.counselorId.toString(),
-                                child: Text(counselor.displayName),
-                              ),
-                            ),
-                          ],
-                          onChanged: isEditing
-                              ? (value) {
-                                  if (value != null) {
-                                    viewModel
-                                            .getPendingController(
-                                              appointment.id,
-                                              'counselor_preference',
-                                              '',
-                                            )
-                                            .text =
-                                        value;
-                                  }
-                                }
-                              : null,
-                        ),
-                ),
-                const SizedBox(height: 16),
+
                 _buildMobileFormField(
                   label: 'Description (Optional)',
                   child: TextFormField(
@@ -857,71 +915,90 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                     Expanded(
                       child: _buildFormField(
                         label: 'Preferred Time',
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _getValidDropdownValue(
-                            appointment.preferredTime,
-                            const [
-                              '8:00 AM - 9:00 AM',
-                              '9:00 AM - 10:00 AM',
-                              '10:00 AM - 11:00 AM',
-                              '1:00 PM - 2:00 PM',
-                              '2:00 PM - 3:00 PM',
-                              '3:00 PM - 4:00 PM',
-                              '4:00 PM - 5:00 PM',
-                            ],
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Select time',
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: '8:00 AM - 9:00 AM',
-                              child: Text('8:00 AM - 9:00 AM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '9:00 AM - 10:00 AM',
-                              child: Text('9:00 AM - 10:00 AM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '10:00 AM - 11:00 AM',
-                              child: Text('10:00 AM - 11:00 AM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '1:00 PM - 2:00 PM',
-                              child: Text('1:00 PM - 2:00 PM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '2:00 PM - 3:00 PM',
-                              child: Text('2:00 PM - 3:00 PM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '3:00 PM - 4:00 PM',
-                              child: Text('3:00 PM - 4:00 PM'),
-                            ),
-                            DropdownMenuItem(
-                              value: '4:00 PM - 5:00 PM',
-                              child: Text('4:00 PM - 5:00 PM'),
-                            ),
-                          ],
-                          onChanged: isEditing
-                              ? (value) {
-                                  if (value != null) {
-                                    viewModel
-                                            .getPendingController(
+                        child: Builder(
+                          builder: (context) {
+                            final date = viewModel
+                                .getPendingController(
+                                  appointment.id,
+                                  'preferred_date',
+                                  appointment.preferredDate ?? '',
+                                )
+                                .text;
+                            final selectedTime = viewModel
+                                .getPendingController(
+                                  appointment.id,
+                                  'preferred_time',
+                                  appointment.preferredTime ?? '',
+                                )
+                                .text;
+                            final counselorId =
+                                appointment.counselorPreference ??
+                                'No preference';
+                            final consultationType = viewModel
+                                .getPendingController(
+                                  appointment.id,
+                                  'consultation_type',
+                                  appointment.consultationType ?? '',
+                                )
+                                .text;
+                            return FutureBuilder<List<String>>(
+                              future: isEditing && date.isNotEmpty
+                                  ? viewModel.fetchAvailableHalfHourSlots(
+                                      date: date,
+                                      counselorId: counselorId,
+                                      consultationType: consultationType,
+                                      selectedTime: selectedTime,
+                                    )
+                                  : Future.value(
+                                      selectedTime.isNotEmpty
+                                          ? [selectedTime]
+                                          : <String>[],
+                                    ),
+                              builder: (context, snapshot) {
+                                final items = snapshot.data ?? <String>[];
+                                return DropdownButtonFormField<String>(
+                                  initialValue:
+                                      items.contains(selectedTime) &&
+                                          selectedTime.isNotEmpty
+                                      ? selectedTime
+                                      : null,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Select time',
+                                  ),
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: '',
+                                      child: Text('Select a time slot'),
+                                    ),
+                                    ...items.map(
+                                      (slot) => DropdownMenuItem(
+                                        value: slot,
+                                        child: Text(slot),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: isEditing
+                                      ? (value) {
+                                          if (value != null) {
+                                            viewModel
+                                                    .getPendingController(
+                                                      appointment.id,
+                                                      'preferred_time',
+                                                      '',
+                                                    )
+                                                    .text =
+                                                value;
+                                            viewModel.onPendingTimeChanged(
                                               appointment.id,
-                                              'preferred_time',
-                                              '',
-                                            )
-                                            .text =
-                                        value;
-                                    // Trigger counselor filtering based on new time
-                                    viewModel.onPendingTimeChanged(
-                                      appointment.id,
-                                      value,
-                                    );
-                                  }
-                                }
-                              : null,
+                                              value,
+                                            );
+                                          }
+                                        }
+                                      : null,
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -967,6 +1044,53 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                                               appointment.id,
                                               'consultation_type',
                                               '',
+                                            )
+                                            .text =
+                                        value;
+                                  }
+                                }
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildFormField(
+                        label: 'Method Type',
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _getValidDropdownValue(
+                            appointment.methodType,
+                            const [
+                              'In-person',
+                              'Online (Video)',
+                              'Online (Audio only)',
+                            ],
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Select a method type',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'In-person',
+                              child: Text('In-person'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Online (Video)',
+                              child: Text('Online (Video)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Online (Audio only)',
+                              child: Text('Online (Audio only)'),
+                            ),
+                          ],
+                          onChanged: isEditing
+                              ? (value) {
+                                  if (value != null) {
+                                    viewModel
+                                            .getPendingController(
+                                              appointment.id,
+                                              'method_type',
+                                              appointment.methodType ?? '',
                                             )
                                             .text =
                                         value;
@@ -1058,20 +1182,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                                     ),
                                   ),
                                 ],
-                                onChanged: isEditing
-                                    ? (value) {
-                                        if (value != null) {
-                                          viewModel
-                                                  .getPendingController(
-                                                    appointment.id,
-                                                    'counselor_preference',
-                                                    '',
-                                                  )
-                                                  .text =
-                                              value;
-                                        }
-                                      }
-                                    : null,
+                                onChanged: null,
                               ),
                       ),
                     ),
@@ -1402,6 +1513,11 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
         'consultation_type',
         appointment.consultationType ?? '',
       );
+      final methodTypeController = _viewModel.getPendingController(
+        appointment.id,
+        'method_type',
+        appointment.methodType ?? '',
+      );
       final purposeController = _viewModel.getPendingController(
         appointment.id,
         'purpose',
@@ -1462,6 +1578,18 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
         return;
       }
 
+      if (methodTypeController.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a method type'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       if (counselorPreferenceController.text.trim().isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1478,6 +1606,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
         'preferred_date': dateController.text,
         'preferred_time': timeController.text,
         'consultation_type': consultationTypeController.text,
+        'method_type': methodTypeController.text,
         'purpose': purposeController.text,
         'counselor_preference': counselorPreferenceController.text,
         'description': _viewModel
@@ -1543,6 +1672,14 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                     viewModel.currentCalendarDate.month - 1,
                   );
                   viewModel.setCalendarDate(newDate);
+                  // Load month stats when navigating months
+                  try {
+                    // ignore: invalid_use_of_protected_member
+                    // optional if implemented in view model
+                    // dynamic call is not allowed; rely on method presence
+                    // so we call directly; if missing, this will be a compile error
+                    viewModel.fetchCalendarStatsForMonth(newDate);
+                  } catch (_) {}
                 },
                 icon: const Icon(Icons.chevron_left),
               ),
@@ -1560,6 +1697,9 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                     viewModel.currentCalendarDate.month + 1,
                   );
                   viewModel.setCalendarDate(newDate);
+                  try {
+                    viewModel.fetchCalendarStatsForMonth(newDate);
+                  } catch (_) {}
                 },
                 icon: const Icon(Icons.chevron_right),
               ),
@@ -1614,6 +1754,19 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
           DateTime.now().subtract(const Duration(days: 1)),
         );
 
+        // Optional month daily stats (badge + fully booked styling)
+        Map<String, dynamic>? stats;
+        int? approvedCount;
+        bool fullyBooked = false;
+        try {
+          stats = viewModel.getStatsForDate(date);
+          approvedCount = stats != null ? (stats['count'] as int?) : null;
+          fullyBooked = stats != null ? (stats['fullyBooked'] == true) : false;
+        } catch (_) {
+          approvedCount = null;
+          fullyBooked = false;
+        }
+
         return GestureDetector(
           onTap: isPast
               ? null
@@ -1625,25 +1778,69 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                   ? Colors.grey[200]
                   : isToday
                   ? const Color(0xFF060E57)
-                  : Colors.white,
+                  : (fullyBooked ? const Color(0xFFFDE2E1) : Colors.white),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isToday ? const Color(0xFF060E57) : Colors.grey[300]!,
+                color: isToday
+                    ? const Color(0xFF060E57)
+                    : (fullyBooked
+                          ? const Color(0xFFF8B4B4)
+                          : Colors.grey[300]!),
                 width: 1,
               ),
             ),
-            child: Center(
-              child: Text(
-                day.toString(),
-                style: TextStyle(
-                  color: isPast
-                      ? Colors.grey[400]
-                      : isToday
-                      ? Colors.white
-                      : Colors.black,
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    day.toString(),
+                    style: TextStyle(
+                      color: isPast
+                          ? Colors.grey[400]
+                          : isToday
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ),
-              ),
+                if (approvedCount != null && approvedCount > 0)
+                  Positioned(
+                    top: 4,
+                    right: 6,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D6EFD),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        approvedCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (fullyBooked && !isToday)
+                  Positioned(
+                    bottom: 4,
+                    left: 0,
+                    right: 0,
+                    child: Text(
+                      'Fully booked',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFFB91C1C),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         );
@@ -1813,14 +2010,14 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                   child: Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 30,
+                        height: 25,
                         decoration: BoxDecoration(
                           color: const Color(0xFF28A745),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
-                          Icons.calendar_today,
+                          Icons.confirmation_num,
                           color: Colors.white,
                           size: 20,
                         ),
@@ -1828,7 +2025,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Appointment Ticket',
+                          'Ticket Details',
                           style: TextStyle(
                             color: const Color(0xFF28A745),
                             fontSize: isMobile ? 18 : 20,
@@ -2033,23 +2230,22 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
         ),
         const SizedBox(height: 15),
 
-        // Third row - Purpose and Status
+        // Third row - Method Type and Purpose
         Row(
           children: [
             Expanded(
               child: _buildDetailItem(
-                icon: Icons.flag,
-                label: 'Purpose',
-                value: appointment.purpose ?? 'Not specified',
+                icon: Icons.laptop,
+                label: 'Method Type',
+                value: appointment.methodType ?? 'Not specified',
               ),
             ),
             const SizedBox(width: 15),
             Expanded(
               child: _buildDetailItem(
-                icon: Icons.info,
-                label: 'Status',
-                value: 'APPROVED',
-                isStatus: true,
+                icon: Icons.flag,
+                label: 'Purpose',
+                value: appointment.purpose ?? 'Not specified',
               ),
             ),
           ],
@@ -2283,10 +2479,12 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
 
     final qrData = {
       'appointmentId': appointment.id,
+      'studentId': appointment.studentId,
       'date': appointment.preferredDate,
       'time': appointment.preferredTime,
       'counselor': appointment.counselorName,
       'type': appointment.consultationType,
+      'methodType': appointment.methodType,
       'purpose': appointment.purpose,
       'ticketId': ticketId,
     };
@@ -2582,47 +2780,64 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
 
           pw.SizedBox(height: 20),
 
-          // Details Grid
-          pw.Row(
+          // Details Grid (3 rows x 2 columns)
+          pw.Column(
             children: [
-              // Left column
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildPDFDetailItem('DATE', appointment.formattedDate),
-                    pw.SizedBox(height: 15),
-                    _buildPDFDetailItem(
-                      'COUNSELOR',
-                      appointment.counselorName ?? 'Not assigned',
+              // Row 1: Date | Time
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
+                      'DATE',
+                      appointment.formattedDate,
                     ),
-                    pw.SizedBox(height: 15),
-                    _buildPDFDetailItem(
-                      'PURPOSE',
-                      appointment.purpose ?? 'Not specified',
-                    ),
-                  ],
-                ),
-              ),
-              pw.SizedBox(width: 20),
-              // Right column
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildPDFDetailItem(
+                  ),
+                  pw.SizedBox(width: 20),
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
                       'TIME',
                       appointment.preferredTime ?? 'Not specified',
                     ),
-                    pw.SizedBox(height: 15),
-                    _buildPDFDetailItem(
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 15),
+              // Row 2: Counselor | Consultation Type
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
+                      'COUNSELOR',
+                      appointment.counselorName ?? 'Not assigned',
+                    ),
+                  ),
+                  pw.SizedBox(width: 20),
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
                       'CONSULTATION TYPE',
                       appointment.consultationType ?? 'Not specified',
                     ),
-                    pw.SizedBox(height: 15),
-                    _buildPDFDetailItem('STATUS', 'APPROVED'),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 15),
+              // Row 3: Method Type | Purpose
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
+                      'METHOD TYPE',
+                      appointment.methodType ?? 'Not specified',
+                    ),
+                  ),
+                  pw.SizedBox(width: 20),
+                  pw.Expanded(
+                    child: _buildPDFDetailItem(
+                      'PURPOSE',
+                      appointment.purpose ?? 'Not specified',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -2665,14 +2880,10 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                 ),
               ),
               pw.SizedBox(width: 20),
-              // QR Code
+              // QR Code (no border)
               pw.Container(
                 width: 80,
                 height: 80,
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.green, width: 2),
-                  borderRadius: pw.BorderRadius.circular(8),
-                ),
                 child: pw.Center(
                   child: qrCodeBytes.isNotEmpty
                       ? pw.Image(
@@ -2874,7 +3085,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
           // Counselor Schedules List
           Expanded(
             child: FutureBuilder<Map<String, List<CounselorSchedule>>>(
-              future: viewModel.fetchCounselorSchedules(),
+              future: viewModel.getCounselorSchedulesFuture(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(

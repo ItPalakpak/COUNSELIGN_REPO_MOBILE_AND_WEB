@@ -58,7 +58,7 @@
 
 
     <main>
-        <div class="container-fluid px-4">
+        <div class="container-fluid px-2">
             <div class="row">
                 <div class="col-12">
                     <div class="follow-up-container">
@@ -72,13 +72,16 @@
 
                         <!-- Completed Appointments Section -->
                         <div class="completed-appointments-section">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h3 class="subsection-title mb-0">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Completed Appointments
-                                </h3>
+                            <div class="section-header-bar">
+                                <div class="section-title-wrapper">
+                                    <h3 class="subsection-title mb-0">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Completed Appointments
+                                    </h3>
+                                    <p class="section-description">View and manage follow-up sessions for completed appointments</p>
+                                </div>
                                 <div class="search-container">
-                                    <div class="input-group" style="max-width: 300px;">
+                                    <div class="input-group search-wrapper">
                                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                                         <input type="text" class="form-control" id="searchInput" placeholder="Search appointments...">
                                         <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display: none;">
@@ -130,7 +133,6 @@
                         <i class="fas fa-plus me-2"></i>
                         Create New Follow-up
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -207,12 +209,10 @@
                             <select class="form-control" id="consultationType" name="consultation_type" required>
                                 <option value="">Select consultation type</option>
                                 <option value="Individual Counseling">Individual Counseling</option>
-                                <option value="Group Counseling">Group Counseling</option>
                                 <option value="Career Guidance">Career Guidance</option>
                                 <option value="Academic Counseling">Academic Counseling</option>
                                 <option value="Personal Development">Personal Development</option>
                                 <option value="Crisis Intervention">Crisis Intervention</option>
-                                <option value="Follow-up Session">Follow-up Session</option>
                             </select>
                         </div>
                         
@@ -258,13 +258,13 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="editPreferredDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="editPreferredDate" name="preferred_date" required>
+                                    <input type="date" class="form-control" id="editPreferredDate" name="preferred_date" required readonly style="background-color: #e9ecef; cursor: not-allowed;">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="editPreferredTime" class="form-label">Preferred Time <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="editPreferredTime" name="preferred_time" required>
+                                    <select class="form-control" id="editPreferredTime" name="preferred_time" required disabled style="background-color: #e9ecef; cursor: not-allowed;">
                                         <option value="">Select a time</option>
                                     </select>
                                 </div>
@@ -276,12 +276,10 @@
                             <select class="form-control" id="editConsultationType" name="consultation_type" required>
                                 <option value="">Select consultation type</option>
                                 <option value="Individual Counseling">Individual Counseling</option>
-                                <option value="Group Counseling">Group Counseling</option>
                                 <option value="Career Guidance">Career Guidance</option>
                                 <option value="Academic Counseling">Academic Counseling</option>
                                 <option value="Personal Development">Personal Development</option>
                                 <option value="Crisis Intervention">Crisis Intervention</option>
-                                <option value="Follow-up Session">Follow-up Session</option>
                             </select>
                         </div>
                         
@@ -361,7 +359,6 @@
     <script>
         window.BASE_URL = "<?= base_url() ?>";
     </script>
-    <script src="<?= base_url('js/counselor/counselor_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/counselor/follow_up.js') ?>" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>

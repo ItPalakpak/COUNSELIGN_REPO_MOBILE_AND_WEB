@@ -82,6 +82,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('counselors/api', 'CounselorsApi::index');
     $routes->post('counselors/api', 'CounselorsApi::save');
     $routes->delete('counselors/api', 'CounselorsApi::delete');
+    $routes->post('counselors/approve', 'CounselorsApi::approve');
+    $routes->post('counselors/reject', 'CounselorsApi::reject');
     $routes->get('counselor-info', 'CounselorInfo::index');
     $routes->post('counselor-info/create-announcement', 'CounselorInfo::createAnnouncement');
     $routes->get('counselor-info/get-announcements', 'CounselorInfo::getAnnouncements');
@@ -100,7 +102,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('filter-data/student-academic-map', 'FilterData::getStudentAcademicMap');
 });
 
-// User routes
+// Student routes
 $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->get('dashboard/get-profile-data', 'Dashboard::getProfileData');
@@ -118,6 +120,8 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->get('check-counselor-conflicts', 'Appointment::checkCounselorConflicts');
     $routes->get('check-edit-conflicts', 'Appointment::checkEditConflicts');
     $routes->get('get-counselor-schedules', 'Appointment::getCounselorSchedules');
+    // Calendar daily stats (approved counts and fully booked flags)
+    $routes->get('calendar/daily-stats', 'Appointment::getCalendarDailyStats');
     $routes->get('profile', 'Profile::profile');
     $routes->post('profile/update', 'Profile::updateProfile');
     $routes->match(['POST','OPTIONS'], 'profile/picture', 'Profile::updateProfilePicture');
@@ -130,6 +134,8 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->post('notifications/mark-read', 'Notifications::markAsRead');
 
     $routes->get('appointments/get-my-appointments', 'Appointment::getMyAppointments');
+    $routes->get('appointments/booked-times', 'Appointment::getBookedTimesForDate');
+    $routes->get('appointments/check-group-slots', 'Appointment::checkGroupSlotAvailability');
     $routes->post('appointments/update', 'Appointment::update');
     $routes->delete('appointments/delete/(:num)', 'Appointment::delete/$1');
     $routes->get('follow-up-sessions', 'FollowUpSessions::index');
@@ -138,7 +144,12 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->post('appointments/cancel', 'Appointment::cancel');
     $routes->post('appointments/track-download', 'Appointment::trackDownload');
     $routes->post('appointments/test-email', 'Appointment::testEmailService');
+    $routes->get('appointments/check-group-slots', 'Appointment::checkGroupSlots');
 
+
+
+// Follow-up routes
+    
     // PDS (Personal Data Sheet) routes
     $routes->get('pds/load', 'PDS::loadPDS');
     $routes->post('pds/save', 'PDS::savePDS');
@@ -206,6 +217,7 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('follow-up/completed-appointments', 'FollowUp::getCompletedAppointments');
     $routes->get('follow-up/sessions', 'FollowUp::getFollowUpSessions');
     $routes->get('follow-up/availability', 'FollowUp::getCounselorAvailability');
+    $routes->get('follow-up/booked-times', 'FollowUp::getBookedTimesForDate');
     $routes->post('follow-up/create', 'FollowUp::createFollowUp');
     $routes->post('follow-up/edit', 'FollowUp::editFollowUp');
     $routes->post('follow-up/complete', 'FollowUp::completeFollowUp');
@@ -219,3 +231,5 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     // Counselor timezone test route
     $routes->get('appointments/test-timezone', 'Appointments::testManilaTimezone');
 });
+
+

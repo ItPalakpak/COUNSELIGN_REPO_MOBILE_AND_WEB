@@ -570,26 +570,48 @@ header.sticky-header {
 
 /* Follow-up Appointments Styling */
 .follow-up-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px 0;
+    max-width: 100%;
+    margin: 0 15px;
+    padding: 30px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 3px solid #f0f4f8;
+    position: relative;
+}
+
+.section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #060E57, #4169E1);
+    border-radius: 2px;
 }
 
 .section-title {
     color: #060E57;
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #060E57, #4169E1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .section-subtitle {
     color: #6c757d;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     margin-bottom: 0;
 }
 
@@ -597,28 +619,78 @@ header.sticky-header {
     margin-bottom: 40px;
 }
 
+.section-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(6, 14, 87, 0.08);
+    border-left: 4px solid #4169E1;
+}
+
+.section-title-wrapper {
+    flex: 1;
+}
+
 .subsection-title {
     color: #060E57;
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e9ecef;
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.section-description {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin: 0;
+    margin-left: 28px;
 }
 
 .appointments-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
     margin-bottom: 30px;
+    max-height: 800px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 12px;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #4169E1 #f1f1f1;
+}
+
+/* Custom Scrollbar for appointments-grid */
+
+.appointments-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.appointments-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.appointments-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #4169E1, #060E57);
+    border-radius: 10px;
+}
+
+.appointments-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #5a7cff, #0A1C7A);
 }
 
 .appointment-card {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 14, 87, 0.1);
-    padding: 25px;
-    transition: all 0.3s ease;
+    padding: 18px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 1px solid #e9ecef;
     position: relative;
     overflow: hidden;
@@ -630,44 +702,55 @@ header.sticky-header {
     top: 0;
     left: 0;
     width: 100%;
-    height: 4px;
-    background: linear-gradient(to right, #28a745, #20c997);
+    height: 5px;
+    background: linear-gradient(90deg, #28a745, #20c997, #28a745);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .appointment-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 14, 87, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 14, 87, 0.2);
+    border-color: #4169E1;
 }
 
 .appointment-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    gap: 8px;
 }
 
 .appointment-status {
     background: #28a745;
     color: white;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .follow-up-count {
     background: linear-gradient(135deg, #4169E1, #87CEFA);
     color: white;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
     transition: all 0.3s ease;
+    white-space: nowrap;
 }
 
 .follow-up-count:hover {
@@ -682,23 +765,25 @@ header.sticky-header {
 .header-indicators {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     align-items: flex-end;
+    flex-shrink: 0;
 }
 
 .pending-follow-up-indicator {
     background: linear-gradient(135deg, #ff6b35, #ff8e53);
     color: white;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
     transition: all 0.3s ease;
     animation: pulse 2s infinite;
+    white-space: nowrap;
 }
 
 .pending-follow-up-indicator:hover {
@@ -727,19 +812,19 @@ header.sticky-header {
 }
 
 .student-name {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #060E57;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .student-id {
     color: #6c757d;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .appointment-details {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .appointment-date,
@@ -747,16 +832,18 @@ header.sticky-header {
 .appointment-type {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     color: #495057;
+    font-size: 0.9rem;
 }
 
 .appointment-date i,
 .appointment-time i,
 .appointment-type i {
-    width: 20px;
+    width: 16px;
     color: #060E57;
-    margin-right: 10px;
+    margin-right: 8px;
+    font-size: 0.85rem;
 }
 
 .follow-up-btn {
@@ -764,37 +851,61 @@ header.sticky-header {
     background: linear-gradient(135deg, #060E57, #4169E1);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba(6, 14, 87, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.follow-up-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.follow-up-btn:hover::before {
+    left: 100%;
 }
 
 .follow-up-btn:hover {
     background: linear-gradient(135deg, #0A1C7A, #5a7cff);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(6, 14, 87, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(6, 14, 87, 0.4);
 }
 
 .no-data-message {
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
     color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
 }
 
 .no-data-message i {
-    font-size: 3rem;
+    font-size: 4rem;
     margin-bottom: 20px;
-    color: #dee2e6;
+    color: #adb5bd;
+    opacity: 0.6;
 }
 
 .no-data-message p {
     font-size: 1.1rem;
     margin: 0;
+    color: #6c757d;
 }
 
 /* Modal Styling */
@@ -822,13 +933,47 @@ header.sticky-header {
 }
 
 .modal-body {
-    padding: 25px;
+    padding: 30px;
+    background: #f8f9fa;
+}
+
+.modal-footer {
+    background: #ffffff;
+    border-top: 1px solid #e9ecef;
+    padding: 20px 25px;
 }
 
 #followUpSessionsContainer {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 12px;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #4169E1 #f1f1f1;
+}
+
+/* Custom Scrollbar for follow-up sessions container */
+
+#followUpSessionsContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#followUpSessionsContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#followUpSessionsContainer::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #4169E1, #060E57);
+    border-radius: 10px;
+}
+
+#followUpSessionsContainer::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #5a7cff, #0A1C7A);
 }
 
 /* Ensure modal body does not collapse grid width */
@@ -837,17 +982,37 @@ header.sticky-header {
 }
 
 .follow-up-session-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
+    background: #ffffff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 22px;
     margin-bottom: 15px;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.follow-up-session-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #4169E1, #87CEFA);
+    transition: width 0.3s ease;
 }
 
 .follow-up-session-card:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
+    background: #ffffff;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    border-color: #4169E1;
+}
+
+.follow-up-session-card:hover::before {
+    width: 6px;
 }
 
 .session-header {
@@ -951,23 +1116,107 @@ header.sticky-header {
     box-shadow: 0 0 0 0.2rem rgba(6, 14, 87, 0.25);
 }
 
+.search-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-wrapper {
+    box-shadow: 0 4px 12px rgba(6, 14, 87, 0.12);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    max-width: 350px;
+    width: 100%;
+}
+
+.search-wrapper:focus-within {
+    box-shadow: 0 6px 20px rgba(6, 14, 87, 0.2);
+    transform: translateY(-2px);
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, #060E57, #4169E1);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #4169E1;
+    box-shadow: 0 0 0 0.2rem rgba(65, 105, 225, 0.15);
+    outline: none;
+}
+
 /* Responsive Design */
+@media (max-width: 1400px) {
+    .appointments-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .section-header-bar {
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+    }
+    
+    .search-wrapper {
+        max-width: 100%;
+    }
+    
+    .appointments-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
 @media (max-width: 768px) {
+    .follow-up-container {
+        margin: 0 10px;
+        padding: 20px 15px;
+        border-radius: 12px;
+    }
+    
+    .section-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 2.2rem;
+    }
+    
+    .section-header-bar {
+        padding: 20px;
+    }
+    
+    .subsection-title {
+        font-size: 1.6rem;
+    }
+    
+    .section-description {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+    
     .appointments-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 16px;
     }
     #followUpSessionsContainer {
         grid-template-columns: 1fr;
         gap: 12px;
-    }
-    
-    .section-title {
-        font-size: 2rem;
-    }
-    
-    .subsection-title {
-        font-size: 1.5rem;
     }
     
     .appointment-card {
@@ -981,7 +1230,8 @@ header.sticky-header {
 
 @media (max-width: 576px) {
     .follow-up-container {
-        padding: 10px 0;
+        margin: 0 8px;
+        padding: 15px 10px;
     }
     #followUpSessionsContainer {
         grid-template-columns: 1fr;

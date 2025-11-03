@@ -742,6 +742,183 @@ footer {
     overflow-y: auto;
 }
 
+/* Enhanced Appointment Details Modal Styles */
+.appointment-modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.appointment-modal-header {
+    background: linear-gradient(135deg, #060E57 0%, #0a1a7a 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.appointment-modal-header .modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.appointment-modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.appointment-modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.appointment-modal-body {
+    padding: 1.25rem 1.5rem;
+    background-color: #fafbfc;
+}
+
+.appointment-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    border-color: #060E57;
+    box-shadow: 0 2px 8px rgba(6, 14, 87, 0.08);
+    transform: translateY(-1px);
+}
+
+.info-icon {
+    font-size: 1.1rem;
+    color: #060E57;
+    min-width: 20px;
+    text-align: center;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 0.9rem;
+    color: #2c3e50;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.description-section {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.description-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #060E57;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.description-content {
+    padding: 1rem;
+    color: #495057;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.description-content:empty::before {
+    content: "No description provided.";
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.timestamp-info {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.appointment-modal-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0 0 12px 12px;
+}
+
+.appointment-modal-footer .btn {
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.appointment-modal-footer .btn-sm {
+    padding: 0.4rem 0.875rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+    .appointment-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .appointment-modal-body {
+        padding: 1rem;
+    }
+    
+    .info-item {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .description-content {
+        padding: 0.75rem;
+    }
+}
+
 /* Responsive Design for Mobile Devices */
 @media (max-width: 991.98px) {
     .container-fluid {
