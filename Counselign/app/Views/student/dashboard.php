@@ -41,6 +41,7 @@
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/announcements') ?>"><i class="fas fa-bullhorn"></i> Announcements</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/schedule-appointment') ?>"><i class="fas fa-plus-circle"></i> Schedule an Appointment</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/my-appointments') ?>"><i class="fas fa-list-alt"></i> My Appointments</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/messages') ?>"><i class="fas fa-comments"></i> Messages</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/follow-up-sessions') ?>"><i class="fas fa-clipboard-list"></i> Follow Up Sessions</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/profile') ?>"><i class="fas fa-user"></i> User Profile</a></li>
             <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
@@ -75,11 +76,9 @@
             </div>
             <div class="ml-auto flex items-center space-x-6">
 
-                <i class="fas fa-user-md text-2xl" id="openCounselorSelectionBtn" title="Select a Counselor"
-                    style="color: #003366; cursor: pointer;"></i>
-
-                <i class="fas fa-comments text-2xl" id="openChatBtn" title="Message a Counselor"
-                    style="color: #003366; cursor: pointer;"></i>
+                <a href="<?= base_url('student/messages') ?>" title="Messages" style="text-decoration:none;">
+                    <i class="fas fa-comments text-2xl" style="color: #003366; cursor: pointer;"></i>
+                </a>
                 <div class="relative notification-icon-container">
                     <i class="fas fa-bell text-2xl" id="notificationIcon" title="Notifications"
                         style="color: #003366; cursor: pointer;"></i>
@@ -110,65 +109,9 @@
         </div>
     </main>
 
-    <!-- Counselor Selection Modal -->
-    <div id="counselorSelectionModal" class="counselor-selection-modal">
-        <div class="counselor-selection-content">
-            <div class="counselor-selection-header">
-                <h3 class="counselor-selection-title">
-                    <i class="fas fa-user-md me-2"></i>
-                    Choose a Counselor to Message
-                </h3>
-                <button id="closeCounselorSelection" class="counselor-selection-close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="counselor-selection-body">
-                <div class="counselor-search-section">
-                    <div class="counselor-search-box">
-                        <i class="fas fa-search counselor-search-icon"></i>
-                        <input type="text" id="counselorSearchInput" class="counselor-search-input" placeholder="Search counselors...">
-                    </div>
-                </div>
-                <div class="counselor-list" id="counselorList">
-                    <div class="counselor-loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading counselors...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
-    <!-- Chat Popup -->
-    <div id="chatPopup" class="chat-popup">
-        <div class="chat-header">
-            <div class="font-bold">
-                <img id="chatCounselorAvatar" src="<?= base_url('Photos/profile.png') ?>" alt="Counselor avatar" class="chat-counselor-avatar" />
-                <span id="chatCounselorName">Send a message to your Counselor</span>
-            </div>
-            <button id="closeChat" class="text-white">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="chat-body" id="chatMessages">
-            <div class="text-center text-gray-500 text-sm mb-4">
-                Your conversation is private and confidential
-            </div>
-            <div id="messagesContainer">
-                <!-- Messages will be loaded here -->
-            </div>
-        </div>
-        <div class="chat-footer">
-            <form id="messageForm" class="message-form">
-                <div class="message-input-wrapper">
-                    <textarea id="messageInput" class="message-input" placeholder="Type your message here..." rows="2" required></textarea>
-                </div>
-                <button type="submit" class="send-button" id="sendMessage">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </form>
-        </div>
-    </div>
+    
 
     <footer>
         <div class="footer-content">

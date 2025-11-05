@@ -564,6 +564,31 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
                     ),
                   ],
                 ),
+                // Method Type
+                if (appointment.methodType != null &&
+                    appointment.methodType!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.video_call_rounded,
+                        size: 16,
+                        color: const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Method: ${appointment.methodType!}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 // Purpose
                 if (appointment.purpose != null &&
                     appointment.purpose!.isNotEmpty) ...[

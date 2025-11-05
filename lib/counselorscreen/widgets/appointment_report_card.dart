@@ -98,6 +98,37 @@ class AppointmentReportCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
+              // Method Type and Session Type
+              Row(
+                children: [
+                  if (appointment.methodType != null &&
+                      appointment.methodType!.isNotEmpty) ...[
+                    const Icon(
+                      FontAwesomeIcons.video,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      appointment.methodType!,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  const Icon(
+                    FontAwesomeIcons.clipboardList,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    appointment.sessionTypeDisplay,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
               // Purpose
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

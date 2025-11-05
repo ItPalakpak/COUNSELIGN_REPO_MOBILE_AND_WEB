@@ -46,7 +46,7 @@ class AppointmentAtomic extends BaseController
                 'student_id' => session()->get('user_id_display'),
                 'preferred_date' => $this->request->getPost('preferred_date'),
                 'preferred_time' => $this->request->getPost('preferred_time'),
-                'method_type' => $this->request->getPost('method_type'),
+                'consultation_type' => $this->request->getPost('consultation_type'),
                 'counselor_preference' => $this->request->getPost('counselor_preference') ?? 'No preference',
                 'description' => $this->request->getPost('description'),
                 'reason' => $this->request->getPost('reason'),
@@ -68,6 +68,7 @@ class AppointmentAtomic extends BaseController
             $result = $this->appointmentModel->createAppointmentAtomic($appointmentData);
 
             return $this->response->setJSON($result);
+
         } catch (CodeIgniterException $e) {
             log_message('error', 'Atomic appointment creation failed: ' . $e->getMessage());
             return $this->response->setJSON([
@@ -115,6 +116,7 @@ class AppointmentAtomic extends BaseController
             $result = $this->appointmentModel->updateStatusAtomic($appointmentId, $newStatus, $reason);
 
             return $this->response->setJSON($result);
+
         } catch (CodeIgniterException $e) {
             log_message('error', 'Atomic status update failed: ' . $e->getMessage());
             return $this->response->setJSON([
@@ -161,6 +163,7 @@ class AppointmentAtomic extends BaseController
             $result = $this->appointmentModel->cancelAppointmentAtomic($appointmentId, $reason);
 
             return $this->response->setJSON($result);
+
         } catch (CodeIgniterException $e) {
             log_message('error', 'Atomic appointment cancellation failed: ' . $e->getMessage());
             return $this->response->setJSON([
@@ -199,6 +202,7 @@ class AppointmentAtomic extends BaseController
                 'success' => true,
                 'transaction_status' => $status
             ]);
+
         } catch (\Exception $e) {
             log_message('error', 'Failed to get transaction status: ' . $e->getMessage());
             return $this->response->setJSON([

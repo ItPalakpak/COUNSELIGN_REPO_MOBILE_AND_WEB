@@ -35,18 +35,47 @@ async function renderAnnouncements() {
         
         list.innerHTML = '';
         announcements.forEach((a) => {
-            const div = document.createElement('div');
-            div.className = 'announcement-item position-relative';
-            div.innerHTML = `
-                <div class="announcement-title">${a.title}</div>
-                <div class="announcement-meta">${a.created_at ? new Date(a.created_at).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</div>
-                <div class="announcement-content">${a.content}</div>
-                <div class="announcement-actions">
-                    <button class="btn btn-sm btn-primary" onclick="editAnnouncement(${a.id}, '${encodeURIComponent(a.title)}', '${encodeURIComponent(a.content)}')"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="btn btn-sm btn-danger ms-2" onclick="deleteAnnouncement(${a.id})"><i class="fas fa-trash-alt"></i> Delete</button>
-                </div>
-            `;
-            list.appendChild(div);
+            const item = document.createElement('div');
+            item.className = 'announcement-item position-relative';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'announcement-title';
+            titleEl.textContent = a.title || '';
+
+            const metaEl = document.createElement('div');
+            metaEl.className = 'announcement-meta';
+            metaEl.textContent = a.created_at ? new Date(a.created_at).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+            const contentEl = document.createElement('div');
+            contentEl.className = 'announcement-content';
+            contentEl.textContent = a.content || '';
+
+            const actionsEl = document.createElement('div');
+            actionsEl.className = 'announcement-actions';
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-sm btn-primary';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+            editBtn.addEventListener('click', function() {
+                editAnnouncement(a.id, encodeURIComponent(a.title || ''), encodeURIComponent(a.content || ''));
+            });
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-sm btn-danger ms-2';
+            delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+            delBtn.addEventListener('click', function() {
+                deleteAnnouncement(a.id);
+            });
+
+            actionsEl.appendChild(editBtn);
+            actionsEl.appendChild(delBtn);
+
+            item.appendChild(titleEl);
+            item.appendChild(metaEl);
+            item.appendChild(contentEl);
+            item.appendChild(actionsEl);
+
+            list.appendChild(item);
         });
     } catch (error) {
         console.error('Error rendering announcements:', error);

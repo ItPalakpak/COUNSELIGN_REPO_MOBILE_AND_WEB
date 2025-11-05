@@ -73,8 +73,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const welcomeSection = document.querySelector('.content-panel h3');
     const welcomeQuote = document.querySelector('.content-panel p');
     const openChatBtn = document.getElementById('openChatBtn');
-    const chatPopup = document.getElementById('chatPopup');
-    const closeChat = document.getElementById('closeChat');
+    const chatPopup = null; // Chat popup removed
+    const closeChat = null; // Chat popup removed
     const main = document.querySelector('main');
     const notificationIcon = document.getElementById('notificationIcon');
     const notificationsDropdown = document.getElementById('notificationsDropdown');
@@ -102,19 +102,14 @@ document.addEventListener('DOMContentLoaded', function () {
         appointmentForm.style.display = 'none';
     }
 
-    // Initially hide the chat popup
-    if (chatPopup) {
-        chatPopup.style.display = 'none';
-    }
+    // Chat popup removed; redirect messages icon to messages page
 
     // Click animations for chat and notifications
     const openChatBtnEl = document.getElementById('openChatBtn');
     if (openChatBtnEl) {
-        openChatBtnEl.addEventListener('click', function() {
-            openChatBtnEl.classList.remove('chat-click');
-            // Force reflow to restart animation
-            void openChatBtnEl.offsetWidth;
-            openChatBtnEl.classList.add('chat-click');
+        openChatBtnEl.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = (window.BASE_URL || '/') + 'student/messages';
         });
     }
     if (notificationIcon) {
@@ -183,20 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let selectedCounselorName = null; // Will store the selected counselor name
 
     // Counselor selection modal elements
-    const counselorSelectionModal = document.getElementById('counselorSelectionModal');
-    const closeCounselorSelection = document.getElementById('closeCounselorSelection');
-    const counselorSearchInput = document.getElementById('counselorSearchInput');
-    const counselorList = document.getElementById('counselorList');
-    const openCounselorSelectionBtn = document.getElementById('openCounselorSelectionBtn');
-
-    // Explicit trigger to open counselor selection (separate from chat button)
-    if (openCounselorSelectionBtn) {
-        openCounselorSelectionBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showCounselorSelectionModal();
-        });
-    }
+    // Removed counselor selection UI (moved to dedicated Messages page)
 
     // Notification handling
     function initializeNotifications() {
@@ -499,7 +481,6 @@ function renderNotifications(notifications = []) {
             .then(data => {
                 if (data.success && data.user_id) {
                     userId = data.user_id;
-                    initializeChat();
                     initializeNotifications();
                     startNotificationPolling();
                     
@@ -939,217 +920,7 @@ function renderNotifications(notifications = []) {
             });
     }
 
-    // Counselor Selection Modal Functions
-    function showCounselorSelectionModal() {
-        if (counselorSelectionModal) {
-            counselorSelectionModal.classList.add('show');
-            loadCounselors();
-            initializeCounselorSearch();
-        }
-    }
-
-    function hideCounselorSelectionModal() {
-        if (counselorSelectionModal) {
-            counselorSelectionModal.classList.remove('show');
-        }
-    }
-
-    function initializeCounselorSearch() {
-        if (counselorSearchInput) {
-            counselorSearchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const counselorItems = counselorList.querySelectorAll('.counselor-item');
-                
-                counselorItems.forEach(item => {
-                    const name = item.querySelector('.counselor-name')?.textContent.toLowerCase() || '';
-                    const specialization = item.querySelector('.counselor-specialization')?.textContent.toLowerCase() || '';
-                    
-                    if (name.includes(searchTerm) || specialization.includes(searchTerm)) {
-                        item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        }
-    }
-
-    function loadCounselors() {
-        if (!counselorList) return;
-
-        // Show loading state
-        counselorList.innerHTML = `
-            <div class="counselor-loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <span>Loading counselors...</span>
-            </div>
-        `;
-
-        fetch(window.BASE_URL + 'student/get-counselors')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success' && data.counselors) {
-                    displayCounselors(data.counselors);
-                } else {
-                    showCounselorError('Failed to load counselors');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading counselors:', error);
-                showCounselorError('Unable to connect to server');
-            });
-    }
-
-    function displayCounselors(counselors) {
-        if (!counselorList) return;
-
-        if (!counselors || counselors.length === 0) {
-            counselorList.innerHTML = `
-                <div class="no-counselors">
-                    <i class="fas fa-user-md"></i>
-                    <h4>No Counselors Available</h4>
-                    <p>There are no counselors available at the moment.</p>
-                </div>
-            `;
-            return;
-        }
-
-        counselorList.innerHTML = '';
-        // Helper to produce absolute URL from stored path
-        const toAbsoluteUrl = (path) => {
-            if (!path || typeof path !== 'string') return null;
-            if (/^https?:\/\//i.test(path)) return path; // already absolute
-            // Normalize: remove leading slash and any accidental 'public/' prefix
-            let normalized = path.replace(/^\/+/, '');
-            normalized = normalized.replace(/^public\//i, '');
-            return (window.BASE_URL || '/') + normalized;
-        };
-
-        counselors.forEach(counselor => {
-            const counselorItem = document.createElement('div');
-            counselorItem.className = 'counselor-item';
-            counselorItem.dataset.counselorId = counselor.counselor_id;
-            
-            // Calculate status based on last_activity, last_login, and logout_time
-            const statusInfo = calculateOnlineStatus(counselor.last_activity, counselor.last_login, counselor.logout_time);
-            
-            // Determine avatar URL with safe fallback
-            const avatarUrl = (counselor && counselor.profile_picture)
-                ? (toAbsoluteUrl(counselor.profile_picture) || (window.BASE_URL + 'Photos/profile.png'))
-                : (window.BASE_URL + 'Photos/profile.png');
-
-            counselorItem.innerHTML = `
-                <div class="counselor-avatar">
-                    <img src="${avatarUrl}" alt="${(counselor.name || 'Counselor') + ' avatar'}" class="counselor-avatar-img" onerror="this.onerror=null;this.src='${window.BASE_URL}Photos/profile.png';" />
-                </div>
-                <div class="counselor-info">
-                    <div class="counselor-name">${counselor.name || 'Unknown Counselor'}</div>
-                </div>
-                <div class="counselor-status">
-                    <span class="counselor-status-indicator ${statusInfo.class}">${statusInfo.text}</span>
-                </div>
-            `;
-
-            // Add click event to select counselor
-            counselorItem.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectCounselor(counselor.counselor_id, counselor.name);
-            });
-
-            counselorList.appendChild(counselorItem);
-        });
-    }
-
-    function showCounselorError(message) {
-        if (!counselorList) return;
-        
-        counselorList.innerHTML = `
-            <div class="no-counselors">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h4>Error Loading Counselors</h4>
-                <p>${message}</p>
-            </div>
-        `;
-    }
-
-    function selectCounselor(counselorId, counselorName) {
-        selectedCounselorId = counselorId;
-        selectedCounselorName = counselorName;
-        
-        // Update chat header with counselor name
-        const chatCounselorName = document.getElementById('chatCounselorName');
-        if (chatCounselorName) {
-            chatCounselorName.textContent = `Counselor ${counselorName}`;
-        }
-        // Update chat header avatar if available in the currently displayed list
-        const selectedItem = counselorList && counselorList.querySelector(`.counselor-item[data-counselor-id="${counselorId}"]`);
-        const avatarImgEl = document.getElementById('chatCounselorAvatar');
-        if (avatarImgEl) {
-            if (selectedItem) {
-                const listImg = selectedItem.querySelector('.counselor-avatar-img');
-                if (listImg && listImg.src) {
-                    avatarImgEl.src = listImg.src;
-                } else {
-                    avatarImgEl.src = (window.BASE_URL + 'Photos/profile.png');
-                }
-            } else {
-                avatarImgEl.src = (window.BASE_URL + 'Photos/profile.png');
-            }
-            avatarImgEl.onerror = function() {
-                this.onerror = null;
-                this.src = window.BASE_URL + 'Photos/profile.png';
-            };
-        }
-        
-        // Hide counselor selection modal
-        hideCounselorSelectionModal();
-        
-        // Auto-open chat popup with the selected counselor and load conversation
-        const chatPopupEl = document.getElementById('chatPopup');
-        const openChatBtnEl = document.getElementById('openChatBtn');
-        if (chatPopupEl) {
-            chatPopupEl.style.display = 'block';
-            chatPopupEl.classList.add('visible');
-            if (openChatBtnEl) openChatBtnEl.classList.add('active');
-        }
-        // Ensure messages load for this counselor immediately
-        loadMessagesWithCounselor();
-        startMessagePolling();
-    }
-
-    function openChatWithCounselor() {
-        if (!selectedCounselorId) {
-            showCounselorSelectionModal();
-            return;
-        }
-
-        if (chatPopup) {
-            chatPopup.style.display = 'block';
-            chatPopup.classList.add('visible');
-            openChatBtn.classList.add('active');
-            loadMessagesWithCounselor();
-            startMessagePolling();
-        }
-    }
-
-    // Close counselor selection modal
-    if (closeCounselorSelection) {
-        closeCounselorSelection.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            hideCounselorSelectionModal();
-        });
-    }
-
-    // Close counselor selection modal when clicking outside
-    if (counselorSelectionModal) {
-        counselorSelectionModal.addEventListener('click', function(e) {
-            if (e.target === counselorSelectionModal) {
-                hideCounselorSelectionModal();
-            }
-        });
-    }
+    // Removed counselor selection modal and logic (moved to student/messages)
 
     // Auto-refresh notifications every 30 seconds
     let notificationRefreshInterval = null;

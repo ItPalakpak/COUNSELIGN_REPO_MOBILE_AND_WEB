@@ -685,62 +685,26 @@ flowchart TD
 - `public/js/counselor/counselor_dashboard.js` `handleLogout()` uses `openConfirmationModal` to confirm and then calls `auth/logout`
 
 ### Student Calendar System Pattern
-- **Calendar Drawer**: Fixed-position drawer that slides in from the right side of the screen
-  - **Toggle Button**: Fixed-position button with calendar icon and "Events Calendar" text
-  - **Responsive Design**: Full-width drawer on mobile (≤768px), 400px width on desktop
-  - **Navigation**: Month navigation with previous/next buttons and month/year display
-- **Calendar Grid**: 7-column grid layout with day headers and clickable date cells
-  - **Event Indicators**: Visual indicators for dates with events/announcements (orange background, white dot)
-  - **Today Highlighting**: Current date highlighted with dark blue background
-  - **Hover Effects**: Scale and color transitions on date hover
-- **Date Details Modal**: Bootstrap modal showing events and announcements for selected date
-  - **Event Cards**: Blue-bordered cards showing event details (title, description, time, location)
-  - **Announcement Cards**: Green-bordered cards showing announcement details (title, content, posted date)
-  - **Responsive Layout**: 2-column layout on desktop, single column on mobile
-- **Tooltip System**: Hover tooltips showing event/announcement counts
-  - **Dynamic Content**: Shows total count and breakdown of events vs announcements
-  - **Positioning**: Centered above the date cell with arrow pointer
-- **Data Integration**: 
-  - **API Endpoints**: Integrates with `student/announcements/all` and `student/events/all`
-  - **Date Filtering**: Filters events by date and announcements by creation date
-  - **Real-time Updates**: Calendar updates when data is refreshed
-- **JavaScript Architecture**:
-  - **State Management**: `calendarData` object stores announcements and events
-  - **Event Listeners**: Separate functions for calendar toggle, navigation, and date clicks
-  - **Modal Management**: Dynamic modal creation and cleanup for date details
-  - **Responsive Handling**: Different behaviors for mobile vs desktop interactions
+Inline mini-calendar embedded on the page (drawer removed).
+
+- Layout: Two-column top row (Announcements | Calendar), full-width "Upcoming Events" list below
+- Navigation: Previous/Next month buttons with month/year title
+- Calendar Grid: 7 columns, smaller cells; each day shows bold date number plus overlaid first event title
+- Badges: Top-right numeric badge shows count of events for that day
+- Visibility: Title overlay uses accessible contrast (blue text) that doesn’t overpower bold date
+- Today: Outlined highlight ring; hover scales cell subtly
+- Date Details Modal: Shows events then announcements for selected date (unchanged)
+- Tooltips: Hover shows total count breakdown
+- Data: `student/announcements/all` and `student/events/all`
 
 ### Counselor Calendar System Pattern
-- **Calendar Drawer**: Fixed-position drawer that slides in from the right side of the screen
-  - **Toggle Button**: Fixed-position button with calendar icon and "Events Calendar" text
-  - **Responsive Design**: Full-width drawer on mobile (≤768px), 400px width on desktop
-  - **Navigation**: Month navigation with previous/next buttons and month/year display
-- **Calendar Grid**: 7-column grid layout with day headers and clickable date cells
-  - **Mixed Indicators**: Visual indicators for dates with both events and announcements (orange background, white dot)
-  - **Today Highlighting**: Current date highlighted with dark blue background
-  - **Hover Effects**: Scale and color transitions on date hover
-  - **Click Functionality**: Click on dates with content to show detailed modal
-- **Date Details Modal**: Bootstrap modal showing events and announcements for selected date
-  - **Event Cards**: Blue-bordered cards showing event details (title, description, time, location)
-  - **Announcement Cards**: Green-bordered cards showing announcement details (title, content, posted date)
-  - **Responsive Layout**: 2-column layout on desktop, single column on mobile
-  - **Empty State**: Shows message when no content for selected date
-- **Enhanced Tooltip System**: Hover tooltips showing both events and announcements with type distinction
-  - **Type Labels**: Tooltips distinguish between "Announcement" and "Event" types
-  - **Time Information**: Shows time for events, creation date for announcements
-  - **Dynamic Content**: Displays all items for a specific date with proper categorization
-  - **Positioning**: Centered above the date cell with arrow pointer
-- **Data Integration**: 
-  - **API Endpoints**: Integrates with `counselor/announcements/all` and `counselor/events/all`
-  - **Date Filtering**: Filters events by date and announcements by creation date
-  - **Real-time Updates**: Calendar updates when both announcements and events data is refreshed
-- **JavaScript Architecture**:
-  - **State Management**: Separate `events` and `announcements` arrays for calendar data storage
-  - **Unified Processing**: `getItemsForDate()` function combines both data types for calendar rendering
-  - **Type Safety**: Each item includes a `type` field ('event' or 'announcement') for proper handling
-  - **Event Listeners**: Separate functions for calendar toggle, navigation, and date clicks
-  - **Modal Management**: Dynamic modal creation and cleanup for date details
-  - **Responsive Handling**: Different behaviors for mobile vs desktop interactions
+Inline mini-calendar embedded on the page (drawer removed).
+
+- Layout: Two-column top row (Announcements | Calendar), full-width "Upcoming Events" list below
+- Calendar Grid: 7 columns, smaller cells with bold dates and overlaid first event title
+- Badges: Top-right numeric badge shows count of events for that day
+- Tooltips: Rich tooltip lists items; click opens modal with full details
+- Data: `counselor/announcements/all` and `counselor/events/all`
 
 ### Student Approved Appointment Ticket Pattern
 - **Approved Appointment Section**: Green-themed section above pending appointments

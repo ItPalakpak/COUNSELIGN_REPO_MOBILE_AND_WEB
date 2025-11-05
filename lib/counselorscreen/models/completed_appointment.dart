@@ -5,6 +5,7 @@ class CompletedAppointment {
   final String preferredDate;
   final String preferredTime;
   final String consultationType;
+  final String? methodType;
   final String? description;
   final String purpose;
   final String reason;
@@ -21,6 +22,7 @@ class CompletedAppointment {
     required this.preferredDate,
     required this.preferredTime,
     required this.consultationType,
+    this.methodType,
     this.description,
     required this.purpose,
     required this.reason,
@@ -39,6 +41,7 @@ class CompletedAppointment {
       preferredDate: json['preferred_date']?.toString() ?? '',
       preferredTime: json['preferred_time']?.toString() ?? '',
       consultationType: json['consultation_type']?.toString() ?? '',
+      methodType: json['method_type']?.toString(),
       description: json['description']?.toString(),
       purpose: json['purpose']?.toString() ?? '',
       reason: json['reason']?.toString() ?? '',
@@ -58,6 +61,7 @@ class CompletedAppointment {
       'preferred_date': preferredDate,
       'preferred_time': preferredTime,
       'consultation_type': consultationType,
+      'method_type': methodType,
       'description': description,
       'purpose': purpose,
       'reason': reason,

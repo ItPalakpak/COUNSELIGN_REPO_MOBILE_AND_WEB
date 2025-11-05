@@ -27,7 +27,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -62,7 +62,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Error: ${viewModel.error}',
@@ -121,7 +125,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           Row(
             children: [
-              const Icon(FontAwesomeIcons.chartLine, color: Color(0xFF0d6efd), size: 24),
+              const Icon(
+                FontAwesomeIcons.chartLine,
+                color: Color(0xFF0d6efd),
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -170,7 +178,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       ),
       child: Row(
         children: [
-          const Icon(FontAwesomeIcons.calendar, color: Color(0xFF0d6efd), size: 20),
+          const Icon(
+            FontAwesomeIcons.calendar,
+            color: Color(0xFF0d6efd),
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField<TimeRange>(
@@ -178,10 +190,16 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               decoration: const InputDecoration(
                 labelText: 'Report Period',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: TimeRange.values.map((range) {
-                return DropdownMenuItem(value: range, child: Text(range.displayName));
+                return DropdownMenuItem(
+                  value: range,
+                  child: Text(range.displayName),
+                );
               }).toList(),
               onChanged: (TimeRange? value) {
                 if (value != null) {
@@ -214,18 +232,47 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'Statistics Summary',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0d6efd),
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
-              _buildStatCard('Completed', viewModel.totalCompleted, FontAwesomeIcons.circleCheck, const Color(0xFF0d6efd)),
-              _buildStatCard('Approved', viewModel.totalApproved, FontAwesomeIcons.thumbsUp, const Color(0xFF198754)),
-              _buildStatCard('Rejected', viewModel.totalRejected, FontAwesomeIcons.circleXmark, const Color(0xFFdc3545)),
-              _buildStatCard('Pending', viewModel.totalPending, FontAwesomeIcons.clock, const Color(0xFFffc107)),
-              _buildStatCard('Cancelled', viewModel.totalCancelled, FontAwesomeIcons.ban, const Color(0xFF6c757d)),
+              _buildStatCard(
+                'Completed',
+                viewModel.totalCompleted,
+                FontAwesomeIcons.circleCheck,
+                const Color(0xFF0d6efd),
+              ),
+              _buildStatCard(
+                'Approved',
+                viewModel.totalApproved,
+                FontAwesomeIcons.thumbsUp,
+                const Color(0xFF198754),
+              ),
+              _buildStatCard(
+                'Rejected',
+                viewModel.totalRejected,
+                FontAwesomeIcons.circleXmark,
+                const Color(0xFFdc3545),
+              ),
+              _buildStatCard(
+                'Pending',
+                viewModel.totalPending,
+                FontAwesomeIcons.clock,
+                const Color(0xFFffc107),
+              ),
+              _buildStatCard(
+                'Cancelled',
+                viewModel.totalCancelled,
+                FontAwesomeIcons.ban,
+                const Color(0xFF6c757d),
+              ),
             ],
           ),
         ],
@@ -248,9 +295,20 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
           const SizedBox(height: 8),
           Text(
             count.toString(),
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
-          Text(title, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -275,7 +333,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'Data Visualization',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0d6efd),
+            ),
           ),
           const SizedBox(height: 20),
           LayoutBuilder(
@@ -336,7 +398,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       children: [
         Row(
           children: [
-            const Icon(FontAwesomeIcons.chartLine, color: Color(0xFF0d6efd), size: 16),
+            const Icon(
+              FontAwesomeIcons.chartLine,
+              color: Color(0xFF0d6efd),
+              size: 16,
+            ),
             const SizedBox(width: 8),
             const Text(
               'Appointment Trends',
@@ -406,23 +472,44 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   borderData: FlBorderData(
                     show: true,
-                    border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
                   ),
                   minX: 0,
                   maxX: (chartData.labels.length - 1).toDouble(),
                   minY: 0,
                   maxY: maxY,
                   lineBarsData: [
-                    _buildLineChartBarData(chartData.completed, const Color(0xFF0d6efd)),
-                    _buildLineChartBarData(chartData.approved, const Color(0xFF198754)),
-                    _buildLineChartBarData(chartData.rejected, const Color(0xFFdc3545)),
-                    _buildLineChartBarData(chartData.pending, const Color(0xFFffc107)),
-                    _buildLineChartBarData(chartData.cancelled, const Color(0xFF6c757d)),
+                    _buildLineChartBarData(
+                      chartData.completed,
+                      const Color(0xFF0d6efd),
+                    ),
+                    _buildLineChartBarData(
+                      chartData.approved,
+                      const Color(0xFF198754),
+                    ),
+                    _buildLineChartBarData(
+                      chartData.rejected,
+                      const Color(0xFFdc3545),
+                    ),
+                    _buildLineChartBarData(
+                      chartData.pending,
+                      const Color(0xFFffc107),
+                    ),
+                    _buildLineChartBarData(
+                      chartData.cancelled,
+                      const Color(0xFF6c757d),
+                    ),
                   ],
                   lineTouchData: LineTouchData(
                     enabled: true,
@@ -432,7 +519,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                           final flSpot = barSpot;
                           return LineTooltipItem(
                             '${flSpot.y.toInt()}',
-                            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           );
                         }).toList();
                       },
@@ -462,7 +552,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
 
   LineChartBarData _buildLineChartBarData(List<int> data, Color color) {
     return LineChartBarData(
-      spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList(),
+      spots: data
+          .asMap()
+          .entries
+          .map((e) => FlSpot(e.key.toDouble(), e.value.toDouble()))
+          .toList(),
       isCurved: true,
       color: color,
       barWidth: 4,
@@ -518,7 +612,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             children: [
               Row(
                 children: [
-                  const Icon(FontAwesomeIcons.chartPie, color: Color(0xFF0d6efd), size: 16),
+                  const Icon(
+                    FontAwesomeIcons.chartPie,
+                    color: Color(0xFF0d6efd),
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'Status Distribution',
@@ -557,29 +655,31 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: pieData
-                          .map((data) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
-                                        color: data.color,
-                                        shape: BoxShape.circle,
-                                      ),
+                          .map(
+                            (data) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: data.color,
+                                      shape: BoxShape.circle,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        data.label,
-                                        style: const TextStyle(fontSize: 12),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      data.label,
+                                      style: const TextStyle(fontSize: 12),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
-                                ),
-                              ))
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -593,7 +693,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             children: [
               Row(
                 children: [
-                  const Icon(FontAwesomeIcons.chartPie, color: Color(0xFF0d6efd), size: 16),
+                  const Icon(
+                    FontAwesomeIcons.chartPie,
+                    color: Color(0xFF0d6efd),
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'Status Distribution',
@@ -633,7 +737,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                       Container(
                         width: 12,
                         height: 12,
-                        decoration: BoxDecoration(color: data.color, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: data.color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(data.label, style: const TextStyle(fontSize: 12)),
@@ -667,7 +774,11 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           const Text(
             'List of All Your Appointments',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0d6efd)),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0d6efd),
+            ),
           ),
           const SizedBox(height: 16),
           TabBar(
@@ -682,6 +793,7 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             },
             tabs: const [
               Tab(text: 'All'),
+              Tab(text: 'Follow-up'),
               Tab(text: 'Approved'),
               Tab(text: 'Rejected'),
               Tab(text: 'Completed'),
@@ -710,7 +822,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                   hintText: 'Search appointments...',
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 onChanged: (value) {
                   _searchTimer?.cancel();
@@ -728,7 +843,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                   hintText: 'Filter by month',
                   prefixIcon: Icon(Icons.calendar_month),
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 readOnly: true,
                 onTap: () async {
@@ -739,7 +857,8 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                     lastDate: DateTime.now(),
                   );
                   if (date != null) {
-                    final monthString = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+                    final monthString =
+                        '${date.year}-${date.month.toString().padLeft(2, '0')}';
                     _dateController.text = monthString;
                     viewModel.updateDateFilter(monthString);
                   }
@@ -793,7 +912,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             children: [
               Icon(Icons.info_outline, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('No appointments found.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+              Text(
+                'No appointments found.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -814,7 +936,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
     );
   }
 
-  void _showExportFiltersDialog(CounselorReportsViewModel viewModel, String exportType) {
+  void _showExportFiltersDialog(
+    CounselorReportsViewModel viewModel,
+    String exportType,
+  ) {
     showDialog(
       context: context,
       builder: (context) => ExportFiltersDialog(
@@ -839,10 +964,19 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
               _buildDetailRow('Student Name', appointment.studentName),
               _buildDetailRow('Date', appointment.formattedDate),
               _buildDetailRow('Time', appointment.appointedTime),
-              _buildDetailRow('Consultation Type', appointment.consultationType),
+              if (appointment.methodType != null &&
+                  appointment.methodType!.isNotEmpty)
+                _buildDetailRow('Method Type', appointment.methodType!),
+              _buildDetailRow(
+                'Consultation Type',
+                appointment.consultationType,
+              ),
+              _buildDetailRow('Session Type', appointment.sessionTypeDisplay),
               _buildDetailRow('Purpose', appointment.purpose),
+              _buildDetailRow('Counselor', appointment.counselorName),
               _buildDetailRow('Status', appointment.status),
-              if (appointment.reason != null) _buildDetailRow('Reason', appointment.reason!),
+              if (appointment.reason != null)
+                _buildDetailRow('Reason', appointment.reason!),
             ],
           ),
         ),
@@ -864,7 +998,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         children: [
           SizedBox(
             width: 120,
-            child: Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           Expanded(child: Text(value)),
         ],

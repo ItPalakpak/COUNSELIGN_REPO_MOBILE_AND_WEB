@@ -522,6 +522,24 @@ class _CounselorFollowUpSessionsScreenState
                 ),
               ],
             ),
+            if (appointment.methodType != null &&
+                appointment.methodType!.isNotEmpty)
+              const SizedBox(height: 4),
+            if (appointment.methodType != null &&
+                appointment.methodType!.isNotEmpty)
+              Row(
+                children: [
+                  Icon(Icons.video_call, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      appointment.methodType!,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 4),
             Row(
               children: [

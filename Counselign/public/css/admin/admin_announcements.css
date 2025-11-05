@@ -198,6 +198,7 @@ body {
     font-size: 0.97rem;
     line-height: 1.6;
     flex: 1;
+    white-space: pre-line;
 }
 
 .announcement-actions {
@@ -284,6 +285,7 @@ body {
     font-size: 0.97rem;
     line-height: 1.6;
     flex: 1;
+    white-space: pre-line;
 }
 
 .event-actions {

@@ -108,6 +108,7 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->get('dashboard/get-profile-data', 'Dashboard::getProfileData');
     $routes->get('session/check', 'SessionCheck::index');
     $routes->match(['GET', 'POST'], 'message/operations', 'Message::operations');
+    $routes->get('messages', 'Message::index');
     $routes->get('profile/get', 'Profile::getProfile');
     $routes->get('announcements', 'Announcements::index');
     $routes->get('announcements/all', 'Announcements::getAll');

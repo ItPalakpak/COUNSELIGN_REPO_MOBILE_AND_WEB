@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'announcement'
                     }));
                     renderAnnouncements(announcements);
+                    // Ensure calendar reflects newly loaded announcements
+                    generateCalendar();
                 } else {
                     showEmptyAnnouncements('No announcements available');
                 }
@@ -78,6 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'event'
                     }));
                     renderEvents(events);
+                    // Refresh calendar to display badges and titles
+                    generateCalendar();
                 } else {
                     showEmptyEvents('No upcoming events');
                 }
@@ -127,10 +131,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span><i class='fas fa-calendar'></i> Posted: ${postedDate}</span>
                     </div>
                     <div class="announcement-description">${announcement.content}</div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-primary see-announcement-details">See details</button>
+                    </div>
                 </div>
             `;
 
             container.appendChild(announcementElement);
+            const btn = announcementElement.querySelector('.see-announcement-details');
+            if (btn) btn.addEventListener('click', function() { openAnnouncementDetails(announcement); });
         });
     }
 
@@ -177,9 +186,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span><i class='fas fa-map-marker-alt'></i> ${location}</span>
                     </div>
                     <div class="event-description">${event.description}</div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-primary see-event-details">See details</button>
+                    </div>
                 </div>
             `;
             container.appendChild(eventElement);
+            const btn = eventElement.querySelector('.see-event-details');
+            if (btn) btn.addEventListener('click', function() { openEventDetails(event); });
         });
     }
 
@@ -229,30 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Setup calendar event listeners
     function setupCalendarEventListeners() {
-        // Calendar toggle button
-        const calendarToggleBtn = document.getElementById('calendarToggleBtn');
-        const calendarDrawer = document.getElementById('calendarDrawer');
-        const calendarOverlay = document.getElementById('calendarOverlay');
-        const calendarCloseBtn = document.getElementById('calendarCloseBtn');
-
-        if (calendarToggleBtn) {
-            calendarToggleBtn.addEventListener('click', function() {
-                openCalendarDrawer();
-            });
-        }
-
-        if (calendarCloseBtn) {
-            calendarCloseBtn.addEventListener('click', function() {
-                closeCalendarDrawer();
-            });
-        }
-
-        if (calendarOverlay) {
-            calendarOverlay.addEventListener('click', function() {
-                closeCalendarDrawer();
-            });
-        }
-
         // Calendar navigation
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
@@ -272,33 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Open calendar drawer
-    function openCalendarDrawer() {
-        const calendarDrawer = document.getElementById('calendarDrawer');
-        const calendarOverlay = document.getElementById('calendarOverlay');
-        const calendarToggleBtn = document.getElementById('calendarToggleBtn');
-
-        if (calendarDrawer && calendarOverlay && calendarToggleBtn) {
-            calendarDrawer.classList.add('open');
-            calendarOverlay.classList.add('active');
-            calendarToggleBtn.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    // Close calendar drawer
-    function closeCalendarDrawer() {
-        const calendarDrawer = document.getElementById('calendarDrawer');
-        const calendarOverlay = document.getElementById('calendarOverlay');
-        const calendarToggleBtn = document.getElementById('calendarToggleBtn');
-
-        if (calendarDrawer && calendarOverlay && calendarToggleBtn) {
-            calendarDrawer.classList.remove('open');
-            calendarOverlay.classList.remove('active');
-            calendarToggleBtn.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    }
+    // Drawer functions removed (inline calendar)
 
     // Generate calendar
     function generateCalendar() {
@@ -343,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let day = 1; day <= daysInMonth; day++) {
             const dayElement = document.createElement('div');
             dayElement.className = 'calendar-day';
-            dayElement.textContent = day;
+            dayElement.innerHTML = `<span class="date-number">${day}</span>`;
             
             const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
             const dateString = formatDateForComparison(dayDate);
@@ -354,26 +318,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 dayElement.classList.add('today');
             }
             
-            // Check for events/announcements on this date
+            // Check for events on this date (exclude announcements from calendar markers)
             const dayEvents = getEventsForDate(dayDate);
-            const dayAnnouncements = getAnnouncementsForDate(dayDate);
-            const totalItems = dayEvents.length + dayAnnouncements.length;
+            const totalItems = dayEvents.length;
             
             if (totalItems > 0) {
                 dayElement.classList.add('has-event');
                 dayElement.setAttribute('data-date', dateString);
-                dayElement.setAttribute('data-events-count', dayEvents.length);
-                dayElement.setAttribute('data-announcements-count', dayAnnouncements.length);
                 dayElement.setAttribute('data-total-count', totalItems);
+                
+                // Badge with count
+                const badge = document.createElement('span');
+                badge.className = 'event-count-badge';
+                badge.textContent = String(dayEvents.length);
+                dayElement.appendChild(badge);
                 
                 // Add click event for showing details
                 dayElement.addEventListener('click', function() {
-                    showDateDetails(dayDate, dayEvents, dayAnnouncements);
+                    showDateDetails(dayDate, dayEvents, []);
                 });
                 
                 // Add tooltip
                 dayElement.addEventListener('mouseenter', function(e) {
-                    showTooltip(e, totalItems, dayEvents.length, dayAnnouncements.length);
+                    showTooltip(e, totalItems, dayEvents.length, 0);
                 });
                 
                 dayElement.addEventListener('mouseleave', function() {
@@ -422,14 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tooltip.className = 'event-tooltip';
         tooltip.id = 'eventTooltip';
         
-        let tooltipText = `${totalCount} item${totalCount > 1 ? 's' : ''}`;
-        if (eventsCount > 0 && announcementsCount > 0) {
-            tooltipText += ` (${eventsCount} event${eventsCount > 1 ? 's' : ''}, ${announcementsCount} announcement${announcementsCount > 1 ? 's' : ''})`;
-        } else if (eventsCount > 0) {
-            tooltipText += ` (${eventsCount} event${eventsCount > 1 ? 's' : ''})`;
-        } else if (announcementsCount > 0) {
-            tooltipText += ` (${announcementsCount} announcement${announcementsCount > 1 ? 's' : ''})`;
-        }
+        let tooltipText = `${eventsCount} event${eventsCount > 1 ? 's' : ''}`;
         
         tooltip.textContent = tooltipText;
         document.body.appendChild(tooltip);
@@ -451,17 +411,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show date details modal
     function showDateDetails(clickedDate, events, announcements) {
+        const itemsCount = (events ? events.length : 0) + (announcements ? announcements.length : 0);
+        const sizeClass = itemsCount <= 1 ? '' : (itemsCount <= 3 ? 'modal-lg' : 'modal-xl');
+        const inlineMaxWidth = itemsCount <= 1 ? 'max-width: 600px;' : (itemsCount <= 3 ? 'max-width: 900px;' : 'max-width: 1140px;');
         // Create modal HTML
         const modalHTML = `
             <div class="modal fade" id="dateDetailsModal" tabindex="-1" aria-labelledby="dateDetailsModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
+                <div class="modal-dialog ${sizeClass} modal-dialog-centered" style="${inlineMaxWidth}">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="dateDetailsModalLabel">
                                 <i class="fas fa-calendar-day me-2"></i>
                                 ${formatDateForDisplay(clickedDate)}
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             ${generateDateDetailsContent(events, announcements)}
@@ -508,6 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let content = '';
         
         if (events.length > 0) {
+            const eventCol = events.length > 1 ? 'col-md-6' : 'col-12';
             content += `
                 <div class="mb-4">
                     <h6 class="text-primary mb-3">
@@ -524,15 +487,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }) : 'Time TBD';
                 
                 content += `
-                    <div class="col-md-6 mb-3">
+                    <div class="${eventCol} mb-3">
                         <div class="card border-primary">
                             <div class="card-body">
                                 <h6 class="card-title text-primary">${event.title}</h6>
-                                <p class="card-text">${event.description || 'No description available'}</p>
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="fas fa-clock me-2"></i>
-                                    <span>${eventTime}</span>
-                                    ${event.location ? `<i class="fas fa-map-marker-alt ms-3 me-2"></i><span>${event.location}</span>` : ''}
+                                <p class="card-text" style="white-space: pre-line;">${event.description || 'No description available'}</p>
+                                <div class="d-flex align-items-center text-muted small gap-3">
+                                    <span class="d-flex align-items-center"><i class="fas fa-clock me-1"></i><span>${eventTime}</span></span>
+                                    ${event.location ? `<span class=\"d-flex align-items-center\"><i class=\"fas fa-map-marker-alt me-1\"></i><span>${event.location}</span></span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -547,6 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (announcements.length > 0) {
+            const annCol = announcements.length > 1 ? 'col-md-6' : 'col-12';
             content += `
                 <div class="mb-4">
                     <h6 class="text-success mb-3">
@@ -564,11 +527,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 content += `
-                    <div class="col-md-6 mb-3">
+                    <div class="${annCol} mb-3">
                         <div class="card border-success">
                             <div class="card-body">
                                 <h6 class="card-title text-success">${announcement.title}</h6>
-                                <p class="card-text">${announcement.content}</p>
+                                <p class="card-text" style="white-space: pre-line;">${announcement.content}</p>
                                 <div class="d-flex align-items-center text-muted small">
                                     <i class="fas fa-calendar me-2"></i>
                                     <span>Posted: ${announcementDate}</span>
@@ -595,5 +558,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         return content;
+    }
+
+    // Details modals for list cards
+    function openAnnouncementDetails(announcement) {
+        const modalHTML = `
+            <div class="modal fade" id="announcementDetailsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-bullhorn me-2"></i>${announcement.title}</h5>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted"><i class="fas fa-calendar me-2"></i>${new Date(announcement.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+                            <div style="white-space: pre-line;">${announcement.content || ''}</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        const existing = document.getElementById('announcementDetailsModal');
+        if (existing) existing.remove();
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const modal = new bootstrap.Modal(document.getElementById('announcementDetailsModal'));
+        modal.show();
+        document.getElementById('announcementDetailsModal').addEventListener('hidden.bs.modal', function(){ this.remove(); });
+    }
+
+    function openEventDetails(event) {
+        const eventDate = event.date ? new Date(event.date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
+        const eventTime = event.time ? new Date(`1970-01-01T${event.time}`).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
+        const modalHTML = `
+            <div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-calendar-check me-2"></i>${event.title}</h5>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted"><i class="fas fa-calendar me-1"></i>${eventDate} ${eventTime ? '• '+eventTime : ''} ${event.location ? '• '+event.location : ''}</p>
+                            <div style="white-space: pre-line;">${event.description || ''}</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        const existing = document.getElementById('eventDetailsModal');
+        if (existing) existing.remove();
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+        modal.show();
+        document.getElementById('eventDetailsModal').addEventListener('hidden.bs.modal', function(){ this.remove(); });
     }
 }); 

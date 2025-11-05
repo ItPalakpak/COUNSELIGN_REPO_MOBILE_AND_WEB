@@ -70,8 +70,27 @@
                 </div>
             </div>
 
-            <!-- Events Section -->
-            <div class="events-section">
+            <!-- Inline Calendar Section -->
+            <div class="calendar-section">
+                <h3 class="subsection-title">Calendar</h3>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button id="prevMonth" class="calendar-nav-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h4 id="currentMonth" class="calendar-month"></h4>
+                        <button id="nextMonth" class="calendar-nav-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be dynamically generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Events List (full width) -->
+            <div class="upcoming-events-section">
                 <h3 class="subsection-title">Upcoming Events</h3>
                 <div class="scrollable-container">
                     <div class="events-list" id="eventsList">
@@ -79,47 +98,9 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Calendar Toggle Button -->
-            <button class="calendar-toggle-btn" id="calendarToggleBtn">
-                <i class="fas fa-calendar-alt"></i>
-                <span> Calendar View</span>
-                <i class="fas fa-chevron-left"></i>
-            </button>
         </div>
     </main>
 
-    <!-- Calendar Drawer -->
-    <div class="calendar-drawer" id="calendarDrawer">
-        <div class="calendar-drawer-header">
-            <h3 class="calendar-drawer-title">
-                <i class="fas fa-calendar-alt me-2"></i>
-                 Calendar View
-            </h3>
-            <button class="calendar-close-btn" id="calendarCloseBtn">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="calendar-drawer-content">
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <button id="prevMonth" class="calendar-nav-btn">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <h4 id="currentMonth" class="calendar-month"></h4>
-                    <button id="nextMonth" class="calendar-nav-btn">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-                <div class="calendar-grid" id="calendarGrid">
-                    <!-- Calendar will be dynamically generated here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Calendar Drawer Overlay -->
-    <div class="calendar-overlay" id="calendarOverlay"></div>
 
     <footer>
         <div class="footer-content">

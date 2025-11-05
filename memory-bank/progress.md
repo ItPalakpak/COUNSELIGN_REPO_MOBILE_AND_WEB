@@ -15,6 +15,37 @@
 - Hardcoded IPs in `ApiConfig` require environment management.
 - Backend dependency (CodeIgniter MVC) must be reachable for runtime features.
 
+## Done (Nov 5, 2025) - Counselor Messages Timestamp Toggle Reactivity Fix
+- **CRITICAL FIX**: Fixed timestamp toggle not showing immediately when clicking message bubbles:
+  - **Root Cause**: ListView.builder was not rebuilding properly when _selectedMessageId state changed, causing timestamps to only appear after page refresh or navigation
+  - **Solution**: Added ValueKey to ListView.builder based on _selectedMessageId to force proper widget tree rebuilds
+  - **Implementation**: Added `key: ValueKey(_selectedMessageId)` parameter to ListView.builder widget
+  - **Behavior Fixed**: Timestamps now show/hide immediately when user clicks message bubbles without any delay or need for refresh
+  - **Flutter Optimization**: ValueKey ensures Flutter recognizes the list has changed and triggers immediate rebuild of visible items
+  - **User Experience**: Matches expected Messenger-like behavior with instant visual feedback on tap
+  - **State Management**: setState() now properly propagates through ListView.builder thanks to the key parameter
+  - **No Breaking Changes**: Maintained all existing messaging functionality including sending, receiving, scrolling
+  - **Type Safety**: Follows Flutter best practices with proper key usage for performance and reactivity
+  - **No Linter Errors**: Successfully tested with flutter analyze showing only 2 pre-existing warnings in admin dashboard (unrelated)
+  - **Files Modified**: 
+    - `lib/counselorscreen/counselor_messages_screen.dart` - Added ValueKey to ListView.builder for immediate timestamp visibility toggle
+
+## Done (Nov 5, 2025) - Counselor Messages Timestamp Toggle Feature
+- **UI ENHANCEMENT**: Implemented Messenger-like timestamp toggle functionality in counselor messages screen:
+  - **Click-to-Show Timestamps**: Message timestamps are now hidden by default and only appear when user clicks on a message bubble
+  - **State Management**: Added _selectedMessageId state variable to track which message's timestamp is currently visible
+  - **Toggle Behavior**: Clicking a message shows its timestamp, clicking again (or clicking another message) hides it
+  - **Layout Restructure**: Changed message bubble layout from Row to Column structure to support conditional timestamp display below bubble
+  - **Proper Alignment**: Timestamps appear below message bubbles with proper alignment (left-aligned for received messages, right-aligned for sent messages with appropriate padding)
+  - **Clean UI**: Message bubbles now display only the message text by default, creating a cleaner, more focused interface
+  - **GestureDetector Integration**: Wrapped message bubble containers with GestureDetector for tap handling using setState to toggle visibility
+  - **Type Safety**: Used messageId field from CounselorMessage model for unique message identification
+  - **Messenger UX Pattern**: Matches the familiar user experience from popular messaging apps where timestamps appear on demand
+  - **Functionality Preserved**: Maintained all existing messaging functionality including sending, receiving, and scrolling behavior
+  - **No Linter Errors**: Successfully tested with flutter analyze showing only 2 pre-existing warnings in admin dashboard (unrelated)
+  - **Files Modified**: 
+    - `lib/counselorscreen/counselor_messages_screen.dart` - Enhanced message bubble with timestamp toggle functionality
+
 ## Done (Dec 19, 2024) - Counselor Scheduled Appointments Loading States Implementation
 - **LOADING STATES**: Added comprehensive loading states to Mark Complete button and Confirm Cancellation button with proper state management and automatic modal closure functionality:
   - **ViewModel Enhancement**: Added loading state properties (isUpdatingStatus, updatingAppointmentId) to CounselorScheduledAppointmentsViewModel to track ongoing operations

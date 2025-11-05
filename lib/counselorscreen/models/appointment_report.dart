@@ -135,6 +135,9 @@ class AppointmentReportItem {
   final String counselorName;
   final String status;
   final String? reason;
+  final String? methodType;
+  final String? appointmentType;
+  final String? recordKind;
 
   const AppointmentReportItem({
     required this.userId,
@@ -146,6 +149,9 @@ class AppointmentReportItem {
     required this.counselorName,
     required this.status,
     this.reason,
+    this.methodType,
+    this.appointmentType,
+    this.recordKind,
   });
 
   factory AppointmentReportItem.fromJson(Map<String, dynamic> json) {
@@ -155,11 +161,14 @@ class AppointmentReportItem {
       studentName: json['student_name'] ?? '',
       appointedDate: json['appointed_date'] ?? json['preferred_date'] ?? '',
       appointedTime: json['appointed_time'] ?? json['preferred_time'] ?? '',
-      consultationType: json['consultation_type'] ?? '',
+      consultationType: json['consultation_type'] ?? 'Individual Consultation',
       purpose: json['purpose'] ?? 'N/A',
       counselorName: json['counselor_name'] ?? '',
       status: json['status'] ?? 'PENDING',
       reason: json['reason'],
+      methodType: json['method_type'],
+      appointmentType: json['appointment_type'],
+      recordKind: json['record_kind'],
     );
   }
 
@@ -174,6 +183,9 @@ class AppointmentReportItem {
       'counselor_name': counselorName,
       'status': status,
       'reason': reason,
+      'method_type': methodType,
+      'appointment_type': appointmentType,
+      'record_kind': recordKind,
     };
   }
 
@@ -203,6 +215,17 @@ class AppointmentReportItem {
       default:
         return 'pending';
     }
+  }
+
+  /// Get session type display text
+  String get sessionTypeDisplay {
+    if (appointmentType != null && appointmentType!.isNotEmpty) {
+      return appointmentType!;
+    }
+    if (recordKind == 'follow_up') {
+      return 'Follow-up Session';
+    }
+    return 'First Session';
   }
 }
 
@@ -413,6 +436,7 @@ enum TimeRange {
 /// Appointment status enum
 enum AppointmentStatus {
   all('all', 'All Appointments'),
+  followup('followup', 'Follow-up'),
   approved('approved', 'Approved'),
   rejected('rejected', 'Rejected'),
   completed('completed', 'Completed'),

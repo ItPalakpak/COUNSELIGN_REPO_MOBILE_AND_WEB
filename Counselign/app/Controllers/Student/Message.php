@@ -12,6 +12,14 @@ use App\Helpers\UserActivityHelper;
 
 class Message extends BaseController
 {
+    public function index()
+    {
+        // Ensure student is logged in; if not, send back to student dashboard
+        if (!session()->get('logged_in') || session()->get('role') !== 'student') {
+            return redirect()->to(base_url('student/dashboard'));
+        }
+        return view('student/messages');
+    }
     public function operations()
     {
         $session = session();

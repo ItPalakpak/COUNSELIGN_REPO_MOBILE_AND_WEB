@@ -17,9 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up calendar navigation
     setupCalendarNavigation();
-    
-    // Set up calendar drawer
-    setupCalendarDrawer();
 });
 
 // Initialize calendar
@@ -73,7 +70,7 @@ function renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dayElement = document.createElement('div');
         dayElement.className = 'calendar-day';
-        dayElement.textContent = day;
+        dayElement.innerHTML = `<span class="date-number">${day}</span>`;
         
         const currentDay = new Date(year, month, day);
         const today = new Date();
@@ -83,16 +80,31 @@ function renderCalendar() {
             dayElement.classList.add('today');
         }
         
-        // Check if there are events or announcements on this day
-        const dayItems = getItemsForDate(currentDay);
+        // Check if there are events on this day (exclude announcements from markers)
+        const dayItems = events.filter(ev => {
+            if (!ev.date) return false;
+            const d = new Date(ev.date);
+            return d.toDateString() === currentDay.toDateString();
+        });
         if (dayItems.length > 0) {
             dayElement.classList.add('has-event');
             dayElement.title = dayItems.map(item => item.title).join(', ');
             
+            // Badge showing number of events (only events counted)
+            const eventsCount = dayItems.filter(i => i.type === 'event').length;
+            if (eventsCount > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'event-count-badge';
+                badge.textContent = String(eventsCount);
+                dayElement.appendChild(badge);
+            }
+            
+            // No title overlay on dates (kept interactive on click)
+            
             // Add click event for showing details
             dayElement.addEventListener('click', function() {
-                const dayEvents = dayItems.filter(item => item.type === 'event');
-                const dayAnnouncements = dayItems.filter(item => item.type === 'announcement');
+                const dayEvents = dayItems;
+                const dayAnnouncements = [];
                 showDateDetails(currentDay, dayEvents, dayAnnouncements);
             });
             
@@ -106,11 +118,12 @@ function renderCalendar() {
 
 // Get events and announcements for a specific date
 function getItemsForDate(date) {
-    const allItems = [...events, ...announcements];
-    return allItems.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate.toDateString() === date.toDateString();
+    // Deprecated in favor of direct events filtering above
+    const items = events.filter(ev => {
+        const d = new Date(ev.date);
+        return d.toDateString() === date.toDateString();
     });
+    return items;
 }
 
 // Add tooltip to calendar day
@@ -122,9 +135,8 @@ function addTooltipToDay(dayElement, dayItems) {
             tooltip = document.createElement('div');
             tooltip.className = 'event-tooltip';
             tooltip.innerHTML = dayItems.map(item => {
-                const typeLabel = item.type === 'announcement' ? 'Announcement' : 'Event';
                 const timeInfo = item.time ? `<br><small>${item.time}</small>` : '';
-                return `<div><strong>${item.title}</strong> <small>(${typeLabel})</small>${timeInfo}</div>`;
+                return `<div><strong>${item.title}</strong>${timeInfo}</div>`;
             }).join('<br>');
             
             document.body.appendChild(tooltip);
@@ -229,7 +241,7 @@ function displayAnnouncements(announcements) {
         return;
     }
 
-    announcementsList.innerHTML = announcements.map(announcement => {
+    announcementsList.innerHTML = announcements.map((announcement, index) => {
         // Parse date for badge
         let announcementDate = announcement.created_at ? new Date(announcement.created_at) : null;
         let badgeMonth = announcementDate ? announcementDate.toLocaleString('en-US', { month: 'short' }).toUpperCase() : '';
@@ -270,7 +282,7 @@ function displayEvents(events) {
         return;
     }
 
-    eventsList.innerHTML = events.map(event => {
+    eventsList.innerHTML = events.map((event, index) => {
         // Parse date for badge
         let eventDate = event.date ? new Date(event.date) : null;
         let badgeMonth = eventDate ? eventDate.toLocaleString('en-US', { month: 'short' }).toUpperCase() : '';
@@ -324,81 +336,7 @@ function showErrorMessage(message) {
     // You can implement a toast notification or alert here
 }
 
-// Setup calendar drawer functionality
-function setupCalendarDrawer() {
-    const toggleBtn = document.getElementById('calendarToggleBtn');
-    const drawer = document.getElementById('calendarDrawer');
-    const closeBtn = document.getElementById('calendarCloseBtn');
-    const overlay = document.getElementById('calendarOverlay');
-    
-    // Open drawer
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            openCalendarDrawer();
-        });
-    }
-    
-    // Close drawer
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            closeCalendarDrawer();
-        });
-    }
-    
-    // Close drawer when clicking overlay
-    if (overlay) {
-        overlay.addEventListener('click', function() {
-            closeCalendarDrawer();
-        });
-    }
-    
-    // Close drawer with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) {
-            closeCalendarDrawer();
-        }
-    });
-}
-
-// Open calendar drawer
-function openCalendarDrawer() {
-    const drawer = document.getElementById('calendarDrawer');
-    const overlay = document.getElementById('calendarOverlay');
-    const toggleBtn = document.getElementById('calendarToggleBtn');
-    
-    if (drawer) {
-        drawer.classList.add('open');
-    }
-    if (overlay) {
-        overlay.classList.add('active');
-    }
-    if (toggleBtn) {
-        toggleBtn.classList.add('active');
-    }
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-}
-
-// Close calendar drawer
-function closeCalendarDrawer() {
-    const drawer = document.getElementById('calendarDrawer');
-    const overlay = document.getElementById('calendarOverlay');
-    const toggleBtn = document.getElementById('calendarToggleBtn');
-    
-    if (drawer) {
-        drawer.classList.remove('open');
-    }
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
-    if (toggleBtn) {
-        toggleBtn.classList.remove('active');
-    }
-    
-    // Restore body scroll
-    document.body.style.overflow = '';
-}
+// Drawer functionality removed (inline calendar now on page)
 
 // Format date for comparison (YYYY-MM-DD)
 function formatDateForComparison(date) {
@@ -407,17 +345,19 @@ function formatDateForComparison(date) {
 
 // Show date details modal
 function showDateDetails(clickedDate, events, announcements) {
+    const itemsCount = (events ? events.length : 0) + (announcements ? announcements.length : 0);
+    const sizeClass = itemsCount <= 1 ? '' : (itemsCount <= 3 ? 'modal-lg' : 'modal-xl');
+    const inlineMaxWidth = itemsCount <= 1 ? 'max-width: 600px;' : (itemsCount <= 3 ? 'max-width: 900px;' : 'max-width: 1140px;');
     // Create modal HTML
     const modalHTML = `
         <div class="modal fade" id="dateDetailsModal" tabindex="-1" aria-labelledby="dateDetailsModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog ${sizeClass} modal-dialog-centered" style="${inlineMaxWidth}">
                 <div class="modal-content">
-                    <div class="modal-header">
+                        <div class="modal-header">
                         <h5 class="modal-title" id="dateDetailsModalLabel">
                             <i class="fas fa-calendar-day me-2"></i>
                             ${formatDateForDisplay(clickedDate)}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         ${generateDateDetailsContent(events, announcements)}
@@ -464,6 +404,7 @@ function generateDateDetailsContent(events, announcements) {
     let content = '';
     
     if (events.length > 0) {
+        const eventCol = events.length > 1 ? 'col-md-6' : 'col-12';
         content += `
             <div class="mb-4">
                 <h6 class="text-primary mb-3">
@@ -480,15 +421,14 @@ function generateDateDetailsContent(events, announcements) {
             }) : 'Time TBD';
             
             content += `
-                <div class="col-md-6 mb-3">
+                <div class="${eventCol} mb-3">
                     <div class="card border-primary">
                         <div class="card-body">
                             <h6 class="card-title text-primary">${event.title}</h6>
-                            <p class="card-text">${event.description || 'No description available'}</p>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-clock me-2"></i>
-                                <span>${eventTime}</span>
-                                ${event.location ? `<i class="fas fa-map-marker-alt ms-3 me-2"></i><span>${event.location}</span>` : ''}
+                            <p class="card-text" style="white-space: pre-line;">${event.description || 'No description available'}</p>
+                            <div class="d-flex align-items-center text-muted small gap-3">
+                                <span class="d-flex align-items-center"><i class="fas fa-clock me-1"></i><span>${eventTime}</span></span>
+                                ${event.location ? `<span class=\"d-flex align-items-center\"><i class=\"fas fa-map-marker-alt me-1\"></i><span>${event.location}</span></span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -503,6 +443,7 @@ function generateDateDetailsContent(events, announcements) {
     }
     
     if (announcements.length > 0) {
+        const annCol = announcements.length > 1 ? 'col-md-6' : 'col-12';
         content += `
             <div class="mb-4">
                 <h6 class="text-success mb-3">
@@ -520,11 +461,11 @@ function generateDateDetailsContent(events, announcements) {
             });
             
             content += `
-                <div class="col-md-6 mb-3">
+                <div class="${annCol} mb-3">
                     <div class="card border-success">
                         <div class="card-body">
                             <h6 class="card-title text-success">${announcement.title}</h6>
-                            <p class="card-text">${announcement.content}</p>
+                            <p class="card-text" style="white-space: pre-line;">${announcement.content}</p>
                             <div class="d-flex align-items-center text-muted small">
                                 <i class="fas fa-calendar me-2"></i>
                                 <span>Posted: ${announcementDate}</span>

@@ -1,4 +1,67 @@
 # Active Context
+## Nov 6, 2025
+### Current focus
+- Synced Flutter counselor reports screen with backend MVC view all appointments functionality to ensure perfect feature parity.
+
+### Recent changes
+- **Counselor Reports Screen Sync with Backend MVC (Nov 6, 2025)**:
+  - **Missing Features Implemented**: Added follow-up tab to match web version (6 tabs total: All, Follow-up, Approved, Rejected, Completed, Cancelled)
+  - **Model Enhancements**: Added methodType, appointmentType, and recordKind fields to AppointmentReportItem model for complete data representation
+  - **Display Improvements**: Updated appointment cards to show method type (Online/Face-to-Face) and session type (First Session/Follow-up Session)
+  - **Filter Logic Enhancement**: Implemented proper follow-up filtering logic matching web version (record_kind === 'follow_up' AND status IN ['PENDING','COMPLETED','CANCELLED'])
+  - **Report Title Logic**: Added follow-up case to report title generation for proper PDF/Excel export titles
+  - **Export Enhancement**: Updated PDF export to include all columns matching web version (User ID, Full Name, Date, Time, Method Type, Consultation Type, Session, Purpose, Counselor, Status)
+  - **Excel Export Update**: Updated Excel headers and data mapping to match PDF structure with 10 columns instead of 8
+  - **Column Width Optimization**: Adjusted Excel column widths for optimal display of all fields
+  - **Session Type Display**: Added sessionTypeDisplay getter to AppointmentReportItem for consistent session type rendering
+  - **Appointment Details Modal**: Enhanced to show all fields including method type, consultation type, session type, and counselor
+  - **Type Safety**: All changes maintain proper null safety and type checking
+  - **No Breaking Changes**: All existing functionality preserved while adding missing features
+  - **Files Modified**:
+    - `lib/counselorscreen/models/appointment_report.dart` - Added methodType, appointmentType, recordKind fields and sessionTypeDisplay getter
+    - `lib/counselorscreen/state/counselor_reports_viewmodel.dart` - Enhanced filter logic and export functionality
+    - `lib/counselorscreen/counselor_reports_screen.dart` - Added follow-up tab and enhanced appointment details modal
+    - `lib/counselorscreen/widgets/appointment_report_card.dart` - Added method type and session type display
+  - **Testing**: Successfully passes `flutter analyze` with only 2 pre-existing warnings in admin dashboard (unrelated)
+  - **Perfect Parity**: Flutter version now matches backend MVC functionality exactly as documented in VIEW_ALL_APPOINTMENTS_SYSTEM_DOCUMENTATION.md
+- Added methodType field display to counselor follow-up sessions completed appointment cards.
+
+### Recent changes
+- Enhanced `CompletedAppointment` model with `methodType` field for proper data parsing from backend
+- Added conditional `methodType` display to appointment cards in counselor follow-up sessions screen
+- Positioned method type field between time and consultation type for logical information flow
+- Used video_call icon for visual consistency with student appointment screens
+- Implemented proper null checking and conditional rendering with separate if statements
+- Previous: Fixed timestamp toggle reactivity issue in counselor messages screen where timestamps weren't showing immediately upon clicking message bubbles.
+
+### Next steps
+- Test counselor follow-up sessions screen to verify methodType displays correctly for all completed appointments
+- Verify that methodType field is properly fetched from backend API
+- Monitor for any layout issues with the new field
+
+## Nov 5, 2025
+### Current focus
+- Fixed timestamp toggle reactivity issue in counselor messages screen where timestamps weren't showing immediately upon clicking message bubbles.
+
+### Recent changes
+- Fixed ListView.builder rebuild issue by adding ValueKey based on _selectedMessageId to force proper widget tree updates
+- Timestamps now show/hide immediately when message bubbles are clicked without requiring page refresh
+- Added key parameter to ListView.builder: `key: ValueKey(_selectedMessageId)`
+- Ensures Flutter rebuilds the list when the selected message changes for immediate UI feedback
+- Previous: Enhanced counselor messages screen with Messenger-like timestamp toggle functionality where timestamps are hidden by default and only shown when a message bubble is clicked.
+
+### Recent changes
+- Added method_type display to appointment cards in follow_up_sessions_screen.dart
+- Positioned method type field between date/time information and purpose field
+- Added video_call icon for visual consistency
+- Implemented proper null checking and conditional rendering
+- Previous: Fixed image loading issue where user profile pictures and photos were not displaying due to incorrect URL construction in ImageUrlHelper utility class.
+
+### Next steps
+- Test follow-up sessions screen to verify method_type displays correctly
+- Verify all appointment cards show the consultation method (Online, Face-to-Face, etc.)
+- Monitor for any layout issues with the new field
+
 ## Nov 3, 2025
 ### Current focus
 - Replace student counselor selection and conversation modals with dedicated screens while preserving messaging functions and counselor status/profile visuals.
@@ -88,6 +151,53 @@ Reminders for future work:
 - Keep visual-only tweaks isolated; avoid changing unrelated logic when addressing lints/deprecations.
 
 ## Recent Changes
+- **Student Follow-up Sessions Method Type Display (Nov 5, 2025)**:
+  - **Enhancement**: Added `method_type` field display to completed appointment cards in follow-up sessions screen
+  - **Location**: Positioned between date/time information and purpose field for logical information flow
+  - **Implementation Details**:
+    - Added conditional rendering with null checking: `if (appointment.methodType != null && appointment.methodType!.isNotEmpty)`
+    - Used video_call_rounded icon for visual consistency with other appointment fields
+    - Applied same styling as other info fields (14px font size, gray color #64748B, medium font weight)
+    - Used Expanded widget for text to handle long method type names gracefully
+    - Display format: "Method: [method_type value]" (e.g., "Method: Online", "Method: Face-to-Face")
+  - **UI Enhancement**:
+    - Maintains consistent visual hierarchy with existing appointment card fields
+    - Proper spacing (8px) between fields for clean layout
+    - Icon-text alignment matches existing pattern
+    - Responsive text handling with Expanded widget
+  - **Type Safety**: Proper null checking and conditional rendering to prevent errors
+  - **No Breaking Changes**: Only adds display of existing data field, all existing functionality preserved
+  - **Files Modified**:
+    - `lib/studentscreen/follow_up_sessions_screen.dart` - Added method_type display in _buildAppointmentCard method
+  - **Testing**: Successfully passes `flutter analyze` with only 2 pre-existing warnings in admin dashboard (unrelated)
+- **Image Loading URL Construction Fix (Nov 5, 2025)**:
+  - **Root Cause Analysis**: User profile pictures and photos were not displaying due to incorrect URL construction in `ImageUrlHelper` utility class
+  - **Error Message Clarification**: "Connection refused (OS Error: Connection refused, errno = 111), address = localhost, port = 50098" was from Flutter DevTools, NOT image loading
+  - **URL Construction Issue**: The helper was trying to replace `/public/index.php` with `/public` but the base URL (`http://192.168.18.65/Counselign/public`) didn't contain `/index.php`, so replacement failed
+  - **Solution Implementation**:
+    - Enhanced `getProfileImageUrl()` method to properly clean base URL by removing `/index.php` suffix if present
+    - Implemented proper slash handling using regex to remove trailing slashes from base URL
+    - Added slash normalization for image paths to prevent leading slashes
+    - Ensured proper URL concatenation: `cleanBaseUrl + '/' + normalizedPath`
+  - **Debug Logging Added**:
+    - Added `debugPrint` statements to track base URL cleaning process
+    - Log normalized path transformation
+    - Log final constructed URL for troubleshooting
+    - Imported `package:flutter/foundation.dart` for debug logging
+  - **Technical Details**:
+    - Uses regex pattern `/$/` to remove trailing slashes reliably
+    - Handles both cases: base URL with or without `/index.php`
+    - Handles paths with or without leading slashes
+    - Returns 'Photos/profile.png' for null/empty image paths (used for asset loading)
+  - **Type Safety**: Maintained proper null safety and string handling throughout URL construction
+  - **No Breaking Changes**: All existing image loading functionality preserved while fixing URL construction
+  - **Files Modified**:
+    - `lib/studentscreen/utils/image_url_helper.dart` - Enhanced with proper URL construction and debug logging
+  - **Example URL Construction**:
+    - Input: `imagePath = "Photos/profile_pictures/user_123.jpg"`
+    - Base URL: `http://192.168.18.65/Counselign/public`
+    - Output: `http://192.168.18.65/Counselign/public/Photos/profile_pictures/user_123.jpg`
+  - **Testing**: Successfully passes `flutter analyze` with only 2 pre-existing warnings in admin dashboard (unrelated)
 - **Student PDS Date Format Parsing Fix**:
   - **Root Cause Analysis**: PDS save functionality was failing with FormatException "Trying to read / from 2005-03-13 at 5" due to date format mismatch
   - **Format Mismatch Issue**: UI displays dates in dd/MM/yyyy format but backend stores dates in yyyy-MM-dd format

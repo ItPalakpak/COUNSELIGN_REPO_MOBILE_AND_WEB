@@ -180,9 +180,26 @@ class CounselorReportsViewModel extends ChangeNotifier {
     List<AppointmentReportItem> filtered = List.from(_allAppointments);
 
     if (_selectedStatus != AppointmentStatus.all) {
-      filtered = filtered.where((appointment) {
-        return appointment.status.toLowerCase() == _selectedStatus.value;
-      }).toList();
+      if (_selectedStatus == AppointmentStatus.followup) {
+        filtered = filtered.where((appointment) {
+          final isFollowUp =
+              (appointment.recordKind == 'follow_up') ||
+              (appointment.appointmentType != null &&
+                  appointment.appointmentType!.toLowerCase().contains(
+                    'follow-up',
+                  ));
+          final validStatus = [
+            'PENDING',
+            'COMPLETED',
+            'CANCELLED',
+          ].contains(appointment.status.toUpperCase());
+          return isFollowUp && validStatus;
+        }).toList();
+      } else {
+        filtered = filtered.where((appointment) {
+          return appointment.status.toLowerCase() == _selectedStatus.value;
+        }).toList();
+      }
     }
 
     if (_searchQuery.isNotEmpty) {
@@ -294,10 +311,12 @@ class CounselorReportsViewModel extends ChangeNotifier {
                   'Full Name',
                   'Date',
                   'Time',
-                  'Type',
+                  'Method Type',
+                  'Consultation Type',
+                  'Session',
                   'Purpose',
+                  'Counselor',
                   'Status',
-                  'Reason',
                 ],
                 data: appointments.map((app) {
                   return [
@@ -305,10 +324,12 @@ class CounselorReportsViewModel extends ChangeNotifier {
                     app.studentName,
                     app.formattedDate,
                     app.appointedTime,
+                    app.methodType ?? '',
                     app.consultationType,
+                    app.sessionTypeDisplay,
                     app.purpose,
-                    app.status,
-                    app.reason ?? '',
+                    app.counselorName,
+                    app.status.toLowerCase(),
                   ];
                 }).toList(),
                 cellStyle: const pw.TextStyle(fontSize: 8),
@@ -384,7 +405,7 @@ class CounselorReportsViewModel extends ChangeNotifier {
       // Title row
       sheet.merge(
         excel_pkg.CellIndex.indexByString('A1'),
-        excel_pkg.CellIndex.indexByString('H1'),
+        excel_pkg.CellIndex.indexByString('J1'),
       );
       var titleCell = sheet.cell(excel_pkg.CellIndex.indexByString('A1'));
       titleCell.value = excel_pkg.TextCellValue(
@@ -399,7 +420,7 @@ class CounselorReportsViewModel extends ChangeNotifier {
       // Filter summary row
       sheet.merge(
         excel_pkg.CellIndex.indexByString('A2'),
-        excel_pkg.CellIndex.indexByString('H2'),
+        excel_pkg.CellIndex.indexByString('J2'),
       );
       var filterCell = sheet.cell(excel_pkg.CellIndex.indexByString('A2'));
       filterCell.value = excel_pkg.TextCellValue(filterSummary);
@@ -414,10 +435,12 @@ class CounselorReportsViewModel extends ChangeNotifier {
         'Full Name',
         'Date',
         'Time',
+        'Method Type',
         'Consultation Type',
+        'Session',
         'Purpose',
+        'Counselor',
         'Status',
-        'Reason',
       ];
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
@@ -480,7 +503,7 @@ class CounselorReportsViewModel extends ChangeNotifier {
               ),
             )
             .value = excel_pkg.TextCellValue(
-          app.consultationType,
+          app.methodType ?? '',
         );
         sheet
             .cell(
@@ -490,7 +513,7 @@ class CounselorReportsViewModel extends ChangeNotifier {
               ),
             )
             .value = excel_pkg.TextCellValue(
-          app.purpose,
+          app.consultationType,
         );
         sheet
             .cell(
@@ -500,7 +523,7 @@ class CounselorReportsViewModel extends ChangeNotifier {
               ),
             )
             .value = excel_pkg.TextCellValue(
-          app.status.toLowerCase(),
+          app.sessionTypeDisplay,
         );
         sheet
             .cell(
@@ -510,7 +533,27 @@ class CounselorReportsViewModel extends ChangeNotifier {
               ),
             )
             .value = excel_pkg.TextCellValue(
-          app.reason ?? '',
+          app.purpose,
+        );
+        sheet
+            .cell(
+              excel_pkg.CellIndex.indexByColumnRow(
+                columnIndex: 8,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = excel_pkg.TextCellValue(
+          app.counselorName,
+        );
+        sheet
+            .cell(
+              excel_pkg.CellIndex.indexByColumnRow(
+                columnIndex: 9,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = excel_pkg.TextCellValue(
+          app.status.toLowerCase(),
         );
       }
 
@@ -520,9 +563,11 @@ class CounselorReportsViewModel extends ChangeNotifier {
       sheet.setColumnWidth(2, 10);
       sheet.setColumnWidth(3, 18);
       sheet.setColumnWidth(4, 15);
-      sheet.setColumnWidth(5, 40);
-      sheet.setColumnWidth(6, 10);
-      sheet.setColumnWidth(7, 40);
+      sheet.setColumnWidth(5, 22);
+      sheet.setColumnWidth(6, 18);
+      sheet.setColumnWidth(7, 30);
+      sheet.setColumnWidth(8, 25);
+      sheet.setColumnWidth(9, 12);
 
       final directory = await getApplicationDocumentsDirectory();
       final file = File(
@@ -610,6 +655,8 @@ class CounselorReportsViewModel extends ChangeNotifier {
         return 'Completed Consultation Records';
       case AppointmentStatus.cancelled:
         return 'Cancelled Consultation Records';
+      case AppointmentStatus.followup:
+        return 'Follow-up Consultation Records';
       default:
         return 'All Consultation Records';
     }

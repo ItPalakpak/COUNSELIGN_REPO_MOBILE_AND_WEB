@@ -1,3 +1,12 @@
+- Inline calendar integrated into Student and Counselor Announcements pages
+  - Removed old drawer/toggle calendar UI
+  - Smaller calendar with badges and overlaid event titles on day cells
+  - Kept details modal on click; added full-width "Upcoming Events" list below
+  - Files updated:
+    - Views: `app/Views/student/student_announcements.php`, `app/Views/counselor/counselor_announcements.php`
+    - JS: `public/js/student/student_announcements.js`, `public/js/counselor/counselor_announcements.js`
+    - CSS: `public/css/student/student_announcements.css`, `public/css/counselor/counselor_announcements.css`
+  - SystemPatterns updated to reflect inline mini-calendar pattern
 - Focus: Enhanced Resend Reset Code Modal Implementation with Professional UI/UX Design and Type-Safe Coding Standards
 Recent Changes:
  - ADMIN ACCOUNT SEED: Added `AdminSeeder` and seeded default admin user

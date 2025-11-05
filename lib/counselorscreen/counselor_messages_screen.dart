@@ -19,6 +19,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _messagesScrollController = ScrollController();
+  String? _selectedMessageId;
 
   @override
   void initState() {
@@ -99,7 +100,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
       children: [
         // Sidebar Header
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             color: const Color(0xFF191970),
             border: Border(
@@ -416,7 +417,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
     bool isMobile,
   ) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+      padding: const EdgeInsets.fromLTRB(2, 48, 16, 2),
       decoration: BoxDecoration(
         color: const Color(0xFF191970),
         border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
@@ -438,7 +439,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
                 ? const Icon(Icons.person, color: Colors.white, size: 20)
                 : null,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 5),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,6 +592,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
       );
     }
 
+    // REMOVED: The ValueKey that was preventing rebuilds
     return ListView.builder(
       controller: _messagesScrollController,
       padding: const EdgeInsets.all(16),
@@ -608,78 +610,112 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
     CounselorMessagesViewModel viewModel,
   ) {
     final isSent = message.isSent;
+    final isTimeVisible = _selectedMessageId == message.messageId.toString();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: isSent
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      child: Column(
+        crossAxisAlignment: isSent
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
-          if (!isSent) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: const Color(0xFF191970).withValues(alpha: 0.1),
-              backgroundImage: viewModel.selectedUserAvatar != null
-                  ? NetworkImage(viewModel.selectedUserAvatar!)
-                  : null,
-              child: viewModel.selectedUserAvatar == null
-                  ? const Icon(Icons.person, color: Color(0xFF191970), size: 16)
-                  : null,
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.7,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSent ? const Color(0xFF191970) : Colors.grey[200],
-                borderRadius: BorderRadius.circular(20).copyWith(
-                  bottomLeft: isSent
-                      ? const Radius.circular(20)
-                      : const Radius.circular(4),
-                  bottomRight: isSent
-                      ? const Radius.circular(4)
-                      : const Radius.circular(20),
+          Row(
+            mainAxisAlignment: isSent
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            children: [
+              if (!isSent) ...[
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  backgroundImage: viewModel.selectedUserAvatar != null
+                      ? NetworkImage(viewModel.selectedUserAvatar!)
+                      : null,
+                  child: viewModel.selectedUserAvatar == null
+                      ? const Icon(
+                          Icons.person,
+                          color: Color(0xFF191970),
+                          size: 16,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {
+                    // CHANGED: Wrap setState in a microtask to ensure immediate rebuild
+                    Future.microtask(() {
+                      if (mounted) {
+                        setState(() {
+                          _selectedMessageId = isTimeVisible
+                              ? null
+                              : message.messageId.toString();
+                        });
+                      }
+                    });
+                  },
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.7,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSent
+                          ? const Color(0xFF191970)
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20).copyWith(
+                        bottomLeft: isSent
+                            ? const Radius.circular(20)
+                            : const Radius.circular(4),
+                        bottomRight: isSent
+                            ? const Radius.circular(4)
+                            : const Radius.circular(20),
+                      ),
+                    ),
+                    child: Text(
+                      message.messageText,
+                      style: TextStyle(
+                        color: isSent ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.messageText,
-                    style: TextStyle(
-                      color: isSent ? Colors.white : Colors.black87,
-                      fontSize: 14,
-                    ),
+              if (isSent) ...[
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.person,
+                    color: Color(0xFF191970),
+                    size: 16,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message.formattedTime,
-                    style: TextStyle(
-                      color: isSent ? Colors.white70 : Colors.grey[600],
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              ],
+            ],
           ),
-          if (isSent) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: const Color(0xFF191970).withValues(alpha: 0.1),
-              child: const Icon(
-                Icons.person,
-                color: Color(0xFF191970),
-                size: 16,
+          if (isTimeVisible)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 4,
+                left: isSent ? 0 : 40,
+                right: isSent ? 40 : 0,
+              ),
+              child: Text(
+                message.formattedTime,
+                style: TextStyle(color: Colors.grey[600], fontSize: 10),
               ),
             ),
-          ],
         ],
       ),
     );
