@@ -28,7 +28,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _viewModel = StudentProfileViewModel();
     _initializeViewModel();
   }
@@ -488,48 +488,81 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
             isScrollable: true, // Allow horizontal scrolling on mobile
             tabAlignment: TabAlignment.center,
             tabs: const [
-              Tab(icon: Icon(Icons.school, size: 18), text: 'Academic'),
-              Tab(icon: Icon(Icons.person, size: 18), text: 'Personal'),
+              Tab(icon: Icon(Icons.school, size: 18), text: 'Personal BG'),
+              Tab(
+                icon: Icon(Icons.family_restroom, size: 18),
+                text: 'Family BG',
+              ),
               Tab(icon: Icon(Icons.info, size: 18), text: 'Other Info'),
+              Tab(icon: Icon(Icons.emoji_events, size: 18), text: 'Awards'),
             ],
           ),
         ),
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.6, // Responsive height
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              SingleChildScrollView(
-                key: const PageStorageKey(
-                  'academic_tab',
-                ), // Preserve scroll position
-                padding: const EdgeInsets.all(16),
-                child: _buildAcademicTab(viewModel),
-              ),
-              SingleChildScrollView(
-                key: const PageStorageKey(
-                  'personal_tab',
-                ), // Preserve scroll position
-                padding: const EdgeInsets.all(16),
-                child: _buildPersonalTab(viewModel),
-              ),
-              SingleChildScrollView(
-                key: const PageStorageKey(
-                  'other_info_tab',
-                ), // Preserve scroll position
-                padding: const EdgeInsets.all(16),
-                child: _buildOtherInfoTab(viewModel),
-              ),
-            ],
-          ),
+          child: viewModel.pdsViewModel.isSavingPDS
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Saving your data...'),
+                    ],
+                  ),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    SingleChildScrollView(
+                      key: const PageStorageKey(
+                        'personal_bg_tab',
+                      ), // Preserve scroll position
+                      padding: const EdgeInsets.all(16),
+                      child: _buildPersonalBackgroundTab(viewModel),
+                    ),
+                    SingleChildScrollView(
+                      key: const PageStorageKey(
+                        'family_bg_tab',
+                      ), // Preserve scroll position
+                      padding: const EdgeInsets.all(16),
+                      child: _buildFamilyBackgroundTab(viewModel),
+                    ),
+                    SingleChildScrollView(
+                      key: const PageStorageKey(
+                        'other_info_tab',
+                      ), // Preserve scroll position
+                      padding: const EdgeInsets.all(16),
+                      child: _buildOtherInfoTab(viewModel),
+                    ),
+                    SingleChildScrollView(
+                      key: const PageStorageKey(
+                        'awards_tab',
+                      ), // Preserve scroll position
+                      padding: const EdgeInsets.all(16),
+                      child: _buildAwardsTab(viewModel),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildAcademicTab(StudentProfileViewModel viewModel) {
+  Widget _buildPersonalBackgroundTab(StudentProfileViewModel viewModel) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Academic Information Section
+        const Text(
+          'Academic Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
         _buildDropdownField(
           'Course',
           viewModel.pdsViewModel.getController('course'),
@@ -568,14 +601,38 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           ],
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
-      ],
-    );
-  }
-
-  Widget _buildPersonalTab(StudentProfileViewModel viewModel) {
-    return Column(
-      children: [
-        // Basic Info - Each field in its own row
+        const SizedBox(height: 16),
+        _buildTextField(
+          'School Last Attended',
+          viewModel.pdsViewModel.getController('schoolLastAttended'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Name of school',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Location of School',
+          viewModel.pdsViewModel.getController('locationOfSchool'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'City, Province',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Previous Course/Grade',
+          viewModel.pdsViewModel.getController('previousCourseGrade'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Previous course or grade level',
+        ),
+        const SizedBox(height: 24),
+        // Personal Information Section
+        const Text(
+          'Personal Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
         _buildTextField(
           'Last name',
           viewModel.pdsViewModel.getController('lastName'),
@@ -594,14 +651,19 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
         const SizedBox(height: 16),
-
-        // Date, Age, Sex - Each field in its own row
         _buildTextField(
           'Date of Birth',
           viewModel.pdsViewModel.getController('dateOfBirth'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
           isDateField: true,
           viewModel: viewModel,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Place of Birth',
+          viewModel.pdsViewModel.getController('placeOfBirth'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'City, Province',
         ),
         const SizedBox(height: 16),
         _buildTextField(
@@ -618,12 +680,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
         const SizedBox(height: 16),
-
-        // Civil Status and Contact - Each field in its own row
         _buildDropdownField(
           'Civil Status',
           viewModel.pdsViewModel.getController('civilStatus'),
           ['Single', 'Married', 'Widowed', 'Legally Separated', 'Annulled'],
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Religion',
+          viewModel.pdsViewModel.getController('religion'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
         const SizedBox(height: 16),
@@ -634,21 +700,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           keyboardType: TextInputType.phone,
           hintText: '09XXXXXXXXX',
         ),
-        const SizedBox(height: 24),
-
-        // Social
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Social',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF060E57),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildTextField(
           'FB Account Name',
           viewModel.pdsViewModel.getController('fbAccountName'),
@@ -662,8 +714,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           hintText: 'name@example.com',
         ),
         const SizedBox(height: 24),
-
-        // Permanent Home Address
+        // Address Section
         const Text(
           'Permanent Home Address',
           style: TextStyle(
@@ -697,8 +748,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
         const SizedBox(height: 24),
-
-        // Present Address
         const Text(
           'Present Address',
           style: TextStyle(
@@ -731,11 +780,17 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           viewModel.pdsViewModel.getController('presentProvince'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
-        const SizedBox(height: 24),
+      ],
+    );
+  }
 
-        // Parents / Guardian
+  Widget _buildFamilyBackgroundTab(StudentProfileViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Father Information
         const Text(
-          'Parents / Guardian',
+          'Father Information',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -756,6 +811,37 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          'Father\'s Educational Attainment',
+          viewModel.pdsViewModel.getController('fatherEducationalAttainment'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Father\'s Age',
+          viewModel.pdsViewModel.getController('fatherAge'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Father\'s Contact Number',
+          viewModel.pdsViewModel.getController('fatherContactNumber'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.phone,
+          hintText: '09XXXXXXXXX',
+        ),
+        const SizedBox(height: 24),
+        // Mother Information
+        const Text(
+          'Mother Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
           'Mother\'s Name',
           viewModel.pdsViewModel.getController('motherName'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
@@ -768,17 +854,231 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          'Spouse',
-          viewModel.pdsViewModel.getController('spouse'),
+          'Mother\'s Educational Attainment',
+          viewModel.pdsViewModel.getController('motherEducationalAttainment'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          'Contact Number',
+          'Mother\'s Age',
+          viewModel.pdsViewModel.getController('motherAge'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Mother\'s Contact Number',
+          viewModel.pdsViewModel.getController('motherContactNumber'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.phone,
+          hintText: '09XXXXXXXXX',
+        ),
+        const SizedBox(height: 24),
+        // Parents Information
+        const Text(
+          'Parents Contact Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Parents Permanent Address',
+          viewModel.pdsViewModel.getController('parentsPermanentAddress'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Parents Contact Number',
+          viewModel.pdsViewModel.getController('parentsContactNumber'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.phone,
+          hintText: '09XXXXXXXXX',
+        ),
+        const SizedBox(height: 24),
+        // Spouse Information
+        const Text(
+          'Spouse Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Spouse Name',
+          viewModel.pdsViewModel.getController('spouse'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Leave blank if not applicable',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Spouse Occupation',
+          viewModel.pdsViewModel.getController('spouseOccupation'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Spouse Educational Attainment',
+          viewModel.pdsViewModel.getController('spouseEducationalAttainment'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 24),
+        // Guardian Information
+        const Text(
+          'Guardian Information',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Guardian Name',
+          viewModel.pdsViewModel.getController('guardianName'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Guardian Age',
+          viewModel.pdsViewModel.getController('guardianAge'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Guardian Occupation',
+          viewModel.pdsViewModel.getController('guardianOccupation'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Guardian Contact Number',
           viewModel.pdsViewModel.getController('guardianContactNumber'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
           keyboardType: TextInputType.phone,
           hintText: '09XXXXXXXXX',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAwardsTab(StudentProfileViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Awards and Recognition',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'List any awards or recognition you have received (up to 3)',
+          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
+        const SizedBox(height: 24),
+        // Award 1
+        const Text(
+          'Award 1',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Award Name',
+          viewModel.pdsViewModel.getController('awardName1'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'e.g., Dean\'s Lister, Academic Excellence Award',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'School/Organization',
+          viewModel.pdsViewModel.getController('awardSchoolOrg1'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Name of school or organization',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Year Received',
+          viewModel.pdsViewModel.getController('awardYear1'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+          hintText: 'YYYY',
+        ),
+        const SizedBox(height: 24),
+        // Award 2
+        const Text(
+          'Award 2',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Award Name',
+          viewModel.pdsViewModel.getController('awardName2'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'e.g., Dean\'s Lister, Academic Excellence Award',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'School/Organization',
+          viewModel.pdsViewModel.getController('awardSchoolOrg2'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Name of school or organization',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Year Received',
+          viewModel.pdsViewModel.getController('awardYear2'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+          hintText: 'YYYY',
+        ),
+        const SizedBox(height: 24),
+        // Award 3
+        const Text(
+          'Award 3',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Award Name',
+          viewModel.pdsViewModel.getController('awardName3'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'e.g., Dean\'s Lister, Academic Excellence Award',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'School/Organization',
+          viewModel.pdsViewModel.getController('awardSchoolOrg3'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Name of school or organization',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Year Received',
+          viewModel.pdsViewModel.getController('awardYear3'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          keyboardType: TextInputType.number,
+          hintText: 'YYYY',
         ),
       ],
     );
@@ -838,6 +1138,187 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           'Attach PWD ID / Proof of Disability',
           'pwdProof',
           viewModel,
+        ),
+        const SizedBox(height: 24),
+
+        // Course Choice Reason
+        const Text(
+          'Course Choice',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          'Why did you choose this course?',
+          viewModel.pdsViewModel.getController('courseChoiceReason'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Explain your reason for choosing this course',
+        ),
+        const SizedBox(height: 24),
+
+        // Family Description
+        const Text(
+          'Family Description',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildCheckboxField(
+          'harmonious',
+          'familyDescHarmonious',
+          'Harmonious',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'conflict',
+          'familyDescConflict',
+          'With conflict',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'separated_parents',
+          'familyDescSeparatedParents',
+          'Separated parents',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'parents_working_abroad',
+          'familyDescParentsWorkingAbroad',
+          'Parents working abroad',
+          viewModel,
+        ),
+        _buildTextField(
+          'Other (specify)',
+          viewModel.pdsViewModel.getController('familyDescriptionOther'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Other family description',
+        ),
+        const SizedBox(height: 24),
+
+        // Living Condition
+        const Text(
+          'Living Condition',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildRadioGroup('', 'livingCondition', [
+          'good_environment',
+          'supportive_family',
+          'financial_challenges',
+          'unstable_housing',
+        ], viewModel),
+        const SizedBox(height: 24),
+
+        // Physical Health Condition
+        const Text(
+          'Physical Health Condition',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildRadioGroup(
+          'Do you have any physical health conditions?',
+          'physicalHealthCondition',
+          ['Yes', 'No'],
+          viewModel,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Specify condition (if Yes)',
+          viewModel.pdsViewModel.getController(
+            'physicalHealthConditionSpecify',
+          ),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Specify your health condition',
+        ),
+        const SizedBox(height: 24),
+
+        // Psychological Treatment
+        _buildRadioGroup(
+          'Have you undergone or are currently undergoing psychological treatment?',
+          'psychTreatment',
+          ['Yes', 'No'],
+          viewModel,
+        ),
+        const SizedBox(height: 24),
+
+        // GCS Activities
+        const Text(
+          'Guidance Counseling Services Activities',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF060E57),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Select activities you are interested in:',
+          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
+        const SizedBox(height: 12),
+        _buildCheckboxField(
+          'adjustment',
+          'gcsAdjustment',
+          'Adjustment to college life',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'building_self_confidence',
+          'gcsSelfConfidence',
+          'Building self-confidence',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'developing_communication_skills',
+          'gcsCommunication',
+          'Developing communication skills',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'study_habits',
+          'gcsStudyHabits',
+          'Study habits',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'time_management',
+          'gcsTimeManagement',
+          'Time management',
+          viewModel,
+        ),
+        _buildCheckboxField(
+          'tutorial_with_peers',
+          'gcsTutorial',
+          'Tutorial with peers',
+          viewModel,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Tutorial subjects (if applicable)',
+          viewModel.pdsViewModel.getController('tutorialSubjects'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'e.g., Math, Science',
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Other activities',
+          viewModel.pdsViewModel.getController('gcsOther'),
+          enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
+          hintText: 'Specify other activities',
         ),
         const SizedBox(height: 24),
 
@@ -957,7 +1438,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
         ], viewModel),
         _buildTextField(
           'Other (specify)',
-          viewModel.pdsViewModel.getController('resOtherText'),
+          viewModel.pdsViewModel.getController('residenceOtherSpecify'),
           enabled: viewModel.pdsViewModel.isPdsEditingEnabled,
           hintText: 'Other (specify)',
         ),
@@ -1157,50 +1638,79 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: controller?.text.isNotEmpty == true
-              ? controller!.text
-              : null,
-          onChanged: enabled
-              ? (value) {
-                  if (value != null) {
-                    controller?.text = value;
-                  }
-                }
-              : null,
-          style: const TextStyle(fontSize: 16, color: Color(0xFF374151)),
-          decoration: InputDecoration(
-            hintText: 'Select $label',
-            hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFF3F4F6), width: 1),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            filled: true,
-            fillColor: enabled ? Colors.white : const Color(0xFFF9FAFB),
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option, style: const TextStyle(fontSize: 16)),
+        // Wrap with AnimatedBuilder to rebuild when controller changes
+        AnimatedBuilder(
+          animation: controller ?? ValueNotifier(''),
+          builder: (context, child) {
+            // Get current value from controller, validating it's in options
+            String? initialValue;
+            if (controller?.text.isNotEmpty == true) {
+              final controllerText = controller!.text.trim();
+              // Only use if it's a valid option
+              if (options.contains(controllerText)) {
+                initialValue = controllerText;
+              }
+            }
+
+            return DropdownButtonFormField<String>(
+              key: ValueKey(
+                '${label}_${initialValue ?? "empty"}',
+              ), // Force rebuild on value change
+              initialValue: initialValue,
+              onChanged: enabled
+                  ? (value) {
+                      if (value != null && controller != null) {
+                        controller.text = value;
+                      }
+                    }
+                  : null,
+              style: const TextStyle(fontSize: 16, color: Color(0xFF374151)),
+              decoration: InputDecoration(
+                hintText: 'Select $label',
+                hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE5E7EB),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE5E7EB),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFF3F4F6),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                filled: true,
+                fillColor: enabled ? Colors.white : const Color(0xFFF9FAFB),
+              ),
+              items: options.map((option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(option, style: const TextStyle(fontSize: 16)),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         ),
       ],
     );

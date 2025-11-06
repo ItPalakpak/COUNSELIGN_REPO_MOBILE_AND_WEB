@@ -50,6 +50,11 @@ class StudentDashboardViewModel extends ChangeNotifier {
   List<Message> _messages = [];
   List<Message> get messages => _messages;
 
+  // Unread messages tracking
+  final Map<String, List<int>> _unreadMessageIds =
+      {}; // counselorId -> [messageIds]
+  Map<String, List<int>> get unreadMessageIds => _unreadMessageIds;
+
   // Get messages filtered by selected counselor
   List<Message> get counselorMessages {
     if (_selectedCounselor == null) return [];
@@ -66,6 +71,23 @@ class StudentDashboardViewModel extends ChangeNotifier {
           (message.senderId == counselorId &&
               message.receiverId == currentUserId);
     }).toList();
+  }
+
+  // Get total unread messages count across all counselors
+  int get totalUnreadMessagesCount {
+    return _unreadMessageIds.values.fold(0, (sum, list) => sum + list.length);
+  }
+
+  // Check if a specific counselor has unread messages
+  bool hasUnreadMessages(String counselorId) {
+    final unreadIds = _unreadMessageIds[counselorId] ?? [];
+    return unreadIds.isNotEmpty;
+  }
+
+  // Get unread messages count for a specific counselor
+  int getUnreadMessagesCount(String counselorId) {
+    final unreadIds = _unreadMessageIds[counselorId] ?? [];
+    return unreadIds.length;
   }
 
   bool _showChat = false;
@@ -491,9 +513,11 @@ class StudentDashboardViewModel extends ChangeNotifier {
           // Mark messages as sent/received based on current user
           final currentUserId = _userProfile?.userId ?? '';
           for (var message in newMessages) {
-            // This is a simplified check - in real app you'd compare with actual user ID
             message.setCurrentUser(currentUserId);
           }
+
+          // Track unread messages (incoming messages that haven't been read)
+          _updateUnreadMessages(newMessages, currentUserId);
 
           _messages = newMessages;
           notifyListeners();
@@ -512,6 +536,34 @@ class StudentDashboardViewModel extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading messages: $e');
+    }
+  }
+
+  // Update unread messages tracking
+  void _updateUnreadMessages(List<Message> messages, String currentUserId) {
+    // Clear existing unread messages
+    _unreadMessageIds.clear();
+
+    // Group unread messages by counselor
+    for (final message in messages) {
+      // Only track incoming messages (received from counselor)
+      if (message.receiverId == currentUserId) {
+        final counselorId = message.senderId;
+
+        if (!_unreadMessageIds.containsKey(counselorId)) {
+          _unreadMessageIds[counselorId] = [];
+        }
+
+        _unreadMessageIds[counselorId]!.add(message.id);
+      }
+    }
+  }
+
+  // Mark all messages from a counselor as read
+  void markMessagesAsRead(String counselorId) {
+    if (_unreadMessageIds.containsKey(counselorId)) {
+      _unreadMessageIds[counselorId] = [];
+      notifyListeners();
     }
   }
 

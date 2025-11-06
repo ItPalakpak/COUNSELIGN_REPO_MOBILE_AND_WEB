@@ -58,6 +58,10 @@ class PDSViewModel extends ChangeNotifier {
   String get course => _pdsData?.academic?.course ?? '';
   String get yearLevel => _pdsData?.academic?.yearLevel ?? '';
   String get academicStatus => _pdsData?.academic?.academicStatus ?? '';
+  String get schoolLastAttended => _pdsData?.academic?.schoolLastAttended ?? '';
+  String get locationOfSchool => _pdsData?.academic?.locationOfSchool ?? '';
+  String get previousCourseGrade =>
+      _pdsData?.academic?.previousCourseGrade ?? '';
 
   String get lastName => _pdsData?.personal?.lastName ?? '';
   String get firstName => _pdsData?.personal?.firstName ?? '';
@@ -68,6 +72,8 @@ class PDSViewModel extends ChangeNotifier {
   String get civilStatus => _pdsData?.personal?.civilStatus ?? '';
   String get contactNumber => _pdsData?.personal?.contactNumber ?? '';
   String get fbAccountName => _pdsData?.personal?.fbAccountName ?? '';
+  String get placeOfBirth => _pdsData?.personal?.placeOfBirth ?? '';
+  String get religion => _pdsData?.personal?.religion ?? '';
   String get personalEmail => _pdsData?.userEmail ?? '';
 
   String get permanentZone => _pdsData?.address?.permanentZone ?? '';
@@ -81,9 +87,27 @@ class PDSViewModel extends ChangeNotifier {
 
   String get fatherName => _pdsData?.family?.fatherName ?? '';
   String get fatherOccupation => _pdsData?.family?.fatherOccupation ?? '';
+  String get fatherEducationalAttainment =>
+      _pdsData?.family?.fatherEducationalAttainment ?? '';
+  String get fatherAge => _pdsData?.family?.fatherAge ?? '';
+  String get fatherContactNumber => _pdsData?.family?.fatherContactNumber ?? '';
   String get motherName => _pdsData?.family?.motherName ?? '';
   String get motherOccupation => _pdsData?.family?.motherOccupation ?? '';
+  String get motherEducationalAttainment =>
+      _pdsData?.family?.motherEducationalAttainment ?? '';
+  String get motherAge => _pdsData?.family?.motherAge ?? '';
+  String get motherContactNumber => _pdsData?.family?.motherContactNumber ?? '';
+  String get parentsPermanentAddress =>
+      _pdsData?.family?.parentsPermanentAddress ?? '';
+  String get parentsContactNumber =>
+      _pdsData?.family?.parentsContactNumber ?? '';
   String get spouse => _pdsData?.family?.spouse ?? '';
+  String get spouseOccupation => _pdsData?.family?.spouseOccupation ?? '';
+  String get spouseEducationalAttainment =>
+      _pdsData?.family?.spouseEducationalAttainment ?? '';
+  String get guardianName => _pdsData?.family?.guardianName ?? '';
+  String get guardianAge => _pdsData?.family?.guardianAge ?? '';
+  String get guardianOccupation => _pdsData?.family?.guardianOccupation ?? '';
   String get guardianContactNumber =>
       _pdsData?.family?.guardianContactNumber ?? '';
 
@@ -102,6 +126,22 @@ class PDSViewModel extends ChangeNotifier {
 
   List<ServiceItem> get servicesNeeded => _pdsData?.servicesNeeded ?? [];
   List<ServiceItem> get servicesAvailed => _pdsData?.servicesAvailed ?? [];
+
+  String get courseChoiceReason =>
+      _pdsData?.otherInfo?.courseChoiceReason ?? '';
+  List<String> get familyDescription =>
+      _pdsData?.otherInfo?.familyDescription ?? [];
+  String get familyDescriptionOther =>
+      _pdsData?.otherInfo?.familyDescriptionOther ?? '';
+  String get livingCondition => _pdsData?.otherInfo?.livingCondition ?? '';
+  String get physicalHealthCondition =>
+      _pdsData?.otherInfo?.physicalHealthCondition ?? '';
+  String get physicalHealthConditionSpecify =>
+      _pdsData?.otherInfo?.physicalHealthConditionSpecify ?? '';
+  String get psychTreatment => _pdsData?.otherInfo?.psychTreatment ?? '';
+
+  List<GCSActivity> get gcsActivities => _pdsData?.gcsActivities ?? [];
+  List<Award> get awards => _pdsData?.awards ?? [];
 
   String get userEmail => _pdsData?.userEmail ?? '';
 
@@ -154,98 +194,148 @@ class PDSViewModel extends ChangeNotifier {
     // Clear existing controllers first
     _pdsControllers.clear();
 
+    // Helper to filter out 'N/A' values - treat 'N/A' as empty
+    String filterNA(String value) =>
+        (value.isEmpty || value == 'N/A') ? '' : value;
+
     // Academic
-    _pdsControllers['course'] = TextEditingController(
-      text: course.isNotEmpty ? course : '',
-    );
+    _pdsControllers['course'] = TextEditingController(text: filterNA(course));
     _pdsControllers['yearLevel'] = TextEditingController(
-      text: yearLevel.isNotEmpty ? yearLevel : '',
+      text: filterNA(yearLevel),
     );
     _pdsControllers['academicStatus'] = TextEditingController(
-      text: academicStatus.isNotEmpty ? academicStatus : '',
+      text: filterNA(academicStatus),
+    );
+    _pdsControllers['schoolLastAttended'] = TextEditingController(
+      text: filterNA(schoolLastAttended),
+    );
+    _pdsControllers['locationOfSchool'] = TextEditingController(
+      text: filterNA(locationOfSchool),
+    );
+    _pdsControllers['previousCourseGrade'] = TextEditingController(
+      text: filterNA(previousCourseGrade),
     );
 
     // Personal
     _pdsControllers['lastName'] = TextEditingController(
-      text: lastName.isNotEmpty ? lastName : '',
+      text: filterNA(lastName),
     );
     _pdsControllers['firstName'] = TextEditingController(
-      text: firstName.isNotEmpty ? firstName : '',
+      text: filterNA(firstName),
     );
     _pdsControllers['middleName'] = TextEditingController(
-      text: middleName.isNotEmpty ? middleName : '',
+      text: filterNA(middleName),
     );
     _pdsControllers['dateOfBirth'] = TextEditingController(
       text: dateOfBirth.isNotEmpty ? _formatDateForUI(dateOfBirth) : '',
     );
-    _pdsControllers['age'] = TextEditingController(
-      text: age.isNotEmpty ? age : '',
-    );
-    _pdsControllers['sex'] = TextEditingController(
-      text: sex.isNotEmpty ? sex : '',
-    );
+    _pdsControllers['age'] = TextEditingController(text: filterNA(age));
+    _pdsControllers['sex'] = TextEditingController(text: filterNA(sex));
     _pdsControllers['civilStatus'] = TextEditingController(
-      text: civilStatus.isNotEmpty ? civilStatus : '',
+      text: filterNA(civilStatus),
     );
     _pdsControllers['contactNumber'] = TextEditingController(
-      text: contactNumber.isNotEmpty ? contactNumber : '',
+      text: filterNA(contactNumber),
     );
     _pdsControllers['fbAccountName'] = TextEditingController(
-      text: fbAccountName.isNotEmpty ? fbAccountName : '',
+      text: filterNA(fbAccountName),
+    );
+    _pdsControllers['placeOfBirth'] = TextEditingController(
+      text: filterNA(placeOfBirth),
+    );
+    _pdsControllers['religion'] = TextEditingController(
+      text: filterNA(religion),
     );
 
     // Address
     _pdsControllers['permanentZone'] = TextEditingController(
-      text: permanentZone.isNotEmpty ? permanentZone : '',
+      text: filterNA(permanentZone),
     );
     _pdsControllers['permanentBarangay'] = TextEditingController(
-      text: permanentBarangay.isNotEmpty ? permanentBarangay : '',
+      text: filterNA(permanentBarangay),
     );
     _pdsControllers['permanentCity'] = TextEditingController(
-      text: permanentCity.isNotEmpty ? permanentCity : '',
+      text: filterNA(permanentCity),
     );
     _pdsControllers['permanentProvince'] = TextEditingController(
-      text: permanentProvince.isNotEmpty ? permanentProvince : '',
+      text: filterNA(permanentProvince),
     );
     _pdsControllers['presentZone'] = TextEditingController(
-      text: presentZone.isNotEmpty ? presentZone : '',
+      text: filterNA(presentZone),
     );
     _pdsControllers['presentBarangay'] = TextEditingController(
-      text: presentBarangay.isNotEmpty ? presentBarangay : '',
+      text: filterNA(presentBarangay),
     );
     _pdsControllers['presentCity'] = TextEditingController(
-      text: presentCity.isNotEmpty ? presentCity : '',
+      text: filterNA(presentCity),
     );
     _pdsControllers['presentProvince'] = TextEditingController(
-      text: presentProvince.isNotEmpty ? presentProvince : '',
+      text: filterNA(presentProvince),
     );
 
     // Family
     _pdsControllers['fatherName'] = TextEditingController(
-      text: fatherName.isNotEmpty ? fatherName : '',
+      text: filterNA(fatherName),
     );
     _pdsControllers['fatherOccupation'] = TextEditingController(
-      text: fatherOccupation.isNotEmpty ? fatherOccupation : '',
+      text: filterNA(fatherOccupation),
+    );
+    _pdsControllers['fatherEducationalAttainment'] = TextEditingController(
+      text: filterNA(fatherEducationalAttainment),
+    );
+    _pdsControllers['fatherAge'] = TextEditingController(
+      text: filterNA(fatherAge),
+    );
+    _pdsControllers['fatherContactNumber'] = TextEditingController(
+      text: filterNA(fatherContactNumber),
     );
     _pdsControllers['motherName'] = TextEditingController(
-      text: motherName.isNotEmpty ? motherName : '',
+      text: filterNA(motherName),
     );
     _pdsControllers['motherOccupation'] = TextEditingController(
-      text: motherOccupation.isNotEmpty ? motherOccupation : '',
+      text: filterNA(motherOccupation),
     );
-    _pdsControllers['spouse'] = TextEditingController(
-      text: spouse.isNotEmpty ? spouse : '',
+    _pdsControllers['motherEducationalAttainment'] = TextEditingController(
+      text: filterNA(motherEducationalAttainment),
+    );
+    _pdsControllers['motherAge'] = TextEditingController(
+      text: filterNA(motherAge),
+    );
+    _pdsControllers['motherContactNumber'] = TextEditingController(
+      text: filterNA(motherContactNumber),
+    );
+    _pdsControllers['parentsPermanentAddress'] = TextEditingController(
+      text: filterNA(parentsPermanentAddress),
+    );
+    _pdsControllers['parentsContactNumber'] = TextEditingController(
+      text: filterNA(parentsContactNumber),
+    );
+    _pdsControllers['spouse'] = TextEditingController(text: filterNA(spouse));
+    _pdsControllers['spouseOccupation'] = TextEditingController(
+      text: filterNA(spouseOccupation),
+    );
+    _pdsControllers['spouseEducationalAttainment'] = TextEditingController(
+      text: filterNA(spouseEducationalAttainment),
+    );
+    _pdsControllers['guardianName'] = TextEditingController(
+      text: filterNA(guardianName),
+    );
+    _pdsControllers['guardianAge'] = TextEditingController(
+      text: filterNA(guardianAge),
+    );
+    _pdsControllers['guardianOccupation'] = TextEditingController(
+      text: filterNA(guardianOccupation),
     );
     _pdsControllers['guardianContactNumber'] = TextEditingController(
-      text: guardianContactNumber.isNotEmpty ? guardianContactNumber : '',
+      text: filterNA(guardianContactNumber),
     );
 
     // Special circumstances
     _pdsControllers['pwdDisabilityType'] = TextEditingController(
-      text: pwdDisabilityType.isNotEmpty ? pwdDisabilityType : '',
+      text: filterNA(pwdDisabilityType),
     );
     _pdsControllers['residenceOtherSpecify'] = TextEditingController(
-      text: residenceOtherSpecify.isNotEmpty ? residenceOtherSpecify : '',
+      text: filterNA(residenceOtherSpecify),
     );
 
     // Services other fields
@@ -268,19 +358,68 @@ class PDSViewModel extends ChangeNotifier {
 
     // Personal email field - auto-populate with user's email
     _pdsControllers['personalEmail'] = TextEditingController(
-      text: userEmail.isNotEmpty ? userEmail : '',
+      text: filterNA(userEmail),
     );
 
-    // Initialize radio button values
-    _radioValues['soloParent'] = isSoloParent.isNotEmpty ? isSoloParent : 'No';
-    _radioValues['indigenous'] = isIndigenous.isNotEmpty ? isIndigenous : 'No';
-    _radioValues['breastFeeding'] = isBreastfeeding.isNotEmpty
-        ? isBreastfeeding
-        : 'N/A';
-    _radioValues['pwd'] = isPwd.isNotEmpty ? isPwd : 'No';
-    _radioValues['residence'] = residenceType.isNotEmpty
-        ? residenceType
-        : 'at home';
+    // Other Info controllers
+    _pdsControllers['courseChoiceReason'] = TextEditingController(
+      text: filterNA(courseChoiceReason),
+    );
+    _pdsControllers['familyDescriptionOther'] = TextEditingController(
+      text: filterNA(familyDescriptionOther),
+    );
+    _pdsControllers['physicalHealthConditionSpecify'] = TextEditingController(
+      text: filterNA(physicalHealthConditionSpecify),
+    );
+
+    // GCS Activities controllers
+    final tutorialActivity = gcsActivities.firstWhere(
+      (a) => a.type == 'tutorial_with_peers',
+      orElse: () => GCSActivity(type: '', tutorialSubjects: ''),
+    );
+    _pdsControllers['tutorialSubjects'] = TextEditingController(
+      text: tutorialActivity.tutorialSubjects ?? '',
+    );
+
+    final otherActivity = gcsActivities.firstWhere(
+      (a) => a.type == 'other',
+      orElse: () => GCSActivity(type: '', other: ''),
+    );
+    _pdsControllers['gcsOther'] = TextEditingController(
+      text: otherActivity.other ?? '',
+    );
+
+    // Awards controllers (3 sets)
+    for (int i = 0; i < 3; i++) {
+      final index = i + 1;
+      if (i < awards.length) {
+        _pdsControllers['awardName$index'] = TextEditingController(
+          text: awards[i].awardName,
+        );
+        _pdsControllers['awardSchoolOrg$index'] = TextEditingController(
+          text: awards[i].schoolOrganization,
+        );
+        _pdsControllers['awardYear$index'] = TextEditingController(
+          text: awards[i].yearReceived,
+        );
+      } else {
+        _pdsControllers['awardName$index'] = TextEditingController(text: '');
+        _pdsControllers['awardSchoolOrg$index'] = TextEditingController(
+          text: '',
+        );
+        _pdsControllers['awardYear$index'] = TextEditingController(text: '');
+      }
+    }
+
+    // Initialize radio button values - filter out 'N/A', use empty string instead
+    _radioValues['soloParent'] = filterNA(isSoloParent);
+    _radioValues['indigenous'] = filterNA(isIndigenous);
+    _radioValues['breastFeeding'] = filterNA(isBreastfeeding);
+    _radioValues['pwd'] = filterNA(isPwd);
+    _radioValues['residence'] = filterNA(residenceType);
+    _radioValues['livingCondition'] = filterNA(livingCondition);
+    _radioValues['physicalHealthCondition'] = filterNA(physicalHealthCondition);
+    _radioValues['psychTreatment'] = filterNA(psychTreatment);
 
     // Initialize checkbox values
     _initializeCheckboxValues();
@@ -288,7 +427,7 @@ class PDSViewModel extends ChangeNotifier {
 
   // Initialize checkbox values from services data
   void _initializeCheckboxValues() {
-    // Services needed checkboxes
+    // Services needed checkboxes (NO checkbox for 'other' - just text field)
     _checkboxValues['svcCounseling'] = servicesNeeded.any(
       (service) => service.type == 'counseling',
     );
@@ -304,11 +443,8 @@ class PDSViewModel extends ChangeNotifier {
     _checkboxValues['svcEqualAccess'] = servicesNeeded.any(
       (service) => service.type == 'equal_access',
     );
-    _checkboxValues['svcOther'] = servicesNeeded.any(
-      (service) => service.type == 'other',
-    );
 
-    // Services availed checkboxes
+    // Services availed checkboxes (NO checkbox for 'other' - just text field)
     _checkboxValues['availedCounseling'] = servicesAvailed.any(
       (service) => service.type == 'counseling',
     );
@@ -324,12 +460,42 @@ class PDSViewModel extends ChangeNotifier {
     _checkboxValues['availedEqualAccess'] = servicesAvailed.any(
       (service) => service.type == 'equal_access',
     );
-    _checkboxValues['availedOther'] = servicesAvailed.any(
-      (service) => service.type == 'other',
-    );
 
     // Consent checkbox
     _checkboxValues['consentAgree'] = hasConsent;
+
+    // Family description checkboxes
+    _checkboxValues['familyDescHarmonious'] = familyDescription.contains(
+      'harmonious',
+    );
+    _checkboxValues['familyDescConflict'] = familyDescription.contains(
+      'conflict',
+    );
+    _checkboxValues['familyDescSeparatedParents'] = familyDescription.contains(
+      'separated_parents',
+    );
+    _checkboxValues['familyDescParentsWorkingAbroad'] = familyDescription
+        .contains('parents_working_abroad');
+
+    // GCS activities checkboxes
+    _checkboxValues['gcsAdjustment'] = gcsActivities.any(
+      (a) => a.type == 'adjustment',
+    );
+    _checkboxValues['gcsSelfConfidence'] = gcsActivities.any(
+      (a) => a.type == 'building_self_confidence',
+    );
+    _checkboxValues['gcsCommunication'] = gcsActivities.any(
+      (a) => a.type == 'developing_communication_skills',
+    );
+    _checkboxValues['gcsStudyHabits'] = gcsActivities.any(
+      (a) => a.type == 'study_habits',
+    );
+    _checkboxValues['gcsTimeManagement'] = gcsActivities.any(
+      (a) => a.type == 'time_management',
+    );
+    _checkboxValues['gcsTutorial'] = gcsActivities.any(
+      (a) => a.type == 'tutorial_with_peers',
+    );
   }
 
   // Toggle PDS editing
@@ -345,76 +511,176 @@ class PDSViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Validate and sanitize sex value
+      String sexValue = (_pdsControllers['sex']?.text ?? '').trim();
+      if (sexValue.isNotEmpty && !['Male', 'Female'].contains(sexValue)) {
+        debugPrint(
+          'WARNING: Invalid sex value "$sexValue", resetting to empty',
+        );
+        sexValue = '';
+      }
+
+      // Validate and sanitize civilStatus value
+      String civilStatusValue = (_pdsControllers['civilStatus']?.text ?? '')
+          .trim();
+      final validCivilStatuses = [
+        'Single',
+        'Married',
+        'Widowed',
+        'Legally Separated',
+        'Annulled',
+      ];
+      if (civilStatusValue.isNotEmpty &&
+          !validCivilStatuses.contains(civilStatusValue)) {
+        debugPrint(
+          'WARNING: Invalid civilStatus value "$civilStatusValue", resetting to empty',
+        );
+        civilStatusValue = '';
+      }
+
       // Create payload matching PHP preparePDSData method exactly
       final payload = <String, dynamic>{
-        // Academic Information
-        'course': _pdsControllers['course']?.text ?? 'N/A',
-        'yearLevel': _pdsControllers['yearLevel']?.text ?? 'N/A',
-        'academicStatus': _pdsControllers['academicStatus']?.text ?? 'N/A',
+        // Academic Information - send actual values, empty strings are acceptable
+        'course': _pdsControllers['course']?.text ?? '',
+        'yearLevel': _pdsControllers['yearLevel']?.text ?? '',
+        'academicStatus': _pdsControllers['academicStatus']?.text ?? '',
+        'schoolLastAttended': _pdsControllers['schoolLastAttended']?.text ?? '',
+        'locationOfSchool': _pdsControllers['locationOfSchool']?.text ?? '',
+        'previousCourseGrade':
+            _pdsControllers['previousCourseGrade']?.text ?? '',
 
-        // Personal Information
-        'lastName': _pdsControllers['lastName']?.text ?? 'N/A',
-        'firstName': _pdsControllers['firstName']?.text ?? 'N/A',
-        'middleName': _pdsControllers['middleName']?.text ?? 'N/A',
+        // Personal Information - send actual values, empty strings are acceptable
+        'lastName': (_pdsControllers['lastName']?.text ?? '').trim(),
+        'firstName': (_pdsControllers['firstName']?.text ?? '').trim(),
+        'middleName': (_pdsControllers['middleName']?.text ?? '').trim(),
         'dateOfBirth': _pdsControllers['dateOfBirth']?.text.isNotEmpty == true
             ? _formatDateForBackend(_pdsControllers['dateOfBirth']!.text)
             : '',
-        'age': _pdsControllers['age']?.text.isNotEmpty == true
-            ? _pdsControllers['age']!.text
-            : null,
-        'sex': _pdsControllers['sex']?.text ?? 'N/A',
-        'civilStatus': _pdsControllers['civilStatus']?.text ?? 'Single',
-        'contactNumber':
-            _pdsControllers['contactNumber']?.text.isNotEmpty == true
-            ? _pdsControllers['contactNumber']!.text
-            : 'N/A',
-        'fbAccountName': _pdsControllers['fbAccountName']?.text ?? 'N/A',
+        'age': (_pdsControllers['age']?.text ?? '').trim(),
+        'sex': sexValue, // Use validated sex value
+        'civilStatus': civilStatusValue, // Use validated civilStatus value
+        'contactNumber': (_pdsControllers['contactNumber']?.text ?? '').trim(),
+        'fbAccountName': (_pdsControllers['fbAccountName']?.text ?? '').trim(),
+        'placeOfBirth': (_pdsControllers['placeOfBirth']?.text ?? '').trim(),
+        'religion': (_pdsControllers['religion']?.text ?? '').trim(),
 
-        // Address Information
-        'permanentZone': _pdsControllers['permanentZone']?.text ?? 'N/A',
-        'permanentBarangay':
-            _pdsControllers['permanentBarangay']?.text ?? 'N/A',
-        'permanentCity': _pdsControllers['permanentCity']?.text ?? 'N/A',
-        'permanentProvince':
-            _pdsControllers['permanentProvince']?.text ?? 'N/A',
-        'presentZone': _pdsControllers['presentZone']?.text ?? 'N/A',
-        'presentBarangay': _pdsControllers['presentBarangay']?.text ?? 'N/A',
-        'presentCity': _pdsControllers['presentCity']?.text ?? 'N/A',
-        'presentProvince': _pdsControllers['presentProvince']?.text ?? 'N/A',
+        // Address Information - send actual values
+        'permanentZone': _pdsControllers['permanentZone']?.text ?? '',
+        'permanentBarangay': _pdsControllers['permanentBarangay']?.text ?? '',
+        'permanentCity': _pdsControllers['permanentCity']?.text ?? '',
+        'permanentProvince': _pdsControllers['permanentProvince']?.text ?? '',
+        'presentZone': _pdsControllers['presentZone']?.text ?? '',
+        'presentBarangay': _pdsControllers['presentBarangay']?.text ?? '',
+        'presentCity': _pdsControllers['presentCity']?.text ?? '',
+        'presentProvince': _pdsControllers['presentProvince']?.text ?? '',
 
-        // Family Information
-        'fatherName': _pdsControllers['fatherName']?.text ?? 'N/A',
-        'fatherOccupation': _pdsControllers['fatherOccupation']?.text ?? 'N/A',
-        'motherName': _pdsControllers['motherName']?.text ?? 'N/A',
-        'motherOccupation': _pdsControllers['motherOccupation']?.text ?? 'N/A',
-        'spouse': _pdsControllers['spouse']?.text ?? 'N/A',
+        // Family Information - send actual values
+        'fatherName': _pdsControllers['fatherName']?.text ?? '',
+        'fatherOccupation': _pdsControllers['fatherOccupation']?.text ?? '',
+        'fatherEducationalAttainment':
+            _pdsControllers['fatherEducationalAttainment']?.text ?? '',
+        'fatherAge': _pdsControllers['fatherAge']?.text ?? '',
+        'fatherContactNumber':
+            _pdsControllers['fatherContactNumber']?.text ?? '',
+        'motherName': _pdsControllers['motherName']?.text ?? '',
+        'motherOccupation': _pdsControllers['motherOccupation']?.text ?? '',
+        'motherEducationalAttainment':
+            _pdsControllers['motherEducationalAttainment']?.text ?? '',
+        'motherAge': _pdsControllers['motherAge']?.text ?? '',
+        'motherContactNumber':
+            _pdsControllers['motherContactNumber']?.text ?? '',
+        'parentsPermanentAddress':
+            _pdsControllers['parentsPermanentAddress']?.text ?? '',
+        'parentsContactNumber':
+            _pdsControllers['parentsContactNumber']?.text ?? '',
+        'spouse': _pdsControllers['spouse']?.text ?? '',
+        'spouseOccupation': _pdsControllers['spouseOccupation']?.text ?? '',
+        'spouseEducationalAttainment':
+            _pdsControllers['spouseEducationalAttainment']?.text ?? '',
+        'guardianName': _pdsControllers['guardianName']?.text ?? '',
+        'guardianAge': _pdsControllers['guardianAge']?.text ?? '',
+        'guardianOccupation': _pdsControllers['guardianOccupation']?.text ?? '',
         'guardianContactNumber':
-            _pdsControllers['guardianContactNumber']?.text.isNotEmpty == true
-            ? _pdsControllers['guardianContactNumber']!.text
-            : 'N/A',
-        // Special Circumstances
-        'soloParent': _radioValues['soloParent'] ?? 'No',
-        'indigenous': _radioValues['indigenous'] ?? 'No',
-        'breastFeeding': _radioValues['breastFeeding'] ?? 'N/A',
-        'pwd': _radioValues['pwd'] ?? 'No',
-        'pwdSpecify': _pdsControllers['pwdDisabilityType']?.text ?? 'N/A',
+            _pdsControllers['guardianContactNumber']?.text ?? '',
+
+        // Special Circumstances - send radio values (empty string if not selected)
+        'soloParent': _radioValues['soloParent'] ?? '',
+        'indigenous': _radioValues['indigenous'] ?? '',
+        'breastFeeding': _radioValues['breastFeeding'] ?? '',
+        'pwd': _radioValues['pwd'] ?? '',
+        'pwdSpecify': _pdsControllers['pwdDisabilityType']?.text ?? '',
+
         // Services Needed
         'services_needed': _buildServicesJson('needed'),
 
         // Services Availed
         'services_availed': _buildServicesJson('availed'),
 
-        // Residence Information
-        'residence': _radioValues['residence'] ?? 'at home',
-        'resOtherText': _pdsControllers['residenceOtherSpecify']?.text ?? 'N/A',
-        'consentAgree': _checkboxValues['consentAgree'] == true ? '1' : '0',
+        // Residence Information - ALWAYS send consent as '1' (user agreed when first filling)
+        'residence': _radioValues['residence'] ?? '',
+        'resOtherText': _pdsControllers['residenceOtherSpecify']?.text ?? '',
+        // CRITICAL FIX: Always send '1' for consent (user already agreed initially)
+        'consentAgree': '1',
+
+        // Other Information
+        'courseChoiceReason': _pdsControllers['courseChoiceReason']?.text ?? '',
+        'family_description': _buildFamilyDescriptionJson(),
+        'familyDescriptionOther':
+            _pdsControllers['familyDescriptionOther']?.text ?? '',
+        'livingCondition': _radioValues['livingCondition'] ?? '',
+        'physicalHealthCondition':
+            _radioValues['physicalHealthCondition'] ?? '',
+        'physicalHealthConditionSpecify':
+            _pdsControllers['physicalHealthConditionSpecify']?.text ?? '',
+        'psychTreatment': _radioValues['psychTreatment'] ?? '',
+
+        // GCS Activities
+        'gcs_activities': _buildGCSActivitiesJson(),
+
+        // Awards
+        'awards': _buildAwardsJson(),
       };
 
-      // Debug: Log the data being sent
-      debugPrint('PDS Save - Sending data:');
+      // Debug: Log the data being sent (remove in production)
+      debugPrint('=== PDS SAVE PAYLOAD ===');
+      debugPrint('consentAgree: ${payload['consentAgree']}');
+
+      // Debug: Check what's in the controllers BEFORE building payload
+      debugPrint('\n=== CONTROLLER VALUES (RAW) ===');
+      debugPrint('course controller: "${_pdsControllers['course']?.text}"');
+      debugPrint(
+        'yearLevel controller: "${_pdsControllers['yearLevel']?.text}"',
+      );
+      debugPrint(
+        'academicStatus controller: "${_pdsControllers['academicStatus']?.text}"',
+      );
+      debugPrint('lastName controller: "${_pdsControllers['lastName']?.text}"');
+      debugPrint(
+        'firstName controller: "${_pdsControllers['firstName']?.text}"',
+      );
+      debugPrint('sex controller: "${_pdsControllers['sex']?.text}"');
+      debugPrint(
+        'civilStatus controller: "${_pdsControllers['civilStatus']?.text}"',
+      );
+      debugPrint('================================\n');
+
+      debugPrint('course: ${payload['course']}');
+      debugPrint('yearLevel: ${payload['yearLevel']}');
+      debugPrint('academicStatus: ${payload['academicStatus']}');
+      debugPrint('lastName: ${payload['lastName']}');
+      debugPrint('firstName: ${payload['firstName']}');
+      debugPrint(
+        'sex: "${payload['sex']}" (length: ${(payload['sex'] as String).length})',
+      );
+      debugPrint(
+        'civilStatus: "${payload['civilStatus']}" (length: ${(payload['civilStatus'] as String).length})',
+      );
       payload.forEach((key, value) {
-        debugPrint('$key: $value');
+        if (value != null && value.toString().isNotEmpty) {
+          debugPrint('$key: $value');
+        }
       });
+      debugPrint('========================');
 
       // Prepare files for upload if PWD proof file is selected
       Map<String, List<int>>? files;
@@ -433,9 +699,17 @@ class PDSViewModel extends ChangeNotifier {
         }
       }
 
+      // Convert payload to Map<String, String> for form data
+      final stringFields = payload.map((key, value) {
+        // Convert to string, but handle null properly
+        final stringValue = value == null ? '' : value.toString();
+        return MapEntry(key, stringValue);
+      });
+
+      // Send as multipart form data (backend expects form-data format)
       final response = await _session.post(
         '${ApiConfig.currentBaseUrl}/student/pds/save',
-        fields: payload.map((key, value) => MapEntry(key, value.toString())),
+        fields: stringFields,
         files: files,
       );
 
@@ -446,6 +720,10 @@ class PDSViewModel extends ChangeNotifier {
         final data = json.decode(response.body);
         if (data['success'] == true) {
           _isPdsEditingEnabled = false;
+
+          // Clear selected file after successful save
+          _selectedPwdProofFile = null;
+
           await loadPDSData(); // Reload data
           debugPrint('PDS data saved successfully');
           return true;
@@ -547,16 +825,102 @@ class PDSViewModel extends ChangeNotifier {
       }
     }
 
+    // Match JS logic: only add 'other' if text field has value (no checkbox check)
     final otherText =
         _pdsControllers[type == 'needed' ? 'svcOther' : 'availedOther']?.text ??
         '';
-    if (_checkboxValues[type == 'needed' ? 'svcOther' : 'availedOther'] ==
-            true &&
-        otherText.isNotEmpty) {
+    if (otherText.isNotEmpty) {
       services.add({'type': 'other', 'other': otherText});
     }
 
     return services.isNotEmpty ? json.encode(services) : '[]';
+  }
+
+  // Helper method to build family description JSON
+  String _buildFamilyDescriptionJson() {
+    final descriptions = <String>[];
+
+    if (_checkboxValues['familyDescHarmonious'] == true) {
+      descriptions.add('harmonious');
+    }
+    if (_checkboxValues['familyDescConflict'] == true) {
+      descriptions.add('conflict');
+    }
+    if (_checkboxValues['familyDescSeparatedParents'] == true) {
+      descriptions.add('separated_parents');
+    }
+    if (_checkboxValues['familyDescParentsWorkingAbroad'] == true) {
+      descriptions.add('parents_working_abroad');
+    }
+
+    return descriptions.isNotEmpty ? json.encode(descriptions) : '[]';
+  }
+
+  // Helper method to build GCS activities JSON
+  String _buildGCSActivitiesJson() {
+    final activities = <Map<String, dynamic>>[];
+    final activityCheckboxes = [
+      {'id': 'gcsAdjustment', 'type': 'adjustment'},
+      {'id': 'gcsSelfConfidence', 'type': 'building_self_confidence'},
+      {'id': 'gcsCommunication', 'type': 'developing_communication_skills'},
+      {'id': 'gcsStudyHabits', 'type': 'study_habits'},
+      {'id': 'gcsTimeManagement', 'type': 'time_management'},
+    ];
+
+    for (final activity in activityCheckboxes) {
+      if (_checkboxValues[activity['id']] == true) {
+        activities.add({
+          'type': activity['type'],
+          'other': null,
+          'tutorial_subjects': null,
+        });
+      }
+    }
+
+    // Tutorial with peers
+    if (_checkboxValues['gcsTutorial'] == true) {
+      final tutorialSubjects = _pdsControllers['tutorialSubjects']?.text ?? '';
+      activities.add({
+        'type': 'tutorial_with_peers',
+        'other': null,
+        'tutorial_subjects': tutorialSubjects.isNotEmpty
+            ? tutorialSubjects
+            : null,
+      });
+    }
+
+    // Other activity
+    final gcsOther = _pdsControllers['gcsOther']?.text ?? '';
+    if (gcsOther.isNotEmpty) {
+      activities.add({
+        'type': 'other',
+        'other': gcsOther,
+        'tutorial_subjects': null,
+      });
+    }
+
+    return activities.isNotEmpty ? json.encode(activities) : '[]';
+  }
+
+  // Helper method to build awards JSON
+  String _buildAwardsJson() {
+    final awards = <Map<String, dynamic>>[];
+
+    for (int i = 1; i <= 3; i++) {
+      final awardName = _pdsControllers['awardName$i']?.text ?? '';
+      final schoolOrg = _pdsControllers['awardSchoolOrg$i']?.text ?? '';
+      final year = _pdsControllers['awardYear$i']?.text ?? '';
+
+      if (awardName.isNotEmpty && schoolOrg.isNotEmpty && year.isNotEmpty) {
+        awards.add({
+          'award_name': awardName,
+          'school_organization': schoolOrg,
+          'year_received': year,
+        });
+      }
+    }
+
+    return awards.isNotEmpty ? json.encode(awards) : '[]';
   }
 
   // Get controller for PDS field

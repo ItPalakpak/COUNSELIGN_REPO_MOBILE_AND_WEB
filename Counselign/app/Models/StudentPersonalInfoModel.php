@@ -23,7 +23,9 @@ class StudentPersonalInfoModel extends Model
         'sex',
         'civil_status',
         'contact_number',
-        'fb_account_name'
+        'fb_account_name',
+        'place_of_birth',
+        'religion'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';

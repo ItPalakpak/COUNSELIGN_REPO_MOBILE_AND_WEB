@@ -24,18 +24,18 @@ class StudentProfile {
     if (profilePicture == null || profilePicture!.isEmpty) {
       return '$baseUrl/Photos/profile.png';
     }
-    
+
     // Remove /index.php from base URL if present
     String cleanBaseUrl = baseUrl.replaceAll('/index.php', '');
-    
+
     if (profilePicture!.startsWith('http')) {
       return profilePicture!;
     }
-    
+
     if (profilePicture!.startsWith('/')) {
       return '$cleanBaseUrl${profilePicture!.substring(1)}';
     }
-    
+
     return '$cleanBaseUrl/$profilePicture';
   }
 }
@@ -49,6 +49,9 @@ class PDSData {
   final List<ServiceItem>? servicesNeeded;
   final List<ServiceItem>? servicesAvailed;
   final ResidenceInfo? residence;
+  final OtherInfo? otherInfo;
+  final List<GCSActivity>? gcsActivities;
+  final List<Award>? awards;
   final String? userEmail;
 
   PDSData({
@@ -60,23 +63,55 @@ class PDSData {
     this.servicesNeeded,
     this.servicesAvailed,
     this.residence,
+    this.otherInfo,
+    this.gcsActivities,
+    this.awards,
     this.userEmail,
   });
 
   factory PDSData.fromJson(Map<String, dynamic> json) {
     return PDSData(
-      academic: json['academic'] != null ? AcademicInfo.fromJson(json['academic']) : null,
-      personal: json['personal'] != null ? PersonalInfo.fromJson(json['personal']) : null,
-      address: json['address'] != null ? AddressInfo.fromJson(json['address']) : null,
-      family: json['family'] != null ? FamilyInfo.fromJson(json['family']) : null,
-      circumstances: json['circumstances'] != null ? SpecialCircumstances.fromJson(json['circumstances']) : null,
-      servicesNeeded: json['services_needed'] != null 
-          ? (json['services_needed'] as List).map((item) => ServiceItem.fromJson(item)).toList()
+      academic: json['academic'] != null
+          ? AcademicInfo.fromJson(json['academic'])
           : null,
-      servicesAvailed: json['services_availed'] != null 
-          ? (json['services_availed'] as List).map((item) => ServiceItem.fromJson(item)).toList()
+      personal: json['personal'] != null
+          ? PersonalInfo.fromJson(json['personal'])
           : null,
-      residence: json['residence'] != null ? ResidenceInfo.fromJson(json['residence']) : null,
+      address: json['address'] != null
+          ? AddressInfo.fromJson(json['address'])
+          : null,
+      family: json['family'] != null
+          ? FamilyInfo.fromJson(json['family'])
+          : null,
+      circumstances: json['circumstances'] != null
+          ? SpecialCircumstances.fromJson(json['circumstances'])
+          : null,
+      servicesNeeded: json['services_needed'] != null
+          ? (json['services_needed'] as List)
+                .map((item) => ServiceItem.fromJson(item))
+                .toList()
+          : null,
+      servicesAvailed: json['services_availed'] != null
+          ? (json['services_availed'] as List)
+                .map((item) => ServiceItem.fromJson(item))
+                .toList()
+          : null,
+      residence: json['residence'] != null
+          ? ResidenceInfo.fromJson(json['residence'])
+          : null,
+      otherInfo: json['other_info'] != null
+          ? OtherInfo.fromJson(json['other_info'])
+          : null,
+      gcsActivities: json['gcs_activities'] != null
+          ? (json['gcs_activities'] as List)
+                .map((item) => GCSActivity.fromJson(item))
+                .toList()
+          : null,
+      awards: json['awards'] != null
+          ? (json['awards'] as List)
+                .map((item) => Award.fromJson(item))
+                .toList()
+          : null,
       userEmail: json['user_email'],
     );
   }
@@ -87,12 +122,18 @@ class AcademicInfo {
   final String course;
   final String yearLevel;
   final String academicStatus;
+  final String schoolLastAttended;
+  final String locationOfSchool;
+  final String previousCourseGrade;
 
   AcademicInfo({
     required this.studentId,
     required this.course,
     required this.yearLevel,
     required this.academicStatus,
+    required this.schoolLastAttended,
+    required this.locationOfSchool,
+    required this.previousCourseGrade,
   });
 
   factory AcademicInfo.fromJson(Map<String, dynamic> json) {
@@ -101,6 +142,9 @@ class AcademicInfo {
       course: json['course'] ?? '',
       yearLevel: json['year_level'] ?? '',
       academicStatus: json['academic_status'] ?? '',
+      schoolLastAttended: json['school_last_attended'] ?? '',
+      locationOfSchool: json['location_of_school'] ?? '',
+      previousCourseGrade: json['previous_course_grade'] ?? '',
     );
   }
 }
@@ -116,6 +160,8 @@ class PersonalInfo {
   final String civilStatus;
   final String contactNumber;
   final String fbAccountName;
+  final String placeOfBirth;
+  final String religion;
 
   PersonalInfo({
     required this.studentId,
@@ -128,6 +174,8 @@ class PersonalInfo {
     required this.civilStatus,
     required this.contactNumber,
     required this.fbAccountName,
+    required this.placeOfBirth,
+    required this.religion,
   });
 
   factory PersonalInfo.fromJson(Map<String, dynamic> json) {
@@ -142,6 +190,8 @@ class PersonalInfo {
       civilStatus: json['civil_status'] ?? '',
       contactNumber: json['contact_number'] ?? '',
       fbAccountName: json['fb_account_name'] ?? '',
+      placeOfBirth: json['place_of_birth'] ?? '',
+      religion: json['religion'] ?? '',
     );
   }
 }
@@ -188,18 +238,44 @@ class FamilyInfo {
   final String studentId;
   final String fatherName;
   final String fatherOccupation;
+  final String fatherEducationalAttainment;
+  final String fatherAge;
+  final String fatherContactNumber;
   final String motherName;
   final String motherOccupation;
+  final String motherEducationalAttainment;
+  final String motherAge;
+  final String motherContactNumber;
+  final String parentsPermanentAddress;
+  final String parentsContactNumber;
   final String spouse;
+  final String spouseOccupation;
+  final String spouseEducationalAttainment;
+  final String guardianName;
+  final String guardianAge;
+  final String guardianOccupation;
   final String guardianContactNumber;
 
   FamilyInfo({
     required this.studentId,
     required this.fatherName,
     required this.fatherOccupation,
+    required this.fatherEducationalAttainment,
+    required this.fatherAge,
+    required this.fatherContactNumber,
     required this.motherName,
     required this.motherOccupation,
+    required this.motherEducationalAttainment,
+    required this.motherAge,
+    required this.motherContactNumber,
+    required this.parentsPermanentAddress,
+    required this.parentsContactNumber,
     required this.spouse,
+    required this.spouseOccupation,
+    required this.spouseEducationalAttainment,
+    required this.guardianName,
+    required this.guardianAge,
+    required this.guardianOccupation,
     required this.guardianContactNumber,
   });
 
@@ -208,9 +284,22 @@ class FamilyInfo {
       studentId: json['student_id']?.toString() ?? '',
       fatherName: json['father_name'] ?? '',
       fatherOccupation: json['father_occupation'] ?? '',
+      fatherEducationalAttainment: json['father_educational_attainment'] ?? '',
+      fatherAge: json['father_age']?.toString() ?? '',
+      fatherContactNumber: json['father_contact_number'] ?? '',
       motherName: json['mother_name'] ?? '',
       motherOccupation: json['mother_occupation'] ?? '',
+      motherEducationalAttainment: json['mother_educational_attainment'] ?? '',
+      motherAge: json['mother_age']?.toString() ?? '',
+      motherContactNumber: json['mother_contact_number'] ?? '',
+      parentsPermanentAddress: json['parents_permanent_address'] ?? '',
+      parentsContactNumber: json['parents_contact_number'] ?? '',
       spouse: json['spouse'] ?? '',
+      spouseOccupation: json['spouse_occupation'] ?? '',
+      spouseEducationalAttainment: json['spouse_educational_attainment'] ?? '',
+      guardianName: json['guardian_name'] ?? '',
+      guardianAge: json['guardian_age']?.toString() ?? '',
+      guardianOccupation: json['guardian_occupation'] ?? '',
       guardianContactNumber: json['guardian_contact_number'] ?? '',
     );
   }
@@ -252,16 +341,10 @@ class ServiceItem {
   final String type;
   final String? other;
 
-  ServiceItem({
-    required this.type,
-    this.other,
-  });
+  ServiceItem({required this.type, this.other});
 
   factory ServiceItem.fromJson(Map<String, dynamic> json) {
-    return ServiceItem(
-      type: json['type'] ?? '',
-      other: json['other'],
-    );
+    return ServiceItem(type: json['type'] ?? '', other: json['other']);
   }
 }
 
@@ -288,4 +371,73 @@ class ResidenceInfo {
   }
 }
 
+class OtherInfo {
+  final String courseChoiceReason;
+  final List<String> familyDescription;
+  final String familyDescriptionOther;
+  final String livingCondition;
+  final String physicalHealthCondition;
+  final String physicalHealthConditionSpecify;
+  final String psychTreatment;
 
+  OtherInfo({
+    required this.courseChoiceReason,
+    required this.familyDescription,
+    required this.familyDescriptionOther,
+    required this.livingCondition,
+    required this.physicalHealthCondition,
+    required this.physicalHealthConditionSpecify,
+    required this.psychTreatment,
+  });
+
+  factory OtherInfo.fromJson(Map<String, dynamic> json) {
+    return OtherInfo(
+      courseChoiceReason: json['course_choice_reason'] ?? '',
+      familyDescription: json['family_description'] != null
+          ? List<String>.from(json['family_description'])
+          : [],
+      familyDescriptionOther: json['family_description_other'] ?? '',
+      livingCondition: json['living_condition'] ?? '',
+      physicalHealthCondition: json['physical_health_condition'] ?? '',
+      physicalHealthConditionSpecify:
+          json['physical_health_condition_specify'] ?? '',
+      psychTreatment: json['psych_treatment'] ?? '',
+    );
+  }
+}
+
+class GCSActivity {
+  final String type;
+  final String? other;
+  final String? tutorialSubjects;
+
+  GCSActivity({required this.type, this.other, this.tutorialSubjects});
+
+  factory GCSActivity.fromJson(Map<String, dynamic> json) {
+    return GCSActivity(
+      type: json['type'] ?? '',
+      other: json['other'],
+      tutorialSubjects: json['tutorial_subjects'],
+    );
+  }
+}
+
+class Award {
+  final String awardName;
+  final String schoolOrganization;
+  final String yearReceived;
+
+  Award({
+    required this.awardName,
+    required this.schoolOrganization,
+    required this.yearReceived,
+  });
+
+  factory Award.fromJson(Map<String, dynamic> json) {
+    return Award(
+      awardName: json['award_name'] ?? '',
+      schoolOrganization: json['school_organization'] ?? '',
+      yearReceived: json['year_received'] ?? '',
+    );
+  }
+}

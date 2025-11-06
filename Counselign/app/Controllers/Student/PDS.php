@@ -226,6 +226,27 @@ class PDS extends BaseController
         // ========================================
         // FAMILY INFORMATION (EXTENSIVELY UPDATED)
         // ========================================
+        // Helper function to clean age values
+        $cleanAge = function($value) {
+            if (empty($value) || $value === 'N/A' || $value === '') {
+                return null;
+            }
+            $age = (int) $value;
+            return ($age >= 18 && $age <= 120) ? $age : null;
+        };
+        
+        // Helper function to clean contact numbers
+        $cleanContactNumber = function($value) {
+            if (empty($value) || $value === 'N/A' || $value === '') {
+                return null;
+            }
+            // Validate Philippine phone number format
+            if (preg_match('/^09[0-9]{9}$/', $value)) {
+                return $value;
+            }
+            return null; // Invalid format, return null instead of N/A
+        };
+        
         $pdsData['family'] = [
             'student_id' => $userId,
             'father_name' => $request->getPost('fatherName') ?: 'N/A',
@@ -233,20 +254,20 @@ class PDS extends BaseController
             'mother_name' => $request->getPost('motherName') ?: 'N/A',
             'mother_occupation' => $request->getPost('motherOccupation') ?: 'N/A',
             'spouse' => $spouse,
-            'guardian_contact_number' => $request->getPost('guardianContactNumber') ?: 'N/A',
+            'guardian_contact_number' => $cleanContactNumber($request->getPost('guardianContactNumber')),
             // NEW FIELDS
             'father_educational_attainment' => $request->getPost('fatherEducationalAttainment') ?: 'N/A',
-            'father_age' => $request->getPost('fatherAge') ?: null,
-            'father_contact_number' => $request->getPost('fatherContactNumber') ?: 'N/A',
+            'father_age' => $cleanAge($request->getPost('fatherAge')),
+            'father_contact_number' => $cleanContactNumber($request->getPost('fatherContactNumber')),
             'mother_educational_attainment' => $request->getPost('motherEducationalAttainment') ?: 'N/A',
-            'mother_age' => $request->getPost('motherAge') ?: null,
-            'mother_contact_number' => $request->getPost('motherContactNumber') ?: 'N/A',
+            'mother_age' => $cleanAge($request->getPost('motherAge')),
+            'mother_contact_number' => $cleanContactNumber($request->getPost('motherContactNumber')),
             'parents_permanent_address' => $request->getPost('parentsPermanentAddress') ?: 'N/A',
-            'parents_contact_number' => $request->getPost('parentsContactNumber') ?: 'N/A',
+            'parents_contact_number' => $cleanContactNumber($request->getPost('parentsContactNumber')),
             'spouse_occupation' => $request->getPost('spouseOccupation') ?: 'N/A',
             'spouse_educational_attainment' => $request->getPost('spouseEducationalAttainment') ?: 'N/A',
             'guardian_name' => $request->getPost('guardianName') ?: 'N/A',
-            'guardian_age' => $request->getPost('guardianAge') ?: null,
+            'guardian_age' => $cleanAge($request->getPost('guardianAge')),
             'guardian_occupation' => $request->getPost('guardianOccupation') ?: 'N/A'
         ];
 

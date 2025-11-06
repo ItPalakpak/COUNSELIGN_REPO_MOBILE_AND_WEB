@@ -73,8 +73,10 @@ class Session {
 
       SecureLogger.debug('Making POST request to: $url');
 
-      // If files are provided, use multipart request
-      if (files != null && files.isNotEmpty) {
+      // If files are provided OR fields are provided, use multipart request
+      // This ensures form-data format expected by backend PHP
+      if ((files != null && files.isNotEmpty) ||
+          (fields != null && fields.isNotEmpty)) {
         final request = http.MultipartRequest('POST', Uri.parse(url));
         request.headers.addAll(requestHeaders);
 
@@ -83,16 +85,18 @@ class Session {
           request.fields.addAll(fields);
         }
 
-        // Add files
-        files.forEach((fieldName, fileBytes) {
-          request.files.add(
-            http.MultipartFile.fromBytes(
-              fieldName,
-              fileBytes,
-              filename: 'file_$fieldName',
-            ),
-          );
-        });
+        // Add files if present
+        if (files != null) {
+          files.forEach((fieldName, fileBytes) {
+            request.files.add(
+              http.MultipartFile.fromBytes(
+                fieldName,
+                fileBytes,
+                filename: 'file_$fieldName',
+              ),
+            );
+          });
+        }
 
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);

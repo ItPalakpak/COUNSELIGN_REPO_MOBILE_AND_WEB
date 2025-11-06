@@ -34,6 +34,15 @@ class _ConversationContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StudentDashboardViewModel>(
       builder: (context, viewModel, child) {
+        // Mark messages as read when conversation is opened
+        if (viewModel.selectedCounselor != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            viewModel.markMessagesAsRead(
+              viewModel.selectedCounselor!.counselorId,
+            );
+          });
+        }
+
         return Scaffold(
           backgroundColor: const Color(0xFFF0F4F8),
           appBar: AppHeader(onMenu: viewModel.toggleDrawer),
@@ -358,7 +367,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
     final margin = widget.isSent
         ? const EdgeInsets.only(right: 10, left: 10, bottom: 8)
         : const EdgeInsets.only(right: 10, left: 10, bottom: 8);
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -389,7 +398,9 @@ class _MessageBubbleState extends State<_MessageBubble> {
                           ),
                         ),
                         child: ClipOval(
-                          child: _buildSenderImage(widget.senderProfilePicture!),
+                          child: _buildSenderImage(
+                            widget.senderProfilePicture!,
+                          ),
                         ),
                       ),
                     Text(
@@ -448,7 +459,9 @@ class _MessageBubbleState extends State<_MessageBubble> {
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
-                        textAlign: widget.isSent ? TextAlign.right : TextAlign.left,
+                        textAlign: widget.isSent
+                            ? TextAlign.right
+                            : TextAlign.left,
                       ),
                     )
                   : const SizedBox.shrink(),

@@ -529,22 +529,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildActionButton(
-                icon: Icons.message_rounded,
-                isActive: false,
-                onPressed: viewModel.selectedCounselor != null
-                    ? () => Navigator.of(context).pushNamed(
-                        '/student/conversation',
-                        arguments: viewModel.selectedCounselor,
-                      )
-                    : () => Navigator.of(
-                        context,
-                      ).pushNamed('/student/counselor-selection'),
-                tooltip: viewModel.selectedCounselor != null
-                    ? 'Message ${viewModel.selectedCounselor!.displayName}'
-                    : 'Select a Counselor First',
-                isMobile: isMobile,
-              ),
+              _buildMessageButton(context, viewModel, isMobile),
               SizedBox(width: isMobile ? 20 : 24),
               _buildNotificationButton(viewModel, isMobile),
             ],
@@ -560,57 +545,91 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required bool isActive,
-    required VoidCallback onPressed,
-    required String tooltip,
-    required bool isMobile,
-  }) {
+  Widget _buildMessageButton(
+    BuildContext context,
+    StudentDashboardViewModel viewModel,
+    bool isMobile,
+  ) {
+    final hasUnreadMessages = viewModel.totalUnreadMessagesCount > 0;
+
     return Container(
       decoration: BoxDecoration(
-        gradient: isActive
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
-              )
-            : null,
-        color: isActive ? null : const Color(0xFFF8FAFD),
+        gradient: null,
+        color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
         border: Border.all(
-          color: isActive
-              ? Colors.transparent
-              : const Color(0xFF060E57).withValues(alpha: 0.2),
+          color: const Color(0xFF060E57).withValues(alpha: 0.2),
           width: 1,
         ),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: viewModel.selectedCounselor != null
+              ? () => Navigator.of(context).pushNamed(
+                  '/student/conversation',
+                  arguments: viewModel.selectedCounselor,
+                )
+              : () => Navigator.of(
+                  context,
+                ).pushNamed('/student/counselor-selection'),
           borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
           child: Container(
             padding: EdgeInsets.all(isMobile ? 16 : 20),
-            child: Icon(
-              icon,
-              color: isActive ? Colors.white : const Color(0xFF060E57),
-              size: isMobile ? 24 : 28,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  Icons.message_rounded,
+                  color: const Color(0xFF060E57),
+                  size: isMobile ? 24 : 28,
+                ),
+                if (hasUnreadMessages)
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: isMobile ? 20 : 22,
+                        minHeight: isMobile ? 20 : 22,
+                      ),
+                      child: Text(
+                        viewModel.totalUnreadMessagesCount > 9
+                            ? '9+'
+                            : viewModel.totalUnreadMessagesCount.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

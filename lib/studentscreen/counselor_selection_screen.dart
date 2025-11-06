@@ -119,10 +119,14 @@ class _CounselorSelectionContentState
                               final counselor = sorted[index];
                               final meta =
                                   latestByCounselor[counselor.counselorId];
+                              final hasUnread = viewModel.hasUnreadMessages(
+                                counselor.counselorId,
+                              );
                               return _CounselorListItem(
                                 counselor: counselor,
                                 latestText: meta?.text,
                                 isIncomingLatest: meta?.isIncoming ?? false,
+                                hasUnreadMessages: hasUnread,
                                 createdAt: meta?.createdAt,
                                 onTap: () {
                                   viewModel.selectCounselor(counselor);
@@ -304,6 +308,7 @@ class _CounselorListItem extends StatelessWidget {
   final VoidCallback onTap;
   final String? latestText;
   final bool isIncomingLatest;
+  final bool hasUnreadMessages;
   final DateTime? createdAt;
 
   const _CounselorListItem({
@@ -311,6 +316,7 @@ class _CounselorListItem extends StatelessWidget {
     required this.onTap,
     this.latestText,
     this.isIncomingLatest = false,
+    this.hasUnreadMessages = false,
     this.createdAt,
   });
 
@@ -436,7 +442,8 @@ class _CounselorListItem extends StatelessWidget {
       color: Color(0xFF64748B),
       height: 1.2,
     );
-    final TextStyle style = isIncomingLatest
+    // Bold text if incoming AND has unread messages
+    final TextStyle style = (isIncomingLatest && hasUnreadMessages)
         ? baseStyle.copyWith(
             fontWeight: FontWeight.w700,
             color: const Color(0xFF1E293B),
