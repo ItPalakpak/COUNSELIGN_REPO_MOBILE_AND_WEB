@@ -73,7 +73,7 @@
         <div class="content-area">
             <div class="schedule-header">
                 <h2 class="content-title">Counselor Weekly Schedule</h2>
-                <button class="refresh-schedule-btn" onclick="loadCounselorSchedules()">
+                <button class="refresh-schedule-btn" id="refreshScheduleBtn" type="button" aria-label="Refresh schedule">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
             </div>

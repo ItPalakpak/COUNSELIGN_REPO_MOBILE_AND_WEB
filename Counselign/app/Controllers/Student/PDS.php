@@ -2,7 +2,6 @@
 
 namespace App\Controllers\Student;
 
-
 use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 use App\Helpers\UserActivityHelper;
@@ -15,6 +14,9 @@ use App\Models\StudentSpecialCircumstancesModel;
 use App\Models\StudentServicesNeededModel;
 use App\Models\StudentServicesAvailedModel;
 use App\Models\StudentResidenceInfoModel;
+use App\Models\StudentOtherInfoModel;
+use App\Models\StudentGCSActivitiesModel;
+use App\Models\StudentAwardsModel;
 
 class PDS extends BaseController
 {
@@ -27,6 +29,9 @@ class PDS extends BaseController
     protected $servicesNeededModel;
     protected $servicesAvailedModel;
     protected $residenceModel;
+    protected $otherInfoModel;
+    protected $gcsActivitiesModel;
+    protected $awardsModel;
     protected $userModel;
 
     public function __construct()
@@ -40,6 +45,9 @@ class PDS extends BaseController
         $this->servicesNeededModel = new StudentServicesNeededModel();
         $this->servicesAvailedModel = new StudentServicesAvailedModel();
         $this->residenceModel = new StudentResidenceInfoModel();
+        $this->otherInfoModel = new StudentOtherInfoModel();
+        $this->gcsActivitiesModel = new StudentGCSActivitiesModel();
+        $this->awardsModel = new StudentAwardsModel();
         $this->userModel = new \App\Models\UserModel();
     }
 
@@ -55,7 +63,7 @@ class PDS extends BaseController
         }
 
         $userId = $session->get('user_id_display') ?? $session->get('user_id');
-        $userId = (string) $userId; // Force string conversion for varchar(10) column
+        $userId = (string) $userId;
         SecureLogHelper::debug('Loading PDS data');
         
         if (!$userId) {
@@ -71,28 +79,11 @@ class PDS extends BaseController
                 $pdsData['user_email'] = $userData['email'];
                 log_message('debug', 'PDS Load - User email: ' . $userData['email']);
             } else {
-                // Try alternative lookup methods
                 $userData = $this->userModel->where('user_id', $userId)->first();
                 if ($userData) {
                     $pdsData['user_email'] = $userData['email'];
-                    log_message('debug', 'PDS Load - User email (by user_id): ' . $userData['email']);
                 } else {
-                    // Try by username or other fields
-                    $session = session();
-                    $username = $session->get('username');
-                    if ($username) {
-                        $userData = $this->userModel->where('username', $username)->first();
-                        if ($userData) {
-                            $pdsData['user_email'] = $userData['email'];
-                            log_message('debug', 'PDS Load - User email (by username): ' . $userData['email']);
-                        } else {
-                            log_message('error', 'PDS Load - User not found for ID: ' . $userId . ', Username: ' . $username);
-                            $pdsData['user_email'] = ''; // Set empty email to prevent errors
-                        }
-                    } else {
-                        SecureLogHelper::error('User not found for PDS loading');
-                        $pdsData['user_email'] = ''; // Set empty email to prevent errors
-                    }
+                    $pdsData['user_email'] = '';
                 }
             }
             
@@ -118,7 +109,7 @@ class PDS extends BaseController
         }
 
         $userId = $session->get('user_id_display') ?? $session->get('user_id');
-        $userId = (string) $userId; // Force string conversion for varchar(10) column
+        $userId = (string) $userId;
         if (!$userId) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid session data'])->setStatusCode(400);
         }
@@ -165,33 +156,37 @@ class PDS extends BaseController
     }
 
     /**
-     * Prepare PDS data from request
+     * Prepare PDS data from request - UPDATED WITH NEW FIELDS
      */
     private function preparePDSData($request, $userId)
     {
         $pdsData = [];
 
-        // Academic Information
+        // ========================================
+        // ACADEMIC INFORMATION (UPDATED)
+        // ========================================
         $pdsData['academic'] = [
             'student_id' => $userId,
             'course' => $request->getPost('course') ?: 'N/A',
             'year_level' => $request->getPost('yearLevel') ?: 'N/A',
-            'academic_status' => $request->getPost('academicStatus') ?: 'N/A'
+            'academic_status' => $request->getPost('academicStatus') ?: 'N/A',
+            // NEW FIELDS
+            'school_last_attended' => $request->getPost('schoolLastAttended') ?: 'N/A',
+            'location_of_school' => $request->getPost('locationOfSchool') ?: 'N/A',
+            'previous_course_grade' => $request->getPost('previousCourseGrade') ?: 'N/A'
         ];
 
-        // Personal Information
+        // ========================================
+        // PERSONAL INFORMATION (UPDATED)
+        // ========================================
         $civilStatus = $request->getPost('civilStatus') ?: 'Single';
         $spouse = ($civilStatus === 'Married') ? ($request->getPost('spouse') ?: '') : 'N/A';
         
-        // Handle contact number validation properly
         $contactNumber = $request->getPost('contactNumber');
         $validContactNumber = '';
         if (!empty($contactNumber) && $contactNumber !== 'N/A') {
-            // Validate format
             if (preg_match('/^09[0-9]{9}$/', $contactNumber)) {
                 $validContactNumber = $contactNumber;
-            } else {
-                $validContactNumber = ''; // Invalid format, store empty
             }
         }
         
@@ -204,24 +199,18 @@ class PDS extends BaseController
             'age' => $request->getPost('age') ?: null,
             'sex' => $request->getPost('sex') ?: 'N/A',
             'civil_status' => $civilStatus,
-            'contact_number' => $validContactNumber, // Use validated contact number
-            'fb_account_name' => $request->getPost('fbAccountName') ?: 'N/A'
+            'contact_number' => $validContactNumber,
+            'fb_account_name' => $request->getPost('fbAccountName') ?: 'N/A',
+            // NEW FIELDS
+            'place_of_birth' => $request->getPost('placeOfBirth') ?: 'N/A',
+            'religion' => $request->getPost('religion') ?: 'N/A'
         ];
-        
-        // Debug: Log personal data
-        log_message('debug', 'PDS Personal Data: ' . json_encode($personalData));
-        
-        // Validate that required personal fields are not empty
-        if (empty($personalData['first_name']) || $personalData['first_name'] === 'N/A') {
-            log_message('error', 'First name is empty or N/A');
-        }
-        if (empty($personalData['last_name']) || $personalData['last_name'] === 'N/A') {
-            log_message('error', 'Last name is empty or N/A');
-        }
         
         $pdsData['personal'] = $personalData;
 
-        // Address Information
+        // ========================================
+        // ADDRESS INFORMATION (UNCHANGED)
+        // ========================================
         $pdsData['address'] = [
             'student_id' => $userId,
             'permanent_zone' => $request->getPost('permanentZone') ?: 'N/A',
@@ -234,7 +223,9 @@ class PDS extends BaseController
             'present_province' => $request->getPost('presentProvince') ?: 'N/A'
         ];
 
-        // Family Information
+        // ========================================
+        // FAMILY INFORMATION (EXTENSIVELY UPDATED)
+        // ========================================
         $pdsData['family'] = [
             'student_id' => $userId,
             'father_name' => $request->getPost('fatherName') ?: 'N/A',
@@ -242,15 +233,30 @@ class PDS extends BaseController
             'mother_name' => $request->getPost('motherName') ?: 'N/A',
             'mother_occupation' => $request->getPost('motherOccupation') ?: 'N/A',
             'spouse' => $spouse,
-            'guardian_contact_number' => $request->getPost('guardianContactNumber') ?: 'N/A'
+            'guardian_contact_number' => $request->getPost('guardianContactNumber') ?: 'N/A',
+            // NEW FIELDS
+            'father_educational_attainment' => $request->getPost('fatherEducationalAttainment') ?: 'N/A',
+            'father_age' => $request->getPost('fatherAge') ?: null,
+            'father_contact_number' => $request->getPost('fatherContactNumber') ?: 'N/A',
+            'mother_educational_attainment' => $request->getPost('motherEducationalAttainment') ?: 'N/A',
+            'mother_age' => $request->getPost('motherAge') ?: null,
+            'mother_contact_number' => $request->getPost('motherContactNumber') ?: 'N/A',
+            'parents_permanent_address' => $request->getPost('parentsPermanentAddress') ?: 'N/A',
+            'parents_contact_number' => $request->getPost('parentsContactNumber') ?: 'N/A',
+            'spouse_occupation' => $request->getPost('spouseOccupation') ?: 'N/A',
+            'spouse_educational_attainment' => $request->getPost('spouseEducationalAttainment') ?: 'N/A',
+            'guardian_name' => $request->getPost('guardianName') ?: 'N/A',
+            'guardian_age' => $request->getPost('guardianAge') ?: null,
+            'guardian_occupation' => $request->getPost('guardianOccupation') ?: 'N/A'
         ];
 
-        // Special Circumstances
+        // ========================================
+        // SPECIAL CIRCUMSTANCES (UNCHANGED)
+        // ========================================
         $pwd = $request->getPost('pwd') ?: 'No';
         $pwdSpecify = ($pwd === 'Yes' || $pwd === 'Other') ? ($request->getPost('pwdSpecify') ?: '') : 'N/A';
         
         $pwdProofFile = $this->handlePWDProofUpload($request, $userId);
-        log_message('debug', 'PWD Proof File Result: ' . $pwdProofFile);
         
         $pdsData['circumstances'] = [
             'student_id' => $userId,
@@ -262,17 +268,21 @@ class PDS extends BaseController
             'pwd_proof_file' => $pwdProofFile
         ];
 
-        // Services Needed
+        // ========================================
+        // SERVICES NEEDED (UNCHANGED)
+        // ========================================
         $servicesNeededJson = $request->getPost('services_needed');
         $pdsData['services_needed'] = $servicesNeededJson ? json_decode($servicesNeededJson, true) : [];
-        log_message('debug', 'Services Needed Data: ' . json_encode($pdsData['services_needed']));
         
-        // Services Availed
+        // ========================================
+        // SERVICES AVAILED (UNCHANGED)
+        // ========================================
         $servicesAvailedJson = $request->getPost('services_availed');
         $pdsData['services_availed'] = $servicesAvailedJson ? json_decode($servicesAvailedJson, true) : [];
-        log_message('debug', 'Services Availed Data: ' . json_encode($pdsData['services_availed']));
 
-        // Residence Information
+        // ========================================
+        // RESIDENCE INFORMATION (UNCHANGED)
+        // ========================================
         $residence = $request->getPost('residence') ?: 'at home';
         $residenceOther = ($residence === 'other') ? ($request->getPost('resOtherText') ?: '') : 'N/A';
         
@@ -283,17 +293,46 @@ class PDS extends BaseController
             'has_consent' => $request->getPost('consentAgree') === '1' ? 1 : 0
         ];
 
+        // ========================================
+        // OTHER INFORMATION (NEW SECTION)
+        // ========================================
+        $familyDescriptionJson = $request->getPost('family_description');
+        $familyDescription = $familyDescriptionJson ? json_decode($familyDescriptionJson, true) : [];
+        
+        $pdsData['other_info'] = [
+            'student_id' => $userId,
+            'course_choice_reason' => $request->getPost('courseChoiceReason') ?: null,
+            'family_description' => $familyDescription,
+            'family_description_other' => $request->getPost('familyDescriptionOther') ?: null,
+            'living_condition' => $request->getPost('livingCondition') ?: null,
+            'physical_health_condition' => $request->getPost('physicalHealthCondition') ?: 'No',
+            'physical_health_condition_specify' => $request->getPost('physicalHealthConditionSpecify') ?: null,
+            'psych_treatment' => $request->getPost('psychTreatment') ?: 'No'
+        ];
+
+        // ========================================
+        // GCS ACTIVITIES (NEW SECTION)
+        // ========================================
+        $gcsActivitiesJson = $request->getPost('gcs_activities');
+        $pdsData['gcs_activities'] = $gcsActivitiesJson ? json_decode($gcsActivitiesJson, true) : [];
+
+        // ========================================
+        // AWARDS (NEW SECTION)
+        // ========================================
+        $awardsJson = $request->getPost('awards');
+        $pdsData['awards'] = $awardsJson ? json_decode($awardsJson, true) : [];
+
         return $pdsData;
     }
 
     /**
-     * Validate PDS data
+     * Validate PDS data - UPDATED WITH NEW VALIDATION RULES
      */
     private function validatePDSData($request)
     {
         $errors = [];
 
-        // Validate required fields
+        // Required fields validation
         $requiredFields = [
             'course' => 'Course',
             'yearLevel' => 'Year Level',
@@ -310,24 +349,52 @@ class PDS extends BaseController
                 $errors[] = $label . ' is required';
             }
         }
-        
-        // Debug: Log the received data
-        log_message('debug', 'PDS Save - Received data: ' . json_encode($request->getPost()));
 
-
-        // Validate contact number format if provided
+        // Validate contact number format
         $contactNumber = $request->getPost('contactNumber');
         if (!empty($contactNumber) && $contactNumber !== 'N/A' && !preg_match('/^09[0-9]{9}$/', $contactNumber)) {
             $errors[] = 'Contact number must be in format 09XXXXXXXXX';
         }
 
-        // Validate guardian contact number format if provided
+        // NEW: Validate father contact number
+        $fatherContactNumber = $request->getPost('fatherContactNumber');
+        if (!empty($fatherContactNumber) && $fatherContactNumber !== 'N/A' && !preg_match('/^09[0-9]{9}$/', $fatherContactNumber)) {
+            $errors[] = 'Father contact number must be in format 09XXXXXXXXX';
+        }
+
+        // NEW: Validate mother contact number
+        $motherContactNumber = $request->getPost('motherContactNumber');
+        if (!empty($motherContactNumber) && $motherContactNumber !== 'N/A' && !preg_match('/^09[0-9]{9}$/', $motherContactNumber)) {
+            $errors[] = 'Mother contact number must be in format 09XXXXXXXXX';
+        }
+
+        // NEW: Validate parents contact number
+        $parentsContactNumber = $request->getPost('parentsContactNumber');
+        if (!empty($parentsContactNumber) && $parentsContactNumber !== 'N/A' && !preg_match('/^09[0-9]{9}$/', $parentsContactNumber)) {
+            $errors[] = 'Parents contact number must be in format 09XXXXXXXXX';
+        }
+
+        // Validate guardian contact number
         $guardianContactNumber = $request->getPost('guardianContactNumber');
         if (!empty($guardianContactNumber) && $guardianContactNumber !== 'N/A' && !preg_match('/^09[0-9]{9}$/', $guardianContactNumber)) {
             $errors[] = 'Guardian contact number must be in format 09XXXXXXXXX';
         }
 
-        // Validate PWD fields if PWD is Yes or Other
+        // NEW: Validate age fields
+        $ageFields = [
+            'fatherAge' => 'Father age',
+            'motherAge' => 'Mother age',
+            'guardianAge' => 'Guardian age'
+        ];
+
+        foreach ($ageFields as $field => $label) {
+            $age = $request->getPost($field);
+            if (!empty($age) && ($age < 18 || $age > 120)) {
+                $errors[] = $label . ' must be between 18 and 120';
+            }
+        }
+
+        // Validate PWD fields
         $pwd = $request->getPost('pwd');
         if ($pwd === 'Yes' || $pwd === 'Other') {
             $pwdSpecify = $request->getPost('pwdSpecify');
@@ -362,33 +429,20 @@ class PDS extends BaseController
     }
 
     /**
-     * Handle PWD proof file upload
-     * Preserves existing file if no new file is uploaded
+     * Handle PWD proof file upload (UNCHANGED)
      */
     private function handlePWDProofUpload($request, $userId)
     {
         $file = $request->getFile('pwdProof');
-        log_message('debug', 'PWD Proof Upload - File received: ' . ($file ? 'Yes' : 'No'));
-        log_message('debug', 'PWD Proof Upload - All files: ' . json_encode($request->getFiles()));
         
-        // If no new file is uploaded, preserve existing file
         if (!$file || !$file->isValid()) {
-            log_message('debug', 'PWD Proof Upload - No new file uploaded, preserving existing file');
-            
-            // Get existing file path from database
             $existingFile = $this->getExistingPWDProofFile($userId);
             if ($existingFile && $existingFile !== 'N/A') {
-                log_message('debug', 'PWD Proof Upload - Preserving existing file: ' . $existingFile);
                 return $existingFile;
             }
-            
-            log_message('debug', 'PWD Proof Upload - No existing file found, returning N/A');
             return 'N/A';
         }
-        
-        log_message('debug', 'PWD Proof Upload - File name: ' . $file->getName() . ', Size: ' . $file->getSize());
 
-        // Validate file type
         $allowedTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'doc', 'docx', 'xls', 'xlsx'];
         $extension = strtolower($file->getExtension());
         
@@ -397,7 +451,6 @@ class PDS extends BaseController
             return 'N/A';
         }
 
-        // Validate file size (max 10MB)
         if ($file->getSize() > 10 * 1024 * 1024) {
             log_message('error', 'PWD proof file too large: ' . $file->getSize());
             return 'N/A';
@@ -426,7 +479,7 @@ class PDS extends BaseController
     }
 
     /**
-     * Get existing PWD proof file path from database
+     * Get existing PWD proof file path (UNCHANGED)
      */
     private function getExistingPWDProofFile($userId)
     {

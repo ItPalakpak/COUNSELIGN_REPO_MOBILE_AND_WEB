@@ -101,31 +101,30 @@ class CounselorsApi extends BaseController
 
             $db = \Config\Database::connect();
 
-            // Ensure table exists
+            // Ensure table matches actual database schema (no specialization or license_number columns)
             $db->query("CREATE TABLE IF NOT EXISTS counselors (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 counselor_id VARCHAR(20) UNIQUE NOT NULL,
                 name VARCHAR(100),
-                specialization VARCHAR(100),
                 degree VARCHAR(100),
                 email VARCHAR(100),
                 contact_number VARCHAR(20),
-                license_number VARCHAR(50),
                 address TEXT,
-                time_scheduled VARCHAR(50),
-                available_days TEXT,
                 profile_picture VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                civil_status VARCHAR(20),
+                sex VARCHAR(10),
+                birthdate DATE
             )");
 
-            // Add new columns if they don't exist (MySQL 8+ supports IF NOT EXISTS)
-            $db->query("ALTER TABLE counselors 
-                ADD COLUMN IF NOT EXISTS time_scheduled VARCHAR(50),
-                ADD COLUMN IF NOT EXISTS available_days TEXT");
-
-            // Join with users table to include verification status
+            
+            // Join with users table to include verification status and profile picture from users table
             $builder = $db->table('counselors c');
-            $builder->select('c.*, u.is_verified, u.username, u.email, u.profile_picture');
+            $builder->select('c.counselor_id, c.name, c.degree, c.email, 
+                             c.contact_number, c.address, c.time_scheduled, 
+                             c.available_days, c.created_at, c.civil_status, c.sex, c.birthdate,
+                             u.is_verified, u.username, u.email as user_email, u.profile_picture');
             $builder->join('users u', 'u.user_id = c.counselor_id', 'left');
             // Pending verification first, then by name (avoid identifier escaping on SQL function)
             $builder->orderBy('COALESCE(u.is_verified, 0) ASC', '', false);
@@ -249,27 +248,29 @@ class CounselorsApi extends BaseController
 
             $db = \Config\Database::connect();
 
-            // Ensure table exists
+            // Ensure table matches actual database schema (no specialization or license_number columns)
             $db->query("CREATE TABLE IF NOT EXISTS counselors (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 counselor_id VARCHAR(20) UNIQUE NOT NULL,
                 name VARCHAR(100),
-                specialization VARCHAR(100),
                 degree VARCHAR(100),
                 email VARCHAR(100),
                 contact_number VARCHAR(20),
-                license_number VARCHAR(50),
                 address TEXT,
-                time_scheduled VARCHAR(50),
-                available_days TEXT,
                 profile_picture VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                civil_status VARCHAR(20),
+                sex VARCHAR(10),
+                birthdate DATE,
+                time_scheduled VARCHAR(50),
+                available_days TEXT
             )");
 
             $post = $this->request->getPost();
 
-            // Validate required fields
-            $requiredFields = ['counselorId', 'name', 'specialization', 'degree', 'email', 'contactNumber', 'licenseNumber', 'address'];
+            // Validate required fields (removed specialization and licenseNumber as they don't exist in DB)
+            $requiredFields = ['counselorId', 'name', 'degree', 'email', 'contactNumber', 'address'];
             foreach ($requiredFields as $field) {
                 if (empty($post[$field])) {
                     throw new \Exception("Missing required field: $field");
@@ -294,11 +295,9 @@ class CounselorsApi extends BaseController
             $params = [
                 'counselor_id' => $post['counselorId'],
                 'name' => $post['name'],
-                'specialization' => $post['specialization'],
                 'degree' => $post['degree'],
                 'email' => $post['email'],
                 'contact_number' => $post['contactNumber'],
-                'license_number' => $post['licenseNumber'],
                 'address' => $post['address'],
                 'time_scheduled' => $post['timeScheduled'] ?? null,
                 'available_days' => $post['availableDays'] ?? null

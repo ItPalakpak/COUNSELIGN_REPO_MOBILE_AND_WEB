@@ -227,14 +227,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const fullName = formatStudentName(pdsData.personal_info);
         document.getElementById('pdsStudentName').textContent = fullName || userInfo.username;
 
-        // Populate academic information
+        // ========================================
+        // PERSONAL BACKGROUND TAB
+        // ========================================
+        
+        // Academic Information
         if (pdsData.academic_info) {
             setPDSValue('pdsCourse', pdsData.academic_info.course);
             setPDSValue('pdsYearLevel', pdsData.academic_info.year_level);
             setPDSValue('pdsAcademicStatus', pdsData.academic_info.academic_status);
+            setPDSValue('pdsSchoolLastAttended', pdsData.academic_info.school_last_attended);
+            setPDSValue('pdsLocationOfSchool', pdsData.academic_info.location_of_school);
+            setPDSValue('pdsPreviousCourseGrade', pdsData.academic_info.previous_course_grade);
         }
 
-        // Populate personal information
+        // Personal Information
         if (pdsData.personal_info) {
             setPDSValue('pdsLastName', pdsData.personal_info.last_name);
             setPDSValue('pdsFirstName', pdsData.personal_info.first_name);
@@ -242,13 +249,15 @@ document.addEventListener('DOMContentLoaded', function() {
             setPDSValue('pdsDateOfBirth', formatDate(pdsData.personal_info.date_of_birth));
             setPDSValue('pdsAge', pdsData.personal_info.age);
             setPDSValue('pdsSex', pdsData.personal_info.sex);
+            setPDSValue('pdsPlaceOfBirth', pdsData.personal_info.place_of_birth);
             setPDSValue('pdsCivilStatus', pdsData.personal_info.civil_status);
+            setPDSValue('pdsReligion', pdsData.personal_info.religion);
             setPDSValue('pdsContactNumber', pdsData.personal_info.contact_number);
             setPDSValue('pdsFbAccount', pdsData.personal_info.fb_account_name);
             setPDSValue('pdsPersonalEmail', userInfo.email);
         }
 
-        // Populate address information
+        // Address Information
         if (pdsData.address_info) {
             setPDSValue('pdsPermanentZone', pdsData.address_info.permanent_zone);
             setPDSValue('pdsPermanentBarangay', pdsData.address_info.permanent_barangay);
@@ -260,17 +269,67 @@ document.addEventListener('DOMContentLoaded', function() {
             setPDSValue('pdsPresentProvince', pdsData.address_info.present_province);
         }
 
-        // Populate family information
+        // ========================================
+        // FAMILY BACKGROUND TAB
+        // ========================================
+        
         if (pdsData.family_info) {
+            // Father's Information
             setPDSValue('pdsFatherName', pdsData.family_info.father_name);
             setPDSValue('pdsFatherOccupation', pdsData.family_info.father_occupation);
+            setPDSValue('pdsFatherEducation', pdsData.family_info.father_educational_attainment);
+            setPDSValue('pdsFatherAge', pdsData.family_info.father_age);
+            setPDSValue('pdsFatherContact', pdsData.family_info.father_contact_number);
+            
+            // Mother's Information
             setPDSValue('pdsMotherName', pdsData.family_info.mother_name);
             setPDSValue('pdsMotherOccupation', pdsData.family_info.mother_occupation);
+            setPDSValue('pdsMotherEducation', pdsData.family_info.mother_educational_attainment);
+            setPDSValue('pdsMotherAge', pdsData.family_info.mother_age);
+            setPDSValue('pdsMotherContact', pdsData.family_info.mother_contact_number);
+            
+            // Parents' Contact Information
+            setPDSValue('pdsParentsAddress', pdsData.family_info.parents_permanent_address);
+            setPDSValue('pdsParentsContact', pdsData.family_info.parents_contact_number);
+            
+            // Spouse Information
             setPDSValue('pdsSpouse', pdsData.family_info.spouse);
+            setPDSValue('pdsSpouseOccupation', pdsData.family_info.spouse_occupation);
+            setPDSValue('pdsSpouseEducation', pdsData.family_info.spouse_educational_attainment);
+            
+            // Guardian Information
+            setPDSValue('pdsGuardianName', pdsData.family_info.guardian_name);
+            setPDSValue('pdsGuardianAge', pdsData.family_info.guardian_age);
+            setPDSValue('pdsGuardianOccupation', pdsData.family_info.guardian_occupation);
             setPDSValue('pdsGuardianContact', pdsData.family_info.guardian_contact_number);
         }
 
-        // Populate special circumstances
+        // ========================================
+        // OTHER INFORMATION TAB
+        // ========================================
+        
+        // Course Choice & Family Description
+        if (pdsData.other_info) {
+            setPDSValue('pdsCourseReason', pdsData.other_info.course_choice_reason);
+            
+            // Format family description
+            if (pdsData.other_info.family_description && Array.isArray(pdsData.other_info.family_description)) {
+                const familyDesc = formatFamilyDescription(pdsData.other_info.family_description, pdsData.other_info.family_description_other);
+                setPDSValue('pdsFamilyDescription', familyDesc);
+            }
+            
+            setPDSValue('pdsLivingCondition', formatLivingCondition(pdsData.other_info.living_condition));
+            
+            // Format health condition
+            const healthCondition = pdsData.other_info.physical_health_condition === 'Yes' 
+                ? `Yes - ${pdsData.other_info.physical_health_condition_specify || 'Not specified'}` 
+                : pdsData.other_info.physical_health_condition;
+            setPDSValue('pdsHealthCondition', healthCondition);
+            
+            setPDSValue('pdsPsychTreatment', pdsData.other_info.psych_treatment);
+        }
+
+        // Special Circumstances
         if (pdsData.special_circumstances) {
             setPDSValue('pdsSoloParent', pdsData.special_circumstances.is_solo_parent);
             setPDSValue('pdsIndigenous', pdsData.special_circumstances.is_indigenous);
@@ -293,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Populate services information
+        // Services Information
         if (pdsData.services_needed && Array.isArray(pdsData.services_needed)) {
             const servicesNeeded = formatServicesList(pdsData.services_needed);
             setPDSValue('pdsServicesNeeded', servicesNeeded);
@@ -304,14 +363,134 @@ document.addEventListener('DOMContentLoaded', function() {
             setPDSValue('pdsServicesAvailed', servicesAvailed);
         }
 
-        // Populate residence information
+        // GCS Activities
+        if (pdsData.gcs_activities && Array.isArray(pdsData.gcs_activities)) {
+            const gcsActivities = formatGCSActivities(pdsData.gcs_activities);
+            setPDSValue('pdsGCSActivities', gcsActivities);
+        }
+
+        // Residence Information
         if (pdsData.residence_info) {
             setPDSValue('pdsResidence', pdsData.residence_info.residence_type);
             setPDSValue('pdsConsent', pdsData.residence_info.has_consent ? 'Yes' : 'No');
         }
+
+        // ========================================
+        // AWARDS TAB
+        // ========================================
+        
+        if (pdsData.awards && Array.isArray(pdsData.awards) && pdsData.awards.length > 0) {
+            populateAwards(pdsData.awards);
+        } else {
+            const awardsContainer = document.getElementById('pdsAwardsContainer');
+            awardsContainer.innerHTML = `
+                <div class="col-12">
+                    <div class="info-item">
+                        <div class="info-value text-muted">No awards recorded</div>
+                    </div>
+                </div>
+            `;
+        }
     }
 
-    // Helper function to set PDS values
+    // Helper function to format family description
+    function formatFamilyDescription(descriptions, otherText) {
+        if (!descriptions || descriptions.length === 0) {
+            return 'Not specified';
+        }
+        
+        const descMap = {
+            'harmonious': 'Harmonious',
+            'conflict': 'Conflict',
+            'separated_parents': 'Separated Parents',
+            'parents_working_abroad': 'Parents Working Abroad'
+        };
+        
+        const formatted = descriptions.map(desc => descMap[desc] || desc);
+        
+        if (otherText && otherText.trim() !== '') {
+            formatted.push(`Other: ${otherText}`);
+        }
+        
+        return formatted.join(', ');
+    }
+
+    // Helper function to format living condition
+    function formatLivingCondition(condition) {
+        if (!condition) return 'Not specified';
+        
+        const conditionMap = {
+            'good_environment': 'Good environment for learning',
+            'not_good_environment': 'Not-so-good environment for learning'
+        };
+        
+        return conditionMap[condition] || condition;
+    }
+
+    // Helper function to format GCS activities
+    function formatGCSActivities(activities) {
+        if (!activities || activities.length === 0) {
+            return 'None specified';
+        }
+        
+        const activityMap = {
+            'adjustment': 'Adjustment',
+            'building_self_confidence': 'Building Self-Confidence',
+            'developing_communication_skills': 'Developing Communication Skills',
+            'study_habits': 'Study Habits',
+            'time_management': 'Time Management',
+            'tutorial_with_peers': 'Tutorial with Peers'
+        };
+        
+        const formatted = activities.map(activity => {
+            if (activity.type === 'other') {
+                return activity.other || 'Other';
+            }
+            
+            if (activity.type === 'tutorial_with_peers' && activity.tutorial_subjects) {
+                return `Tutorial with Peers (${activity.tutorial_subjects})`;
+            }
+            
+            return activityMap[activity.type] || activity.type;
+        });
+        
+        return formatted.join(', ');
+    }
+
+    // Helper function to populate awards
+    function populateAwards(awards) {
+        const awardsContainer = document.getElementById('pdsAwardsContainer');
+        awardsContainer.innerHTML = '';
+        
+        awards.forEach((award, index) => {
+            const awardHtml = `
+                <div class="col-12 mb-3">
+                    <h6 class="text-secondary mb-2">Award ${index + 1}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <div class="info-item">
+                                <label class="info-label">Name of Award</label>
+                                <div class="info-value">${award.award_name || 'Not specified'}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="info-item">
+                                <label class="info-label">School/Organization</label>
+                                <div class="info-value">${award.school_organization || 'Not specified'}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-item">
+                                <label class="info-label">Year</label>
+                                <div class="info-value">${award.year_received || 'Not specified'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            awardsContainer.insertAdjacentHTML('beforeend', awardHtml);
+        });
+    }
     function setPDSValue(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {

@@ -13,6 +13,9 @@ use App\Models\StudentResidenceInfoModel;
 use App\Models\StudentSpecialCircumstancesModel;
 use App\Models\StudentServicesNeededModel;
 use App\Models\StudentServicesAvailedModel;
+use App\Models\StudentOtherInfoModel;
+use App\Models\StudentGCSActivitiesModel;
+use App\Models\StudentAwardsModel;
 use CodeIgniter\API\ResponseTrait;
 
 class UsersApi extends BaseController
@@ -143,7 +146,7 @@ class UsersApi extends BaseController
      * Retrieve comprehensive student data from all related models
      * 
      * @param string $userId The student's user ID
-     * @return array Comprehensive student data including academic, personal, address, family, residence, special circumstances, and services
+     * @return array Comprehensive student data including all PDS sections
      */
     private function getComprehensiveStudentData(string $userId): array
     {
@@ -157,6 +160,9 @@ class UsersApi extends BaseController
             $circumstancesModel = new StudentSpecialCircumstancesModel();
             $servicesNeededModel = new StudentServicesNeededModel();
             $servicesAvailedModel = new StudentServicesAvailedModel();
+            $otherInfoModel = new StudentOtherInfoModel();
+            $gcsActivitiesModel = new StudentGCSActivitiesModel();
+            $awardsModel = new StudentAwardsModel();
 
             // Retrieve data from all models
             $academicData = $academicModel->getByUserId($userId);
@@ -167,22 +173,30 @@ class UsersApi extends BaseController
             $circumstancesData = $circumstancesModel->getByUserId($userId);
             $servicesNeededData = $servicesNeededModel->getServicesArray($userId);
             $servicesAvailedData = $servicesAvailedModel->getServicesArray($userId);
+            $otherInfoData = $otherInfoModel->getByUserId($userId);
+            $gcsActivitiesData = $gcsActivitiesModel->getActivitiesArray($userId);
+            $awardsData = $awardsModel->getAwardsArray($userId);
 
             // Compile comprehensive student data
             return [
                 'academic_info' => $academicData ?: [
                     'course' => null,
                     'year_level' => null,
-                    'academic_status' => null
+                    'academic_status' => null,
+                    'school_last_attended' => null,
+                    'location_of_school' => null,
+                    'previous_course_grade' => null
                 ],
                 'personal_info' => $personalData ?: [
                     'last_name' => null,
                     'first_name' => null,
                     'middle_name' => null,
                     'date_of_birth' => null,
+                    'place_of_birth' => null,
                     'age' => null,
                     'sex' => null,
                     'civil_status' => null,
+                    'religion' => null,
                     'contact_number' => null,
                     'fb_account_name' => null
                 ],
@@ -199,9 +213,22 @@ class UsersApi extends BaseController
                 'family_info' => $familyData ?: [
                     'father_name' => null,
                     'father_occupation' => null,
+                    'father_educational_attainment' => null,
+                    'father_age' => null,
+                    'father_contact_number' => null,
                     'mother_name' => null,
                     'mother_occupation' => null,
+                    'mother_educational_attainment' => null,
+                    'mother_age' => null,
+                    'mother_contact_number' => null,
+                    'parents_permanent_address' => null,
+                    'parents_contact_number' => null,
                     'spouse' => null,
+                    'spouse_occupation' => null,
+                    'spouse_educational_attainment' => null,
+                    'guardian_name' => null,
+                    'guardian_age' => null,
+                    'guardian_occupation' => null,
                     'guardian_contact_number' => null
                 ],
                 'residence_info' => $residenceData ?: [
@@ -218,7 +245,18 @@ class UsersApi extends BaseController
                     'pwd_proof_file' => null
                 ],
                 'services_needed' => $servicesNeededData ?: [],
-                'services_availed' => $servicesAvailedData ?: []
+                'services_availed' => $servicesAvailedData ?: [],
+                'other_info' => $otherInfoData ?: [
+                    'course_choice_reason' => null,
+                    'family_description' => null,
+                    'family_description_other' => null,
+                    'living_condition' => null,
+                    'physical_health_condition' => null,
+                    'physical_health_condition_specify' => null,
+                    'psych_treatment' => null
+                ],
+                'gcs_activities' => $gcsActivitiesData ?: [],
+                'awards' => $awardsData ?: []
             ];
 
         } catch (\Exception $e) {
@@ -226,14 +264,17 @@ class UsersApi extends BaseController
             
             // Return empty structure on error to maintain API consistency
             return [
-                'academic_info' => ['course' => null, 'year_level' => null, 'academic_status' => null],
-                'personal_info' => ['last_name' => null, 'first_name' => null, 'middle_name' => null, 'date_of_birth' => null, 'age' => null, 'sex' => null, 'civil_status' => null, 'contact_number' => null, 'fb_account_name' => null],
+                'academic_info' => ['course' => null, 'year_level' => null, 'academic_status' => null, 'school_last_attended' => null, 'location_of_school' => null, 'previous_course_grade' => null],
+                'personal_info' => ['last_name' => null, 'first_name' => null, 'middle_name' => null, 'date_of_birth' => null, 'place_of_birth' => null, 'age' => null, 'sex' => null, 'civil_status' => null, 'religion' => null, 'contact_number' => null, 'fb_account_name' => null],
                 'address_info' => ['permanent_zone' => null, 'permanent_barangay' => null, 'permanent_city' => null, 'permanent_province' => null, 'present_zone' => null, 'present_barangay' => null, 'present_city' => null, 'present_province' => null],
-                'family_info' => ['father_name' => null, 'father_occupation' => null, 'mother_name' => null, 'mother_occupation' => null, 'spouse' => null, 'guardian_contact_number' => null],
+                'family_info' => ['father_name' => null, 'father_occupation' => null, 'father_educational_attainment' => null, 'father_age' => null, 'father_contact_number' => null, 'mother_name' => null, 'mother_occupation' => null, 'mother_educational_attainment' => null, 'mother_age' => null, 'mother_contact_number' => null, 'parents_permanent_address' => null, 'parents_contact_number' => null, 'spouse' => null, 'spouse_occupation' => null, 'spouse_educational_attainment' => null, 'guardian_name' => null, 'guardian_age' => null, 'guardian_occupation' => null, 'guardian_contact_number' => null],
                 'residence_info' => ['residence_type' => null, 'residence_other_specify' => null, 'has_consent' => null],
                 'special_circumstances' => ['is_solo_parent' => null, 'is_indigenous' => null, 'is_breastfeeding' => null, 'is_pwd' => null, 'pwd_disability_type' => null, 'pwd_proof_file' => null],
                 'services_needed' => [],
-                'services_availed' => []
+                'services_availed' => [],
+                'other_info' => ['course_choice_reason' => null, 'family_description' => null, 'family_description_other' => null, 'living_condition' => null, 'physical_health_condition' => null, 'physical_health_condition_specify' => null, 'psych_treatment' => null],
+                'gcs_activities' => [],
+                'awards' => []
             ];
         }
     }

@@ -196,6 +196,9 @@ class HistoryReports extends Controller
                     if ($st === 'cancelled') $cancelled[$idx]++;
                 }
             } elseif ($reportType === 'yearly') {
+                // Get the selected year from the month parameter
+                $selectedYear = (int)date('Y', strtotime($month . '-01'));
+                
                 $query = $this->db->query("
                     SELECT
                         YEAR(preferred_date) as year,
@@ -205,10 +208,10 @@ class HistoryReports extends Controller
                         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
                         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
                     FROM appointments
-                    WHERE YEAR(preferred_date) BETWEEN 2023 AND 2025
+                    WHERE YEAR(preferred_date) = ?
                     GROUP BY YEAR(preferred_date)
                     ORDER BY YEAR(preferred_date)
-                ");
+                ", [$selectedYear]);
 
                 foreach ($query->getResult() as $row) {
                     $labels[] = $row->year;
@@ -225,8 +228,8 @@ class HistoryReports extends Controller
                            SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
                            SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled
                         FROM follow_up_appointments
-                        WHERE YEAR(preferred_date) BETWEEN 2023 AND 2025
-                        GROUP BY YEAR(preferred_date)")->getResult();
+                        WHERE YEAR(preferred_date) = ?
+                        GROUP BY YEAR(preferred_date)", [$selectedYear])->getResult();
                 foreach ($fuYears as $row) {
                     $idx = array_search($row->year, $labels);
                     if ($idx === false) continue;
@@ -258,29 +261,58 @@ class HistoryReports extends Controller
                 }
             }
 
-            // Get total counts (appointments + follow-ups)
-            $totalQuery = $this->db->query("
-                SELECT
-                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
-                    SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as total_approved,
-                    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as total_rejected,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
-                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
-                FROM appointments
-                WHERE preferred_date BETWEEN ? AND ?
-            ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')]);
+            // Get total counts (appointments + follow-ups) based on report type
+            if ($reportType === 'yearly') {
+                // For yearly reports, use the selected year from the month parameter
+                $selectedYear = (int)date('Y', strtotime($month . '-01'));
+                $totalQuery = $this->db->query("
+                    SELECT
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as total_approved,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as total_rejected,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
+                        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
+                    FROM appointments
+                    WHERE YEAR(preferred_date) = ?
+                ", [$selectedYear]);
 
-            $totals = $totalQuery->getRow();
+                $totals = $totalQuery->getRow();
 
-            // Follow-up totals
-            $fuTotals = $this->db->query("
-                SELECT
-                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
-                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
-                FROM follow_up_appointments
-                WHERE preferred_date BETWEEN ? AND ?
-            ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')])->getRow();
+                // Follow-up totals for the year
+                $fuTotals = $this->db->query("
+                    SELECT
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
+                        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
+                    FROM follow_up_appointments
+                    WHERE YEAR(preferred_date) = ?
+                ", [$selectedYear])->getRow();
+            } else {
+                // For daily, weekly, and monthly reports, use the date range
+                $totalQuery = $this->db->query("
+                    SELECT
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as total_approved,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as total_rejected,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
+                        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
+                    FROM appointments
+                    WHERE preferred_date BETWEEN ? AND ?
+                ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')]);
+
+                $totals = $totalQuery->getRow();
+
+                // Follow-up totals for the date range
+                $fuTotals = $this->db->query("
+                    SELECT
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as total_completed,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as total_pending,
+                        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as total_cancelled
+                    FROM follow_up_appointments
+                    WHERE preferred_date BETWEEN ? AND ?
+                ", [$firstDay->format('Y-m-d'), $lastDay->format('Y-m-d')])->getRow();
+            }
+            
             $totals->total_completed += (int)($fuTotals->total_completed ?? 0);
             $totals->total_pending += (int)($fuTotals->total_pending ?? 0);
             $totals->total_cancelled += (int)($fuTotals->total_cancelled ?? 0);

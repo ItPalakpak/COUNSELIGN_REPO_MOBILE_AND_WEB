@@ -1,12 +1,13 @@
 <?php
-namespace App\Models;
 
+namespace App\Models;
 
 use App\Helpers\SecureLogHelper;
 use CodeIgniter\Model;
 
 /**
  * Complete PDS Model - Aggregates all PDS data with ACID compliance
+ * UPDATED: Added support for Other Info, GCS Activities, and Awards
  */
 class StudentPDSModel extends BaseModel
 {
@@ -18,11 +19,14 @@ class StudentPDSModel extends BaseModel
     protected $servicesNeededModel;
     protected $servicesAvailedModel;
     protected $residenceModel;
+    protected $otherInfoModel;
+    protected $gcsActivitiesModel;
+    protected $awardsModel;
 
     public function __construct()
     {
         parent::__construct();
-        
+
         $this->academicModel = new StudentAcademicInfoModel();
         $this->personalModel = new StudentPersonalInfoModel();
         $this->addressModel = new StudentAddressInfoModel();
@@ -31,6 +35,9 @@ class StudentPDSModel extends BaseModel
         $this->servicesNeededModel = new StudentServicesNeededModel();
         $this->servicesAvailedModel = new StudentServicesAvailedModel();
         $this->residenceModel = new StudentResidenceInfoModel();
+        $this->otherInfoModel = new StudentOtherInfoModel();
+        $this->gcsActivitiesModel = new StudentGCSActivitiesModel();
+        $this->awardsModel = new StudentAwardsModel();
     }
 
     /**
@@ -46,7 +53,10 @@ class StudentPDSModel extends BaseModel
             'circumstances' => $this->circumstancesModel->getByUserId($userId),
             'services_needed' => $this->servicesNeededModel->getServicesArray($userId),
             'services_availed' => $this->servicesAvailedModel->getServicesArray($userId),
-            'residence' => $this->residenceModel->getByUserId($userId)
+            'residence' => $this->residenceModel->getByUserId($userId),
+            'other_info' => $this->otherInfoModel->getByUserId($userId),
+            'gcs_activities' => $this->gcsActivitiesModel->getActivitiesArray($userId),
+            'awards' => $this->awardsModel->getAwardsArray($userId)
         ];
     }
 
@@ -55,53 +65,64 @@ class StudentPDSModel extends BaseModel
      */
     public function saveCompletePDS(string $userId, array $pdsData): bool
     {
-        $userId = (string) $userId; // Ensure string type for varchar(10) column
+        $userId = (string) $userId;
         $this->db->transStart();
 
         try {
-            // Save each section
+            // Save each section (existing code remains the same)
             if (isset($pdsData['academic'])) {
                 log_message('debug', 'Saving academic data...');
                 $this->academicModel->upsert($userId, $pdsData['academic']);
             }
-            
+
             if (isset($pdsData['personal'])) {
                 log_message('debug', 'Saving personal data...');
                 $result = $this->personalModel->upsert($userId, $pdsData['personal']);
                 log_message('debug', 'Personal data upsert result: ' . ($result ? 'SUCCESS' : 'FAILED'));
-                if (!$result) {
-                    log_message('error', 'Personal data upsert failed for user: ' . $userId);
-                    log_message('error', 'Personal data: ' . json_encode($pdsData['personal']));
-                }
             }
-            
+
             if (isset($pdsData['address'])) {
                 $this->addressModel->upsert($userId, $pdsData['address']);
             }
-            
+
             if (isset($pdsData['family'])) {
                 $this->familyModel->upsert($userId, $pdsData['family']);
             }
-            
+
             if (isset($pdsData['circumstances'])) {
                 $this->circumstancesModel->upsert($userId, $pdsData['circumstances']);
             }
-            
+
             if (isset($pdsData['services_needed'])) {
                 $this->servicesNeededModel->syncServices($userId, $pdsData['services_needed']);
             }
-            
+
             if (isset($pdsData['services_availed'])) {
                 $this->servicesAvailedModel->syncServices($userId, $pdsData['services_availed']);
             }
-            
+
             if (isset($pdsData['residence'])) {
                 $this->residenceModel->upsert($userId, $pdsData['residence']);
             }
 
+            // NEW SECTIONS
+            if (isset($pdsData['other_info'])) {
+                log_message('debug', 'Saving other info data...');
+                $this->otherInfoModel->upsert($userId, $pdsData['other_info']);
+            }
+
+            if (isset($pdsData['gcs_activities'])) {
+                log_message('debug', 'Syncing GCS activities...');
+                $this->gcsActivitiesModel->syncActivities($userId, $pdsData['gcs_activities']);
+            }
+
+            if (isset($pdsData['awards'])) {
+                log_message('debug', 'Syncing awards...');
+                $this->awardsModel->syncAwards($userId, $pdsData['awards']);
+            }
+
             $this->db->transComplete();
             return $this->db->transStatus();
-
         } catch (\Exception $e) {
             $this->db->transRollback();
             log_message('error', 'PDS Save Error: ' . $e->getMessage());
@@ -148,7 +169,7 @@ class StudentPDSModel extends BaseModel
                 $operations,
                 [
                     'student_academic_info',
-                    'student_personal_info', 
+                    'student_personal_info',
                     'student_address_info',
                     'student_family_info',
                     'student_special_circumstances',
@@ -170,7 +191,6 @@ class StudentPDSModel extends BaseModel
                 'sections_saved' => array_keys($pdsData),
                 'message' => 'PDS data saved successfully'
             ];
-
         } catch (\Exception $e) {
             $this->logAtomicOperation('saveCompletePDS', [
                 'user_id' => $userId,
@@ -194,8 +214,14 @@ class StudentPDSModel extends BaseModel
     {
         // Validate section name
         $validSections = [
-            'academic', 'personal', 'address', 'family', 
-            'circumstances', 'services_needed', 'services_availed', 'residence'
+            'academic',
+            'personal',
+            'address',
+            'family',
+            'circumstances',
+            'services_needed',
+            'services_availed',
+            'residence'
         ];
 
         if (!in_array($section, $validSections)) {
@@ -226,7 +252,6 @@ class StudentPDSModel extends BaseModel
                 'section' => $section,
                 'message' => ucfirst($section) . ' section updated successfully'
             ];
-
         } catch (\Exception $e) {
             $this->logAtomicOperation('updatePDSSection', [
                 'user_id' => $userId,
@@ -265,7 +290,7 @@ class StudentPDSModel extends BaseModel
                 [
                     'student_academic_info',
                     'student_personal_info',
-                    'student_address_info', 
+                    'student_address_info',
                     'student_family_info',
                     'student_special_circumstances',
                     'student_services_needed',
@@ -282,7 +307,6 @@ class StudentPDSModel extends BaseModel
                 'user_id' => $userId,
                 'message' => 'PDS data deleted successfully'
             ];
-
         } catch (\Exception $e) {
             $this->logAtomicOperation('deletePDS', [
                 'user_id' => $userId,
@@ -431,7 +455,7 @@ class StudentPDSModel extends BaseModel
     private function preparePDSSectionOperations(string $userId, string $section, array $sectionData): array
     {
         $model = $this->getModelForSection($section);
-        
+
         if (in_array($section, ['services_needed', 'services_availed'])) {
             return [$this->createAtomicOperation('syncServices', [$userId, $sectionData], $model)];
         } else {
@@ -449,15 +473,24 @@ class StudentPDSModel extends BaseModel
     private function getModelForSection(string $section)
     {
         switch ($section) {
-            case 'academic': return $this->academicModel;
-            case 'personal': return $this->personalModel;
-            case 'address': return $this->addressModel;
-            case 'family': return $this->familyModel;
-            case 'circumstances': return $this->circumstancesModel;
-            case 'services_needed': return $this->servicesNeededModel;
-            case 'services_availed': return $this->servicesAvailedModel;
-            case 'residence': return $this->residenceModel;
-            default: throw new \Exception("Unknown PDS section: {$section}");
+            case 'academic':
+                return $this->academicModel;
+            case 'personal':
+                return $this->personalModel;
+            case 'address':
+                return $this->addressModel;
+            case 'family':
+                return $this->familyModel;
+            case 'circumstances':
+                return $this->circumstancesModel;
+            case 'services_needed':
+                return $this->servicesNeededModel;
+            case 'services_availed':
+                return $this->servicesAvailedModel;
+            case 'residence':
+                return $this->residenceModel;
+            default:
+                throw new \Exception("Unknown PDS section: {$section}");
         }
     }
 
@@ -471,15 +504,24 @@ class StudentPDSModel extends BaseModel
     private function getTableNameForSection(string $section): string
     {
         switch ($section) {
-            case 'academic': return 'student_academic_info';
-            case 'personal': return 'student_personal_info';
-            case 'address': return 'student_address_info';
-            case 'family': return 'student_family_info';
-            case 'circumstances': return 'student_special_circumstances';
-            case 'services_needed': return 'student_services_needed';
-            case 'services_availed': return 'student_services_availed';
-            case 'residence': return 'student_residence_info';
-            default: throw new \Exception("Unknown PDS section: {$section}");
+            case 'academic':
+                return 'student_academic_info';
+            case 'personal':
+                return 'student_personal_info';
+            case 'address':
+                return 'student_address_info';
+            case 'family':
+                return 'student_family_info';
+            case 'circumstances':
+                return 'student_special_circumstances';
+            case 'services_needed':
+                return 'student_services_needed';
+            case 'services_availed':
+                return 'student_services_availed';
+            case 'residence':
+                return 'student_residence_info';
+            default:
+                throw new \Exception("Unknown PDS section: {$section}");
         }
     }
 

@@ -53,8 +53,8 @@ class AdminsManagement extends BaseController
             $counselorModel = new CounselorModel();
             $availabilityModel = new CounselorAvailabilityModel();
 
-            // Get all active counselors
-            $counselors = $counselorModel->getActiveCounselors();
+            // Get all active counselors with user profile pictures
+            $counselors = $counselorModel->getAllCounselorsWithUsers();
             
             if (empty($counselors)) {
                 return $this->respond([
@@ -92,11 +92,16 @@ class AdminsManagement extends BaseController
                             }
                         }
                         
+                        // Get profile picture from users table, not counselors table
+                        $profilePicture = !empty($counselor['profile_picture']) 
+                            ? $counselor['profile_picture'] 
+                            : 'Photos/profile.png';
+                        
                         $scheduleData[$day][] = [
                             'counselor_id' => $counselorId,
                             'name' => $counselorName,
                             'degree' => $counselorDegree,
-                            'profile_picture' => $counselor['profile_picture'] ?? null,
+                            'profile_picture' => $profilePicture,
                             'time_slots' => $timeSlots,
                             'display_name' => $counselorName . ', ' . $counselorDegree
                         ];
@@ -182,8 +187,8 @@ class AdminsManagement extends BaseController
             $counselorModel = new CounselorModel();
             $availabilityModel = new CounselorAvailabilityModel();
 
-            // Get all counselors
-            $counselors = $counselorModel->getActiveCounselors();
+            // Get all counselors with user profile pictures
+            $counselors = $counselorModel->getAllCounselorsWithUsers();
             $availableCounselors = [];
 
             // Check each counselor's availability for the specific time and day
@@ -207,13 +212,18 @@ class AdminsManagement extends BaseController
                 }
                 
                 if ($isAvailable) {
+                    // Get profile picture from users table, not counselors table
+                    $profilePicture = !empty($counselor['profile_picture']) 
+                        ? $counselor['profile_picture'] 
+                        : 'Photos/profile.png';
+                    
                     $availableCounselors[] = [
                         'counselor_id' => $counselorId,
                         'name' => $counselor['name'],
                         'degree' => $counselor['degree'],
                         'email' => $counselor['email'],
                         'contact_number' => $counselor['contact_number'],
-                        'profile_picture' => $counselor['profile_picture'] ?? null,
+                        'profile_picture' => $profilePicture,
                         'time_slots' => $timeSlots,
                         'display_name' => $counselor['name'] . ', ' . $counselor['degree']
                     ];

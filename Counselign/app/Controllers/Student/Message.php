@@ -37,6 +37,64 @@ class Message extends BaseController
 
         try {
             switch ($action) {
+                case 'get_counselor_conversations':
+                    // Get all counselors with latest message data
+                    $counselors = $db->table('counselors c')
+                        ->select('c.counselor_id, c.name')
+                        ->join('users u', 'u.user_id = c.counselor_id', 'left')
+                        ->select('u.profile_picture, u.last_activity, u.last_login, u.logout_time')
+                        ->orderBy('c.name', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    // For each counselor, get latest message data
+                    foreach ($counselors as &$counselor) {
+                        $counselorId = $counselor['counselor_id'];
+                        
+                        // Get latest message between student and counselor
+                        $latestMessageSql = "SELECT message_text, created_at, sender_id 
+                            FROM messages 
+                            WHERE (sender_id = ? AND receiver_id = ?) 
+                               OR (sender_id = ? AND receiver_id = ?) 
+                            ORDER BY created_at DESC LIMIT 1";
+                        
+                        $latestMessage = $db->query($latestMessageSql, [
+                            $user_id, $counselorId, $counselorId, $user_id
+                        ])->getRowArray();
+
+                        if ($latestMessage) {
+                            $counselor['last_message'] = $latestMessage['message_text'];
+                            $counselor['last_message_time'] = $latestMessage['created_at'];
+                            $counselor['last_message_type'] = ($latestMessage['sender_id'] === $user_id) ? 'sent' : 'received';
+                        } else {
+                            $counselor['last_message'] = null;
+                            $counselor['last_message_time'] = null;
+                            $counselor['last_message_type'] = null;
+                        }
+
+                        // Get unread count (messages from counselor that student hasn't read)
+                        $unreadCount = $db->table('messages')
+                            ->where('sender_id', $counselorId)
+                            ->where('receiver_id', $user_id)
+                            ->where('is_read', 0)
+                            ->countAllResults();
+
+                        $counselor['unread_count'] = $unreadCount;
+                    }
+
+                    // Sort by last message time (newest first), then by name
+                    usort($counselors, function($a, $b) {
+                        if ($a['last_message_time'] && $b['last_message_time']) {
+                            return strtotime($b['last_message_time']) - strtotime($a['last_message_time']);
+                        }
+                        if ($a['last_message_time']) return -1;
+                        if ($b['last_message_time']) return 1;
+                        return strcmp($a['name'], $b['name']);
+                    });
+
+                    $response = ['success' => true, 'counselors' => $counselors];
+                    break;
+
                 case 'get_conversations':
                     // Use Query Builder for security and compatibility
                     $sql = "SELECT DISTINCT
@@ -130,11 +188,34 @@ class Message extends BaseController
                     break;
 
                 case 'mark_read':
-                    $db->table('messages')
+                    // Mark messages from specific sender as read
+                    $sender_id = $this->request->getPost('user_id') ?? $this->request->getGet('user_id');
+                    if ($sender_id) {
+                        $db->table('messages')
+                            ->where('sender_id', $sender_id)
+                            ->where('receiver_id', $user_id)
+                            ->where('is_read', 0)
+                            ->update(['is_read' => 1]);
+                    } else {
+                        // If no sender specified, mark all as read
+                        $db->table('messages')
+                            ->where('receiver_id', $user_id)
+                            ->where('is_read', 0)
+                            ->update(['is_read' => 1]);
+                    }
+                    $response = ['success' => true, 'message' => 'Messages marked as read'];
+                    break;
+
+                case 'get_unread_count':
+                    // Get total unread message count from all counselors
+                    $unreadCount = $db->table('messages')
                         ->where('receiver_id', $user_id)
                         ->where('is_read', 0)
-                        ->update(['is_read' => 1]);
-                    $response = ['success' => true, 'message' => 'Messages marked as read'];
+                        ->join('users u', 'u.user_id = messages.sender_id', 'left')
+                        ->where('u.role', 'counselor')
+                        ->countAllResults();
+                    // Ensure type-safe integer response
+                    $response = ['success' => true, 'unread_count' => (int)$unreadCount];
                     break;
 
                 default:

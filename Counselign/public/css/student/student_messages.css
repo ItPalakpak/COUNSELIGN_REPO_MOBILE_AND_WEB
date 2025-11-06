@@ -431,6 +431,26 @@ body {
   color: var(--medium-blue);
 }
 
+/* Unread message highlight */
+.conversation-item.has-unread {
+  background: linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%);
+  border-left: 3px solid var(--medium-blue);
+}
+
+.conversation-item.has-unread:hover {
+  background: linear-gradient(135deg, #dceef8 0%, #c8e5f7 100%);
+}
+
+.conversation-item.has-unread .conversation-name {
+  color: var(--dark-blue);
+  font-weight: 800;
+}
+
+.conversation-item.has-unread .conversation-last-message {
+  color: var(--dark-blue);
+  font-weight: 600;
+}
+
 /* Chat Area */
 .chat-area {
   flex: 1;
@@ -618,6 +638,7 @@ body {
 .message {
   margin-bottom: 16px;
   display: flex;
+  flex-direction: column;
   animation: messageSlideIn 0.3s ease-out;
 }
 
@@ -633,11 +654,11 @@ body {
 }
 
 .message.sent {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .message.received {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .message-content {
@@ -683,18 +704,18 @@ body {
 
 .message-time {
   font-size: 11px;
-  opacity: 0.7;
-  margin: 4px 0 0 0;
+  opacity: 0;
+  margin: 4px 8px 0 8px;
   line-height: 1;
   font-weight: 500;
+  transition: opacity 0.2s ease;
+  visibility: hidden;
+  color: var(--gray-600);
 }
 
-.message.sent .message-time {
-  text-align: right;
-}
-
-.message.received .message-time {
-  text-align: left;
+.message:hover .message-time {
+  opacity: 0.8;
+  visibility: visible;
 }
 
 /* Message Input Section */

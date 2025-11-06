@@ -251,6 +251,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function updateMessageCounter(count) {
+        const messageBadge = document.getElementById('messageBadge');
+        if (messageBadge) {
+            const numCount = parseInt(count) || 0;
+            if (numCount > 0) {
+                messageBadge.textContent = numCount;
+                messageBadge.style.display = 'inline-block';
+                messageBadge.classList.remove('hidden');
+            } else {
+                messageBadge.textContent = '';
+                messageBadge.style.display = 'none';
+                messageBadge.classList.add('hidden');
+            }
+        }
+    }
+
     function fetchNotificationCount() {
         // Use the same source and filtering as the list (exclude ALL message notifications)
         fetch(window.BASE_URL + 'student/notifications')
@@ -266,6 +282,22 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('Error fetching notification count:', error);
+            });
+    }
+
+    function fetchMessageCount() {
+        fetch(window.BASE_URL + 'student/message/operations?action=get_unread_count')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const count = parseInt(data.unread_count) || 0;
+                    updateMessageCounter(count);
+                } else {
+                    console.error('Error fetching message count:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching message count:', error);
             });
     }
 
@@ -425,11 +457,13 @@ function renderNotifications(notifications = []) {
         }
     }
 
-    // Real-time polling for notifications
+    // Real-time polling for notifications and messages
     function startNotificationPolling() {
         fetchNotificationCount();
+        fetchMessageCount();
         setInterval(() => {
             fetchNotificationCount();
+            fetchMessageCount();
             loadNotifications();
         }, 10000); // every 10 seconds
     }

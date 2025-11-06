@@ -894,8 +894,8 @@ function displayMessages(messages) {
             <div class="message ${isSent ? 'sent' : 'received'}">
                 <div class="message-content">
                     <p class="message-text">${escapeHtml(msg.message_text || '')}</p>
-                    <p class="message-time">${time}</p>
                 </div>
+                <p class="message-time">${time}</p>
             </div>
         `;
     });
@@ -981,8 +981,8 @@ async function sendMessage() {
                     <div class="message sent">
                         <div class="message-content bg-primary text-white rounded-3 p-2 px-3 shadow-sm">
                             <p class="mb-1">${messageText}</p>
-                            <small class="text-white-50 message-time">Just now</small>
                         </div>
+                        <small class="text-white-50 message-time">Just now</small>
                     </div>
                 </div>
             `;

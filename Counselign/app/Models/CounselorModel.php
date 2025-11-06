@@ -126,13 +126,17 @@ class CounselorModel extends Model
 
     /**
      * Get counselor with user account details (JOIN)
+     * Profile picture is retrieved from users table, not counselors table
      * 
      * @param string $counselorId
      * @return array|null
      */
     public function getCounselorWithUser(string $counselorId): ?array
     {
-        return $this->select('counselors.*, users.username, users.last_login, users.is_verified')
+        return $this->select('counselors.counselor_id, counselors.name, counselors.degree, 
+                             counselors.email, counselors.contact_number, counselors.address,
+                             counselors.civil_status, counselors.sex, counselors.birthdate,
+                             users.username, users.last_login, users.is_verified, users.profile_picture')
                     ->join('users', 'counselors.counselor_id = users.user_id', 'left')
                     ->where('counselors.counselor_id', $counselorId)
                     ->first();
@@ -140,12 +144,16 @@ class CounselorModel extends Model
 
     /**
      * Get all counselors with their user account info
+     * Profile picture is retrieved from users table, not counselors table
      * 
      * @return array
      */
     public function getAllCounselorsWithUsers(): array
     {
-        return $this->select('counselors.*, users.username, users.last_login, users.is_verified')
+        return $this->select('counselors.counselor_id, counselors.name, counselors.degree, 
+                             counselors.email, counselors.contact_number, counselors.address,
+                             counselors.civil_status, counselors.sex, counselors.birthdate,
+                             users.username, users.last_login, users.is_verified, users.profile_picture')
                     ->join('users', 'counselors.counselor_id = users.user_id', 'left')
                     ->orderBy('counselors.name', 'ASC')
                     ->findAll();

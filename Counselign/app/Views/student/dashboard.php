@@ -41,7 +41,6 @@
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/announcements') ?>"><i class="fas fa-bullhorn"></i> Announcements</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/schedule-appointment') ?>"><i class="fas fa-plus-circle"></i> Schedule an Appointment</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/my-appointments') ?>"><i class="fas fa-list-alt"></i> My Appointments</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/messages') ?>"><i class="fas fa-comments"></i> Messages</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/follow-up-sessions') ?>"><i class="fas fa-clipboard-list"></i> Follow Up Sessions</a></li>
             <li class="nav-item"><a class="nav-link" href="<?= base_url('student/profile') ?>"><i class="fas fa-user"></i> User Profile</a></li>
             <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
@@ -77,12 +76,15 @@
             <div class="ml-auto flex items-center space-x-6">
 
                 <a href="<?= base_url('student/messages') ?>" title="Messages" style="text-decoration:none;">
-                    <i class="fas fa-comments text-2xl" style="color: #003366; cursor: pointer;"></i>
+                    <div class="message-icon-container">
+                        <i class="fas fa-comments text-2xl" style="color: #003366; cursor: pointer;"></i>
+                        <span id="messageBadge" class="message-badge hidden"></span>
+                    </div>
                 </a>
                 <div class="relative notification-icon-container">
                     <i class="fas fa-bell text-2xl" id="notificationIcon" title="Notifications"
                         style="color: #003366; cursor: pointer;"></i>
-                    <span id="notificationBadge" class="notification-badge hidden">0</span>
+                    <span id="notificationBadge" class="notification-badge hidden"></span>
                 </div>
             </div>
         </div>

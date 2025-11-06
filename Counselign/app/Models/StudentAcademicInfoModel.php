@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-
 use App\Helpers\SecureLogHelper;
 use CodeIgniter\Model;
 
 /**
  * Student Academic Information Model
+ * UPDATED: Added school_last_attended, location_of_school, previous_course_grade
  */
 class StudentAcademicInfoModel extends Model
 {
@@ -17,7 +17,11 @@ class StudentAcademicInfoModel extends Model
         'student_id',
         'course',
         'year_level',
-        'academic_status'
+        'academic_status',
+        // NEW FIELDS
+        'school_last_attended',
+        'location_of_school',
+        'previous_course_grade'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';

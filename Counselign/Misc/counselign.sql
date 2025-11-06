@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2025 at 03:42 PM
+-- Generation Time: Nov 06, 2025 at 04:18 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,7 +48,8 @@ CREATE TABLE `appointments` (
   `student_id` varchar(10) NOT NULL,
   `preferred_date` date NOT NULL,
   `preferred_time` varchar(50) NOT NULL,
-  `consultation_type` varchar(50) NOT NULL,
+  `consultation_type` varchar(50) DEFAULT NULL,
+  `method_type` varchar(50) NOT NULL,
   `purpose` text DEFAULT NULL,
   `counselor_preference` varchar(100) DEFAULT 'No preference',
   `description` text DEFAULT NULL,
@@ -56,55 +57,125 @@ CREATE TABLE `appointments` (
   `status` enum('pending','approved','rejected','completed','cancelled') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Triggers `appointments`
 --
 DELIMITER $$
 CREATE TRIGGER `prevent_double_booking` BEFORE INSERT ON `appointments` FOR EACH ROW BEGIN
-                DECLARE conflict_count INT DEFAULT 0;
-                
-                -- Check for conflicts with same counselor, date, and time
-                SELECT COUNT(*) INTO conflict_count
-                FROM appointments 
-                WHERE counselor_preference = NEW.counselor_preference 
-                AND preferred_date = NEW.preferred_date 
-                AND preferred_time = NEW.preferred_time 
-                AND status IN ('pending', 'approved')
-                AND counselor_preference != 'No preference';
-                
-                IF conflict_count > 0 THEN
-                    SIGNAL SQLSTATE '45000' 
-                    SET MESSAGE_TEXT = 'Counselor already has an appointment at this time';
-                END IF;
-            END
+    DECLARE conflict_count INT DEFAULT 0;
+    DECLARE individual_count INT DEFAULT 0;
+    DECLARE group_count INT DEFAULT 0;
+    
+    IF NEW.consultation_type = 'Individual Consultation' THEN
+        SELECT COUNT(*) INTO conflict_count
+        FROM appointments 
+        WHERE counselor_preference = NEW.counselor_preference 
+        AND preferred_date = NEW.preferred_date 
+        AND preferred_time = NEW.preferred_time 
+        AND status IN ('pending', 'approved')
+        AND counselor_preference != 'No preference'
+        AND id != NEW.id;
+        
+        IF conflict_count > 0 THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'This time slot is already booked. Individual consultations require exclusive time slots.';
+        END IF;
+    
+    ELSEIF NEW.consultation_type = 'Group Consultation' THEN
+        SELECT COUNT(*) INTO individual_count
+        FROM appointments 
+        WHERE counselor_preference = NEW.counselor_preference 
+        AND preferred_date = NEW.preferred_date 
+        AND preferred_time = NEW.preferred_time 
+        AND status IN ('pending', 'approved')
+        AND consultation_type = 'Individual Consultation'
+        AND counselor_preference != 'No preference'
+        AND id != NEW.id;
+        
+        IF individual_count > 0 THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'This time slot is already booked for individual consultation. Group consultations cannot share time slots with individual consultations.';
+        END IF;
+        
+        SELECT COUNT(*) INTO group_count
+        FROM appointments 
+        WHERE counselor_preference = NEW.counselor_preference 
+        AND preferred_date = NEW.preferred_date 
+        AND preferred_time = NEW.preferred_time 
+        AND status IN ('pending', 'approved')
+        AND consultation_type = 'Group Consultation'
+        AND counselor_preference != 'No preference'
+        AND id != NEW.id;
+        
+        IF group_count >= 5 THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Group consultation slots are full for this time slot (maximum 5 participants).';
+        END IF;
+    END IF;
+END
 $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `prevent_double_booking_update` BEFORE UPDATE ON `appointments` FOR EACH ROW BEGIN
-                DECLARE conflict_count INT DEFAULT 0;
-                
-                -- Only check if counselor, date, or time is being changed
-                IF (OLD.counselor_preference != NEW.counselor_preference 
-                    OR OLD.preferred_date != NEW.preferred_date 
-                    OR OLD.preferred_time != NEW.preferred_time) THEN
-                    
-                    SELECT COUNT(*) INTO conflict_count
-                    FROM appointments 
-                    WHERE counselor_preference = NEW.counselor_preference 
-                    AND preferred_date = NEW.preferred_date 
-                    AND preferred_time = NEW.preferred_time 
-                    AND status IN ('pending', 'approved')
-                    AND counselor_preference != 'No preference'
-                    AND id != NEW.id;
-                    
-                    IF conflict_count > 0 THEN
-                        SIGNAL SQLSTATE '45000' 
-                        SET MESSAGE_TEXT = 'Counselor already has an appointment at this time';
-                    END IF;
-                END IF;
-            END
+    DECLARE conflict_count INT DEFAULT 0;
+    DECLARE individual_count INT DEFAULT 0;
+    DECLARE group_count INT DEFAULT 0;
+    
+    IF (NEW.counselor_preference != OLD.counselor_preference 
+        OR NEW.preferred_date != OLD.preferred_date 
+        OR NEW.preferred_time != OLD.preferred_time
+        OR NEW.consultation_type != OLD.consultation_type) THEN
+        
+        IF NEW.consultation_type = 'Individual Consultation' THEN
+            SELECT COUNT(*) INTO conflict_count
+            FROM appointments 
+            WHERE counselor_preference = NEW.counselor_preference 
+            AND preferred_date = NEW.preferred_date 
+            AND preferred_time = NEW.preferred_time 
+            AND status IN ('pending', 'approved')
+            AND counselor_preference != 'No preference'
+            AND id != NEW.id;
+            
+            IF conflict_count > 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'This time slot is already booked. Individual consultations require exclusive time slots.';
+            END IF;
+        
+        ELSEIF NEW.consultation_type = 'Group Consultation' THEN
+            SELECT COUNT(*) INTO individual_count
+            FROM appointments 
+            WHERE counselor_preference = NEW.counselor_preference 
+            AND preferred_date = NEW.preferred_date 
+            AND preferred_time = NEW.preferred_time 
+            AND status IN ('pending', 'approved')
+            AND consultation_type = 'Individual Consultation'
+            AND counselor_preference != 'No preference'
+            AND id != NEW.id;
+            
+            IF individual_count > 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'This time slot is already booked for individual consultation. Group consultations cannot share time slots with individual consultations.';
+            END IF;
+            
+            SELECT COUNT(*) INTO group_count
+            FROM appointments 
+            WHERE counselor_preference = NEW.counselor_preference 
+            AND preferred_date = NEW.preferred_date 
+            AND preferred_time = NEW.preferred_time 
+            AND status IN ('pending', 'approved')
+            AND consultation_type = 'Group Consultation'
+            AND counselor_preference != 'No preference'
+            AND id != NEW.id;
+            
+            IF group_count >= 5 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Group consultation slots are full for this time slot (maximum 5 participants).';
+            END IF;
+        END IF;
+    END IF;
+END
 $$
 DELIMITER ;
 
@@ -140,7 +211,9 @@ CREATE TABLE `counselors` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `civil_status` varchar(20) DEFAULT NULL,
   `sex` varchar(10) DEFAULT NULL,
-  `birthdate` date DEFAULT NULL
+  `birthdate` date DEFAULT NULL,
+  `time_scheduled` varchar(50) DEFAULT NULL,
+  `available_days` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -193,7 +266,7 @@ CREATE TABLE `follow_up_appointments` (
   `status` enum('pending','rejected','completed','cancelled') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Triggers `follow_up_appointments`
@@ -249,15 +322,16 @@ CREATE TABLE `migrations` (
 --
 
 CREATE TABLE `notifications` (
-  `id` int(11) UNSIGNED NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `id` int(11) NOT NULL,
+  `user_id` varchar(50) DEFAULT NULL,
+  `type` varchar(50) NOT NULL,
   `title` varchar(255) NOT NULL,
   `message` text NOT NULL,
-  `type` varchar(50) NOT NULL DEFAULT 'general',
-  `related_id` int(11) UNSIGNED DEFAULT NULL,
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL
+  `related_id` int(11) DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `event_date` datetime DEFAULT NULL,
+  `appointment_date` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -286,6 +360,9 @@ CREATE TABLE `student_academic_info` (
   `course` varchar(50) NOT NULL,
   `year_level` varchar(10) NOT NULL,
   `academic_status` varchar(50) NOT NULL,
+  `school_last_attended` varchar(255) DEFAULT NULL,
+  `location_of_school` varchar(255) DEFAULT NULL,
+  `previous_course_grade` varchar(100) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -314,6 +391,22 @@ CREATE TABLE `student_address_info` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_awards`
+--
+
+CREATE TABLE `student_awards` (
+  `id` int(11) NOT NULL,
+  `student_id` varchar(10) NOT NULL,
+  `award_name` varchar(255) NOT NULL,
+  `school_organization` varchar(255) NOT NULL,
+  `year_received` varchar(4) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_family_info`
 --
 
@@ -322,10 +415,58 @@ CREATE TABLE `student_family_info` (
   `student_id` varchar(10) NOT NULL,
   `father_name` varchar(255) DEFAULT NULL,
   `father_occupation` varchar(100) DEFAULT NULL,
+  `father_educational_attainment` varchar(100) DEFAULT NULL,
+  `father_age` int(3) DEFAULT NULL,
+  `father_contact_number` varchar(20) DEFAULT NULL,
   `mother_name` varchar(255) DEFAULT NULL,
   `mother_occupation` varchar(100) DEFAULT NULL,
+  `mother_educational_attainment` varchar(100) DEFAULT NULL,
+  `mother_age` int(3) DEFAULT NULL,
+  `mother_contact_number` varchar(20) DEFAULT NULL,
+  `parents_permanent_address` text DEFAULT NULL,
+  `parents_contact_number` varchar(20) DEFAULT NULL,
   `spouse` varchar(255) DEFAULT NULL,
+  `spouse_occupation` varchar(100) DEFAULT NULL,
+  `spouse_educational_attainment` varchar(100) DEFAULT NULL,
+  `guardian_name` varchar(255) DEFAULT NULL,
+  `guardian_age` int(3) DEFAULT NULL,
+  `guardian_occupation` varchar(100) DEFAULT NULL,
   `guardian_contact_number` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_gcs_activities`
+--
+
+CREATE TABLE `student_gcs_activities` (
+  `id` int(11) NOT NULL,
+  `student_id` varchar(10) NOT NULL,
+  `activity_type` enum('adjustment','building_self_confidence','developing_communication_skills','study_habits','time_management','tutorial_with_peers','other') NOT NULL,
+  `other_specify` varchar(255) DEFAULT NULL,
+  `tutorial_subjects` text DEFAULT NULL COMMENT 'For tutorial_with_peers type',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_other_info`
+--
+
+CREATE TABLE `student_other_info` (
+  `id` int(11) NOT NULL,
+  `student_id` varchar(10) NOT NULL,
+  `course_choice_reason` text DEFAULT NULL,
+  `family_description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array of: harmonious, conflict, separated_parents, parents_working_abroad, other' CHECK (json_valid(`family_description`)),
+  `family_description_other` varchar(255) DEFAULT NULL,
+  `living_condition` enum('good_environment','not_good_environment') DEFAULT NULL,
+  `physical_health_condition` enum('No','Yes') DEFAULT 'No',
+  `physical_health_condition_specify` text DEFAULT NULL,
+  `psych_treatment` enum('No','Yes') DEFAULT 'No',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -343,9 +484,11 @@ CREATE TABLE `student_personal_info` (
   `first_name` varchar(100) DEFAULT NULL,
   `middle_name` varchar(100) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
+  `place_of_birth` varchar(255) DEFAULT NULL,
   `age` int(3) DEFAULT NULL,
   `sex` enum('Male','Female') DEFAULT NULL,
   `civil_status` enum('Single','Married','Widowed','Legally Separated','Annulled') DEFAULT NULL,
+  `religion` varchar(100) DEFAULT NULL,
   `contact_number` varchar(20) DEFAULT NULL,
   `fb_account_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -519,16 +662,17 @@ ALTER TABLE `migrations`
 --
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `type` (`type`),
-  ADD KEY `is_read` (`is_read`);
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_is_read` (`is_read`),
+  ADD KEY `idx_created_at` (`created_at`);
 
 --
 -- Indexes for table `password_resets`
 --
 ALTER TABLE `password_resets`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_reset_code` (`reset_code`);
+  ADD KEY `idx_reset_code` (`reset_code`),
+  ADD KEY `password_resets_fk2` (`user_id`);
 
 --
 -- Indexes for table `student_academic_info`
@@ -546,11 +690,36 @@ ALTER TABLE `student_address_info`
   ADD UNIQUE KEY `student_id` (`student_id`);
 
 --
+-- Indexes for table `student_awards`
+--
+ALTER TABLE `student_awards`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_student_awards` (`student_id`),
+  ADD KEY `idx_awards_student_year` (`student_id`,`year_received`);
+
+--
 -- Indexes for table `student_family_info`
 --
 ALTER TABLE `student_family_info`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `student_id` (`student_id`);
+
+--
+-- Indexes for table `student_gcs_activities`
+--
+ALTER TABLE `student_gcs_activities`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_student_activity_type` (`student_id`,`activity_type`),
+  ADD KEY `idx_student_activities` (`student_id`,`activity_type`),
+  ADD KEY `idx_gcs_activities_student` (`student_id`);
+
+--
+-- Indexes for table `student_other_info`
+--
+ALTER TABLE `student_other_info`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `student_id` (`student_id`),
+  ADD KEY `idx_student_other_info` (`student_id`);
 
 --
 -- Indexes for table `student_personal_info`
@@ -656,7 +825,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
@@ -677,9 +846,27 @@ ALTER TABLE `student_address_info`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `student_awards`
+--
+ALTER TABLE `student_awards`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `student_family_info`
 --
 ALTER TABLE `student_family_info`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_gcs_activities`
+--
+ALTER TABLE `student_gcs_activities`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_other_info`
+--
+ALTER TABLE `student_other_info`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -745,7 +932,7 @@ ALTER TABLE `counselor_availability`
 -- Constraints for table `follow_up_appointments`
 --
 ALTER TABLE `follow_up_appointments`
-  ADD CONSTRAINT `fk_parent_appointment` FOREIGN KEY (`parent_appointment_id`) REFERENCES `follow_up_appointments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_parent_appointment` FOREIGN KEY (`parent_appointment_id`) REFERENCES `appointments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_student` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `follow_up_appointments_ibfk_1` FOREIGN KEY (`counselor_id`) REFERENCES `counselors` (`counselor_id`) ON DELETE CASCADE;
 
@@ -755,12 +942,6 @@ ALTER TABLE `follow_up_appointments`
 ALTER TABLE `messages`
   ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `notifications`
---
-ALTER TABLE `notifications`
-  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `password_resets`
@@ -781,10 +962,28 @@ ALTER TABLE `student_address_info`
   ADD CONSTRAINT `student_address_info_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `student_awards`
+--
+ALTER TABLE `student_awards`
+  ADD CONSTRAINT `student_awards_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `student_family_info`
 --
 ALTER TABLE `student_family_info`
   ADD CONSTRAINT `student_family_info_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_gcs_activities`
+--
+ALTER TABLE `student_gcs_activities`
+  ADD CONSTRAINT `student_gcs_activities_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_other_info`
+--
+ALTER TABLE `student_other_info`
+  ADD CONSTRAINT `student_other_info_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `student_personal_info`
@@ -820,18 +1019,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
-
--- Add consultation_type column to appointments table
--- This column stores: "Individual Consultation" or "Group Consultation"
--- Values: "Individual Consultation" or "Group Consultation"
-
-ALTER TABLE `appointments`
-ADD COLUMN `consultation_type` VARCHAR(50) NOT NULL DEFAULT 'Individual Consultation'
-AFTER `preferred_time`;
-
--- Optional: If you want to keep existing records without updating them,
--- use this version instead (allows NULL initially):
--- ALTER TABLE `appointments`
--- ADD COLUMN `consultation_type` VARCHAR(50) DEFAULT NULL
--- AFTER `preferred_time`;

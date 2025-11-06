@@ -182,6 +182,13 @@ function loadHistoricalReport() {
 function updateCharts(data) {
     const reportType = document.getElementById('reportTypeFilter').value;
     
+    // Validate data
+    if (!data || !Array.isArray(data.labels)) {
+        console.error('Invalid data format received');
+        resetStatistics();
+        return;
+    }
+    
     // Update trend chart based on report type
     if (reportType === 'monthly') {
         trendChart.options.scales.y = {
@@ -244,13 +251,13 @@ function updateCharts(data) {
     
     trendChart.update();
 
-    // Update pie chart
+    // Update pie chart - Use totalXXX for aggregate counts (real-time based on filters)
     const pieData = [
-        data.totalCompleted || 0,
-        data.totalApproved || 0,
-        data.totalRejected || 0,
-        data.totalPending || 0,
-        data.totalCancelled || 0
+        parseInt(data.totalCompleted) || 0,
+        parseInt(data.totalApproved) || 0,
+        parseInt(data.totalRejected) || 0,
+        parseInt(data.totalPending) || 0,
+        parseInt(data.totalCancelled) || 0
     ];
     pieChart.data.datasets[0].data = pieData;
     
@@ -265,11 +272,12 @@ function updateCharts(data) {
 }
 
 function updateStatistics(data) {
-    document.getElementById('completedCount').textContent = data.totalCompleted || 0;
-    document.getElementById('approvedCount').textContent = data.totalApproved || 0;
-    document.getElementById('rejectedCount').textContent = data.totalRejected || 0;
-    document.getElementById('pendingCount').textContent = data.totalPending || 0;
-    document.getElementById('cancelledCount').textContent = data.totalCancelled || 0;
+    // Use parseInt to ensure proper integer conversion from the server response
+    document.getElementById('completedCount').textContent = parseInt(data.totalCompleted) || 0;
+    document.getElementById('approvedCount').textContent = parseInt(data.totalApproved) || 0;
+    document.getElementById('rejectedCount').textContent = parseInt(data.totalRejected) || 0;
+    document.getElementById('pendingCount').textContent = parseInt(data.totalPending) || 0;
+    document.getElementById('cancelledCount').textContent = parseInt(data.totalCancelled) || 0;
 }
 
 function resetStatistics() {

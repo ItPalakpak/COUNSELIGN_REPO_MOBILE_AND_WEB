@@ -135,10 +135,12 @@ async function loadConversations() {
     const userList = document.querySelector('.conversations-list');
     if (!userList) return;
     if (!userList.querySelector('.conversation-item')) userList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><span>Loading counselors...</span></div>';
-    const res = await fetch((window.BASE_URL || '/') + 'student/get-counselors', { credentials: 'include' });
+    
+    const res = await fetch((window.BASE_URL || '/') + 'student/message/operations?action=get_counselor_conversations', { credentials: 'include' });
     const data = await res.json();
-    if (data.status === 'success' && Array.isArray(data.counselors)) {
-        updateConversations(data.counselors, true);
+    
+    if (data.success && Array.isArray(data.counselors)) {
+        updateConversations(data.counselors, false);
     } else {
         userList.innerHTML = '<div class="no-conversations"><i class="fas fa-user-md"></i><p>No counselors available</p></div>';
     }
@@ -164,17 +166,28 @@ function updateConversations(items, isCounselorList = false) {
     const list = document.querySelector('.conversations-list');
     if (!list) return;
     list.innerHTML = '';
+    
     items.forEach(item => {
-        const otherUserId = isCounselorList ? item.counselor_id : (item.other_user_id || item.user_id);
-        const otherName = isCounselorList ? (item.name || 'Counselor') : (item.other_username || item.name || 'Unknown');
-        const avatarPath = isCounselorList ? item.profile_picture : (item.other_profile_picture || 'Photos/profile.png');
-        const otherAvatar = resolveImageUrl(avatarPath || 'Photos/profile.png');
-        const unread = isCounselorList ? 0 : (parseInt(item.unread_count) || 0);
-        const last = isCounselorList ? '' : (item.last_message || 'No messages yet');
-        const lastTime = isCounselorList ? '' : (item.last_message_time ? formatMessageTime(item.last_message_time) : '');
+        const otherUserId = item.counselor_id;
+        const otherName = item.name || 'Counselor';
+        const avatarPath = item.profile_picture || 'Photos/profile.png';
+        const otherAvatar = resolveImageUrl(avatarPath);
+        const unread = parseInt(item.unread_count) || 0;
+        
+        // Format last message
+        let last = '';
+        if (item.last_message) {
+            const prefix = item.last_message_type === 'sent' ? 'You: ' : '';
+            last = prefix + item.last_message;
+        } else {
+            last = 'No messages yet';
+        }
+        
+        const lastTime = item.last_message_time ? formatMessageTime(item.last_message_time) : '';
         const statusInfo = calculateOnlineStatus(item.last_activity, item.last_login, item.logout_time);
+        
         const card = document.createElement('div');
-        card.className = `conversation-item${otherUserId === currentUserId ? ' active' : ''}`;
+        card.className = `conversation-item${otherUserId === currentUserId ? ' active' : ''}${unread > 0 ? ' has-unread' : ''}`;
         card.dataset.id = otherUserId;
         card.dataset.lastActivity = item.last_activity || '';
         card.dataset.lastLogin = item.last_login || '';
@@ -185,12 +198,12 @@ function updateConversations(items, isCounselorList = false) {
             </div>
             <div class="conversation-details">
                 <div class="conversation-name">${otherName}</div>
-                ${isCounselorList ? '' : `<div class=\"conversation-last-message\">${last.length>20? last.substring(0,17)+'...': last}</div>`}
+                <div class="conversation-last-message">${last.length>30? last.substring(0,27)+'...': last}</div>
                 <div class="conversation-status ${statusInfo.class}">${statusInfo.text}</div>
             </div>
             <div class="conversation-meta">
-                ${isCounselorList ? '' : `<div class=\"conversation-time\">${lastTime}</div>`}
-                ${!isCounselorList && unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
+                <div class="conversation-time">${lastTime}</div>
+                ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
             </div>`;
         list.appendChild(card);
     });
@@ -276,8 +289,8 @@ function displayMessages(messages) {
             <div class="message ${isSent ? 'sent' : 'received'}">
                 <div class="message-content">
                     <p class="message-text">${escapeHtml(msg.message_text || '')}</p>
-                    <p class="message-time">${time}</p>
                 </div>
+                <p class="message-time">${time}</p>
             </div>`;
     });
     html += '</div>';
@@ -316,8 +329,8 @@ async function sendMessage() {
                     <div class="message sent">
                         <div class="message-content bg-primary text-white rounded-3 p-2 px-3 shadow-sm">
                             <p class="mb-1">${escapeHtml(text)}</p>
-                            <small class="text-white-50 message-time">Just now</small>
                         </div>
+                        <small class="text-white-50 message-time">Just now</small>
                     </div>
                 </div>`;
             if (container.innerHTML.includes('empty-state')) {

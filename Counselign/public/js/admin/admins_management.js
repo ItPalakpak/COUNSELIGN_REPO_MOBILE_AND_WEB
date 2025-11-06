@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Initialize refresh button
+    const refreshButton = document.getElementById('refreshScheduleBtn');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', handleRefreshSchedule);
+    }
+
     // Load counselor schedules on page load
     loadCounselorSchedules();
 
@@ -37,18 +43,75 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(loadCounselorSchedules, 300000);
 });
 
+/**
+ * Handle refresh schedule button click
+ * Manages button state and triggers schedule reload
+ * @param {Event} event - Click event
+ * @returns {void}
+ */
+function handleRefreshSchedule(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    
+    const refreshButton = document.getElementById('refreshScheduleBtn');
+    if (!refreshButton) return;
+    
+    // Disable button during refresh to prevent multiple clicks
+    if (refreshButton.disabled) {
+        return;
+    }
+    
+    refreshButton.disabled = true;
+    const icon = refreshButton.querySelector('i');
+    
+    // Add spinning animation to icon
+    if (icon) {
+        icon.classList.add('fa-spin');
+    }
+    
+    // Load schedules
+    loadCounselorSchedules()
+        .finally(() => {
+            // Re-enable button after operation completes
+            refreshButton.disabled = false;
+            if (icon) {
+                icon.classList.remove('fa-spin');
+            }
+        });
+}
+
+/**
+ * Confirm logout dialog
+ * @returns {void}
+ */
 function confirmLogout() {
     if (confirm("Are you sure you want to log out?")) {
         window.location.href = (window.BASE_URL || '/') + 'auth/logout';
     }
 }
 
+/**
+ * Load counselor schedules from the server
+ * Fetches and displays weekly counselor availability schedules
+ * @returns {Promise<void>}
+ */
 function loadCounselorSchedules() {
     const baseUrl = window.BASE_URL || '/';
     
     SecureLogger.info('Loading counselor schedules...');
     
-    fetch(baseUrl + 'admin/admins-management/schedules')
+    // Show loading state
+    showLoadingState();
+    
+    return fetch(baseUrl + 'admin/admins-management/schedules', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        },
+        credentials: 'include'
+    })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -59,9 +122,10 @@ function loadCounselorSchedules() {
             if (data.success) {
                 displayCounselorSchedules(data.schedules);
                 SecureLogger.info(`Loaded schedules for ${data.total_counselors} counselors`);
+                showSuccessNotification('Schedules refreshed successfully');
             } else {
                 console.error('Failed to load counselor schedules:', data.message);
-                showScheduleError(data.message);
+                showScheduleError(data.message || 'Failed to load schedules');
                 showEmptySchedules();
             }
         })
@@ -72,11 +136,23 @@ function loadCounselorSchedules() {
         });
 }
 
+/**
+ * Display counselor schedules in the weekly view
+ * Renders counselor cards for each day of the week with proper gradient coloring
+ * @param {Object} scheduleData - Schedule data organized by day
+ * @returns {void}
+ */
 function displayCounselorSchedules(scheduleData) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     
     // Deterministic color assignment per counselor ID
     const __counselorColorCache = new Map();
+    
+    /**
+     * Hash string to integer for consistent color generation
+     * @param {string} str - String to hash
+     * @returns {number} - Hash integer
+     */
     function hashStringToInt(str) {
         let hash = 0;
         for (let i = 0; i < String(str).length; i++) {
@@ -85,6 +161,14 @@ function displayCounselorSchedules(scheduleData) {
         }
         return Math.abs(hash);
     }
+    
+    /**
+     * Convert HSL to Hex color
+     * @param {number} h - Hue (0-360)
+     * @param {number} s - Saturation (0-100)
+     * @param {number} l - Lightness (0-100)
+     * @returns {string} - Hex color code
+     */
     function hslToHex(h, s, l) {
         s /= 100; l /= 100;
         const k = n => (n + h / 30) % 12;
@@ -93,6 +177,13 @@ function displayCounselorSchedules(scheduleData) {
         const toHex = x => Math.round(255 * x).toString(16).padStart(2, '0');
         return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
     }
+    
+    /**
+     * Get consistent gradient color for a counselor
+     * @param {string|number} counselorId - Counselor ID
+     * @param {string} counselorName - Counselor name
+     * @returns {string} - CSS gradient string
+     */
     function getCounselorGradient(counselorId, counselorName) {
         if (__counselorColorCache.has(counselorId)) return __counselorColorCache.get(counselorId);
         const key = counselorId || counselorName || 'default';
@@ -144,6 +235,14 @@ function displayCounselorSchedules(scheduleData) {
     });
 }
 
+/**
+ * Create a counselor card element
+ * Builds a DOM element displaying counselor information with gradient styling
+ * @param {Object} counselor - Counselor data object
+ * @param {string} gradient - CSS gradient for card background
+ * @param {string} day - Day of the week
+ * @returns {HTMLDivElement} - Counselor card element
+ */
 function createCounselorCard(counselor, gradient, day) {
     const card = document.createElement('div');
     card.className = 'counselor-card';
@@ -163,23 +262,37 @@ function createCounselorCard(counselor, gradient, day) {
         <div class="counselor-card-header">
             
             <div class="counselor-info">
-                <h4 class="counselor-name">${counselor.name}</h4>
+                <h4 class="counselor-name">${escapeHtml(counselor.name)}</h4>
                 
             </div>
         </div>
         <div class="counselor-card-body">
             <div class="time-info">
                 <i class="fas fa-clock"></i>
-                <span class="time-display">${timeDisplay}</span>
+                <span class="time-display">${escapeHtml(timeDisplay)}</span>
             </div>
             
         </div>
         <div class="counselor-card-footer">
-            <button class="view-details-btn" onclick='showCounselorDetails(${JSON.stringify(counselor).replace(/'/g, "&#39;")})'>
+            <button class="view-details-btn" data-counselor='${JSON.stringify(counselor).replace(/'/g, "&#39;")}' aria-label="View details for ${escapeHtml(counselor.name)}">
                 <i class="fas fa-info-circle"></i> View Details
             </button>
         </div>
     `;
+
+    // Add event listener for view details button
+    const viewDetailsBtn = card.querySelector('.view-details-btn');
+    if (viewDetailsBtn) {
+        viewDetailsBtn.addEventListener('click', function() {
+            try {
+                const counselorData = JSON.parse(this.dataset.counselor);
+                showCounselorDetails(counselorData);
+            } catch (error) {
+                console.error('Error parsing counselor data:', error);
+                showScheduleError('Failed to load counselor details');
+            }
+        });
+    }
 
     // Add hover effect
     card.addEventListener('mouseenter', function() {
@@ -195,6 +308,32 @@ function createCounselorCard(counselor, gradient, day) {
     return card;
 }
 
+/**
+ * Display loading state in all schedule containers
+ * Shows a loading spinner while data is being fetched
+ * @returns {void}
+ */
+function showLoadingState() {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    
+    days.forEach(day => {
+        const container = document.getElementById(`${day}-schedule`);
+        if (container) {
+            container.innerHTML = `
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading schedule...</p>
+                </div>
+            `;
+        }
+    });
+}
+
+/**
+ * Display empty state when no counselors are scheduled
+ * Shows a friendly message indicating no schedules available
+ * @returns {void}
+ */
 function showEmptySchedules() {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
     
@@ -213,7 +352,57 @@ function showEmptySchedules() {
 
 // Time formatting functions are now provided by the shared utility: timeFormatter.js
 
+/**
+ * Display a success notification
+ * Shows a temporary success message to the user
+ * @param {string} message - Success message to display
+ * @returns {void}
+ */
+function showSuccessNotification(message) {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector('.schedule-success');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const successDiv = document.createElement('div');
+    successDiv.className = 'schedule-success';
+    successDiv.innerHTML = `
+        <div class="success-content">
+            <i class="fas fa-check-circle"></i>
+            <div>
+                <strong>Success</strong>
+                <p>${escapeHtml(message)}</p>
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" class="success-close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+        if (successDiv.parentElement) {
+            successDiv.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => successDiv.remove(), 300);
+        }
+    }, 3000);
+}
+
+/**
+ * Display error notification
+ * Shows a temporary error message to the user
+ * @param {string} message - Error message to display
+ * @returns {void}
+ */
 function showScheduleError(message) {
+    // Remove any existing error messages
+    const existingError = document.querySelector('.schedule-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
     const errorDiv = document.createElement('div');
     errorDiv.className = 'schedule-error';
     errorDiv.innerHTML = `
@@ -221,7 +410,7 @@ function showScheduleError(message) {
             <i class="fas fa-exclamation-triangle"></i>
             <div>
                 <strong>Schedule Error</strong>
-                <p>${message}</p>
+                <p>${escapeHtml(message)}</p>
             </div>
         </div>
         <button onclick="this.parentElement.remove()" class="error-close">
@@ -239,6 +428,23 @@ function showScheduleError(message) {
     }, 5000);
 }
 
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped HTML string
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Show counselor details in a modal dialog
+ * Displays comprehensive information about a counselor
+ * @param {Object} counselor - Counselor data object
+ * @returns {void}
+ */
 function showCounselorDetails(counselor) {
     const modal = document.createElement('div');
     modal.className = 'counselor-details-modal';
@@ -246,6 +452,10 @@ function showCounselorDetails(counselor) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     
+    /**
+     * Close the modal dialog
+     * @returns {void}
+     */
     const closeModal = () => {
         modal.style.animation = 'fadeOut 0.3s ease-out';
         overlay.style.animation = 'fadeOut 0.3s ease-out';
@@ -271,26 +481,26 @@ function showCounselorDetails(counselor) {
     } else {
         // Split by bullet points and create individual badges
         const timeSlotArray = formattedTimeSlots.split(' • ');
-        timeSlotsHTML = timeSlotArray.map(time => `<span class="time-badge">${time}</span>`).join('');
+        timeSlotsHTML = timeSlotArray.map(time => `<span class="time-badge">${escapeHtml(time)}</span>`).join('');
     }
 
     modal.innerHTML = `
         <div class="modal-header">
             <h3><i class="fas fa-user-circle"></i> Counselor Details</h3>
-            <button class="close-modal-btn" id="closeModalBtn">
+            <button class="close-modal-btn" id="closeModalBtn" type="button" aria-label="Close modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="counselor-profile">
                 <img src="${profilePicture}" 
-                     alt="${counselor.name}" 
+                     alt="${escapeHtml(counselor.name)}" 
                      class="modal-avatar"
                      onerror="this.src='${baseUrl}Photos/profile.png'">
                 <div class="profile-details">
-                    <h4>${counselor.name}</h4>
-                    <p class="degree-text">${counselor.degree || 'Counselor'}</p>
-                    <p class="id-text"><i class="fas fa-id-badge"></i> ID: ${counselor.counselor_id}</p>
+                    <h4>${escapeHtml(counselor.name)}</h4>
+                    <p class="degree-text">${escapeHtml(counselor.degree || 'Counselor')}</p>
+                    <p class="id-text"><i class="fas fa-id-badge"></i> ID: ${escapeHtml(String(counselor.counselor_id))}</p>
                 </div>
             </div>
             <div class="schedule-details">
@@ -301,7 +511,7 @@ function showCounselorDetails(counselor) {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="close-btn" onclick="this.closest('.counselor-details-modal').previousElementSibling.click()">
+            <button class="close-btn" id="closeModalFooterBtn" type="button">
                 Close
             </button>
         </div>
@@ -310,8 +520,19 @@ function showCounselorDetails(counselor) {
     document.body.appendChild(overlay);
     document.body.appendChild(modal);
 
+    // Add event listeners
     overlay.onclick = closeModal;
     modal.querySelector('#closeModalBtn').onclick = closeModal;
+    modal.querySelector('#closeModalFooterBtn').onclick = closeModal;
+    
+    // Close on Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
     
     // Animate in
     setTimeout(() => {

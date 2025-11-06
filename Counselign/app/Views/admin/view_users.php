@@ -181,119 +181,164 @@
                         <div class="pds-tabs-container">
                             <ul class="nav nav-tabs nav-fill" id="pdsTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="academic-tab" data-bs-toggle="tab" 
-                                            data-bs-target="#academic-content" type="button" role="tab">
-                                        <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                    <button class="nav-link active" id="personal-bg-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#pds-personal-bg" type="button" role="tab">
+                                        <i class="fas fa-user me-2"></i>Personal Background
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="personal-tab" data-bs-toggle="tab" 
-                                            data-bs-target="#personal-content" type="button" role="tab">
-                                        <i class="fas fa-user me-2"></i>Personal Information
+                                    <button class="nav-link" id="family-bg-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#pds-family-bg" type="button" role="tab">
+                                        <i class="fas fa-users me-2"></i>Family Background
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="other-tab" data-bs-toggle="tab" 
-                                            data-bs-target="#other-content" type="button" role="tab">
+                                    <button class="nav-link" id="other-info-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#pds-other-info" type="button" role="tab">
                                         <i class="fas fa-info-circle me-2"></i>Other Information
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="awards-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#pds-awards" type="button" role="tab">
+                                        <i class="fas fa-trophy me-2"></i>Awards
                                     </button>
                                 </li>
                             </ul>
 
                             <div class="tab-content p-4" id="pdsTabContent">
-                                <!-- Academic Information Tab -->
-                                <div class="tab-pane fade show active" id="academic-content" role="tabpanel">
-                                    <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <div class="info-item">
-                                                <label class="info-label">Course</label>
-                                                <div class="info-value" id="pdsCourse">Not specified</div>
+                                <!-- Personal Background Tab -->
+                                <div class="tab-pane fade show active" id="pds-personal-bg" role="tabpanel">
+                                    <!-- Academic Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Course</label>
+                                                    <div class="info-value" id="pdsCourse">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="info-item">
-                                                <label class="info-label">Year Level</label>
-                                                <div class="info-value" id="pdsYearLevel">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Year Level</label>
+                                                    <div class="info-value" id="pdsYearLevel">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="info-item">
-                                                <label class="info-label">Academic Status</label>
-                                                <div class="info-value" id="pdsAcademicStatus">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Academic Status</label>
+                                                    <div class="info-value" id="pdsAcademicStatus">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">School Last Attended</label>
+                                                    <div class="info-value" id="pdsSchoolLastAttended">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Location of School</label>
+                                                    <div class="info-value" id="pdsLocationOfSchool">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Previous Course/Grade</label>
+                                                    <div class="info-value" id="pdsPreviousCourseGrade">Not specified</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Personal Information Tab -->
-                                <div class="tab-pane fade" id="personal-content" role="tabpanel">
-                                    <div class="row g-3">
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">Last Name</label>
-                                                <div class="info-value" id="pdsLastName">Not specified</div>
+                                    <!-- Personal Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-id-card me-2"></i>Personal Information
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Last Name</label>
+                                                    <div class="info-value" id="pdsLastName">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">First Name</label>
-                                                <div class="info-value" id="pdsFirstName">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">First Name</label>
+                                                    <div class="info-value" id="pdsFirstName">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">Middle Name</label>
-                                                <div class="info-value" id="pdsMiddleName">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Middle Name</label>
+                                                    <div class="info-value" id="pdsMiddleName">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">Date of Birth</label>
-                                                <div class="info-value" id="pdsDateOfBirth">Not specified</div>
+                                            <div class="col-md-3">
+                                                <div class="info-item">
+                                                    <label class="info-label">Sex</label>
+                                                    <div class="info-value" id="pdsSex">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <div class="info-item">
-                                                <label class="info-label">Age</label>
-                                                <div class="info-value" id="pdsAge">Not specified</div>
+                                            <div class="col-md-3">
+                                                <div class="info-item">
+                                                    <label class="info-label">Date of Birth</label>
+                                                    <div class="info-value" id="pdsDateOfBirth">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <div class="info-item">
-                                                <label class="info-label">Sex</label>
-                                                <div class="info-value" id="pdsSex">Not specified</div>
+                                            <div class="col-md-2">
+                                                <div class="info-item">
+                                                    <label class="info-label">Age</label>
+                                                    <div class="info-value" id="pdsAge">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">Civil Status</label>
-                                                <div class="info-value" id="pdsCivilStatus">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Place of Birth</label>
+                                                    <div class="info-value" id="pdsPlaceOfBirth">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-item">
-                                                <label class="info-label">Contact Number</label>
-                                                <div class="info-value" id="pdsContactNumber">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Civil Status</label>
+                                                    <div class="info-value" id="pdsCivilStatus">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label class="info-label">Facebook Account</label>
-                                                <div class="info-value" id="pdsFbAccount">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Religion</label>
+                                                    <div class="info-value" id="pdsReligion">Not specified</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label class="info-label">Email Address</label>
-                                                <div class="info-value" id="pdsPersonalEmail">Not specified</div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Contact Number</label>
+                                                    <div class="info-value" id="pdsContactNumber">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Email Address</label>
+                                                    <div class="info-value" id="pdsPersonalEmail">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Facebook Account</label>
+                                                    <div class="info-value" id="pdsFbAccount">Not specified</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Address Information -->
-                                    <div class="mt-4">
+                                    <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                                            <i class="fas fa-map-marker-alt me-2"></i>Permanent Address
+                                            <i class="fas fa-map-marker-alt me-2"></i>Permanent Home Address
                                         </h6>
                                         <div class="row g-3">
                                             <div class="col-md-3">
@@ -323,7 +368,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="mt-4">
+                                    <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
                                             <i class="fas fa-home me-2"></i>Present Address
                                         </h6>
@@ -355,45 +400,163 @@
                                         </div>
                                     </div>
 
-                                    <!-- Family Information -->
-                                    <div class="mt-4">
+                                </div>
+
+                                <!-- Family Background Tab -->
+                                <div class="tab-pane fade" id="pds-family-bg" role="tabpanel">
+                                    <!-- Father's Information -->
+                                    <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                                            <i class="fas fa-users me-2"></i>Family Information
+                                            <i class="fas fa-male me-2"></i>Father's Information
                                         </h6>
                                         <div class="row g-3">
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <div class="info-item">
                                                     <label class="info-label">Father's Name</label>
                                                     <div class="info-value" id="pdsFatherName">Not specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
                                                 <div class="info-item">
                                                     <label class="info-label">Father's Occupation</label>
                                                     <div class="info-value" id="pdsFatherOccupation">Not specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Father's Educational Attainment</label>
+                                                    <div class="info-value" id="pdsFatherEducation">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Father's Age</label>
+                                                    <div class="info-value" id="pdsFatherAge">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Father's Contact No.</label>
+                                                    <div class="info-value" id="pdsFatherContact">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mother's Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-female me-2"></i>Mother's Information
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
                                                 <div class="info-item">
                                                     <label class="info-label">Mother's Name</label>
                                                     <div class="info-value" id="pdsMotherName">Not specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
                                                 <div class="info-item">
                                                     <label class="info-label">Mother's Occupation</label>
                                                     <div class="info-value" id="pdsMotherOccupation">Not specified</div>
                                                 </div>
                                             </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Mother's Educational Attainment</label>
+                                                    <div class="info-value" id="pdsMotherEducation">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Mother's Age</label>
+                                                    <div class="info-value" id="pdsMotherAge">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Mother's Contact No.</label>
+                                                    <div class="info-value" id="pdsMotherContact">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Parents' Contact Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-address-book me-2"></i>Parents' Contact Information
+                                        </h6>
+                                        <div class="row g-3">
                                             <div class="col-md-8">
                                                 <div class="info-item">
-                                                    <label class="info-label">Spouse</label>
+                                                    <label class="info-label">Parents' Permanent Address</label>
+                                                    <div class="info-value" id="pdsParentsAddress">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Parents' Contact No.</label>
+                                                    <div class="info-value" id="pdsParentsContact">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Spouse Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-ring me-2"></i>Spouse Information (If Married)
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Husband/Wife Name</label>
                                                     <div class="info-value" id="pdsSpouse">Not applicable</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="info-item">
-                                                    <label class="info-label">Guardian Contact</label>
+                                                    <label class="info-label">Spouse's Occupation</label>
+                                                    <div class="info-value" id="pdsSpouseOccupation">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Spouse's Educational Attainment</label>
+                                                    <div class="info-value" id="pdsSpouseEducation">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Guardian Information -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-user-shield me-2"></i>Guardian Information (If Applicable)
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="info-item">
+                                                    <label class="info-label">Name of Guardian</label>
+                                                    <div class="info-value" id="pdsGuardianName">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="info-item">
+                                                    <label class="info-label">Guardian's Age</label>
+                                                    <div class="info-value" id="pdsGuardianAge">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="info-item">
+                                                    <label class="info-label">Guardian's Occupation</label>
+                                                    <div class="info-value" id="pdsGuardianOccupation">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="info-item">
+                                                    <label class="info-label">Guardian's Contact No.</label>
                                                     <div class="info-value" id="pdsGuardianContact">Not specified</div>
                                                 </div>
                                             </div>
@@ -402,7 +565,78 @@
                                 </div>
 
                                 <!-- Other Information Tab -->
-                                <div class="tab-pane fade" id="other-content" role="tabpanel">
+                                <div class="tab-pane fade" id="pds-other-info" role="tabpanel">
+                                    <!-- Course Choice -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-question-circle me-2"></i>Course Selection
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
+                                                <div class="info-item">
+                                                    <label class="info-label">Why did you choose this course/program?</label>
+                                                    <div class="info-value" id="pdsCourseReason">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Family Description -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-home me-2"></i>Family Description
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
+                                                <div class="info-item">
+                                                    <label class="info-label">Family Description</label>
+                                                    <div class="info-value" id="pdsFamilyDescription">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Living Arrangement -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-building me-2"></i>Living Arrangement & Condition
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Current Residence</label>
+                                                    <div class="info-value" id="pdsResidence">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Living Condition</label>
+                                                    <div class="info-value" id="pdsLivingCondition">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Physical/Health Condition -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-heartbeat me-2"></i>Physical/Health Condition
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Physical/Health Condition</label>
+                                                    <div class="info-value" id="pdsHealthCondition">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Psychological Treatment</label>
+                                                    <div class="info-value" id="pdsPsychTreatment">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <!-- Special Circumstances -->
                                     <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
@@ -475,7 +709,7 @@
                                     <!-- Services Information -->
                                     <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                                            <i class="fas fa-concierge-bell me-2"></i>Services Information
+                                            <i class="fas fa-hands-helping me-2"></i>Services Information
                                         </h6>
                                         <div class="row g-3">
                                             <div class="col-md-6">
@@ -493,22 +727,47 @@
                                         </div>
                                     </div>
 
-                                    <!-- Residence Information -->
+                                    <!-- GCS Activities -->
                                     <div class="mb-4">
                                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                                            <i class="fas fa-building me-2"></i>Residence Information
+                                            <i class="fas fa-chalkboard-teacher me-2"></i>GCS Seminars/Activities to Avail
                                         </h6>
                                         <div class="row g-3">
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="info-item">
-                                                    <label class="info-label">Current Residence</label>
-                                                    <div class="info-value" id="pdsResidence">Not specified</div>
+                                                    <label class="info-label">Selected Activities</label>
+                                                    <div class="info-value" id="pdsGCSActivities">None specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
+                                        </div>
+                                    </div>
+
+                                    <!-- Consent -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-check-circle me-2"></i>Consent
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
                                                 <div class="info-item">
-                                                    <label class="info-label">Consent Given</label>
+                                                    <label class="info-label">Consent to Participate</label>
                                                     <div class="info-value" id="pdsConsent">Not specified</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Awards Tab -->
+                                <div class="tab-pane fade" id="pds-awards" role="tabpanel">
+                                    <div class="mb-4">
+                                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                                            <i class="fas fa-trophy me-2"></i>Awards and Recognition
+                                        </h6>
+                                        <div class="row g-3" id="pdsAwardsContainer">
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <div class="info-value">No awards recorded</div>
                                                 </div>
                                             </div>
                                         </div>

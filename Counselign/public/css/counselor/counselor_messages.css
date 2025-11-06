@@ -618,6 +618,7 @@ body {
 .message {
     margin-bottom: 16px;
     display: flex;
+    flex-direction: column;
     animation: messageSlideIn 0.3s ease-out;
 }
 
@@ -633,11 +634,11 @@ body {
 }
 
 .message.sent {
-    justify-content: flex-end;
+    align-items: flex-end;
 }
 
 .message.received {
-    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .message-content {
@@ -683,18 +684,18 @@ body {
 
 .message-time {
     font-size: 11px;
-    opacity: 0.7;
-    margin: 4px 0 0 0;
+    opacity: 0;
+    margin: 4px 8px 0 8px;
     line-height: 1;
     font-weight: 500;
+    transition: opacity 0.2s ease;
+    visibility: hidden;
+    color: var(--gray-600);
 }
 
-.message.sent .message-time {
-    text-align: right;
-}
-
-.message.received .message-time {
-    text-align: left;
+.message:hover .message-time {
+    opacity: 0.8;
+    visibility: visible;
 }
 
 /* Message Input Section */
