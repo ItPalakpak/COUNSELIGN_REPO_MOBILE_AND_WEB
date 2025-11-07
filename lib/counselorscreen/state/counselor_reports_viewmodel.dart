@@ -207,7 +207,9 @@ class CounselorReportsViewModel extends ChangeNotifier {
         return appointment.userId.toLowerCase().contains(_searchQuery) ||
             appointment.studentName.toLowerCase().contains(_searchQuery) ||
             appointment.consultationType.toLowerCase().contains(_searchQuery) ||
-            appointment.purpose.toLowerCase().contains(_searchQuery);
+            appointment.purpose.toLowerCase().contains(_searchQuery) ||
+            (appointment.methodType?.toLowerCase().contains(_searchQuery) ??
+                false);
       }).toList();
     }
 

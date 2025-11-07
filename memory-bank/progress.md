@@ -1,3 +1,9 @@
+## Nov 7, 2025
+- Added env-driven API base URL (`API_BASE_URL`) and HTTPS production placeholder in `lib/api/config.dart`.
+- Updated Android Gradle to Java 17 (`compileOptions`, `kotlinOptions`, Kotlin `jvmToolchain`).
+- Analyzer clean after changes.
+- Synced counselor announcements UI copy with student screen and restricted both calendars to event-only markers/details; counselor announcement cards now reuse student layout for parity.
+- Counselor appointments & schedules now expose `method_type` data, and scheduled follow-up entries show "Pending Follow-up" badges when outstanding. Reports search matches method type, exports unchanged. Analyzer currently reports two pre-existing admin dashboard async context info warnings.
 # Progress
 
 ## What works

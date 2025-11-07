@@ -5,6 +5,7 @@ import 'widgets/counselor_screen_wrapper.dart';
 import 'state/counselor_scheduled_appointments_viewmodel.dart';
 import 'widgets/weekly_schedule.dart';
 import 'widgets/mini_calendar.dart';
+import 'models/appointment.dart';
 
 class CounselorAppointmentsScreen extends StatefulWidget {
   const CounselorAppointmentsScreen({super.key});
@@ -387,7 +388,10 @@ class _CounselorAppointmentsScreenState
     );
   }
 
-  Widget _buildAppointmentTile(BuildContext context, dynamic appt) {
+  Widget _buildAppointmentTile(
+    BuildContext context,
+    CounselorAppointment appt,
+  ) {
     final statusColor = _statusColor(appt.status);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -443,6 +447,13 @@ class _CounselorAppointmentsScreenState
               'Preferred time: ${appt.preferredTime ?? 'N/A'}',
               style: TextStyle(color: Colors.grey[700]),
             ),
+            if ((appt.methodType ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Method type: ${appt.methodType}',
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+            ],
             if ((appt.purpose ?? '').isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
@@ -477,7 +488,7 @@ class _CounselorAppointmentsScreenState
     );
   }
 
-  void _showDetailsDialog(BuildContext context, dynamic appt) {
+  void _showDetailsDialog(BuildContext context, CounselorAppointment appt) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -501,13 +512,21 @@ class _CounselorAppointmentsScreenState
                 ),
                 _detailsRow('Preferred time', appt.preferredTime ?? 'N/A'),
                 _detailsRow(
+                  'Method type',
+                  (appt.methodType ?? '').trim().isNotEmpty
+                      ? appt.methodType!.trim()
+                      : 'N/A',
+                ),
+                _detailsRow(
                   'Purpose',
-                  (appt.purpose ?? '').isNotEmpty ? appt.purpose : 'N/A',
+                  (appt.purpose ?? '').trim().isNotEmpty
+                      ? appt.purpose!.trim()
+                      : 'N/A',
                 ),
                 _detailsRow(
                   'Consultation type',
                   (appt.consultationType ?? '').isNotEmpty
-                      ? appt.consultationType
+                      ? appt.consultationType!
                       : 'N/A',
                 ),
                 _detailsRow(
@@ -556,7 +575,7 @@ class _CounselorAppointmentsScreenState
     );
   }
 
-  Widget _buildActions(BuildContext context, dynamic appt) {
+  Widget _buildActions(BuildContext context, CounselorAppointment appt) {
     return Consumer<CounselorAppointmentsViewModel>(
       builder: (context, vm, child) {
         if (appt.status == 'pending') {

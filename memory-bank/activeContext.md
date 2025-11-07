@@ -3,6 +3,27 @@
 ### Current focus
 - **CRITICAL BUG FIX**: Fixed Session class not sending form fields when files parameter is null
 
+### Nov 7, 2025 - Announcements Calendar Alignment
+- Matched counselor announcements screen copy with student announcements UI so headers, error states, and empty placeholders stay consistent across roles.
+- Updated both announcements view models and screens so the calendar badges and selected-day lists surface events only; announcements now stay in list sections without influencing calendar markers.
+- Reused student announcement card layout in counselor screen to keep textual content and styling aligned.
+- Analyzer still reports two long-standing admin dashboard async context infos (unchanged by this work).
+
+### Nov 7, 2025 - Client Config & Android Toolchain Updates
+- Updated `lib/api/config.dart` to support build-time `API_BASE_URL` (via `--dart-define`) and set a clear HTTPS production placeholder. This allows switching environments without code changes and prevents shipping a LAN-only URL.
+- Updated Android Gradle Kotlin DSL to use Java 17:
+  - `android/app/build.gradle.kts`: `compileOptions` and `kotlinOptions` set to 17.
+  - `android/build.gradle.kts`: configured Kotlin `jvmToolchain(17)` where supported.
+- Purpose: remove Java 8 deprecation warnings during release builds and align with modern AGP expectations.
+
+### Nov 7, 2025 - Counselor Appointment Method Types
+- Surfaced `method_type` across counselor screens so appointments consistently display how sessions will be conducted.
+- `CounselorAppointment` and `CounselorScheduledAppointment` models now parse `method_type`; cards, tables, and detail dialogs render the value when provided.
+- Scheduled appointments detect follow-up records and show a "Pending Follow-up" status badge when the follow-up status remains pending, matching backend intent.
+- Follow-up detection now normalizes backend strings (e.g., `follow_up_status`, `record_kind`) so mixed casing or spacing still yields the pending indicator.
+- Added fallback using `pending_follow_up_count` so any outstanding follow-up automatically shows the "Pending Follow-up" badge even if explicit status text is missing.
+- Counselor reports retain existing export structure; added method type to quick search matching to make filtering easier.
+
 ### Critical Fix #9 - SESSION POST METHOD (Nov 6, 2025 - BREAKTHROUGH)
 - **PDS Save 400 Error - ROOT CAUSE FINALLY FOUND**:
   - **User Error**: Backend receiving "Course is required..." despite controllers having correct values

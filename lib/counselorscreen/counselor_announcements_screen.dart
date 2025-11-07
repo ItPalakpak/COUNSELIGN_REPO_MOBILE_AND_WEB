@@ -106,7 +106,7 @@ class _CounselorAnnouncementsScreenState
         Icon(Icons.campaign, color: const Color(0xFF191970), size: 28),
         const SizedBox(width: 12),
         const Text(
-          'Announcements',
+          'Announcements and Events',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -144,19 +144,29 @@ class _CounselorAnnouncementsScreenState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         color: Colors.red,
-                        size: 48,
+                        size: isMobile ? 48 : 64,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading announcements',
+                        style: TextStyle(
+                          fontSize: isMobile ? 16 : 18,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
                       Text(
                         viewModel.announcementsError!,
-                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: isMobile ? 14 : 16,
                           color: const Color(0xFF6C757D),
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -196,70 +206,119 @@ class _CounselorAnnouncementsScreenState
     BuildContext context,
     Announcement announcement,
   ) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: isMobile ? 80 : 100),
+      margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
-          width: 1,
-        ),
+        color: const Color(0xFFF8FBFF),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF191970).withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF060E57).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(color: const Color(0xFFE3EAFC), width: 1),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF191970).withAlpha((0.1 * 255).round()),
-                  borderRadius: BorderRadius.circular(4),
+          Container(
+            width: isMobile ? 50 : 60,
+            height: isMobile ? 50 : 60,
+            margin: EdgeInsets.all(isMobile ? 10 : 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF2346C6), Color(0xFF1E3799)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E3799).withValues(alpha: 0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                child: const Text(
-                  'General',
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _getMonthShort(announcement.createdAt),
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF191970),
+                    fontSize: isMobile ? 10 : 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    letterSpacing: 1,
                   ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                _formatDate(announcement.createdAt.toIso8601String()),
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            announcement.title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF191970),
+                Text(
+                  announcement.createdAt.day.toString(),
+                  style: TextStyle(
+                    fontSize: isMobile ? 24 : 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            announcement.content,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              height: 1.5,
+          Flexible(
+            child: Padding(
+              padding: EdgeInsets.all(isMobile ? 10 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    announcement.title,
+                    style: TextStyle(
+                      fontSize: isMobile ? 14 : 15,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF14205A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: isMobile ? 12 : 14,
+                        color: const Color(0xFF2346C6),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        announcement.formattedDate,
+                        style: TextStyle(
+                          fontSize: isMobile ? 11 : 12,
+                          color: const Color(0xFF2346C6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Text(
+                    announcement.content,
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 13,
+                      color: const Color(0xFF1A1A1A),
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -294,19 +353,29 @@ class _CounselorAnnouncementsScreenState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         color: Colors.red,
-                        size: 48,
+                        size: isMobile ? 48 : 64,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading events',
+                        style: TextStyle(
+                          fontSize: isMobile ? 16 : 18,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
                       Text(
                         viewModel.eventsError!,
-                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: isMobile ? 14 : 16,
                           color: const Color(0xFF6C757D),
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -480,12 +549,12 @@ class _CounselorAnnouncementsScreenState
           ),
           child: Column(
             children: [
-              TableCalendar<Map<String, dynamic>>(
+              TableCalendar<Event>(
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: viewModel.focusedDay,
                 calendarFormat: viewModel.calendarFormat,
-                eventLoader: viewModel.getItemsForDay,
+                eventLoader: viewModel.getEventsForDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 headerStyle: const HeaderStyle(
                   formatButtonVisible: true,
@@ -511,13 +580,27 @@ class _CounselorAnnouncementsScreenState
     final isMobile = MediaQuery.of(context).size.width < 600;
     return Consumer<CounselorAnnouncementsViewModel>(
       builder: (context, viewModel, child) {
-        final items = viewModel.getItemsForDay(selectedDay);
-        if (items.isEmpty) {
+        final events = viewModel.getEventsForDay(selectedDay);
+        if (events.isEmpty) {
           return Container(
             padding: EdgeInsets.all(isMobile ? 20 : 30),
-            child: const Text(
-              'No events or announcements for this day',
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Icon(
+                  Icons.event_available_outlined,
+                  color: const Color(0xFF6C757D),
+                  size: isMobile ? 40 : 48,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No events scheduled for this day',
+                  style: TextStyle(
+                    fontSize: isMobile ? 14 : 16,
+                    color: const Color(0xFF6C757D),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           );
         }
@@ -533,24 +616,15 @@ class _CounselorAnnouncementsScreenState
               ),
             ),
             const SizedBox(height: 12),
-            ...items.map((item) => _buildCalendarItemCard(context, item)),
+            ...events.map((event) => _buildCalendarItemCard(context, event)),
           ],
         );
       },
     );
   }
 
-  Widget _buildCalendarItemCard(
-    BuildContext context,
-    Map<String, dynamic> item,
-  ) {
+  Widget _buildCalendarItemCard(BuildContext context, Event event) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final String type = item['type'] as String;
-    final data = item['data'];
-    final Event? event = type == 'event' ? data as Event : null;
-    final Announcement? announcement = type == 'announcement'
-        ? data as Announcement
-        : null;
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
@@ -577,14 +651,12 @@ class _CounselorAnnouncementsScreenState
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: type == 'announcement'
-                    ? [const Color(0xFF2346C6), const Color(0xFF1E3799)]
-                    : [const Color(0xFF198754), const Color(0xFF146C43)],
+                colors: const [Color(0xFF198754), Color(0xFF146C43)],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              type == 'announcement' ? Icons.announcement : Icons.event,
+              Icons.event,
               color: Colors.white,
               size: isMobile ? 16 : 18,
             ),
@@ -596,7 +668,7 @@ class _CounselorAnnouncementsScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    type == 'announcement' ? announcement!.title : event!.title,
+                    event.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -607,9 +679,7 @@ class _CounselorAnnouncementsScreenState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    type == 'announcement'
-                        ? announcement!.content
-                        : event!.description,
+                    event.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -618,7 +688,7 @@ class _CounselorAnnouncementsScreenState
                       height: 1.3,
                     ),
                   ),
-                  if (type == 'event' && event!.time != null) ...[
+                  if (event.time != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -828,15 +898,5 @@ class _CounselorAnnouncementsScreenState
       'DEC',
     ];
     return months[date.month - 1];
-  }
-
-  String _formatDate(String? dateString) {
-    if (dateString == null) return 'Unknown date';
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (e) {
-      return 'Invalid date';
-    }
   }
 }

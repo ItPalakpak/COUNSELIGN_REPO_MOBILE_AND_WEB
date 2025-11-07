@@ -821,12 +821,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           child: Column(
             children: [
               // Calendar
-              TableCalendar<Map<String, dynamic>>(
+              TableCalendar<Event>(
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: viewModel.focusedDay,
                 calendarFormat: viewModel.calendarFormat,
-                eventLoader: viewModel.getItemsForDay,
+                eventLoader: viewModel.getEventsForDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
@@ -904,9 +904,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
     return Consumer<AnnouncementsViewModel>(
       builder: (context, viewModel, child) {
-        final items = viewModel.getItemsForDay(selectedDay);
+        final events = viewModel.getEventsForDay(selectedDay);
 
-        if (items.isEmpty) {
+        if (events.isEmpty) {
           return Container(
             padding: EdgeInsets.all(isMobile ? 20 : 30),
             child: Column(
@@ -918,7 +918,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'No events or announcements for this day',
+                  'No events scheduled for this day',
                   style: TextStyle(
                     fontSize: isMobile ? 14 : 16,
                     color: const Color(0xFF6C757D),
@@ -942,7 +942,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             ),
             SizedBox(height: isMobile ? 12 : 16),
-            ...items.map((item) => _buildCalendarItemCard(context, item)),
+            ...events.map((event) => _buildCalendarItemCard(context, event)),
           ],
         );
       },
@@ -950,17 +950,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   // ---------------- CALENDAR ITEM CARD ----------------
-  Widget _buildCalendarItemCard(
-    BuildContext context,
-    Map<String, dynamic> item,
-  ) {
+  Widget _buildCalendarItemCard(BuildContext context, Event event) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final type = item['type'] as String;
-    final data = item['data'];
-
-    final event = type == 'event' ? data as Event : null;
-    final announcement = type == 'announcement' ? data as Announcement : null;
 
     return Container(
       width: double.infinity,
@@ -988,14 +980,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: type == 'announcement'
-                    ? [const Color(0xFF2346C6), const Color(0xFF1E3799)]
-                    : [const Color(0xFF198754), const Color(0xFF146C43)],
+                colors: const [Color(0xFF198754), Color(0xFF146C43)],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              type == 'announcement' ? Icons.announcement : Icons.event,
+              Icons.event,
               color: Colors.white,
               size: isMobile ? 16 : 18,
             ),
@@ -1007,7 +997,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    type == 'announcement' ? announcement!.title : event!.title,
+                    event.title,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: isMobile ? 13 : 14,
@@ -1018,9 +1008,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    type == 'announcement'
-                        ? announcement!.content
-                        : event!.description,
+                    event.description,
                     style: TextStyle(
                       fontSize: isMobile ? 11 : 12,
                       color: const Color(0xFF1A1A1A),
@@ -1029,7 +1017,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (type == 'event' && event!.time != null) ...[
+                  if (event.time != null) ...[
                     SizedBox(height: 4),
                     Row(
                       children: [

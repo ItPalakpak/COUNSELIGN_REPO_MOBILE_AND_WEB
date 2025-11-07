@@ -104,7 +104,7 @@ class _AppointmentCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _buildStatusChip(appointment.status),
+              _buildStatusChip(appointment),
             ],
           ),
           const SizedBox(height: 16),
@@ -141,6 +141,14 @@ class _AppointmentCard extends StatelessWidget {
                   'Consultation',
                   appointment.consultationType,
                 ),
+                if ((appointment.methodType ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    Icons.wifi_tethering,
+                    'Method Type',
+                    appointment.methodType!.trim(),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.flag_outlined,
@@ -245,13 +253,9 @@ class _AppointmentCard extends StatelessWidget {
         viewModel.updatingAppointmentId == appointment.id.toString();
   }
 
-  Widget _buildStatusChip(String status) {
-    Color bg = const Color(0xFFE3F2FD);
-    Color fg = const Color(0xFF0D47A1);
-    if (status.toLowerCase() == 'approved') {
-      bg = const Color(0xFFE8F5E9);
-      fg = const Color(0xFF2E7D32);
-    }
+  Widget _buildStatusChip(CounselorScheduledAppointment appointment) {
+    final Color fg = _resolveStatusColor(appointment);
+    final Color bg = fg.withValues(alpha: 0.12);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -259,9 +263,23 @@ class _AppointmentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       child: Text(
-        status,
+        appointment.statusText,
         style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 12),
       ),
     );
+  }
+
+  Color _resolveStatusColor(CounselorScheduledAppointment appointment) {
+    switch (appointment.statusColor) {
+      case 'success':
+        return const Color(0xFF2E7D32);
+      case 'primary':
+        return const Color(0xFF0D47A1);
+      case 'danger':
+        return const Color(0xFFB22727);
+      case 'warning':
+      default:
+        return const Color(0xFFFB8C00);
+    }
   }
 }

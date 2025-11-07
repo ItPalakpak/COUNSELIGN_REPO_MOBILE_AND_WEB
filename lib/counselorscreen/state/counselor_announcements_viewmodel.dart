@@ -172,16 +172,4 @@ class CounselorAnnouncementsViewModel extends ChangeNotifier {
   List<Announcement> getAnnouncementsForDay(DateTime day) {
     return _announcements.where((a) => isSameDay(a.createdAt, day)).toList();
   }
-
-  List<Map<String, dynamic>> getItemsForDay(DateTime day) {
-    final List<Map<String, dynamic>> items = [];
-    for (final a in getAnnouncementsForDay(day)) {
-      items.add({'type': 'announcement', 'data': a, 'date': a.createdAt});
-    }
-    for (final e in getEventsForDay(day)) {
-      items.add({'type': 'event', 'data': e, 'date': e.date!});
-    }
-    items.sort((a, b) => a['date'].compareTo(b['date']));
-    return items;
-  }
 }

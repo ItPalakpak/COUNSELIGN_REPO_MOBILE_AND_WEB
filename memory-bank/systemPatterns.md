@@ -82,16 +82,21 @@ The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure
   - Modern drawer: `frontend/drawer.dart` with gradient background, animated navigation items, responsive design.
 - `lib/studentscreen` → student dashboards, appointments, profile, announcements.
   - Dashboard: `student_dashboard.dart` with PDS reminder modal (`pds_reminder_modal.dart`) that shows 20-second auto-close timer with dismiss/update buttons on initial login.
+  - Announcements: `announcements_screen.dart` shares copy with counselor view; calendar markers now derive exclusively from event data while announcements stay in list sections.
   - Schedule Appointment: `schedule_appointment_screen.dart` with consent accordion (`consent_accordion.dart`) and acknowledgment section (`acknowledgment_section.dart`) for legal consent requirements.
   - Appointments: `my_appointments_screen.dart` with card-based UI using `AppointmentCard` widget.
   - Models: `counselor_schedule.dart` for counselor schedule data with weekday organization.
 - `lib/adminscreen` → admin dashboard and widgets.
 - `lib/counselorscreen` → counselor dashboard with messages/appointments cards, announcements, appointments, follow-up sessions, profile, messages screen with conversation list and chat interface, reports screen with comprehensive appointment analytics.
+  - Announcements: `counselor_announcements_screen.dart` mirrors student copy and uses event-only calendar markers and details for parity.
   - Profile management: `counselor_profile_screen.dart`, `state/counselor_profile_viewmodel.dart`, `models/counselor_profile.dart`, `models/counselor_availability.dart` with comprehensive profile management including account settings, personal information updates, password changes, profile picture uploads, and availability management with time range functionality.
   - Appointments management: `counselor_appointments_screen.dart`, `state/counselor_appointments_viewmodel.dart`, `models/appointment.dart`.
+    - Cards and detail dialogs now show `method_type` so counselors can distinguish in-person vs remote consultations at a glance.
   - Scheduled appointments: `counselor_scheduled_appointments_screen.dart`, `state/counselor_scheduled_appointments_viewmodel.dart`, `models/scheduled_appointment.dart`, `models/counselor_schedule.dart`.
+    - Method type appears in both the responsive cards and table view; follow-up entries surface a "Pending Follow-up" badge when the linked session is still awaiting completion.
   - Follow-up sessions: `counselor_follow_up_sessions_screen.dart`, `state/counselor_follow_up_sessions_viewmodel.dart`, `models/completed_appointment.dart`, `models/follow_up_session.dart`, `models/counselor_availability.dart` with enhanced features: follow-up count badges, pending warning indicators, separate pending section, proper sorting.
   - Reports system: `counselor_reports_screen.dart`, `state/counselor_reports_viewmodel.dart`, `models/appointment_report.dart` with comprehensive appointment analytics including statistics dashboard, data visualization (line charts for trends, pie charts for status distribution), tab-based filtering, search and date filtering, PDF export with advanced filtering, responsive appointment cards for mobile display.
+    - Quick search now matches `method_type`, and exports already include the column to match on-screen data.
   - Widgets: `appointments_table.dart`, `weekly_schedule.dart`, `mini_calendar.dart`, `cancellation_reason_dialog.dart`, `appointment_report_card.dart`, `export_filters_dialog.dart`.
 - `lib/servicesscreen` → services display and navigation.
 - `lib/utils/session.dart` → session utilities.

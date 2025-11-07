@@ -13,10 +13,15 @@ class CounselorScheduledAppointment {
   final String? time;
   final String? preferredTime;
   final String consultationType;
+  final String? methodType;
   final String purpose;
   final String status;
   final String? counselorPreference;
   final String? reason;
+  final String? recordKind;
+  final String? followUpStatus;
+  final String? appointmentType;
+  final int pendingFollowUpCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,10 +38,15 @@ class CounselorScheduledAppointment {
     this.time,
     this.preferredTime,
     required this.consultationType,
+    this.methodType,
     required this.purpose,
     required this.status,
     this.counselorPreference,
     this.reason,
+    this.recordKind,
+    this.followUpStatus,
+    this.appointmentType,
+    required this.pendingFollowUpCount,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -55,11 +65,20 @@ class CounselorScheduledAppointment {
       time: json['time'],
       preferredTime: json['preferred_time'],
       consultationType: json['consultation_type'] ?? 'In-person',
+      methodType: json['method_type']?.toString(),
       purpose: json['purpose'] ?? 'Not specified',
       status: json['status'] ?? 'pending',
       counselorPreference:
           json['counselorPreference'] ?? json['counselor_name'],
       reason: json['reason'],
+      recordKind: json['record_kind']?.toString(),
+      followUpStatus: json['follow_up_status']?.toString(),
+      appointmentType: json['appointment_type']?.toString(),
+      pendingFollowUpCount: _parseInt(
+        json.containsKey('pending_follow_up_count')
+            ? json['pending_follow_up_count']
+            : json['pendingFollowUpCount'],
+      ),
       createdAt: _parseDateTime(json['created_at']),
       updatedAt: _parseDateTime(json['updated_at']),
     );
@@ -79,10 +98,15 @@ class CounselorScheduledAppointment {
       'time': time,
       'preferred_time': preferredTime,
       'consultation_type': consultationType,
+      'method_type': methodType,
       'purpose': purpose,
       'status': status,
       'counselorPreference': counselorPreference,
       'reason': reason,
+      'record_kind': recordKind,
+      'follow_up_status': followUpStatus,
+      'appointment_type': appointmentType,
+      'pending_follow_up_count': pendingFollowUpCount,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -92,8 +116,13 @@ class CounselorScheduledAppointment {
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
+    if (value is double) return value.round();
     if (value is String) {
-      return int.tryParse(value) ?? 0;
+      final trimmed = value.trim();
+      final parsedInt = int.tryParse(trimmed);
+      if (parsedInt != null) return parsedInt;
+      final parsedDouble = double.tryParse(trimmed);
+      if (parsedDouble != null) return parsedDouble.round();
     }
     return 0;
   }
@@ -141,6 +170,72 @@ class CounselorScheduledAppointment {
   // Check if appointment is approved
   bool get isApproved => status.toLowerCase() == 'approved';
 
+  String _normalize(dynamic value) =>
+      value?.toString().toLowerCase().trim() ?? '';
+
+  // FIXED: Enhanced follow-up detection logic
+  bool get _isFollowUp {
+    final kind = _normalize(recordKind);
+    final type = _normalize(appointmentType);
+    
+    // Check record_kind field
+    if (kind.isNotEmpty && (kind.contains('follow') || kind == 'followup')) {
+      return true;
+    }
+    
+    // Check appointment_type field
+    if (type.isNotEmpty && (type.contains('follow') || type == 'followup')) {
+      return true;
+    }
+    
+    // Check if purpose mentions follow-up
+    final purposeLower = _normalize(purpose);
+    if (purposeLower.contains('follow')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  // FIXED: Enhanced pending follow-up detection
+  bool get isPendingFollowUp {
+    // First check if this is a follow-up appointment
+    if (!_isFollowUp) return false;
+    
+    // Check follow_up_status field explicitly
+    final followUpStatusNorm = _normalize(followUpStatus);
+    if (followUpStatusNorm.isNotEmpty) {
+      // If follow_up_status exists and is pending, it's a pending follow-up
+      if (followUpStatusNorm == 'pending' || followUpStatusNorm.contains('pending')) {
+        return true;
+      }
+      // If follow_up_status is completed/done, it's not pending anymore
+      if (followUpStatusNorm == 'completed' || 
+          followUpStatusNorm == 'done' || 
+          followUpStatusNorm.contains('complete')) {
+        return false;
+      }
+    }
+    
+    // Check pending follow-up count
+    if (pendingFollowUpCount > 0) {
+      return true;
+    }
+    
+    // If status is approved but it's a follow-up, check if it needs action
+    final statusNorm = _normalize(status);
+    if (statusNorm == 'approved' && _isFollowUp) {
+      // Approved follow-up that hasn't been marked completed is pending
+      if (statusNorm != 'completed') {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  String get _normalizedStatus => status.toLowerCase();
+
   // Get formatted date string
   String get formattedDate {
     if (effectiveDate == null) return 'Not scheduled';
@@ -160,9 +255,15 @@ class CounselorScheduledAppointment {
     return effectiveTime!;
   }
 
-  // Get status color for UI
+  // FIXED: Enhanced status color logic - prioritize pending follow-up
   String get statusColor {
-    switch (status.toLowerCase()) {
+    // Priority 1: Check if it's a pending follow-up first
+    if (isPendingFollowUp) {
+      return 'warning';
+    }
+    
+    // Priority 2: Check actual status
+    switch (_normalizedStatus) {
       case 'completed':
         return 'success';
       case 'cancelled':
@@ -177,8 +278,14 @@ class CounselorScheduledAppointment {
     }
   }
 
-  // Get status text for display
+  // FIXED: Enhanced status text logic - prioritize pending follow-up
   String get statusText {
+    // Priority 1: Check if it's a pending follow-up first
+    if (isPendingFollowUp) {
+      return 'Pending Follow-up';
+    }
+    
+    // Priority 2: Return actual status
     switch (status.toLowerCase()) {
       case 'completed':
         return 'Completed';

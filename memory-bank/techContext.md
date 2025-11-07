@@ -18,6 +18,13 @@
   - Production: `productionUrl`
 - `defaultHeaders`, `connectTimeout`, `receiveTimeout` defined.
 
+### Nov 7, 2025 - Updates
+- Build-time override added: `API_BASE_URL` via `--dart-define` to select the backend without code changes.
+- Production URL placeholder now expects HTTPS (`https://your-domain.example.com/Counselign/public`).
+- Android toolchain updated to Java 17:
+  - `android/app/build.gradle.kts`: `compileOptions`/`kotlinOptions` set to 17.
+  - `android/build.gradle.kts`: Kotlin `jvmToolchain(17)` configured when plugin present.
+
 ## Data Persistence
 - `shared_preferences` for simple key/value storage and PDS reminder session tracking
 - `utils/session.dart` manages session-related logic (see file for details)
@@ -54,6 +61,14 @@
 - **Integration**: Integrated into `StudentDashboard` screen with proper state management
 - **Session Tracking**: Uses SharedPreferences key 'pdsReminderShown' to track if reminder has been displayed
 
+## Announcements Calendar (Students & Counselors)
+- **Screens**: `lib/studentscreen/announcements_screen.dart`, `lib/counselorscreen/counselor_announcements_screen.dart`
+- **ViewModels**: `AnnouncementsViewModel`, `CounselorAnnouncementsViewModel`
+- **Behavior**:
+  - Calendar markers and selected-day lists surface events only; announcements are not mapped to calendar badges.
+  - Student and counselor screens now share identical copy for headers, error states, and empty placeholders to maintain parity.
+  - Counselor announcement cards reuse the student layout with month/day badge and formatted timestamp text.
+
 ## Counselor Profile Management
 - Models: `CounselorProfile`, `CounselorDetails`, `CounselorAvailabilitySlot`, `TimeRange`, `AvailabilityData`
 - ViewModel: `CounselorProfileViewModel`
@@ -87,6 +102,7 @@
   - `GET /counselor/appointments` — list all (pending default filter applied client-side)
   - `POST /counselor/appointments/updateAppointmentStatus` with `appointment_id`, `status`, optional `rejection_reason`
 - Features: search by name/ID/purpose, status filter (Pending/Approved/Rejected/Completed/Cancelled/All), approve/reject with reason modal, cancel with reason
+- Data Model Notes: `method_type` now parsed and displayed in summary cards and detail dialogs for parity with backend dashboard.
 
 ## Counselor Scheduled Appointments
 - Models: `CounselorScheduledAppointment`, `CounselorSchedule`
@@ -98,6 +114,7 @@
   - `GET /counselor/appointments/schedule` — get counselor availability schedule
   - `POST /counselor/appointments/updateAppointmentStatus` with `appointment_id`, `status`, optional `rejection_reason`
 - Features: two-column layout (appointments table + sidebar), weekly schedule display, mini calendar with appointment highlighting, mark complete/cancel actions with reason modal, responsive design for mobile/tablet/desktop
+- Data Model Notes: includes `method_type`, `appointment_type`, `follow_up_status`, `record_kind` for follow-up detection; UI surfaces method type and shows "Pending Follow-up" badge when applicable.
 
 ## Counselor Follow-up Sessions
 - Models: `CompletedAppointment`, `FollowUpSession`, `CounselorAvailability`
@@ -125,6 +142,7 @@
 - Data Visualization: Line charts showing appointment trends over time with different colored lines for each status, pie charts displaying status distribution with color-coded sections and legends, responsive chart sizing for mobile/tablet/desktop screens
 - Export Functionality: PDF export with custom header including logo and counselor name, comprehensive table with all appointment details, filter summary in footer, proper page formatting with page numbers and generation timestamp, advanced filtering options for date range, student selection, course and year level filtering
 - Mobile Optimization: Responsive appointment cards instead of tables for better mobile experience, proper touch targets and spacing, optimized layout for different screen sizes, card-based design with status badges and icons
+- Search Enhancements: quick search filters now match `method_type`; exports already include the column alongside session type.
 
 ## Linting
 - `flutter_lints` v5 enabled via `analysis_options.yaml`

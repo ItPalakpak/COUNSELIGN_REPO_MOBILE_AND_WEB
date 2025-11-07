@@ -356,7 +356,7 @@ class _CounselorFollowUpSessionsScreenState
                 : MediaQuery.of(context).size.width > 600
                 ? 2
                 : 1,
-            childAspectRatio: 1.15,
+            childAspectRatio: 1.1,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -391,7 +391,7 @@ class _CounselorFollowUpSessionsScreenState
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -497,7 +497,7 @@ class _CounselorFollowUpSessionsScreenState
                 ],
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               appointment.studentName,
               style: const TextStyle(
@@ -511,7 +511,7 @@ class _CounselorFollowUpSessionsScreenState
               'ID: ${appointment.studentId}',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
@@ -555,7 +555,7 @@ class _CounselorFollowUpSessionsScreenState
               ],
             ),
             if (appointment.purpose.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -574,7 +574,7 @@ class _CounselorFollowUpSessionsScreenState
             ],
             if (appointment.description != null &&
                 appointment.description!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -584,14 +584,14 @@ class _CounselorFollowUpSessionsScreenState
                     child: Text(
                       appointment.description!,
                       style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ],
-            const Spacer(),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -600,7 +600,7 @@ class _CounselorFollowUpSessionsScreenState
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF191970),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

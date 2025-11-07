@@ -11,6 +11,7 @@ class CounselorAppointment {
   final String? purpose;
   final String? notes;
   final String? consultationType;
+  final String? methodType;
   final String? reason;
   final String status; // pending, approved, rejected, completed, cancelled
   final DateTime? preferredDate;
@@ -31,6 +32,7 @@ class CounselorAppointment {
     this.purpose,
     this.notes,
     this.consultationType,
+    this.methodType,
     this.reason,
     this.preferredDate,
     this.preferredTime,
@@ -61,6 +63,7 @@ class CounselorAppointment {
       purpose: json['purpose']?.toString(),
       notes: (json['notes'] ?? json['description'])?.toString(),
       consultationType: json['consultation_type']?.toString(),
+      methodType: json['method_type']?.toString(),
       reason: json['reason']?.toString(),
       status: readString(json['status']).isEmpty
           ? 'pending'
@@ -86,6 +89,7 @@ class CounselorAppointment {
       'purpose': purpose,
       'notes': notes,
       'consultation_type': consultationType,
+      'method_type': methodType,
       'reason': reason,
       'status': status,
       'preferred_date': fmt(preferredDate),
@@ -103,6 +107,7 @@ class CounselorAppointment {
         studentId.toLowerCase().contains(q) ||
         (username?.toLowerCase().contains(q) ?? false) ||
         (purpose?.toLowerCase().contains(q) ?? false) ||
-        (notes?.toLowerCase().contains(q) ?? false);
+        (notes?.toLowerCase().contains(q) ?? false) ||
+        (methodType?.toLowerCase().contains(q) ?? false);
   }
 }

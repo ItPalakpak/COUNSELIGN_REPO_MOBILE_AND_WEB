@@ -227,29 +227,6 @@ class AnnouncementsViewModel extends ChangeNotifier {
     }).toList();
   }
 
-  // Get all items (announcements + events) for a specific day
-  List<Map<String, dynamic>> getItemsForDay(DateTime day) {
-    final List<Map<String, dynamic>> items = [];
-
-    // Add announcements
-    for (final announcement in getAnnouncementsForDay(day)) {
-      items.add({
-        'type': 'announcement',
-        'data': announcement,
-        'date': announcement.createdAt,
-      });
-    }
-
-    // Add events
-    for (final event in getEventsForDay(day)) {
-      items.add({'type': 'event', 'data': event, 'date': event.date!});
-    }
-
-    // Sort by date/time
-    items.sort((a, b) => a['date'].compareTo(b['date']));
-    return items;
-  }
-
   // Navigation
   void navigateToDashboard(BuildContext context) {
     Navigator.of(context).pushReplacementNamed('/user/dashboard');

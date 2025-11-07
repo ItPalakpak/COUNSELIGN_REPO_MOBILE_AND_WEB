@@ -5,6 +5,13 @@ allprojects {
     }
 }
 
+// Ensure Kotlin uses Java 17 toolchain where supported
+plugins.withId("org.jetbrains.kotlin.android") {
+    extensions.configure(org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension::class.java) {
+        jvmToolchain(17)
+    }
+}
+
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")

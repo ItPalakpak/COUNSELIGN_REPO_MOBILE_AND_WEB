@@ -45,6 +45,7 @@ class AppointmentsTable extends StatelessWidget {
             Expanded(flex: 2, child: _buildHeaderCell('Name')),
             Expanded(flex: 2, child: _buildHeaderCell('Appointed Date')),
             Expanded(flex: 1, child: _buildHeaderCell('Time')),
+            Expanded(flex: 2, child: _buildHeaderCell('Method Type')),
             Expanded(flex: 2, child: _buildHeaderCell('Consultation Type')),
             Expanded(flex: 2, child: _buildHeaderCell('Purpose')),
             Expanded(flex: 1, child: _buildHeaderCell('Status', center: true)),
@@ -123,6 +124,14 @@ class AppointmentsTable extends StatelessWidget {
                 ),
                 Expanded(
                   flex: 2,
+                  child: _buildDataCell(
+                    (appointment.methodType ?? '').trim().isNotEmpty
+                        ? appointment.methodType!.trim()
+                        : 'N/A',
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
                   child: _buildDataCell(appointment.consultationType),
                 ),
                 Expanded(flex: 2, child: _buildDataCell(appointment.purpose)),
@@ -144,7 +153,7 @@ class AppointmentsTable extends StatelessWidget {
   }
 
   Widget _buildStatusCell(CounselorScheduledAppointment appointment) {
-    final statusColor = _getStatusColor(appointment.status);
+    final statusColor = _getStatusColor(appointment);
 
     return Center(
       child: Container(
@@ -219,19 +228,17 @@ class AppointmentsTable extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      case 'approved':
-        return Colors.blue;
-      case 'rejected':
-        return Colors.red;
-      case 'pending':
+  Color _getStatusColor(CounselorScheduledAppointment appointment) {
+    switch (appointment.statusColor) {
+      case 'success':
+        return const Color(0xFF2E7D32);
+      case 'primary':
+        return const Color(0xFF0D47A1);
+      case 'danger':
+        return const Color(0xFFB22727);
+      case 'warning':
       default:
-        return Colors.orange;
+        return const Color(0xFFFFA000);
     }
   }
 }
