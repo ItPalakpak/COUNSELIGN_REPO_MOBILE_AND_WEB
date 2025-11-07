@@ -9,6 +9,11 @@
 - Reused student announcement card layout in counselor screen to keep textual content and styling aligned.
 - Analyzer still reports two long-standing admin dashboard async context infos (unchanged by this work).
 
+### Nov 7, 2025 - Counselor Dashboard Message Highlight
+- Dashboard messages card now bolds unread conversation previews so counselors can spot pending follow-ups quickly.
+- Message timestamps on dashboard cards and counselor chat bubbles render in 12-hour format with explicit AM/PM suffixes for clarity.
+- Counselor message list now shows month-abbreviated timestamps (e.g., "Nov 7 9:20 PM") in both dashboard overview and conversations sidebar for consistent readability.
+
 ### Nov 7, 2025 - Client Config & Android Toolchain Updates
 - Updated `lib/api/config.dart` to support build-time `API_BASE_URL` (via `--dart-define`) and set a clear HTTPS production placeholder. This allows switching environments without code changes and prevents shipping a LAN-only URL.
 - Updated Android Gradle Kotlin DSL to use Java 17:

@@ -4,6 +4,8 @@
 - Analyzer clean after changes.
 - Synced counselor announcements UI copy with student screen and restricted both calendars to event-only markers/details; counselor announcement cards now reuse student layout for parity.
 - Counselor appointments & schedules now expose `method_type` data, and scheduled follow-up entries show "Pending Follow-up" badges when outstanding. Reports search matches method type, exports unchanged. Analyzer currently reports two pre-existing admin dashboard async context info warnings.
+- Counselor dashboard messages card now bolds unread conversation previews and appends 12-hour AM/PM timestamps; counselor chat timestamps share the same 12-hour formatting.
+- Counselor conversation sidebar now formats last-message timestamps as "Nov 7 9:20 PM" while dashboard cards use the same month-abbrev 12-hour style, improving consistency with backend displays.
 # Progress
 
 ## What works

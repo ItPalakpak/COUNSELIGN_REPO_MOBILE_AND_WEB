@@ -331,7 +331,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  conversation.lastMessageTime,
+                  conversation.formattedLastMessageTime,
                   style: TextStyle(color: Colors.grey[500], fontSize: 10),
                 ),
                 if (conversation.hasUnreadMessages) ...[

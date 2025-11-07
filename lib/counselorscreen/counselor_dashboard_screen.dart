@@ -430,6 +430,14 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                       itemCount: viewModel.messages.take(2).length,
                       itemBuilder: (context, index) {
                         final message = viewModel.messages[index];
+                        final String formattedTimestamp =
+                            _formatMessageTimestamp(message.createdAt);
+                        final FontWeight nameFontWeight = message.isRead
+                            ? FontWeight.w600
+                            : FontWeight.bold;
+                        final FontWeight textFontWeight = message.isRead
+                            ? FontWeight.normal
+                            : FontWeight.bold;
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(12),
@@ -449,10 +457,10 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                                   Expanded(
                                     child: Text(
                                       'Student: ${message.senderName}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF191970),
+                                        fontWeight: nameFontWeight,
+                                        color: const Color(0xFF191970),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -466,16 +474,17 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 message.messageText,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF191970),
+                                  color: const Color(0xFF191970),
+                                  fontWeight: textFontWeight,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Received on: ${_formatDate(message.createdAt.toIso8601String())}',
+                                'Received on: $formattedTimestamp',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -657,6 +666,37 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
     } catch (e) {
       return 'Invalid date';
     }
+  }
+
+  String _formatTimeWithMeridian(DateTime dateTime) {
+    final localDateTime = dateTime.toLocal();
+    final int hour = localDateTime.hour % 12 == 0
+        ? 12
+        : localDateTime.hour % 12;
+    final String minute = localDateTime.minute.toString().padLeft(2, '0');
+    final String period = localDateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  String _formatMessageTimestamp(DateTime dateTime) {
+    final DateTime localDateTime = dateTime.toLocal();
+    const List<String> monthAbbreviations = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final String month = monthAbbreviations[localDateTime.month - 1];
+    final String time = _formatTimeWithMeridian(localDateTime);
+    return '$month ${localDateTime.day} $time';
   }
 
   /// Build status indicator widget for a message

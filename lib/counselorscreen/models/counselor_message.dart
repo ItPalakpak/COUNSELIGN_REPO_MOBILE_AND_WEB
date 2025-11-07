@@ -53,8 +53,9 @@ class CounselorMessage {
   bool get isReceived => messageType == 'received';
 
   String get formattedTime {
-    final now = DateTime.now();
-    final diff = now.difference(createdAt);
+    final DateTime localCreatedAt = createdAt.toLocal();
+    final DateTime now = DateTime.now();
+    final Duration diff = now.difference(localCreatedAt);
 
     // If less than a minute ago
     if (diff.inMinutes < 1) {
@@ -67,19 +68,19 @@ class CounselorMessage {
     }
 
     // If today
-    if (createdAt.day == now.day &&
-        createdAt.month == now.month &&
-        createdAt.year == now.year) {
-      return '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+    if (localCreatedAt.day == now.day &&
+        localCreatedAt.month == now.month &&
+        localCreatedAt.year == now.year) {
+      return _formatTime12Hour(localCreatedAt);
     }
 
     // If this year
-    if (createdAt.year == now.year) {
-      return '${_getMonthName(createdAt.month)} ${createdAt.day}';
+    if (localCreatedAt.year == now.year) {
+      return '${_getMonthName(localCreatedAt.month)} ${localCreatedAt.day}, ${_formatTime12Hour(localCreatedAt)}';
     }
 
     // Otherwise show full date
-    return '${_getMonthName(createdAt.month)} ${createdAt.day}, ${createdAt.year}';
+    return '${_getMonthName(localCreatedAt.month)} ${localCreatedAt.day}, ${localCreatedAt.year} ${_formatTime12Hour(localCreatedAt)}';
   }
 
   String _getMonthName(int month) {
@@ -98,5 +99,12 @@ class CounselorMessage {
       'Dec',
     ];
     return months[month - 1];
+  }
+
+  String _formatTime12Hour(DateTime dateTime) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
+    final String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }

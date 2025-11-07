@@ -98,4 +98,42 @@ class Conversation {
       logoutTime,
     );
   }
+
+  String get formattedLastMessageTime {
+    if (lastMessageTime.isEmpty) {
+      return '';
+    }
+    final String normalized = lastMessageTime.contains('T')
+        ? lastMessageTime
+        : lastMessageTime.replaceFirst(' ', 'T');
+    final DateTime? parsed = DateTime.tryParse(normalized);
+    if (parsed == null) {
+      return lastMessageTime;
+    }
+    final DateTime localDateTime = parsed.toLocal();
+    const List<String> monthAbbreviations = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final String month = monthAbbreviations[localDateTime.month - 1];
+    final String time = _formatTimeWithMeridian(localDateTime);
+    return '$month ${localDateTime.day} $time';
+  }
+
+  String _formatTimeWithMeridian(DateTime dateTime) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
+    final String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
 }
