@@ -19,7 +19,6 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _messagesScrollController = ScrollController();
-  String? _selectedMessageId;
 
   @override
   void initState() {
@@ -592,132 +591,17 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
       );
     }
 
-    // REMOVED: The ValueKey that was preventing rebuilds
     return ListView.builder(
       controller: _messagesScrollController,
       padding: const EdgeInsets.all(16),
       itemCount: viewModel.messages.length,
       itemBuilder: (context, index) {
         final message = viewModel.messages[index];
-        return _buildMessageBubble(context, message, viewModel);
+        return _MessageBubble(
+          message: message,
+          viewModel: viewModel,
+        );
       },
-    );
-  }
-
-  Widget _buildMessageBubble(
-    BuildContext context,
-    CounselorMessage message,
-    CounselorMessagesViewModel viewModel,
-  ) {
-    final isSent = message.isSent;
-    final isTimeVisible = _selectedMessageId == message.messageId.toString();
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-      child: Column(
-        crossAxisAlignment: isSent
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: isSent
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
-            children: [
-              if (!isSent) ...[
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: const Color(
-                    0xFF191970,
-                  ).withValues(alpha: 0.1),
-                  backgroundImage: viewModel.selectedUserAvatar != null
-                      ? NetworkImage(viewModel.selectedUserAvatar!)
-                      : null,
-                  child: viewModel.selectedUserAvatar == null
-                      ? const Icon(
-                          Icons.person,
-                          color: Color(0xFF191970),
-                          size: 16,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: GestureDetector(
-                  onTap: () {
-                    // CHANGED: Wrap setState in a microtask to ensure immediate rebuild
-                    Future.microtask(() {
-                      if (mounted) {
-                        setState(() {
-                          _selectedMessageId = isTimeVisible
-                              ? null
-                              : message.messageId.toString();
-                        });
-                      }
-                    });
-                  },
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.7,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSent
-                          ? const Color(0xFF191970)
-                          : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20).copyWith(
-                        bottomLeft: isSent
-                            ? const Radius.circular(20)
-                            : const Radius.circular(4),
-                        bottomRight: isSent
-                            ? const Radius.circular(4)
-                            : const Radius.circular(20),
-                      ),
-                    ),
-                    child: Text(
-                      message.messageText,
-                      style: TextStyle(
-                        color: isSent ? Colors.white : Colors.black87,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (isSent) ...[
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: const Color(
-                    0xFF191970,
-                  ).withValues(alpha: 0.1),
-                  child: const Icon(
-                    Icons.person,
-                    color: Color(0xFF191970),
-                    size: 16,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (isTimeVisible)
-            Padding(
-              padding: EdgeInsets.only(
-                top: 4,
-                left: isSent ? 0 : 40,
-                right: isSent ? 40 : 0,
-              ),
-              child: Text(
-                message.formattedTime,
-                style: TextStyle(color: Colors.grey[600], fontSize: 10),
-              ),
-            ),
-        ],
-      ),
     );
   }
 
@@ -825,5 +709,130 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
       viewModel.selectedUserLogoutTime,
     );
     return statusResult.text;
+  }
+}
+
+/// Stateful message bubble widget for showing/hiding timestamps
+class _MessageBubble extends StatefulWidget {
+  final CounselorMessage message;
+  final CounselorMessagesViewModel viewModel;
+
+  const _MessageBubble({
+    required this.message,
+    required this.viewModel,
+  });
+
+  @override
+  State<_MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<_MessageBubble> {
+  bool _showTimestamp = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSent = widget.message.isSent;
+    final isTimeVisible = _showTimestamp;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      child: Column(
+        crossAxisAlignment: isSent
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: isSent
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            children: [
+              if (!isSent) ...[
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  backgroundImage: widget.viewModel.selectedUserAvatar != null
+                      ? NetworkImage(widget.viewModel.selectedUserAvatar!)
+                      : null,
+                  child: widget.viewModel.selectedUserAvatar == null
+                      ? const Icon(
+                          Icons.person,
+                          color: Color(0xFF191970),
+                          size: 16,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showTimestamp = !_showTimestamp;
+                    });
+                  },
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.7,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSent
+                          ? const Color(0xFF191970)
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20).copyWith(
+                        bottomLeft: isSent
+                            ? const Radius.circular(20)
+                            : const Radius.circular(4),
+                        bottomRight: isSent
+                            ? const Radius.circular(4)
+                            : const Radius.circular(20),
+                      ),
+                    ),
+                    child: Text(
+                      widget.message.messageText,
+                      style: TextStyle(
+                        color: isSent ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (isSent) ...[
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.person,
+                    color: Color(0xFF191970),
+                    size: 16,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (isTimeVisible)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 4,
+                left: isSent ? 0 : 40,
+                right: isSent ? 40 : 0,
+              ),
+              child: Text(
+                widget.message.formattedTime,
+                style: TextStyle(color: Colors.grey[600], fontSize: 10),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

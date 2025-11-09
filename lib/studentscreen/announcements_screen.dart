@@ -65,19 +65,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Page title
-              Text(
-                'Announcements and Events',
-                style: TextStyle(
-                  color: const Color(0xFF191970),
-                  fontSize: isMobile
-                      ? 22
-                      : isTablet
-                      ? 26
-                      : 28,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              _buildHeader(context),
               SizedBox(height: isMobile ? 16 : 24),
 
               // Calendar toggle button and refresh button
@@ -125,6 +113,33 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+
+  // ---------------- HEADER ----------------
+  Widget _buildHeader(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.campaign,
+          color: const Color(0xFF191970),
+          size: isMobile ? 24 : 28,
+        ),
+        SizedBox(width: isMobile ? 8 : 12),
+        Text(
+          'Announcements and Events',
+          style: TextStyle(
+            fontSize: isMobile ? 22 : 24,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF191970),
+          ),
+        ),
+      ],
     );
   }
 

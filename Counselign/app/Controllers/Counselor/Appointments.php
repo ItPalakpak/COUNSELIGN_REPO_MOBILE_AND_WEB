@@ -6,6 +6,7 @@ namespace App\Controllers\Counselor;
 use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 use App\Helpers\UserActivityHelper;
+use App\Models\NotificationsModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Appointments extends BaseController
@@ -187,6 +188,11 @@ class Appointments extends BaseController
         if ($updatedAppointment) {
             // Send email notification to student
             $this->sendAppointmentNotificationToStudent($updatedAppointment, $new_status);
+            
+            // Create notification for student when status is approved, rejected, or cancelled
+            if (in_array($new_status, ['approved', 'rejected', 'cancelled'])) {
+                $this->createAppointmentStatusNotification($updatedAppointment, $new_status, $rejection_reason);
+            }
         }
 
         $db->transComplete();
@@ -243,6 +249,54 @@ class Appointments extends BaseController
 
         } catch (\Exception $e) {
             log_message('error', 'Error sending appointment notification to student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Create notification for appointment status changes
+     * 
+     * @param array $appointmentData The appointment data
+     * @param string $status The new status ('approved', 'rejected', 'cancelled')
+     * @param string|null $rejectionReason Optional rejection reason
+     */
+    private function createAppointmentStatusNotification(array $appointmentData, string $status, ?string $rejectionReason = null): void
+    {
+        try {
+            $notificationsModel = new NotificationsModel();
+            
+            $date = isset($appointmentData['preferred_date']) ? date('F j, Y', strtotime($appointmentData['preferred_date'])) : '';
+            $time = $appointmentData['preferred_time'] ?? '';
+            
+            $title = 'Appointment ' . ucfirst($status);
+            $message = '';
+            
+            if ($status === 'approved') {
+                $message = "Congratulations! Your appointment on {$date} at {$time} has been approved. Please check your scheduled appointments for details.";
+            } elseif ($status === 'rejected') {
+                $message = "We're sorry, but your appointment on {$date} at {$time} was rejected.";
+                if ($rejectionReason) {
+                    $message .= " Reason: {$rejectionReason}.";
+                }
+                $message .= " If you have questions, please contact the counseling office.";
+            } elseif ($status === 'cancelled') {
+                $message = "Your appointment on {$date} at {$time} has been cancelled by the counselor.";
+                if ($rejectionReason) {
+                    $message .= " Reason: {$rejectionReason}.";
+                }
+            }
+            
+            $notificationData = [
+                'user_id' => $appointmentData['student_id'],
+                'type' => 'appointment',
+                'title' => $title,
+                'message' => $message,
+                'related_id' => $appointmentData['id'],
+                'is_read' => 0
+            ];
+            
+            $notificationsModel->createNotification($notificationData);
+        } catch (\Exception $e) {
+            log_message('error', 'Error creating appointment status notification: ' . $e->getMessage());
         }
     }
 

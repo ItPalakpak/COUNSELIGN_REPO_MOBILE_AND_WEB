@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/session.dart';
 import 'dart:convert';
+import 'dart:async';
 import '../../api/config.dart';
 import '../../utils/secure_logger.dart';
 import '../models/counselor_profile.dart';
@@ -97,6 +98,9 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   int _unreadNotificationsCount = 0;
   int get unreadNotificationsCount => _unreadNotificationsCount;
 
+  // Timer for polling notifications
+  Timer? _notificationTimer;
+
   final Session _session = Session();
 
   void initialize() {
@@ -105,6 +109,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
     fetchMessages();
     fetchNotifications();
     fetchRecentAppointments();
+    startPolling();
   }
 
   // Fetch counselor profile
@@ -313,29 +318,55 @@ class CounselorDashboardViewModel extends ChangeNotifier {
     }
   }
 
-  // Mark notification as read
-  Future<bool> markNotificationAsRead(int notificationId) async {
+  // Mark notification as read - supports both notification_id and type/related_id
+  Future<bool> markNotificationAsRead({
+    int? notificationId,
+    String? type,
+    int? relatedId,
+  }) async {
     try {
+      final Map<String, String> payload = {};
+      if (notificationId != null) {
+        payload['notification_id'] = notificationId.toString();
+      } else if (type != null && relatedId != null) {
+        payload['type'] = type;
+        payload['related_id'] = relatedId.toString();
+      } else {
+        debugPrint('Error: Invalid parameters for markNotificationAsRead');
+        return false;
+      }
+
       final response = await _session.post(
         '${ApiConfig.currentBaseUrl}/counselor/notifications/mark-read',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'notification_id': notificationId.toString()},
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['success'] == true) {
-          final notificationIndex = _notifications.indexWhere(
-            (n) => n.id == notificationId,
-          );
-          if (notificationIndex != -1) {
-            _notifications[notificationIndex] =
-                _notifications[notificationIndex].copyWith(isRead: true);
-            _unreadNotificationsCount = _notifications
-                .where((n) => !n.isRead)
-                .length;
-            notifyListeners();
+        if (data['status'] == 'success' || data['success'] == true) {
+          // Update local state
+          if (notificationId != null) {
+            final notificationIndex = _notifications.indexWhere(
+              (n) => n.id == notificationId,
+            );
+            if (notificationIndex != -1) {
+              _notifications[notificationIndex] =
+                  _notifications[notificationIndex].copyWith(isRead: true);
+            }
+          } else if (type != null && relatedId != null) {
+            // Update by type and related_id
+            for (int i = 0; i < _notifications.length; i++) {
+              if (_notifications[i].type == type &&
+                  _notifications[i].relatedId == relatedId) {
+                _notifications[i] = _notifications[i].copyWith(isRead: true);
+              }
+            }
           }
+          _unreadNotificationsCount = _notifications
+              .where((n) => !n.isRead)
+              .length;
+          notifyListeners();
           return true;
         }
       }
@@ -343,6 +374,69 @@ class CounselorDashboardViewModel extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error marking notification as read: $e');
       return false;
+    }
+  }
+
+  // Mark all notifications as read
+  Future<bool> markAllNotificationsAsRead() async {
+    try {
+      final response = await _session.post(
+        '${ApiConfig.currentBaseUrl}/counselor/notifications/mark-read',
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mark_all': true}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success' || data['success'] == true) {
+          // Mark all notifications as read locally
+          _notifications = _notifications
+              .map((n) => n.copyWith(isRead: true))
+              .toList();
+          _unreadNotificationsCount = 0;
+          notifyListeners();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error marking all notifications as read: $e');
+      return false;
+    }
+  }
+
+  // Fetch appointment details by ID
+  Future<Map<String, dynamic>?> fetchAppointmentDetails(
+    String appointmentId,
+  ) async {
+    try {
+      final response = await _session.get(
+        '${ApiConfig.currentBaseUrl}/counselor/appointments/getAppointments',
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['appointments'] != null) {
+          final appointments = data['appointments'] as List<dynamic>;
+          try {
+            final appointment = appointments.firstWhere(
+              (app) => app['id'].toString() == appointmentId.toString(),
+            );
+            if (appointment != null) {
+              return appointment as Map<String, dynamic>;
+            }
+          } catch (e) {
+            // Appointment not found
+            debugPrint('Appointment not found: $appointmentId');
+            return null;
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching appointment details: $e');
+      return null;
     }
   }
 
@@ -453,5 +547,24 @@ class CounselorDashboardViewModel extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching recent appointments: $e');
     }
+  }
+
+  // Polling Methods
+  void startPolling() {
+    // Poll for notifications every 10 seconds
+    _notificationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      fetchNotifications();
+    });
+  }
+
+  void stopPolling() {
+    _notificationTimer?.cancel();
+    _notificationTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _notificationTimer?.cancel();
+    super.dispose();
   }
 }

@@ -472,15 +472,62 @@ class _CounselorListItem extends StatelessWidget {
   }
 
   String _formatShortTime(DateTime t) {
-    final now = DateTime.now();
-    final diff = now.difference(t);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m';
-    if (diff.inDays == 0) {
-      return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    final DateTime localTime = t.toLocal();
+    final DateTime now = DateTime.now();
+    final Duration diff = now.difference(localTime);
+    final String time12Hour = _formatTime12Hour(localTime);
+
+    // If today
+    if (localTime.day == now.day &&
+        localTime.month == now.month &&
+        localTime.year == now.year) {
+      return time12Hour;
     }
-    if (diff.inDays == 1) return 'yday';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    return '${t.month}/${t.day}/${t.year % 100}';
+
+    // If yesterday
+    final DateTime yesterday = now.subtract(const Duration(days: 1));
+    if (localTime.day == yesterday.day &&
+        localTime.month == yesterday.month &&
+        localTime.year == yesterday.year) {
+      return 'Yesterday at $time12Hour';
+    }
+
+    // If 1 day ago (more than yesterday but less than 2 days ago)
+    if (diff.inDays >= 1 && diff.inDays < 2) {
+      return '1 day ago at $time12Hour';
+    }
+
+    // If within the week (2-7 days ago)
+    if (diff.inDays >= 2 && diff.inDays <= 7) {
+      return '${diff.inDays} days ago at $time12Hour';
+    }
+
+    // If more than a week, show full date with time
+    return '${_getMonthName(localTime.month)} ${localTime.day}, ${localTime.year} at $time12Hour';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
+  }
+
+  String _formatTime12Hour(DateTime dateTime) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
+    final String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }

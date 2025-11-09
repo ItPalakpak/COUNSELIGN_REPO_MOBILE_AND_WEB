@@ -9,12 +9,14 @@ class AppointmentsCards extends StatelessWidget {
   onUpdateStatus;
   final void Function(CounselorScheduledAppointment appointment)
   onCancelAppointment;
+  final VoidCallback? onNavigateToFollowUp;
 
   const AppointmentsCards({
     super.key,
     required this.appointments,
     required this.onUpdateStatus,
     required this.onCancelAppointment,
+    this.onNavigateToFollowUp,
   });
 
   @override
@@ -37,6 +39,7 @@ class AppointmentsCards extends StatelessWidget {
               viewModel: viewModel,
               onUpdateStatus: (status) => onUpdateStatus(a, status),
               onCancelAppointment: () => onCancelAppointment(a),
+              onNavigateToFollowUp: onNavigateToFollowUp,
             );
           },
         );
@@ -50,12 +53,14 @@ class _AppointmentCard extends StatelessWidget {
   final CounselorScheduledAppointmentsViewModel viewModel;
   final void Function(String status) onUpdateStatus;
   final VoidCallback onCancelAppointment;
+  final VoidCallback? onNavigateToFollowUp;
 
   const _AppointmentCard({
     required this.appointment,
     required this.viewModel,
     required this.onUpdateStatus,
     required this.onCancelAppointment,
+    this.onNavigateToFollowUp,
   });
 
   @override
@@ -159,59 +164,8 @@ class _AppointmentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Action buttons - using Flexible to prevent overflow
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _isMarkCompleteLoading()
-                      ? null
-                      : () => onUpdateStatus('completed'),
-                  icon: _isMarkCompleteLoading()
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Icon(Icons.check_circle_outline, size: 18),
-                  label: Text(
-                    _isMarkCompleteLoading()
-                        ? 'Processing...'
-                        : 'Mark Complete',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[600],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onCancelAppointment,
-                  icon: const Icon(Icons.cancel_outlined, size: 18),
-                  label: const Text('Cancel'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF060E57),
-                    side: const BorderSide(color: Color(0xFF060E57)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // Action buttons - conditional based on follow-up status
+          _buildActionButtons(),
         ],
       ),
     );
@@ -281,5 +235,77 @@ class _AppointmentCard extends StatelessWidget {
       default:
         return const Color(0xFFFB8C00);
     }
+  }
+
+  Widget _buildActionButtons() {
+    // If it's a follow-up session, show "Manage in Follow-up Sessions" button
+    if (appointment.isFollowUp && onNavigateToFollowUp != null) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onNavigateToFollowUp,
+          icon: const Icon(Icons.update_rounded, size: 18),
+          label: const Text('Manage in Follow-up Sessions'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF191970),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Otherwise, show the standard Mark Complete and Cancel buttons
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _isMarkCompleteLoading()
+                ? null
+                : () => onUpdateStatus('completed'),
+            icon: _isMarkCompleteLoading()
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.check_circle_outline, size: 18),
+            label: Text(
+              _isMarkCompleteLoading() ? 'Processing...' : 'Mark Complete',
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[600],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onCancelAppointment,
+            icon: const Icon(Icons.cancel_outlined, size: 18),
+            label: const Text('Cancel'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF060E57),
+              side: const BorderSide(color: Color(0xFF060E57)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

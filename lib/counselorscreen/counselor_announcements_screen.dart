@@ -101,16 +101,24 @@ class _CounselorAnnouncementsScreenState
   }
 
   Widget _buildHeader(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.campaign, color: const Color(0xFF191970), size: 28),
-        const SizedBox(width: 12),
-        const Text(
+        Icon(
+          Icons.campaign,
+          color: const Color(0xFF191970),
+          size: isMobile ? 24 : 28,
+        ),
+        SizedBox(width: isMobile ? 8 : 12),
+        Text(
           'Announcements and Events',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: isMobile ? 22 : 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF191970),
+            color: const Color(0xFF191970),
           ),
         ),
       ],

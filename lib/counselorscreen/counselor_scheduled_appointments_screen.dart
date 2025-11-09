@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import 'state/counselor_scheduled_appointments_viewmodel.dart';
 import 'widgets/counselor_screen_wrapper.dart';
 import 'widgets/appointments_cards.dart';
@@ -19,18 +20,33 @@ class CounselorScheduledAppointmentsScreen extends StatefulWidget {
 class _CounselorScheduledAppointmentsScreenState
     extends State<CounselorScheduledAppointmentsScreen> {
   late CounselorScheduledAppointmentsViewModel _viewModel;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
 
   @override
   void initState() {
     super.initState();
     _viewModel = CounselorScheduledAppointmentsViewModel();
     _viewModel.initialize();
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _viewModel.setSearchQuery(_searchController.text);
+      }
+    });
   }
 
   @override
@@ -66,6 +82,8 @@ class _CounselorScheduledAppointmentsScreenState
             children: [
               _buildHeader(context),
               SizedBox(height: isMobile ? 20 : 30),
+              _buildSearchBar(context, isMobile),
+              SizedBox(height: isMobile ? 16 : 20),
               _buildContent(context, isMobile, isTablet, isDesktop),
             ],
           ),
@@ -114,6 +132,72 @@ class _CounselorScheduledAppointmentsScreenState
     );
   }
 
+  Widget _buildSearchBar(BuildContext context, bool isMobile) {
+    return Consumer<CounselorScheduledAppointmentsViewModel>(
+      builder: (context, viewModel, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFCFE1EF)),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF123B63).withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {});
+                },
+                decoration: InputDecoration(
+                  hintText:
+                      'Search by date, time, student name, consultation type, or any details...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: isMobile ? 13 : 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF060E57),
+                    size: 20,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                            color: Color(0xFF060E57),
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            viewModel.setSearchQuery('');
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 20,
+                    vertical: isMobile ? 12 : 16,
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: isMobile ? 14 : 15,
+                  color: const Color(0xFF123B63),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildContent(
     BuildContext context,
     bool isMobile,
@@ -131,7 +215,11 @@ class _CounselorScheduledAppointmentsScreenState
         }
 
         // Always show appointments section only - sidebar is now a modal
-        return _buildAppointmentsSection(context, viewModel);
+        return _buildAppointmentsSection(
+          context,
+          viewModel,
+          viewModel.filteredAppointments,
+        );
       },
     );
   }
@@ -208,6 +296,7 @@ class _CounselorScheduledAppointmentsScreenState
   Widget _buildAppointmentsSection(
     BuildContext context,
     CounselorScheduledAppointmentsViewModel viewModel,
+    List<CounselorScheduledAppointment> appointments,
   ) {
     return Container(
       decoration: BoxDecoration(
@@ -219,33 +308,40 @@ class _CounselorScheduledAppointmentsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (viewModel.appointments.isEmpty)
-            _buildEmptyAppointmentsState()
+          if (appointments.isEmpty)
+            _buildEmptyAppointmentsState(viewModel.searchQuery.isNotEmpty)
           else
             AppointmentsCards(
-              appointments: viewModel.appointments,
+              appointments: appointments,
               onUpdateStatus: (appointment, status) =>
                   _handleUpdateStatus(appointment, status),
               onCancelAppointment: (appointment) =>
                   _handleCancelAppointment(appointment),
+              onNavigateToFollowUp: () => _navigateToFollowUpSessions(context),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyAppointmentsState() {
+  Widget _buildEmptyAppointmentsState(bool isSearching) {
     return Container(
       padding: const EdgeInsets.all(40),
-      child: const Center(
+      child: Center(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Icon(Icons.info_outline, size: 48, color: Colors.blue),
-              SizedBox(height: 16),
+              Icon(
+                isSearching ? Icons.search_off : Icons.info_outline,
+                size: 48,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 16),
               Text(
-                'No scheduled appointments found.',
-                style: TextStyle(
+                isSearching
+                    ? 'No appointments match your search.'
+                    : 'No scheduled appointments found.',
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                   fontWeight: FontWeight.w500,
@@ -256,6 +352,12 @@ class _CounselorScheduledAppointmentsScreenState
         ),
       ),
     );
+  }
+
+  void _navigateToFollowUpSessions(BuildContext context) {
+    if (context.mounted) {
+      Navigator.of(context).pushReplacementNamed('/counselor/follow-up');
+    }
   }
 
   void _showSchedulesModal(BuildContext context) {

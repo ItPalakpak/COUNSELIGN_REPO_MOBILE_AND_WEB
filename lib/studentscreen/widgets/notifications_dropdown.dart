@@ -135,10 +135,11 @@ class StudentNotificationsDropdown extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.clear_all, size: 16),
+                        icon: const Icon(Icons.done_all, size: 16),
                         label: const Text('Clear All'),
-                        onPressed: () =>
-                            viewModel.clearAllNotifications(context),
+                        onPressed: () async {
+                          await viewModel.clearAllNotifications(context);
+                        },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF64748B),
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -159,7 +160,9 @@ class StudentNotificationsDropdown extends StatelessWidget {
     student_notification.UserNotification notification,
   ) {
     return InkWell(
-      onTap: () => viewModel.handleNotificationTap(context, notification),
+      onTap: () async {
+        await viewModel.handleNotificationTap(context, notification);
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -229,7 +232,7 @@ class StudentNotificationsDropdown extends StatelessWidget {
                     ),
                   ),
 
-                  // Unread indicator for read notifications
+                  // Unread indicator for unread notifications
                   if (!notification.isRead)
                     Container(
                       width: 8,
@@ -243,6 +246,44 @@ class StudentNotificationsDropdown extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Mark as read button
+            if (!notification.isRead)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.check, size: 18),
+                  color: const Color(0xFF3B82F6),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  onPressed: () {
+                    // For events and announcements, use type+related_id
+                    // For other notifications, use notification_id
+                    final notificationType = notification.type.toLowerCase();
+                    if ((notificationType == 'event' ||
+                            notificationType == 'announcement') &&
+                        notification.relatedId != null) {
+                      // Use type + related_id for events/announcements
+                      viewModel.markNotificationAsRead(
+                        null,
+                        type: notification.type,
+                        relatedId: notification.relatedId,
+                      );
+                    } else if (notification.id > 0) {
+                      // Use notification_id for other types
+                      viewModel.markNotificationAsRead(
+                        notification.id,
+                        type: notification.type,
+                        relatedId: notification.relatedId,
+                      );
+                    }
+                  },
+                  tooltip: 'Mark as read',
+                ),
+              ),
           ],
         ),
       ),

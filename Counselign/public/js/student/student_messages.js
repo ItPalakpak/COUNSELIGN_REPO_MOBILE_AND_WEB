@@ -3,7 +3,7 @@ let currentUserId = null;
 let messageUpdateInterval = null;
 let isSearching = false;
 let searchTimeout = null;
-let lastMessageTimestamp = null;
+let lastMessageTimestamp = null; // Changed: Now resets per conversation
 let autoSelectUserId = null;
 
 function resolveImageUrl(path) {
@@ -128,7 +128,11 @@ function initializeChatHeader() {
 
 async function startMessagePolling() {
     if (messageUpdateInterval) clearInterval(messageUpdateInterval);
-    messageUpdateInterval = setInterval(async () => { if (!isSearching && currentUserId) await loadMessages(currentUserId); }, 1500);
+    messageUpdateInterval = setInterval(async () => { 
+        if (!isSearching && currentUserId) {
+            await loadMessages(currentUserId, true); // CHANGED: Added silent parameter
+        }
+    }, 1500);
 }
 
 async function loadConversations() {
@@ -212,6 +216,10 @@ function updateConversations(items, isCounselorList = false) {
 function selectConversation(userId) {
     pausePolling();
     if (!userId) return;
+    
+    // CHANGED: Reset timestamp when switching conversations
+    lastMessageTimestamp = null;
+    
     const container = document.getElementById('messages-container');
     if (container) container.innerHTML = `<div class="empty-state" id="empty-state"><i class=\"fas fa-inbox\"></i><h5>Loading Messages...</h5><p>Please wait while we load the conversation.</p></div>`;
     currentUserId = userId;
@@ -242,10 +250,16 @@ function selectConversation(userId) {
     const sendBtn = document.getElementById('send-button');
     if (input) { input.disabled = false; input.placeholder = 'Type your message...'; input.focus(); }
     if (sendBtn) sendBtn.disabled = false;
-    loadMessages(userId).then(() => { markMessagesAsRead(userId); startMessagePolling(); });
+    
+    // CHANGED: Force load messages for new conversation
+    loadMessages(userId, false).then(() => { 
+        markMessagesAsRead(userId); 
+        startMessagePolling(); 
+    });
 }
 
-async function loadMessages(userId) {
+// CHANGED: Added silent parameter to prevent scroll when polling
+async function loadMessages(userId, silent = false) {
     if (!userId) return;
     const res = await fetch((window.BASE_URL || '/') + `student/message/operations?action=get_messages&user_id=${userId}`, { credentials: 'include' });
     const data = await res.json();
@@ -254,32 +268,41 @@ async function loadMessages(userId) {
         if (msgs.length > 0) {
             const latest = msgs[msgs.length - 1];
             const t = new Date(latest.created_at).getTime();
+            
+            // CHANGED: Always display if no timestamp, or if new messages exist
             if (!lastMessageTimestamp || t > lastMessageTimestamp) {
                 lastMessageTimestamp = t;
-                displayMessages(msgs);
-                markMessagesAsRead(userId);
+                displayMessages(msgs, silent);
+                if (!silent) {
+                    markMessagesAsRead(userId);
+                }
             }
         } else {
-            displayMessages([]);
+            displayMessages([], silent);
         }
     }
 }
 
-function displayMessages(messages) {
+// CHANGED: Added silent parameter
+function displayMessages(messages, silent = false) {
     const container = document.getElementById('messages-container');
-    const emptyState = document.getElementById('empty-state');
-    if (!container || !emptyState) return;
+    if (!container) return;
+
+    // CHANGED: Store scroll position before updating
+    const wasAtBottom = silent && (container.scrollHeight - container.scrollTop - container.clientHeight < 50);
+
     if (!Array.isArray(messages) || messages.length === 0) {
-        emptyState.style.display = 'flex';
         container.innerHTML = `
-            <div class="empty-state" id="empty-state">
-                <i class="fas fa-inbox"></i>
+            <div class="empty-chat" id="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
                 <h5>No Messages Yet</h5>
                 <p>Start the conversation by sending a message.</p>
             </div>`;
         return;
     }
-    emptyState.style.display = 'none';
+
     let html = '<div class="p-3">';
     messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     messages.forEach(msg => {
@@ -295,7 +318,11 @@ function displayMessages(messages) {
     });
     html += '</div>';
     container.innerHTML = html;
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+    
+    // CHANGED: Only scroll if at bottom or not silent
+    if (!silent || wasAtBottom) {
+        setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+    }
 }
 
 function markMessagesAsRead(userId) {
@@ -303,7 +330,8 @@ function markMessagesAsRead(userId) {
     fetch((window.BASE_URL || '/') + 'student/message/operations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=mark_read&user_id=${userId}`
+        body: `action=mark_read&user_id=${userId}`,
+        credentials: 'include'
     });
 }
 
@@ -314,32 +342,33 @@ async function sendMessage() {
         const sendBtn = document.getElementById('send-button');
         const text = (input?.value || '').trim();
         if (!text) return;
-        input.disabled = true; sendBtn.disabled = true;
+        
+        input.disabled = true; 
+        sendBtn.disabled = true;
+        
         const res = await fetch((window.BASE_URL || '/') + 'student/message/operations?action=send_message', {
-            method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            method: 'POST', 
+            credentials: 'include', 
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `receiver_id=${currentUserId}&message=${encodeURIComponent(text)}`
         });
         const data = await res.json();
+        
         if (data.success) {
             input.value = '';
             input.style.height = 'auto';
-            const container = document.getElementById('messages-container');
-            const nowHtml = `
-                <div class="d-flex justify-content-end mb-3">
-                    <div class="message sent">
-                        <div class="message-content bg-primary text-white rounded-3 p-2 px-3 shadow-sm">
-                            <p class="mb-1">${escapeHtml(text)}</p>
-                        </div>
-                        <small class="text-white-50 message-time">Just now</small>
-                    </div>
-                </div>`;
-            if (container.innerHTML.includes('empty-state')) {
-                container.innerHTML = '<div class="p-3">' + nowHtml + '</div>';
-            } else {
-                const wrap = container.querySelector('.p-3');
-                if (wrap) wrap.insertAdjacentHTML('beforeend', nowHtml);
-            }
-            container.scrollTop = container.scrollHeight;
+            
+            // CHANGED: Force refresh by resetting timestamp and loading messages
+            lastMessageTimestamp = null;
+            
+            // Small delay to ensure database is updated
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Reload messages from server after sending
+            await loadMessages(currentUserId, false);
+            
+            // Also refresh the conversations list to update last message
+            loadConversations(); // Don't await to avoid delay
         }
     } finally {
         const input = document.getElementById('message-input');
@@ -364,5 +393,3 @@ function formatMessageTime(timestamp) {
 function escapeHtml(text) {
     return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
-
-

@@ -111,7 +111,41 @@ class Conversation {
       return lastMessageTime;
     }
     final DateTime localDateTime = parsed.toLocal();
-    const List<String> monthAbbreviations = [
+    final DateTime now = DateTime.now();
+    final Duration diff = now.difference(localDateTime);
+    final String time12Hour = _formatTime12Hour(localDateTime);
+
+    // If today
+    if (localDateTime.day == now.day &&
+        localDateTime.month == now.month &&
+        localDateTime.year == now.year) {
+      return time12Hour;
+    }
+
+    // If yesterday
+    final DateTime yesterday = now.subtract(const Duration(days: 1));
+    if (localDateTime.day == yesterday.day &&
+        localDateTime.month == yesterday.month &&
+        localDateTime.year == yesterday.year) {
+      return 'Yesterday at $time12Hour';
+    }
+
+    // If 1 day ago (more than yesterday but less than 2 days ago)
+    if (diff.inDays >= 1 && diff.inDays < 2) {
+      return '1 day ago at $time12Hour';
+    }
+
+    // If within the week (2-7 days ago)
+    if (diff.inDays >= 2 && diff.inDays <= 7) {
+      return '${diff.inDays} days ago at $time12Hour';
+    }
+
+    // If more than a week, show full date with time
+    return '${_getMonthName(localDateTime.month)} ${localDateTime.day}, ${localDateTime.year} at $time12Hour';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
       'Jan',
       'Feb',
       'Mar',
@@ -125,12 +159,10 @@ class Conversation {
       'Nov',
       'Dec',
     ];
-    final String month = monthAbbreviations[localDateTime.month - 1];
-    final String time = _formatTimeWithMeridian(localDateTime);
-    return '$month ${localDateTime.day} $time';
+    return months[month - 1];
   }
 
-  String _formatTimeWithMeridian(DateTime dateTime) {
+  String _formatTime12Hour(DateTime dateTime) {
     final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
     final String minute = dateTime.minute.toString().padLeft(2, '0');
     final String period = dateTime.hour >= 12 ? 'PM' : 'AM';

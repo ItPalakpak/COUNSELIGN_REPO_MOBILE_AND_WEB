@@ -206,14 +206,11 @@ CREATE TABLE `counselors` (
   `email` varchar(100) NOT NULL,
   `contact_number` varchar(20) NOT NULL,
   `address` text NOT NULL,
-  `profile_picture` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `civil_status` varchar(20) DEFAULT NULL,
   `sex` varchar(10) DEFAULT NULL,
-  `birthdate` date DEFAULT NULL,
-  `time_scheduled` varchar(50) DEFAULT NULL,
-  `available_days` text DEFAULT NULL
+  `birthdate` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

@@ -480,6 +480,10 @@ footer {
     padding: 12px 16px;
     background: #f8fafd;
     border-bottom: 1px solid #eef2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
 }
 
 #notificationsDropdown h3 {
@@ -487,6 +491,13 @@ footer {
     font-weight: 600;
     color: #003366;
     margin: 0;
+    flex-shrink: 0;
+}
+
+#notificationsDropdown #markAllReadBtn {
+    flex-shrink: 0;
+    margin-left: auto;
+    white-space: nowrap;
 }
 
 /* Notification items */
@@ -520,6 +531,42 @@ footer {
     height: 4px;
     background-color: #060E57;
     border-radius: 50%;
+}
+
+/* Notification Header and Actions */
+.notification-item .notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.notification-item .notification-header h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #003366;
+    margin: 0;
+    flex: 1;
+}
+
+.notification-item .notification-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.notification-item .notification-time {
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.notification-item .mark-read-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
 
 /* Notification Title */

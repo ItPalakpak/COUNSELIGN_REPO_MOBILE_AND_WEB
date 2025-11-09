@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 
 use App\Helpers\SecureLogHelper;
+use App\Models\NotificationsModel;
 use CodeIgniter\API\ResponseTrait;
 
 class EventsApi extends \CodeIgniter\Controller
@@ -41,10 +42,15 @@ class EventsApi extends \CodeIgniter\Controller
                 'time' => $time,
                 'location' => $location
             ]);
+            $eventId = $db->insertID();
+            
+            // Create notifications for all students and counselors
+            $this->createEventNotifications($eventId, $title, $description, $date, $time, $location);
+            
             return $this->respond([
                 'success' => true,
                 'message' => 'Event added successfully.',
-                'event_id' => $db->insertID()
+                'event_id' => $eventId
             ]);
         } else {
             return $this->respond([
@@ -76,6 +82,9 @@ class EventsApi extends \CodeIgniter\Controller
                 'location' => $location
             ]);
             if ($db->affectedRows() > 0) {
+                // Create notifications for all students and counselors
+                $this->createEventNotifications($id, $title, $description, $date, $time, $location);
+                
                 return $this->respond([
                     'success' => true,
                     'message' => 'Event updated successfully.'
@@ -120,5 +129,49 @@ class EventsApi extends \CodeIgniter\Controller
             'success' => false,
             'message' => 'Event not found.'
         ], 404);
+    }
+
+    /**
+     * Create notifications for all users when event is created/updated
+     * 
+     * @param int $eventId Event ID
+     * @param string $title Event title
+     * @param string $description Event description
+     * @param string $date Event date
+     * @param string $time Event time
+     * @param string $location Event location
+     */
+    private function createEventNotifications(int $eventId, string $title, string $description, string $date, string $time, string $location): void
+    {
+        try {
+            $db = \Config\Database::connect();
+            $notificationsModel = new NotificationsModel();
+            
+            // Get all student and counselor user IDs
+            $users = $db->table('users')
+                ->select('user_id')
+                ->whereIn('role', ['student', 'counselor'])
+                ->get()
+                ->getResultArray();
+            
+            $eventDateTime = $date . ' ' . $time;
+            $formattedDate = date('F j, Y', strtotime($date));
+            $message = "A new event has been scheduled for " . $formattedDate . " at " . $time . " in " . $location;
+            
+            foreach ($users as $user) {
+                $notificationData = [
+                    'user_id' => $user['user_id'],
+                    'type' => 'event',
+                    'title' => 'New Event: ' . $title,
+                    'message' => $message,
+                    'related_id' => $eventId,
+                    'event_date' => $eventDateTime,
+                    'is_read' => 0
+                ];
+                $notificationsModel->createNotification($notificationData);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error creating event notifications: ' . $e->getMessage());
+        }
     }
 }

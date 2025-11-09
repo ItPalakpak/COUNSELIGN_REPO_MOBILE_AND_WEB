@@ -6,6 +6,7 @@ namespace App\Controllers\Student;
 use App\Helpers\SecureLogHelper;
 use App\Controllers\BaseController;
 use App\Helpers\UserActivityHelper;
+use App\Models\NotificationsModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Appointment extends BaseController
@@ -555,6 +556,10 @@ class Appointment extends BaseController
                     // Send email notification to counselor if counselor preference is selected
                     if (!empty($counselor_preference) && $counselor_preference !== 'No preference') {
                         $this->sendAppointmentNotificationToCounselor($counselor_preference, $data, $user_id, 'booking');
+                        
+                        // Create notification for counselor
+                        $appointmentId = $db->insertID();
+                        $this->createAppointmentNotification($counselor_preference, $appointmentId, 'appointment', 'New Appointment Request', 'Student ' . $user_id . ' has requested a ' . $consultation_type . ' appointment on ' . date('F j, Y', strtotime($preferred_date)) . ' at ' . $preferred_time . '.');
                     }
 
                     $response['status'] = 'success';
@@ -883,6 +888,9 @@ class Appointment extends BaseController
                 // Send email notification to counselor if counselor preference is selected
                 if (!empty($appointment['counselor_preference']) && $appointment['counselor_preference'] !== 'No preference') {
                     $this->sendAppointmentNotificationToCounselor($appointment['counselor_preference'], $appointment, $appointment['student_id'], 'editing');
+                    
+                    // Create notification for counselor
+                    $this->createAppointmentNotification($appointment['counselor_preference'], $appointment_id, 'appointment', 'Appointment Updated', 'Student ' . $appointment['student_id'] . ' has updated their appointment. New schedule: ' . date('F j, Y', strtotime($appointment['preferred_date'])) . ' at ' . $appointment['preferred_time'] . '.');
                 }
             }
 
@@ -1130,6 +1138,9 @@ class Appointment extends BaseController
                 // Add the cancellation reason to the appointment data for email
                 $appointment['reason'] = $reason;
                 $this->sendAppointmentCancellationNotificationToCounselor($appointment['counselor_preference'], $appointment, $appointment['student_id']);
+                
+                // Create notification for counselor
+                $this->createAppointmentNotification($appointment['counselor_preference'], $appointment_id, 'appointment', 'Appointment Cancelled', 'Student ' . $appointment['student_id'] . ' has cancelled their appointment scheduled for ' . date('F j, Y', strtotime($appointment['preferred_date'])) . ' at ' . $appointment['preferred_time'] . '. Reason: ' . $reason . '.');
             }
 
             return $this->response->setJSON(['success' => true]);
@@ -1582,5 +1593,32 @@ class Appointment extends BaseController
         }
         
         return $earliestTime;
+    }
+
+    /**
+     * Create notification for appointment actions
+     * 
+     * @param string $counselorId Counselor ID to receive notification
+     * @param int $relatedId Appointment ID
+     * @param string $type Notification type ('appointment')
+     * @param string $title Notification title
+     * @param string $message Notification message
+     */
+    private function createAppointmentNotification(string $counselorId, int $relatedId, string $type, string $title, string $message): void
+    {
+        try {
+            $notificationsModel = new NotificationsModel();
+            $notificationData = [
+                'user_id' => $counselorId,
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'related_id' => $relatedId,
+                'is_read' => 0
+            ];
+            $notificationsModel->createNotification($notificationData);
+        } catch (\Exception $e) {
+            log_message('error', 'Error creating appointment notification: ' . $e->getMessage());
+        }
     }
 }

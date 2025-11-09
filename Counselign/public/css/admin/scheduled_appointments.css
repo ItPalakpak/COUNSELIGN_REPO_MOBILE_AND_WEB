@@ -553,6 +553,77 @@ header.sticky-header {
     background-color: rgba(228, 189, 194, 0.2) !important; /* Bootstrap's danger color with 20% opacity */
 }
 
+/* Search bar styling */
+.search-container {
+    flex-shrink: 0;
+}
+
+.search-container .input-group {
+    position: relative;
+}
+
+.search-container .input-group-text {
+    border: 2px solid #6aa2c6;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    padding: 8px 12px;
+}
+
+.search-container .form-control {
+    border: 2px solid #6aa2c6;
+    border-left: none;
+    border-radius: 0;
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-container .form-control:focus {
+    border-color: #4169E1;
+    box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.1);
+    outline: none;
+}
+
+.search-container .form-control:focus ~ .btn-outline-secondary {
+    border-color: #4169E1;
+}
+
+.search-container:has(.form-control:focus) .input-group-text {
+    border-color: #4169E1;
+}
+
+.search-container .btn-outline-secondary {
+    border: 2px solid #6aa2c6;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    padding: 8px 12px;
+    color: #6aa2c6;
+    transition: all 0.3s ease;
+}
+
+.search-container .btn-outline-secondary:hover {
+    background-color: #6aa2c6;
+    color: white;
+    border-color: #6aa2c6;
+}
+
+/* Responsive search bar */
+@media (max-width: 768px) {
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
+    .search-container {
+        width: 100%;
+    }
+
+    .search-container .input-group {
+        max-width: 100% !important;
+    }
+}
+
 /* Two-column layout matching reference UI */
 .csq-layout {
     display: grid;

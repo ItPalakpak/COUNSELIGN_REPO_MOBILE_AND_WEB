@@ -56,31 +56,35 @@ class CounselorMessage {
     final DateTime localCreatedAt = createdAt.toLocal();
     final DateTime now = DateTime.now();
     final Duration diff = now.difference(localCreatedAt);
-
-    // If less than a minute ago
-    if (diff.inMinutes < 1) {
-      return 'Just now';
-    }
-
-    // If less than an hour ago
-    if (diff.inHours < 1) {
-      return '${diff.inMinutes}m ago';
-    }
+    final String time12Hour = _formatTime12Hour(localCreatedAt);
 
     // If today
     if (localCreatedAt.day == now.day &&
         localCreatedAt.month == now.month &&
         localCreatedAt.year == now.year) {
-      return _formatTime12Hour(localCreatedAt);
+      return time12Hour;
     }
 
-    // If this year
-    if (localCreatedAt.year == now.year) {
-      return '${_getMonthName(localCreatedAt.month)} ${localCreatedAt.day}, ${_formatTime12Hour(localCreatedAt)}';
+    // If yesterday
+    final DateTime yesterday = now.subtract(const Duration(days: 1));
+    if (localCreatedAt.day == yesterday.day &&
+        localCreatedAt.month == yesterday.month &&
+        localCreatedAt.year == yesterday.year) {
+      return 'Yesterday at $time12Hour';
     }
 
-    // Otherwise show full date
-    return '${_getMonthName(localCreatedAt.month)} ${localCreatedAt.day}, ${localCreatedAt.year} ${_formatTime12Hour(localCreatedAt)}';
+    // If 1 day ago (more than yesterday but less than 2 days ago)
+    if (diff.inDays >= 1 && diff.inDays < 2) {
+      return '1 day ago at $time12Hour';
+    }
+
+    // If within the week (2-7 days ago)
+    if (diff.inDays >= 2 && diff.inDays <= 7) {
+      return '${diff.inDays} days ago at $time12Hour';
+    }
+
+    // If more than a week, show full date with time
+    return '${_getMonthName(localCreatedAt.month)} ${localCreatedAt.day}, ${localCreatedAt.year} at $time12Hour';
   }
 
   String _getMonthName(int month) {

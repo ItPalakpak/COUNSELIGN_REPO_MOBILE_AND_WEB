@@ -139,6 +139,9 @@
         <div id="notificationsDropdown" class="absolute bg-white rounded-lg shadow-lg border">
             <div class="p-3 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-blue-800">Notifications</h3>
+                <button id="markAllReadBtn" class="btn btn-sm btn-outline-primary" title="Mark all as read">
+                    <i class="fas fa-check-double"></i> Clear All
+                </button>
             </div>
             <div class="notifications-list max-h-64 overflow-y-auto">
                 <!-- Notifications will be dynamically populated here -->

@@ -11,6 +11,13 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
   List<CounselorScheduledAppointment> _appointments = [];
   List<CounselorScheduledAppointment> get appointments => _appointments;
 
+  List<CounselorScheduledAppointment> _filteredAppointments = [];
+  List<CounselorScheduledAppointment> get filteredAppointments =>
+      _searchQuery.isEmpty ? _appointments : _filteredAppointments;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
   List<CounselorSchedule> _counselorSchedule = [];
   List<CounselorSchedule> get counselorSchedule => _counselorSchedule;
 
@@ -57,6 +64,8 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
           _appointments = appointmentsList
               .map((json) => CounselorScheduledAppointment.fromJson(json))
               .toList();
+          // Filter appointments after loading
+          _filterAppointments();
         } else {
           _error = data['message'] ?? 'Failed to load appointments';
         }
@@ -199,5 +208,100 @@ class CounselorScheduledAppointmentsViewModel extends ChangeNotifier {
   // Check if a date has appointments
   bool hasAppointmentsOnDate(DateTime date) {
     return getAppointmentCountForDate(date) > 0;
+  }
+
+  // Search functionality
+  void setSearchQuery(String query) {
+    _searchQuery = query.trim();
+    _filterAppointments();
+    notifyListeners();
+  }
+
+  void _filterAppointments() {
+    if (_searchQuery.isEmpty) {
+      _filteredAppointments = _appointments;
+      return;
+    }
+
+    final query = _searchQuery.toLowerCase();
+    _filteredAppointments = _appointments.where((appointment) {
+      // Search in student name
+      if (appointment.studentName.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in student ID
+      if (appointment.studentId.toString().contains(query)) {
+        return true;
+      }
+
+      // Search in date (appointed_date or preferred_date)
+      if (appointment.appointedDate != null &&
+          appointment.appointedDate!.toLowerCase().contains(query)) {
+        return true;
+      }
+      if (appointment.preferredDate != null &&
+          appointment.preferredDate!.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in time
+      if (appointment.time != null &&
+          appointment.time!.toLowerCase().contains(query)) {
+        return true;
+      }
+      if (appointment.preferredTime != null &&
+          appointment.preferredTime!.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in consultation type
+      if (appointment.consultationType.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in method type
+      if (appointment.methodType != null &&
+          appointment.methodType!.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in purpose
+      if (appointment.purpose.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in status
+      if (appointment.status.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in course
+      if (appointment.course.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in year level
+      if (appointment.yearLevel.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in course year
+      if (appointment.courseYear.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in formatted date
+      if (appointment.formattedDate.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      // Search in formatted time
+      if (appointment.formattedTime.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      return false;
+    }).toList();
   }
 }

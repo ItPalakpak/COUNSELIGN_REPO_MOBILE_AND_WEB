@@ -75,10 +75,10 @@ class _ModernBottomNavigationBarState extends State<ModernBottomNavigationBar>
       ),
       child: SafeArea(
         child: Container(
-          height: isMobile ? 80 : 90,
+          height: isMobile ? 65 : 90,
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? 16 : 24,
-            vertical: isMobile ? 8 : 12,
+            vertical: isMobile ? 4 : 12,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,

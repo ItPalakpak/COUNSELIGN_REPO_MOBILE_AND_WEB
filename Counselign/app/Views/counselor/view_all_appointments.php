@@ -182,301 +182,303 @@
                     </div>
                 </div>
             </div>
+
+            
+                <div class="appointment-container">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2 class="text-center fw-bold" style="color: #0d6efd;">List of All Your Appointments</h2>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mb-4" id="appointmentTabs" role="tablist">
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button">
+                                <i class="fas fa-list-alt"></i>
+                                <span class="tab-text">All Appointments</span>
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup" type="button">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span class="tab-text">Follow-up</span>
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="tab-text">Approved</span>
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button">
+                                <i class="fas fa-times-circle"></i>
+                                <span class="tab-text">Rejected</span>
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button">
+                                <i class="fas fa-check-double"></i>
+                                <span class="tab-text">Completed</span>
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-2" role="presentation">
+                            <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button">
+                                <i class="fas fa-ban"></i>
+                                <span class="tab-text">Cancelled</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search appointments...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input type="month" class="form-control" id="dateFilter">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-primary" id="exportPDF"><i class="fas fa-file-pdf me-2"></i>Export PDF</button>
+                                <button class="btn btn-success" id="exportExcel"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Export Filters Modal -->
+                    <div class="modal fade" id="exportFiltersModal" tabindex="-1" aria-labelledby="exportFiltersModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exportFiltersModalLabel"><i class="fas fa-filter me-2"></i>Export Filters</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Date Range Filters -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-3">
+                                            <label for="exportStartDate" class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" id="exportStartDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="exportEndDate" class="form-label">End Date</label>
+                                            <input type="date" class="form-control" id="exportEndDate">
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Leave dates empty to export all appointments from the selected status tab.
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Filters -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4">
+                                            <label for="exportStudentFilter" class="form-label">Student</label>
+                                            <select class="form-select" id="exportStudentFilter">
+                                                <option value="">All Students</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="exportCourseFilter" class="form-label">Course</label>
+                                            <select class="form-select" id="exportCourseFilter">
+                                                <option value="">All Courses</option>
+                                                <option value="BSIT">BSIT</option>
+                                                <option value="BSABE">BSABE</option>
+                                                <option value="BSEnE">BSEnE</option>
+                                                <option value="BSHM">BSHM</option>
+                                                <option value="BFPT">BFPT</option>
+                                                <option value="BSA">BSA</option>
+                                                <option value="BTHM">BTHM</option>
+                                                <option value="BSSW">BSSW</option>
+                                                <option value="BSAF">BSAF</option>
+                                                <option value="BTLED">BTLED</option>
+                                                <option value="DAT-BAT">DAT-BAT</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="exportYearLevelFilter" class="form-label">Year Level</label>
+                                            <select class="form-select" id="exportYearLevelFilter">
+                                                <option value="">All Year Levels</option>
+                                                <option value="I">I</option>
+                                                <option value="II">II</option>
+                                                <option value="III">III</option>
+                                                <option value="IV">IV</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-outline-secondary" id="clearAllFilters">
+                                        <i class="fas fa-times me-1"></i>Clear All
+                                    </button>
+                                    <button class="btn btn-outline-primary" id="clearDateRange">
+                                        <i class="fas fa-calendar-times me-1"></i>Clear Dates
+                                    </button>
+                                    <button class="btn btn-primary" id="applyFilters">
+                                        <i class="fas fa-check me-1"></i>Apply Filters & Export
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="appointmentTabContent">
+                        <div class="loading-spinner" style="display: none;">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="empty-state alert alert-info text-center" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No appointments found.
+                        </div>
+
+                        <div class="tab-pane fade show active" id="all" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                            <th style="width: 60%;">Reason for Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="approved" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="approvedAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="rejected" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                            <th style="width: 60%;">Reason for Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rejectedAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="completed" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="completedAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="cancelled" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                            <th style="width: 60%;">Reason for Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cancelledAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="followup" role="tabpanel">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+                                <table class="table table-hover mb-0" style="min-width: 1150px;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Full Name</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Method Type</th>
+                                            <th>Consultation Type</th>
+                                            <th>Session Type</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="followUpAppointmentsTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
         </div>
     </div>
 
-    <div class="container mt-4">
-        <div class="appointment-container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h2 class="text-center fw-bold" style="color: #0d6efd;">List of All Your Appointments</h2>
-                </div>
-            </div>
 
-            <ul class="nav nav-tabs mb-4" id="appointmentTabs" role="tablist">
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button">
-                        <i class="fas fa-list-alt"></i>
-                        <span class="tab-text">All Appointments</span>
-                    </button>
-                </li>
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup" type="button">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span class="tab-text">Follow-up</span>
-                    </button>
-                </li>
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button">
-                        <i class="fas fa-check-circle"></i>
-                        <span class="tab-text">Approved</span>
-                    </button>
-                </li>
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button">
-                        <i class="fas fa-times-circle"></i>
-                        <span class="tab-text">Rejected</span>
-                    </button>
-                </li>
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button">
-                        <i class="fas fa-check-double"></i>
-                        <span class="tab-text">Completed</span>
-                    </button>
-                </li>
-                <li class="nav-item col-md-2" role="presentation">
-                    <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button">
-                        <i class="fas fa-ban"></i>
-                        <span class="tab-text">Cancelled</span>
-                    </button>
-                </li>
-            </ul>
-
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search appointments...">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                        <input type="month" class="form-control" id="dateFilter">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="btn-group w-100">
-                        <button class="btn btn-primary" id="exportPDF"><i class="fas fa-file-pdf me-2"></i>Export PDF</button>
-                        <button class="btn btn-success" id="exportExcel"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Export Filters Modal -->
-            <div class="modal fade" id="exportFiltersModal" tabindex="-1" aria-labelledby="exportFiltersModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="exportFiltersModalLabel"><i class="fas fa-filter me-2"></i>Export Filters</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- Date Range Filters -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-3">
-                                    <label for="exportStartDate" class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="exportStartDate">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="exportEndDate" class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="exportEndDate">
-                                </div>
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Leave dates empty to export all appointments from the selected status tab.
-                                    </small>
-                                </div>
-                            </div>
-
-                            <!-- Additional Filters -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-4">
-                                    <label for="exportStudentFilter" class="form-label">Student</label>
-                                    <select class="form-select" id="exportStudentFilter">
-                                        <option value="">All Students</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="exportCourseFilter" class="form-label">Course</label>
-                                    <select class="form-select" id="exportCourseFilter">
-                                        <option value="">All Courses</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSABE">BSABE</option>
-                                        <option value="BSEnE">BSEnE</option>
-                                        <option value="BSHM">BSHM</option>
-                                        <option value="BFPT">BFPT</option>
-                                        <option value="BSA">BSA</option>
-                                        <option value="BTHM">BTHM</option>
-                                        <option value="BSSW">BSSW</option>
-                                        <option value="BSAF">BSAF</option>
-                                        <option value="BTLED">BTLED</option>
-                                        <option value="DAT-BAT">DAT-BAT</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="exportYearLevelFilter" class="form-label">Year Level</label>
-                                    <select class="form-select" id="exportYearLevelFilter">
-                                        <option value="">All Year Levels</option>
-                                        <option value="I">I</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-outline-secondary" id="clearAllFilters">
-                                <i class="fas fa-times me-1"></i>Clear All
-                            </button>
-                            <button class="btn btn-outline-primary" id="clearDateRange">
-                                <i class="fas fa-calendar-times me-1"></i>Clear Dates
-                            </button>
-                            <button class="btn btn-primary" id="applyFilters">
-                                <i class="fas fa-check me-1"></i>Apply Filters & Export
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-content" id="appointmentTabContent">
-                <div class="loading-spinner" style="display: none;">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="empty-state alert alert-info text-center" style="display: none;">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No appointments found.
-                </div>
-
-                <div class="tab-pane fade show active" id="all" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                    <th style="width: 60%;">Reason for Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="allAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="approved" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="approvedAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="rejected" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                    <th style="width: 60%;">Reason for Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rejectedAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="completed" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="completedAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="cancelled" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                    <th style="width: 60%;">Reason for Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cancelledAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="followup" role="tabpanel">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-hover mb-0" style="min-width: 1150px;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Full Name</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Method Type</th>
-                                    <th>Consultation Type</th>
-                                    <th>Session Type</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="followUpAppointmentsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <footer>
         <div class="footer-content">

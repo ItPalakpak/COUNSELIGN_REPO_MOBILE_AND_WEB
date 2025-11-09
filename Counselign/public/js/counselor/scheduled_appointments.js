@@ -5,7 +5,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const appointmentsTableContainer = document.getElementById('appointments-table-container');
     const appointmentsBody = document.getElementById('appointments-body');
 
+    // Store original appointments data for search filtering
+    let originalAppointments = [];
+    let filteredAppointments = [];
+
     initStickyHeader();
+    initSearchFunctionality();
     loadAppointments();
     loadCounselorSchedule();
 
@@ -26,6 +31,97 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    /**
+     * Initialize search functionality for appointments table
+     */
+    function initSearchFunctionality() {
+        const searchInput = document.getElementById('appointmentsSearchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        
+        if (!searchInput) {
+            return;
+        }
+
+        // Search input event listener
+        searchInput.addEventListener('input', function() {
+            const searchQuery = this.value.trim().toLowerCase();
+            filterAppointmentsTable(searchQuery);
+            
+            // Show/hide clear button
+            if (searchQuery.length > 0) {
+                clearSearchBtn.style.display = 'block';
+            } else {
+                clearSearchBtn.style.display = 'none';
+            }
+        });
+
+        // Clear search button event listener
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                filterAppointmentsTable('');
+            });
+        }
+    }
+
+    /**
+     * Filter appointments table based on search query
+     * @param {string} searchQuery - The search query string
+     */
+    function filterAppointmentsTable(searchQuery) {
+        const tableRows = appointmentsBody.querySelectorAll('tr');
+        
+        if (!searchQuery || searchQuery.length === 0) {
+            // Show all rows if search is empty
+            tableRows.forEach(row => {
+                row.style.display = '';
+            });
+            
+            // Show/hide empty message based on original data
+            if (originalAppointments.length === 0) {
+                emptyMessage.classList.remove('d-none');
+                appointmentsTableContainer.classList.add('d-none');
+            } else {
+                emptyMessage.classList.add('d-none');
+                appointmentsTableContainer.classList.remove('d-none');
+            }
+            return;
+        }
+
+        let visibleRowCount = 0;
+        
+        // Filter rows based on search query
+        tableRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let rowText = '';
+            
+            // Collect all text content from table cells
+            cells.forEach(cell => {
+                if (cell) {
+                    rowText += ' ' + cell.textContent.trim().toLowerCase();
+                }
+            });
+            
+            // Check if search query matches any cell content
+            if (rowText.includes(searchQuery)) {
+                row.style.display = '';
+                visibleRowCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty message based on filtered results
+        if (visibleRowCount === 0 && originalAppointments.length > 0) {
+            emptyMessage.textContent = 'No appointments match your search criteria.';
+            emptyMessage.classList.remove('d-none');
+        } else if (visibleRowCount > 0) {
+            emptyMessage.classList.add('d-none');
+            appointmentsTableContainer.classList.remove('d-none');
+        }
+    }
+
     function loadAppointments() {
         loadingIndicator.classList.remove('d-none');
         appointmentsTableContainer.classList.add('d-none');
@@ -36,10 +132,14 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.status === 'success') {
                     if (Array.isArray(data.appointments) && data.appointments.length > 0) {
+                        originalAppointments = data.appointments;
+                        filteredAppointments = data.appointments;
                         displayAppointments(data.appointments);
                         appointmentsTableContainer.classList.remove('d-none');
                         emptyMessage.classList.add('d-none');
                     } else {
+                        originalAppointments = [];
+                        filteredAppointments = [];
                         emptyMessage.textContent = data.message || 'No approved appointments found';
                         emptyMessage.classList.remove('d-none');
                         appointmentsTableContainer.classList.add('d-none');
@@ -49,6 +149,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
+                originalAppointments = [];
+                filteredAppointments = [];
                 emptyMessage.textContent = error.message;
                 emptyMessage.classList.remove('d-none');
                 appointmentsTableContainer.classList.add('d-none');
@@ -63,6 +165,10 @@ document.addEventListener('DOMContentLoaded', function () {
             appointmentsTableContainer.classList.add('d-none');
             return;
         }
+        
+        // Store current search query to reapply after rendering
+        const searchInput = document.getElementById('appointmentsSearchInput');
+        const currentSearchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
         appointments.forEach(appointment => {
             const row = document.createElement('tr');
             row.dataset.id = appointment.id;
@@ -123,6 +229,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         appointmentsTableContainer.classList.remove('d-none');
         emptyMessage.classList.add('d-none');
+        
+        // Reapply search filter if there's an active search query
+        if (currentSearchQuery && currentSearchQuery.length > 0) {
+            filterAppointmentsTable(currentSearchQuery);
+        }
         
         // Update calendar with appointments
         updateCalendarWithAppointments(appointments);

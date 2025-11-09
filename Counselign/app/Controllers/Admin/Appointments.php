@@ -334,7 +334,10 @@ class Appointments extends BaseController
         // Get student_id for notification
         $user = $db->table('appointments')->select('student_id')->where('id', $appointment_id)->get()->getRowArray();
         if ($user) {
-            $this->createNotification($db, $user['student_id'], $appointment_id, $new_status, $rejection_reason);
+            // Create notification for student when status is approved, rejected, or cancelled
+            if (in_array($new_status, ['approved', 'rejected', 'cancelled'])) {
+                $this->createNotification($db, $user['student_id'], $appointment_id, $new_status, $rejection_reason);
+            }
             
             // Send email notification
             if ($appointment_details && in_array($new_status, ['approved', 'rejected', 'cancelled'])) {
@@ -433,38 +436,48 @@ class Appointments extends BaseController
     // Helper function for notification
     private function createNotification($db, $student_id, $appointment_id, $status, $rejection_reason = null)
     {
-        $type = 'appointment';
-        $title = 'Appointment ' . ucfirst($status);
+        try {
+            $notificationsModel = new \App\Models\NotificationsModel();
+            
+            $type = 'appointment';
+            $title = 'Appointment ' . ucfirst($status);
 
-        // Fetch appointment details for date/time
-        $appt = $db->table('appointments')->select('preferred_date, preferred_time')->where('id', $appointment_id)->get()->getRowArray();
-        $date = $appt ? date('F j, Y', strtotime($appt['preferred_date'])) : '';
-        $time = $appt ? $appt['preferred_time'] : '';
+            // Fetch appointment details for date/time
+            $appt = $db->table('appointments')->select('preferred_date, preferred_time')->where('id', $appointment_id)->get()->getRowArray();
+            $date = $appt ? date('F j, Y', strtotime($appt['preferred_date'])) : '';
+            $time = $appt ? $appt['preferred_time'] : '';
 
-        // Create appropriate message based on status
-        if ($status === 'approved') {
-            $message = "Congratulations! Your appointment on $date at $time has been approved. Please check your scheduled appointments for details.";
-        } else if ($status === 'rejected') {
-            $message = "We're sorry, but your appointment on $date at $time was rejected.";
-            if ($rejection_reason) {
-                $message .= " Reason: $rejection_reason.";
+            // Create appropriate message based on status
+            if ($status === 'approved') {
+                $message = "Congratulations! Your appointment on {$date} at {$time} has been approved. Please check your scheduled appointments for details.";
+            } else if ($status === 'rejected') {
+                $message = "We're sorry, but your appointment on {$date} at {$time} was rejected.";
+                if ($rejection_reason) {
+                    $message .= " Reason: {$rejection_reason}.";
+                }
+                $message .= " If you have questions, please contact the counseling office.";
+            } else if ($status === 'cancelled') {
+                $message = "Your appointment on {$date} at {$time} has been cancelled by the admin.";
+                if ($rejection_reason) {
+                    $message .= " Reason: {$rejection_reason}.";
+                }
+            } else {
+                $message = "Your appointment status has been updated to {$status}.";
             }
-            $message .= " If you have questions, please contact the counseling office.";
-        } else {
-            $message = "Your appointment status has been updated to $status.";
-        }
 
-        // Insert notification into a notifications table (if you have one)
-        // If you use a separate notification system, you can call it here.
-        // Example:
-        // $db->table('notifications')->insert([
-        //     'user_id' => $user_id,
-        //     'type' => $type,
-        //     'title' => $title,
-        //     'message' => $message,
-        //     'related_id' => $appointment_id,
-        //     'created_at' => date('Y-m-d H:i:s')
-        // ]);
+            $notificationData = [
+                'user_id' => $student_id,
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'related_id' => $appointment_id,
+                'is_read' => 0
+            ];
+            
+            $notificationsModel->createNotification($notificationData);
+        } catch (\Exception $e) {
+            log_message('error', 'Error creating admin appointment notification: ' . $e->getMessage());
+        }
     }
 
     /**

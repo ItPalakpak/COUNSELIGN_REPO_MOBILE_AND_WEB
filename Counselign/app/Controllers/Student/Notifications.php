@@ -124,18 +124,50 @@ class Notifications extends \CodeIgniter\Controller
             return $this->failUnauthorized('User ID not found in session');
         }
 
-        // Since notifications are generated dynamically from events, announcements, appointments, and messages,
-        // we don't have a persistent notifications table to mark as read.
-        // The "read" state is handled by updating the user's last_activity timestamp.
         try {
-            // Update last_activity for viewing notifications (using Manila time)
-            $activityHelper = new UserActivityHelper();
-            $activityHelper->updateStudentActivity($userId, 'view_notifications');
+            $input = $this->request->getJSON(true);
+            $notificationId = $input['notification_id'] ?? null;
+            $notificationType = $input['type'] ?? null;
+            $relatedId = $input['related_id'] ?? null;
+            $markAll = $input['mark_all'] ?? false;
 
-            return $this->respond([
-                'status' => 'success',
-                'message' => 'Notifications marked as read by updating last activity time.'
-            ]);
+            if ($markAll) {
+                // Mark all notifications as read
+                $this->notificationsModel->markAllAsRead($userId);
+                
+                // Update last_activity for viewing notifications
+                $activityHelper = new UserActivityHelper();
+                $activityHelper->updateStudentActivity($userId, 'view_notifications');
+
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'All notifications marked as read.'
+                ]);
+            } else if ($notificationId) {
+                // Mark single notification as read
+                $this->notificationsModel->markAsRead($notificationId, $userId);
+                
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'Notification marked as read.'
+                ]);
+            } else if ($notificationType && $relatedId) {
+                // Mark event or announcement as read
+                if ($notificationType === 'event') {
+                    $this->notificationsModel->markEventAsRead($userId, (int)$relatedId);
+                } else if ($notificationType === 'announcement') {
+                    $this->notificationsModel->markAnnouncementAsRead($userId, (int)$relatedId);
+                } else {
+                    return $this->fail('Invalid notification type');
+                }
+                
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'Notification marked as read.'
+                ]);
+            } else {
+                return $this->fail('Missing required parameters');
+            }
         } catch (\Exception $e) {
             log_message('error', 'Error marking notifications as read: ' . $e->getMessage());
             return $this->failServerError('Failed to mark notifications as read');

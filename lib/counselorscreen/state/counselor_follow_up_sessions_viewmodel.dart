@@ -132,11 +132,48 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
-          _followUpSessions =
+          final sessions =
               (data['follow_up_sessions'] as List<dynamic>?)
                   ?.map((json) => FollowUpSession.fromJson(json))
                   .toList() ??
               [];
+
+          // Sort follow-up sessions: Pending/Latest on top, oldest at bottom
+          sessions.sort((a, b) {
+            // First, prioritize pending status
+            final aIsPending = a.status.toLowerCase() == 'pending';
+            final bIsPending = b.status.toLowerCase() == 'pending';
+
+            if (aIsPending && !bIsPending) {
+              return -1; // a (pending) comes before b
+            }
+            if (!aIsPending && bIsPending) {
+              return 1; // b (pending) comes before a
+            }
+
+            // Both have same pending status, sort by date (descending - latest first)
+            try {
+              final aDate = DateTime.parse(a.preferredDate);
+              final bDate = DateTime.parse(b.preferredDate);
+              final dateComparison = bDate.compareTo(aDate);
+
+              if (dateComparison != 0) {
+                return dateComparison;
+              }
+
+              // If dates are equal, sort by time (descending - latest first)
+              return b.preferredTime.compareTo(a.preferredTime);
+            } catch (e) {
+              // If date parsing fails, fall back to string comparison
+              final dateComparison = b.preferredDate.compareTo(a.preferredDate);
+              if (dateComparison != 0) {
+                return dateComparison;
+              }
+              return b.preferredTime.compareTo(a.preferredTime);
+            }
+          });
+
+          _followUpSessions = sessions;
           notifyListeners();
         } else {
           _error = data['message'] ?? 'Failed to load follow-up sessions';

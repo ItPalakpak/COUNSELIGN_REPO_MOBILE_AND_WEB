@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../widgets/app_header.dart';
 import 'state/student_dashboard_viewmodel.dart';
 import 'models/counselor.dart';
 import 'utils/image_url_helper.dart';
@@ -44,8 +43,7 @@ class _ConversationContent extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
-          appBar: AppHeader(onMenu: viewModel.toggleDrawer),
+          backgroundColor: Colors.white,
           body: Stack(
             children: [
               Column(
@@ -89,15 +87,15 @@ class _ConversationContent extends StatelessWidget {
   ) {
     final counselor = viewModel.selectedCounselor;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE6E8EF), width: 1)),
+      padding: const EdgeInsets.fromLTRB(2, 48, 16, 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF191970),
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
               if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
@@ -109,48 +107,41 @@ class _ConversationContent extends StatelessWidget {
             },
           ),
           if (counselor != null)
-            Container(
-              width: 40,
-              height: 40,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE4E6EB), width: 2),
-              ),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: ClipOval(child: _buildCounselorProfileImage(counselor)),
             ),
+          const SizedBox(width: 5),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  counselor != null ? counselor.displayName : 'Conversation',
+                  counselor != null ? counselor.displayName : 'Messages',
                   style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF003366),
+                    fontWeight: FontWeight.bold,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (counselor != null)
-                  Row(
-                    children: [
-                      Icon(
-                        counselor.onlineStatus.statusIcon,
-                        size: 8,
-                        color: counselor.onlineStatus.statusColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        counselor.onlineStatus.text,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: counselor.onlineStatus.statusColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    counselor.onlineStatus.text,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                  )
+                else
+                  Text(
+                    'Select a conversation to start messaging',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
                   ),
               ],
             ),
@@ -164,81 +155,73 @@ class _ConversationContent extends StatelessWidget {
     BuildContext context,
     StudentDashboardViewModel viewModel,
   ) {
-    return Container(
-      color: const Color(0xFFF8FAFD),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(5),
-            margin: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF060E57).withAlpha((0.05 * 255).round()),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFF060E57).withAlpha((0.08 * 255).round()),
-                width: 1,
+    if (viewModel.selectedCounselor == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No Messages Yet',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            child: const Text(
-              'Your conversation is private and confidential',
-              style: TextStyle(
-                color: Color(0xFF666666),
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-              ),
+            const SizedBox(height: 8),
+            Text(
+              'Select a conversation from the list to view messages.',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
               textAlign: TextAlign.center,
             ),
-          ),
-          Expanded(
-            child: viewModel.counselorMessages.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        viewModel.selectedCounselor != null
-                            ? 'Start a conversation with ${viewModel.selectedCounselor!.displayName}'
-                            : 'Select a counselor to start messaging',
-                        style: const TextStyle(
-                          color: Color(0xFF666666),
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    controller: viewModel.chatScrollController,
-                    itemCount: viewModel.counselorMessages.length,
-                    itemBuilder: (context, index) {
-                      final message = viewModel.counselorMessages[index];
-                      return _MessageBubble(
-                        text: message.messageText,
-                        createdAt: viewModel.formatMessageTime(
-                          message.createdAt,
-                        ),
-                        isSent: message.isSent,
-                        senderName: message.senderName,
-                        senderProfilePicture: message.senderProfilePicture,
-                      );
-                    },
-                  ),
-          ),
-          if (viewModel.isTyping)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha((0.04 * 255).round()),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [_Dot(), _Dot(), _Dot()],
+          ],
+        ),
+      );
+    }
+
+    if (viewModel.counselorMessages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No Messages Yet',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-        ],
-      ),
+            const SizedBox(height: 8),
+            Text(
+              'Start the conversation by sending a message.',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: viewModel.chatScrollController,
+      padding: const EdgeInsets.all(16),
+      itemCount: viewModel.counselorMessages.length,
+      itemBuilder: (context, index) {
+        final message = viewModel.counselorMessages[index];
+        return _MessageBubble(
+          text: message.messageText,
+          createdAt: viewModel.formatMessageTime(message.createdAt),
+          isSent: message.isSent,
+          senderName: message.senderName,
+          senderProfilePicture: message.senderProfilePicture,
+          counselorProfilePicture: viewModel.selectedCounselor?.profileImageUrl,
+        );
+      },
     );
   }
 
@@ -250,49 +233,62 @@ class _ConversationContent extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.black.withAlpha((0.06 * 255).round()),
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: TextField(
-              controller: viewModel.messageController,
-              decoration: const InputDecoration(
-                hintText: 'Type your message here...',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
-                alignLabelWithHint: true,
+            child: Material(
+              child: TextField(
+                controller: viewModel.messageController,
+                enabled: viewModel.selectedCounselor != null,
+                decoration: InputDecoration(
+                  hintText: viewModel.selectedCounselor != null
+                      ? 'Type your message...'
+                      : 'Select a conversation to reply...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: const BorderSide(color: Color(0xFF191970)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                maxLines: null,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.send,
+                autocorrect: false,
+                enableSuggestions: false,
+                spellCheckConfiguration:
+                    const SpellCheckConfiguration.disabled(),
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty &&
+                      viewModel.selectedCounselor != null) {
+                    viewModel.sendMessage(context);
+                  }
+                },
               ),
-              maxLines: 3,
-              minLines: 1,
-              textAlign: TextAlign.left,
-              onSubmitted: (_) => viewModel.sendMessage(context),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Container(
-            width: 44,
-            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF060E57),
-              borderRadius: BorderRadius.circular(50),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(
-                    0xFF060E57,
-                  ).withAlpha((0.08 * 255).round()),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: viewModel.selectedCounselor != null
+                  ? const Color(0xFF191970)
+                  : Colors.grey[400],
+              shape: BoxShape.circle,
             ),
             child: IconButton(
+              onPressed:
+                  viewModel.isSendingMessage ||
+                      viewModel.selectedCounselor == null
+                  ? null
+                  : () => viewModel.sendMessage(context),
               icon: viewModel.isSendingMessage
                   ? const SizedBox(
                       width: 20,
@@ -302,11 +298,7 @@ class _ConversationContent extends StatelessWidget {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.send, color: Colors.white, size: 18),
-              onPressed: viewModel.isSendingMessage
-                  ? null
-                  : () => viewModel.sendMessage(context),
-              padding: EdgeInsets.zero,
+                  : const Icon(Icons.send, color: Colors.white),
             ),
           ),
         ],
@@ -343,6 +335,7 @@ class _MessageBubble extends StatefulWidget {
   final bool isSent;
   final String? senderName;
   final String? senderProfilePicture;
+  final String? counselorProfilePicture;
 
   const _MessageBubble({
     required this.text,
@@ -350,6 +343,7 @@ class _MessageBubble extends StatefulWidget {
     required this.isSent,
     required this.senderName,
     required this.senderProfilePicture,
+    this.counselorProfilePicture,
   });
 
   @override
@@ -361,150 +355,111 @@ class _MessageBubbleState extends State<_MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = widget.isSent
-        ? CrossAxisAlignment.end
-        : CrossAxisAlignment.start;
-    final margin = widget.isSent
-        ? const EdgeInsets.only(right: 10, left: 10, bottom: 8)
-        : const EdgeInsets.only(right: 10, left: 10, bottom: 8);
+    final isSent = widget.isSent;
+    final isTimeVisible = _showTimestamp;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _showTimestamp = !_showTimestamp;
-        });
-      },
-      child: Container(
-        margin: margin,
-        child: Column(
-          crossAxisAlignment: alignment,
-          children: [
-            if (!widget.isSent && widget.senderName != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.senderProfilePicture != null)
-                      Container(
-                        width: 20,
-                        height: 20,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFE4E6EB),
-                            width: 1,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      child: Column(
+        crossAxisAlignment: isSent
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: isSent
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            children: [
+              if (!isSent) ...[
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  backgroundImage: widget.counselorProfilePicture != null
+                      ? NetworkImage(
+                          ImageUrlHelper.getProfileImageUrl(
+                            widget.counselorProfilePicture!,
                           ),
-                        ),
-                        child: ClipOval(
-                          child: _buildSenderImage(
-                            widget.senderProfilePicture!,
-                          ),
-                        ),
-                      ),
-                    Text(
-                      widget.senderName!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                        )
+                      : null,
+                  child: widget.counselorProfilePicture == null
+                      ? const Icon(
+                          Icons.person,
+                          color: Color(0xFF191970),
+                          size: 16,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showTimestamp = !_showTimestamp;
+                    });
+                  },
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.7,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSent
+                          ? const Color(0xFF191970)
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20).copyWith(
+                        bottomLeft: isSent
+                            ? const Radius.circular(20)
+                            : const Radius.circular(4),
+                        bottomRight: isSent
+                            ? const Radius.circular(4)
+                            : const Radius.circular(20),
                       ),
                     ),
-                  ],
+                    child: Text(
+                      widget.text,
+                      style: TextStyle(
+                        color: isSent ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.isSent ? const Color(0xFF060E57) : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: widget.isSent
-                      ? const Radius.circular(18)
-                      : const Radius.circular(4),
-                  bottomRight: widget.isSent
-                      ? const Radius.circular(4)
-                      : const Radius.circular(18),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha((0.06 * 255).round()),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+              if (isSent) ...[
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(
+                    0xFF191970,
+                  ).withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.person,
+                    color: Color(0xFF191970),
+                    size: 16,
                   ),
-                ],
+                ),
+              ],
+            ],
+          ),
+          if (isTimeVisible)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 4,
+                left: isSent ? 0 : 40,
+                right: isSent ? 40 : 0,
               ),
               child: Text(
-                widget.text,
-                style: TextStyle(
-                  color: widget.isSent ? Colors.white : const Color(0xFF1A1A1A),
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.left,
+                widget.createdAt,
+                style: TextStyle(color: Colors.grey[600], fontSize: 10),
               ),
             ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: _showTimestamp
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        widget.createdAt,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: widget.isSent
-                            ? TextAlign.right
-                            : TextAlign.left,
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSenderImage(String profilePicture) {
-    final imageUrl = ImageUrlHelper.getProfileImageUrl(profilePicture);
-    if (imageUrl == 'Photos/profile.png') {
-      return Image.asset(
-        'Photos/profile.png',
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(Icons.person, color: Color(0xFF64748B), size: 12);
-        },
-      );
-    }
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return const Icon(Icons.person, color: Color(0xFF64748B), size: 12);
-      },
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 6,
-      height: 6,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: const BoxDecoration(
-        color: Color(0xFF060E57),
-        shape: BoxShape.circle,
+        ],
       ),
     );
   }

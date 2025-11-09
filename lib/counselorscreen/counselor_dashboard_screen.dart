@@ -312,7 +312,61 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                   isVisible: viewModel.isNotificationsOpen,
                   notifications: viewModel.notifications,
                   onClose: viewModel.closeNotifications,
-                  onMarkAsRead: (id) => viewModel.markNotificationAsRead(id),
+                  onMarkAsRead:
+                      ({
+                        int? notificationId,
+                        String? type,
+                        int? relatedId,
+                      }) async {
+                        await viewModel.markNotificationAsRead(
+                          notificationId: notificationId,
+                          type: type,
+                          relatedId: relatedId,
+                        );
+                      },
+                  onMarkAllAsRead: () async {
+                    await viewModel.markAllNotificationsAsRead();
+                  },
+                  onNotificationTap: (notification) async {
+                    // Mark as read if not already read
+                    if (!notification.isRead) {
+                      await viewModel.markNotificationAsRead(
+                        notificationId: notification.id != 0
+                            ? notification.id
+                            : null,
+                        type: notification.type,
+                        relatedId: notification.relatedId,
+                      );
+                    }
+                    // Close notifications dropdown
+                    viewModel.closeNotifications();
+                    // Handle navigation based on notification type
+                    if (notification.type == 'appointment' &&
+                        notification.relatedId != null) {
+                      _showAppointmentDetailsDialog(
+                        context,
+                        viewModel,
+                        notification.relatedId.toString(),
+                      );
+                    } else if (notification.type == 'event' ||
+                        notification.type == 'announcement') {
+                      // Navigate to announcements screen
+                      if (context.mounted) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.counselorAnnouncements,
+                        );
+                      }
+                    } else if (notification.type == 'message') {
+                      // Navigate to messages screen
+                      if (context.mounted) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.counselorMessages,
+                        );
+                      }
+                    }
+                  },
                   unreadCount: viewModel.unreadNotificationsCount,
                 ),
             ],
@@ -725,6 +779,160 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Show appointment details dialog
+  void _showAppointmentDetailsDialog(
+    BuildContext context,
+    CounselorDashboardViewModel viewModel,
+    String appointmentId,
+  ) async {
+    // Show loading dialog
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) =>
+          const Center(child: CircularProgressIndicator()),
+    );
+
+    // Fetch appointment details
+    final appointmentData = await viewModel.fetchAppointmentDetails(
+      appointmentId,
+    );
+
+    // Close loading dialog
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+
+    if (appointmentData == null) {
+      if (!context.mounted) return;
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Failed to load appointment details.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Show appointment details dialog
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final status =
+            appointmentData['status']?.toString().toLowerCase() ?? '';
+        Color statusColor = Colors.grey;
+        if (status == 'rejected') {
+          statusColor = Colors.red;
+        } else if (status == 'pending') {
+          statusColor = Colors.orange;
+        } else if (status == 'completed') {
+          statusColor = Colors.blue;
+        } else if (status == 'approved') {
+          statusColor = Colors.green;
+        } else if (status == 'cancelled') {
+          statusColor = Colors.grey;
+        }
+
+        return AlertDialog(
+          title: const Text('Appointment Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow(
+                  'Date',
+                  appointmentData['preferred_date']?.toString() ?? 'N/A',
+                ),
+                _buildDetailRow(
+                  'Time',
+                  appointmentData['preferred_time']?.toString() ?? 'N/A',
+                ),
+                _buildDetailRow(
+                  'Status',
+                  status.toUpperCase(),
+                  statusColor: statusColor,
+                ),
+                _buildDetailRow(
+                  'Student',
+                  appointmentData['student_name']?.toString() ??
+                      appointmentData['username']?.toString() ??
+                      appointmentData['student_id']?.toString() ??
+                      'N/A',
+                ),
+                _buildDetailRow(
+                  'Method',
+                  appointmentData['method_type']?.toString() ?? 'N/A',
+                ),
+                _buildDetailRow(
+                  'Purpose',
+                  appointmentData['purpose']?.toString() ?? 'N/A',
+                ),
+                _buildDetailRow(
+                  'Description',
+                  appointmentData['description']?.toString() ?? 'N/A',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                if (context.mounted) {
+                  Navigator.pushNamed(context, AppRoutes.counselorAppointments);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF191970),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Go to Appointments'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? statusColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: statusColor != null
+                  ? TextStyle(color: statusColor, fontWeight: FontWeight.w500)
+                  : null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

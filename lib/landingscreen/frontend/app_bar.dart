@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:counselign/widgets/app_header.dart';
 
 PreferredSizeWidget buildAppBar({
   required BuildContext context,
@@ -10,6 +11,7 @@ PreferredSizeWidget buildAppBar({
   final screenWidth = MediaQuery.of(context).size.width;
 
   return AppBar(
+    toolbarHeight: kAppBarHeight,
     backgroundColor: const Color(0xFF060E57),
     elevation: 2,
     shadowColor: Colors.black.withValues(alpha: 0.1),

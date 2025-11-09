@@ -71,7 +71,20 @@
 
     <main class="bg-light p-4">
         <div class="container-fluid px-4">
-            <h2 class="h2 fw-bold text-primary mb-4">Consultation Schedule Queries</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h2 fw-bold text-primary mb-0">Consultation Schedule Queries</h2>
+                <div class="search-container">
+                    <div class="input-group" style="max-width: 300px;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="appointmentsSearchInput" placeholder="Search appointments..." aria-label="Search appointments">
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <div class="csq-layout">
                 <div class="csq-left">
@@ -180,7 +193,7 @@
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 
-    
+
 </body>
 
 </html>

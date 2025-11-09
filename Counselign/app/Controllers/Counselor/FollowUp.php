@@ -8,6 +8,7 @@ use App\Helpers\UserActivityHelper;
 use App\Models\AppointmentModel;
 use App\Models\FollowUpAppointmentModel;
 use App\Models\CounselorAvailabilityModel;
+use App\Models\NotificationsModel;
 use CodeIgniter\API\ResponseTrait;
 
 class FollowUp extends BaseController
@@ -364,6 +365,9 @@ public function createFollowUp()
             // Send email notification to student
             $this->sendFollowUpNotificationToStudent($createdFollowUp, 'created');
             
+            // Create notification for student
+            $this->createFollowUpNotification($studentId, $insertId, 'follow_up_session', 'New Follow-up Session Created', 'A new follow-up session has been scheduled for ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
+            
             // Update last_activity for creating follow-up appointment
             $activityHelper = new UserActivityHelper();
             $activityHelper->updateCounselorActivity($counselorId, 'create_follow_up');
@@ -515,6 +519,9 @@ public function createFollowUp()
             // Send email notification to student
             $this->sendFollowUpNotificationToStudent($sessionRow, 'cancelled');
 
+            // Create notification for student
+            $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Cancelled', 'Your follow-up session scheduled for ' . date('F j, Y', strtotime($sessionRow['preferred_date'])) . ' at ' . $sessionRow['preferred_time'] . ' has been cancelled. Reason: ' . $reason . '.');
+
             // Update last_activity for cancelling follow-up
             $activityHelper = new UserActivityHelper();
             $activityHelper->updateCounselorActivity($counselorId, 'cancel_follow_up');
@@ -605,6 +612,9 @@ public function createFollowUp()
                 
                 // Send email notification to student
                 $this->sendFollowUpNotificationToStudent($updatedSession, 'edited');
+
+                // Create notification for student
+                $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Updated', 'Your follow-up session has been updated. New schedule: ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
 
                 // Update last_activity for editing follow-up
                 $activityHelper = new UserActivityHelper();
@@ -758,6 +768,33 @@ public function createFollowUp()
         } catch (\Exception $e) {
             log_message('error', 'Error getting student email: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Create notification for follow-up session actions
+     * 
+     * @param string $studentId Student ID to receive notification
+     * @param int $relatedId Follow-up session ID
+     * @param string $type Notification type ('follow_up_session')
+     * @param string $title Notification title
+     * @param string $message Notification message
+     */
+    private function createFollowUpNotification(string $studentId, int $relatedId, string $type, string $title, string $message): void
+    {
+        try {
+            $notificationsModel = new NotificationsModel();
+            $notificationData = [
+                'user_id' => $studentId,
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'related_id' => $relatedId,
+                'is_read' => 0
+            ];
+            $notificationsModel->createNotification($notificationData);
+        } catch (\Exception $e) {
+            log_message('error', 'Error creating follow-up notification: ' . $e->getMessage());
         }
     }
 }

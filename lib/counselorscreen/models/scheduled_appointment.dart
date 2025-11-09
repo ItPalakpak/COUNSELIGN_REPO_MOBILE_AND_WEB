@@ -177,51 +177,55 @@ class CounselorScheduledAppointment {
   bool get _isFollowUp {
     final kind = _normalize(recordKind);
     final type = _normalize(appointmentType);
-    
+
     // Check record_kind field
     if (kind.isNotEmpty && (kind.contains('follow') || kind == 'followup')) {
       return true;
     }
-    
+
     // Check appointment_type field
     if (type.isNotEmpty && (type.contains('follow') || type == 'followup')) {
       return true;
     }
-    
+
     // Check if purpose mentions follow-up
     final purposeLower = _normalize(purpose);
     if (purposeLower.contains('follow')) {
       return true;
     }
-    
+
     return false;
   }
+
+  // Public getter for follow-up detection
+  bool get isFollowUp => _isFollowUp;
 
   // FIXED: Enhanced pending follow-up detection
   bool get isPendingFollowUp {
     // First check if this is a follow-up appointment
     if (!_isFollowUp) return false;
-    
+
     // Check follow_up_status field explicitly
     final followUpStatusNorm = _normalize(followUpStatus);
     if (followUpStatusNorm.isNotEmpty) {
       // If follow_up_status exists and is pending, it's a pending follow-up
-      if (followUpStatusNorm == 'pending' || followUpStatusNorm.contains('pending')) {
+      if (followUpStatusNorm == 'pending' ||
+          followUpStatusNorm.contains('pending')) {
         return true;
       }
       // If follow_up_status is completed/done, it's not pending anymore
-      if (followUpStatusNorm == 'completed' || 
-          followUpStatusNorm == 'done' || 
+      if (followUpStatusNorm == 'completed' ||
+          followUpStatusNorm == 'done' ||
           followUpStatusNorm.contains('complete')) {
         return false;
       }
     }
-    
+
     // Check pending follow-up count
     if (pendingFollowUpCount > 0) {
       return true;
     }
-    
+
     // If status is approved but it's a follow-up, check if it needs action
     final statusNorm = _normalize(status);
     if (statusNorm == 'approved' && _isFollowUp) {
@@ -230,7 +234,7 @@ class CounselorScheduledAppointment {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -261,7 +265,7 @@ class CounselorScheduledAppointment {
     if (isPendingFollowUp) {
       return 'warning';
     }
-    
+
     // Priority 2: Check actual status
     switch (_normalizedStatus) {
       case 'completed':
@@ -284,7 +288,7 @@ class CounselorScheduledAppointment {
     if (isPendingFollowUp) {
       return 'Pending Follow-up';
     }
-    
+
     // Priority 2: Return actual status
     switch (status.toLowerCase()) {
       case 'completed':
