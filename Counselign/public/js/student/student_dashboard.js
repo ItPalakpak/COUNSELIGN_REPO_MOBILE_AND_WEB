@@ -501,64 +501,99 @@ function renderNotifications(notifications = []) {
     }
     
     // Add mark all as read functionality
-    const markAllReadBtn = document.getElementById('markAllReadBtn');
-    if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            // Get all notifications currently displayed in the modal
-            const notificationsList = document.querySelector('.notifications-list');
-            if (!notificationsList) return;
-            
-            const notificationItems = notificationsList.querySelectorAll('.notification-item');
-            const notificationsToMark = [];
-            
+const markAllReadBtn = document.getElementById('markAllReadBtn');
+if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Get all notifications currently displayed in the modal
+        const notificationsList = document.querySelector('.notifications-list');
+        if (!notificationsList) return;
+        
+        const notificationItems = notificationsList.querySelectorAll('.notification-item');
+        
+        // Collect all notifications that need to be marked as read
+        const notificationsToMark = [];
+        
+        notificationItems.forEach(item => {
+            const markReadBtn = item.querySelector('.mark-read-btn');
+            if (markReadBtn) {
+                const notificationId = markReadBtn.dataset.notificationId || null;
+                const notificationType = markReadBtn.dataset.type || null;
+                const relatedId = markReadBtn.dataset.relatedId || null;
+                
+                if (notificationId || (notificationType && relatedId)) {
+                    notificationsToMark.push({
+                        notification_id: notificationId,
+                        type: notificationType,
+                        related_id: relatedId
+                    });
+                }
+            }
+        });
+        
+        // If no notifications to mark, just return
+        if (notificationsToMark.length === 0) {
+            return;
+        }
+        
+        // Mark all notifications as read using the bulk endpoint
+        fetch(window.BASE_URL + 'student/notifications/mark-read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mark_all: true })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Now mark each individual notification based on its type
+                const markPromises = notificationsToMark.map(notif => {
+                    const payload = {};
+                    
+                    // Handle different notification types
+                    if (notif.notification_id) {
+                        payload.notification_id = notif.notification_id;
+                    } else if (notif.type && notif.related_id) {
+                        payload.type = notif.type;
+                        payload.related_id = notif.related_id;
+                    } else {
+                        return Promise.resolve();
+                    }
+                    
+                    return fetch(window.BASE_URL + 'student/notifications/mark-read', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                });
+                
+                // Wait for all individual marks to complete
+                return Promise.all(markPromises);
+            } else {
+                console.error('Error marking all notifications as read:', data.message);
+                throw new Error(data.message);
+            }
+        })
+        .then(() => {
+            // Remove all mark-as-read buttons and unread classes
             notificationItems.forEach(item => {
+                item.classList.remove('unread');
                 const markReadBtn = item.querySelector('.mark-read-btn');
                 if (markReadBtn) {
-                    const notificationId = markReadBtn.dataset.notificationId || null;
-                    const notificationType = markReadBtn.dataset.type || null;
-                    const relatedId = markReadBtn.dataset.relatedId || null;
-                    
-                    if (notificationId || (notificationType && relatedId)) {
-                        notificationsToMark.push({
-                            notification_id: notificationId,
-                            type: notificationType,
-                            related_id: relatedId
-                        });
-                    }
+                    markReadBtn.remove();
                 }
             });
             
-            // Mark all notifications as read
-            fetch(window.BASE_URL + 'student/notifications/mark-read', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mark_all: true })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove all mark-as-read buttons and unread classes
-                    notificationItems.forEach(item => {
-                        item.classList.remove('unread');
-                        const markReadBtn = item.querySelector('.mark-read-btn');
-                        if (markReadBtn) {
-                            markReadBtn.remove();
-                        }
-                    });
-                    loadNotifications();
-                    fetchNotificationCount();
-                } else {
-                    console.error('Error marking all notifications as read:', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error marking all notifications as read:', error);
-            });
+            // Reload notifications to get fresh data
+            loadNotifications();
+            fetchNotificationCount();
+        })
+        .catch(error => {
+            console.error('Error marking all notifications as read:', error);
         });
-    }
+    });
+}
 
     function showEmptyNotifications(message) {
         const notificationsContainer = document.querySelector('.notifications-list');

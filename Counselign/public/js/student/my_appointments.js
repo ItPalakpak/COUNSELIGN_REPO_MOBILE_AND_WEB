@@ -1987,32 +1987,55 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Save Changes Modal
-  const confirmSaveBtn = document.getElementById("confirmSaveChangesBtn");
-  if (confirmSaveBtn) {
-    confirmSaveBtn.addEventListener("click", function () {
-      if (pendingSaveContext) {
-        // Show loading state
-        showButtonLoading(confirmSaveBtn, "Saving Changes...");
+ // Save Changes Modal
+const confirmSaveBtn = document.getElementById("confirmSaveChangesBtn");
+if (confirmSaveBtn) {
+  confirmSaveBtn.addEventListener("click", async function () {
+    if (pendingSaveContext) {
+      // Show loading state
+      showButtonLoading(confirmSaveBtn, "Saving Changes...");
 
-        updatePendingAppointment(
+      try {
+        await updatePendingAppointment(
           pendingSaveContext.appointmentId,
           pendingSaveContext.form
-        )
-          .then(() => {
-            // Hide modal after successful update
-            bootstrap.Modal.getInstance(
-              document.getElementById("saveChangesModal")
-            ).hide();
-            pendingSaveContext = null;
-          })
-          .catch(() => {
-            // Reset button state on error
-            hideButtonLoading(confirmSaveBtn, "Save Changes");
-          });
+        );
+        
+        // Hide modal after successful update
+        const modalElement = document.getElementById("saveChangesModal");
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+        
+        // Reset context
+        pendingSaveContext = null;
+        
+        // Reset button state after a short delay (to ensure modal closes smoothly)
+        setTimeout(() => {
+          hideButtonLoading(confirmSaveBtn, "Save Changes");
+        }, 300);
+        
+      } catch (error) {
+        // Reset button state on error
+        hideButtonLoading(confirmSaveBtn, "Save Changes");
+        console.error("Error saving changes:", error);
       }
-    });
-  }
+    }
+  });
+}
+
+// Reset button state when modal is closed/hidden (handles X button, backdrop clicks, etc.)
+const saveChangesModal = document.getElementById("saveChangesModal");
+if (saveChangesModal) {
+  saveChangesModal.addEventListener('hidden.bs.modal', function () {
+    const confirmBtn = document.getElementById("confirmSaveChangesBtn");
+    if (confirmBtn) {
+      // Reset button to original state whenever modal is hidden
+      hideButtonLoading(confirmBtn, "Save Changes");
+    }
+  });
+}
 
   // Cancel Modal
   const confirmCancelBtn = document.getElementById("confirmCancellationBtn");

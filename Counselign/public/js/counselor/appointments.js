@@ -230,9 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function capitalizeFirstLetter(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
     function getStatusBadgeClass(status){ switch(status){ case 'pending': return 'bg-warning text-dark'; case 'approved': return 'bg-success'; case 'rejected': return 'bg-danger'; case 'completed': return 'bg-info'; case 'cancelled': return 'bg-secondary'; default: return 'bg-secondary'; } }
 
+    // Filter event listeners
     document.getElementById('dateRangeFilter').addEventListener('change', function(){ displayAppointments(appointments); });
     document.getElementById('statusFilter').addEventListener('change', function(){ displayAppointments(appointments); });
 
+    // Appointment details modal event delegation for approve/reject buttons
     document.getElementById('appointmentDetailsModal').addEventListener('click', function(event){
         const target = event.target;
         if (target.id === 'approveAppointmentBtn' || target.closest('#approveAppointmentBtn')) {
@@ -241,58 +243,26 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('confirmationModalBody').innerHTML = '<p>Are you sure you want to approve this appointment?</p><p class="text-muted">This action will notify the student via email.</p>';
             const confirmBtn = document.getElementById('confirmActionBtn');
             confirmBtn.className = 'btn btn-success';
+            confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i>Confirm';
             document.getElementById('confirmationModal').dataset.action = 'approve';
             confirmationModal.show();
         } else if (target.id === 'rejectAppointmentBtn' || target.closest('#rejectAppointmentBtn')) {
-            const appointmentModal = bootstrap.Modal.getInstance(document.getElementById('appointmentDetailsModal')); if (appointmentModal) appointmentModal.hide();
-            setTimeout(()=>{ new bootstrap.Modal(document.getElementById('rejectionReasonModal'), { backdrop:'static', keyboard:false }).show(); }, 300);
+            const appointmentModal = bootstrap.Modal.getInstance(document.getElementById('appointmentDetailsModal')); 
+            if (appointmentModal) appointmentModal.hide();
+            setTimeout(()=>{ 
+                new bootstrap.Modal(document.getElementById('rejectionReasonModal'), { backdrop:'static', keyboard:false }).show(); 
+            }, 300);
         }
     });
 
+    // SINGLE event listener for confirmation action button
     document.getElementById('confirmActionBtn').addEventListener('click', function(){
         const action = document.getElementById('confirmationModal').dataset.action;
         const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
         const confirmBtn = document.getElementById('confirmActionBtn');
         
-        // Show loading state
-        showButtonLoading(confirmBtn, 'Processing...');
-        
-        if (action === 'approve') { 
-            updateAppointmentStatus(currentAppointmentId, 'approved')
-                .then(() => {
-                    if (confirmationModal) confirmationModal.hide();
-                })
-                .catch(() => {
-                    hideButtonLoading(confirmBtn, 'Confirm');
-                });
-        }
-    });
-
-    document.getElementById('confirmRejectionBtn').addEventListener('click', function(){
-        const rejectionReason = document.getElementById('rejectionReason').value.trim();
-        if (!rejectionReason) { alert('Please provide a reason for rejection.'); return; }
-        
-        const confirmRejectionBtn = document.getElementById('confirmRejectionBtn');
-        showButtonLoading(confirmRejectionBtn, 'Processing...');
-        
-        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-        document.querySelector('#confirmationModal .modal-header').className = 'modal-header bg-danger text-white';
-        document.getElementById('confirmationModalTitle').textContent = 'Confirm Rejection';
-        document.getElementById('confirmationModalBody').innerHTML = `<p>Are you sure you want to reject this appointment?</p><p class="text-muted">Reason: ${rejectionReason}</p><p class="text-muted">This action will notify the student via email.</p>`;
-        const confirmBtn = document.getElementById('confirmActionBtn');
-        confirmBtn.className = 'btn btn-danger';
-        document.getElementById('confirmationModal').dataset.action = 'reject';
-        document.getElementById('confirmationModal').dataset.reason = rejectionReason;
-        const rejectionModal = bootstrap.Modal.getInstance(document.getElementById('rejectionReasonModal')); if (rejectionModal) rejectionModal.hide();
-        confirmationModal.show();
-        
-        hideButtonLoading(confirmRejectionBtn, 'Confirm Rejection');
-    });
-
-    document.getElementById('confirmActionBtn').addEventListener('click', function(){
-        const action = document.getElementById('confirmationModal').dataset.action;
-        const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
-        const confirmBtn = document.getElementById('confirmActionBtn');
+        // Prevent double-clicking
+        if (confirmBtn.disabled) return;
         
         // Show loading state
         showButtonLoading(confirmBtn, 'Processing...');
@@ -318,10 +288,42 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.getElementById('rejectionReasonModal').addEventListener('hidden.bs.modal', function(){ document.getElementById('rejectionReason').value = ''; });
+    // Rejection reason confirmation handler
+    document.getElementById('confirmRejectionBtn').addEventListener('click', function(){
+        const rejectionReason = document.getElementById('rejectionReason').value.trim();
+        if (!rejectionReason) { 
+            alert('Please provide a reason for rejection.'); 
+            return; 
+        }
+        
+        const confirmRejectionBtn = document.getElementById('confirmRejectionBtn');
+        showButtonLoading(confirmRejectionBtn, 'Processing...');
+        
+        // Setup confirmation modal for rejection
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        document.querySelector('#confirmationModal .modal-header').className = 'modal-header bg-danger text-white';
+        document.getElementById('confirmationModalTitle').textContent = 'Confirm Rejection';
+        document.getElementById('confirmationModalBody').innerHTML = `<p>Are you sure you want to reject this appointment?</p><p class="text-muted">Reason: ${rejectionReason}</p><p class="text-muted">This action will notify the student via email.</p>`;
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        confirmBtn.className = 'btn btn-danger';
+        confirmBtn.innerHTML = '<i class="fas fa-times me-1"></i>Confirm Rejection';
+        document.getElementById('confirmationModal').dataset.action = 'reject';
+        document.getElementById('confirmationModal').dataset.reason = rejectionReason;
+        
+        // Hide rejection reason modal and show confirmation modal
+        const rejectionModal = bootstrap.Modal.getInstance(document.getElementById('rejectionReasonModal')); 
+        if (rejectionModal) rejectionModal.hide();
+        confirmationModal.show();
+        
+        // Reset button state
+        hideButtonLoading(confirmRejectionBtn, 'Confirm Rejection');
+    });
 
+    // Reset rejection reason when modal is hidden
+    document.getElementById('rejectionReasonModal').addEventListener('hidden.bs.modal', function(){ 
+        document.getElementById('rejectionReason').value = ''; 
+    });
+
+    // Load appointments on page load
     loadAppointments();
 });
-
-
-

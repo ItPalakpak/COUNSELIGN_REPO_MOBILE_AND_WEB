@@ -18,20 +18,14 @@ function changeImage() {
 
 // Function to handle logout action
 function handleLogout() {
-    openConfirmationModal("Are you sure you want to log out?", function() {
-        // Call logout endpoint
-        fetch(window.BASE_URL + 'auth/logout', {
-            method: 'GET',
-            credentials: 'include'
-        })
-        .then(() => {
-            window.location.href = window.BASE_URL;
-        })
-        .catch(error => {
-            console.error('Logout error:', error);
-            window.location.href = window.BASE_URL;
-        });
-    });
+    if (typeof window.confirmLogout === "function") {
+        window.confirmLogout();
+    } else {
+        // Fallback (should rarely occur)
+        if (confirm("Are you sure you want to log out?")) {
+            window.location.href = (window.BASE_URL || "/") + "auth/logout";
+        }
+    }
 }
 
 // Function to validate email format

@@ -557,9 +557,12 @@ class Appointment extends BaseController
                     if (!empty($counselor_preference) && $counselor_preference !== 'No preference') {
                         $this->sendAppointmentNotificationToCounselor($counselor_preference, $data, $user_id, 'booking');
                         
+                        // Get student name for notification
+                        $studentName = $this->getStudentName($user_id);
+                        
                         // Create notification for counselor
                         $appointmentId = $db->insertID();
-                        $this->createAppointmentNotification($counselor_preference, $appointmentId, 'appointment', 'New Appointment Request', 'Student ' . $user_id . ' has requested a ' . $consultation_type . ' appointment on ' . date('F j, Y', strtotime($preferred_date)) . ' at ' . $preferred_time . '.');
+                        $this->createAppointmentNotification($counselor_preference, $appointmentId, 'appointment', 'New Appointment Request', 'Student ' . $studentName . ' has requested a ' . $consultation_type . ' appointment on ' . date('F j, Y', strtotime($preferred_date)) . ' at ' . $preferred_time . '.');
                     }
 
                     $response['status'] = 'success';
@@ -889,8 +892,11 @@ class Appointment extends BaseController
                 if (!empty($appointment['counselor_preference']) && $appointment['counselor_preference'] !== 'No preference') {
                     $this->sendAppointmentNotificationToCounselor($appointment['counselor_preference'], $appointment, $appointment['student_id'], 'editing');
                     
+                    // Get student name for notification
+                    $studentName = $this->getStudentName($appointment['student_id']);
+                    
                     // Create notification for counselor
-                    $this->createAppointmentNotification($appointment['counselor_preference'], $appointment_id, 'appointment', 'Appointment Updated', 'Student ' . $appointment['student_id'] . ' has updated their appointment. New schedule: ' . date('F j, Y', strtotime($appointment['preferred_date'])) . ' at ' . $appointment['preferred_time'] . '.');
+                    $this->createAppointmentNotification($appointment['counselor_preference'], $appointment_id, 'appointment', 'Appointment Updated', 'Student ' . $studentName . ' has updated their appointment. New schedule: ' . date('F j, Y', strtotime($appointment['preferred_date'])) . ' at ' . $appointment['preferred_time'] . '.');
                 }
             }
 
@@ -1593,6 +1599,33 @@ class Appointment extends BaseController
         }
         
         return $earliestTime;
+    }
+
+    /**
+     * Get student name from student_personal_info table
+     * 
+     * @param string $studentId Student ID
+     * @return string Student name in format "Last Name, First Name" or student ID as fallback
+     */
+    private function getStudentName(string $studentId): string
+    {
+        try {
+            $db = \Config\Database::connect();
+            $result = $db->table('student_personal_info')
+                ->select('first_name, last_name')
+                ->where('student_id', $studentId)
+                ->get()
+                ->getRowArray();
+            
+            if ($result && !empty($result['first_name']) && !empty($result['last_name'])) {
+                return trim($result['last_name'] . ', ' . $result['first_name']);
+            }
+            
+            return $studentId; // Fallback to student ID if name not found
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting student name: ' . $e->getMessage());
+            return $studentId; // Fallback to student ID on error
+        }
     }
 
     /**

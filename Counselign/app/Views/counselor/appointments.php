@@ -273,7 +273,7 @@
                                     <span class="info-value" id="modalPurpose"></span>
                                 </div>
                             </div>
-                            <div class="info-item">
+                            <div class="info-item" hidden>
                                 <i class="fas fa-user-md info-icon"></i>
                                 <div class="info-content">
                                     <span class="info-label">Counselor Preference</span>

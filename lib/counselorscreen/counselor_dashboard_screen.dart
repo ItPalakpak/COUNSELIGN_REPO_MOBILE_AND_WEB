@@ -341,6 +341,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                     // Close notifications dropdown
                     viewModel.closeNotifications();
                     // Handle navigation based on notification type
+                    if (!context.mounted) return;
                     if (notification.type == 'appointment' &&
                         notification.relatedId != null) {
                       _showAppointmentDetailsDialog(

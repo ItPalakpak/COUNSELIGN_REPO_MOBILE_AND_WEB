@@ -386,9 +386,21 @@ class CounselorFollowUpSessionsViewModel extends ChangeNotifier {
   bool canCreateNextFollowUp() {
     if (_followUpSessions.isEmpty) return false;
 
+    // Check if there's any pending session - if yes, cannot create next
+    final hasPendingSession = _followUpSessions.any(
+      (session) => session.status.toLowerCase() == 'pending',
+    );
+    if (hasPendingSession) return false;
+
     final lastSession = _followUpSessions.last;
     return lastSession.status == 'completed' ||
         lastSession.status == 'cancelled';
+  }
+
+  bool hasPendingFollowUpSession() {
+    return _followUpSessions.any(
+      (session) => session.status.toLowerCase() == 'pending',
+    );
   }
 
   Future<void> refresh() async {

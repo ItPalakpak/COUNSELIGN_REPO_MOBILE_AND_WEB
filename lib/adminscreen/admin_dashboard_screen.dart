@@ -1116,21 +1116,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           TextButton(
             onPressed: () async {
               final dialogContext = context;
+              // Capture the ScaffoldMessenger BEFORE the async gap
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
               Navigator.pop(dialogContext);
+
+              // Perform the async operation
               final success = await _viewModel.updateAppointmentStatus(
                 appointmentId,
                 status,
               );
+
+              // Check if widget is still mounted before showing snackbar
               if (!mounted) return;
+
+              // Now safe to use the captured ScaffoldMessenger
               if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text('Appointment status updated to $status'),
                     backgroundColor: Colors.green,
                   ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(
                     content: Text('Failed to update appointment status'),
                     backgroundColor: Colors.red,

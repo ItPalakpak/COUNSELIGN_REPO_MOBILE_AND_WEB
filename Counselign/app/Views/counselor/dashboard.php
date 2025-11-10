@@ -73,7 +73,15 @@
                         <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="small text-secondary">Last login: <?= session()->get('last_login') ?></div>
+                <div class="small text-secondary">Last login: <?php 
+                    $lastLogin = session()->get('last_login');
+                    if ($lastLogin) {
+                        $dateTime = new \DateTime($lastLogin);
+                        echo $dateTime->format('M j, g:i A');
+                    } else {
+                        echo 'N/A';
+                    }
+                ?></div>
             </div>
             <div class="ml-auto flex items-center space-x-6">
                 <div class="relative notification-icon-container">
@@ -271,6 +279,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script>

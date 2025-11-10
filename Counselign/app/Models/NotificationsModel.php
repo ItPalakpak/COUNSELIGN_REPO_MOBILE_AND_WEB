@@ -120,10 +120,19 @@ class NotificationsModel extends Model
              ->set(['is_read' => 1])
              ->update();
         
-        // Also mark all events and announcements as read via notification_reads table
+        // Mark all events and announcements as read using the EXACT same logic as getRecentNotifications()
+        // This ensures we mark exactly what is currently visible in the notifications popup
         $db = \Config\Database::connect();
         
-        // Get all unread event IDs
+        // Get last active time for filtering (same logic as getRecentNotifications)
+        $lastActiveTimeRow = $db->table('users')
+            ->select('last_activity')
+            ->where('user_id', $userId)
+            ->get()
+            ->getRowArray();
+        $lastActiveTime = $lastActiveTimeRow && $lastActiveTimeRow['last_activity'] ? $lastActiveTimeRow['last_activity'] : date('Y-m-d H:i:s', strtotime('-30 days'));
+        
+        // Get all already read event IDs (same as getRecentNotifications)
         $readEvents = $db->table('notification_reads')
             ->select('related_id')
             ->where('user_id', $userId)
@@ -132,44 +141,33 @@ class NotificationsModel extends Model
             ->getResultArray();
         $readEventIds = array_column($readEvents, 'related_id');
         
-        // Get all events created after last active time
-        $lastActiveTime = $db->table('users')
-            ->select('last_activity')
-            ->where('user_id', $userId)
-            ->get()
-            ->getRowArray();
-        $lastActiveTime = $lastActiveTime && $lastActiveTime['last_activity'] ? $lastActiveTime['last_activity'] : date('Y-m-d H:i:s', strtotime('-30 days'));
-        
+        // Get all unread events that would appear in notifications
+        // EXACT same query as in getRecentNotifications() - created after last active time AND date >= today
         $eventsQuery = $db->table('events')
-            ->select('id')
+            ->select('id, title, date, time, location, created_at')
             ->where('created_at >', $lastActiveTime)
-            ->where('date >=', date('Y-m-d'));
+            ->where('date >=', date('Y-m-d')); // Only show events from today onwards
         
+        // Exclude read events (same as getRecentNotifications)
         if (!empty($readEventIds)) {
             $eventsQuery->whereNotIn('id', $readEventIds);
         }
         
         $unreadEvents = $eventsQuery->get()->getResultArray();
-        $unreadEventIds = array_column($unreadEvents, 'id');
         
-        // Mark all unread events as read
-        foreach ($unreadEventIds as $eventId) {
-            $exists = $db->table('notification_reads')
-                ->where('user_id', $userId)
-                ->where('notification_type', 'event')
-                ->where('related_id', $eventId)
-                ->countAllResults();
-            
-            if ($exists === 0) {
-                $db->table('notification_reads')->insert([
-                    'user_id' => $userId,
-                    'notification_type' => 'event',
-                    'related_id' => $eventId
-                ]);
+        // Mark all unread events as read (only non-expired events, same check as getRecentNotifications)
+        foreach ($unreadEvents as $event) {
+            // Skip expired events (same check as in getRecentNotifications)
+            if ($this->isEventExpired($event['date'], $event['time'])) {
+                continue;
             }
+            
+            $eventId = $event['id'];
+            // Use markEventAsRead to ensure consistency with individual marking
+            $this->markEventAsRead($userId, $eventId);
         }
         
-        // Get all unread announcement IDs
+        // Get all already read announcement IDs (same as getRecentNotifications)
         $readAnnouncements = $db->table('notification_reads')
             ->select('related_id')
             ->where('user_id', $userId)
@@ -178,32 +176,24 @@ class NotificationsModel extends Model
             ->getResultArray();
         $readAnnouncementIds = array_column($readAnnouncements, 'related_id');
         
+        // Get all unread announcements that would appear in notifications
+        // EXACT same query as in getRecentNotifications() - created after last active time
         $announcementsQuery = $db->table('announcements')
-            ->select('id')
+            ->select('id, title, content, created_at')
             ->where('created_at >', $lastActiveTime);
         
+        // Exclude read announcements (same as getRecentNotifications)
         if (!empty($readAnnouncementIds)) {
             $announcementsQuery->whereNotIn('id', $readAnnouncementIds);
         }
         
         $unreadAnnouncements = $announcementsQuery->get()->getResultArray();
-        $unreadAnnouncementIds = array_column($unreadAnnouncements, 'id');
         
-        // Mark all unread announcements as read
-        foreach ($unreadAnnouncementIds as $announcementId) {
-            $exists = $db->table('notification_reads')
-                ->where('user_id', $userId)
-                ->where('notification_type', 'announcement')
-                ->where('related_id', $announcementId)
-                ->countAllResults();
-            
-            if ($exists === 0) {
-                $db->table('notification_reads')->insert([
-                    'user_id' => $userId,
-                    'notification_type' => 'announcement',
-                    'related_id' => $announcementId
-                ]);
-            }
+        // Mark all unread announcements as read using markAnnouncementAsRead for consistency
+        foreach ($unreadAnnouncements as $announcement) {
+            $announcementId = $announcement['id'];
+            // Use markAnnouncementAsRead to ensure consistency with individual marking
+            $this->markAnnouncementAsRead($userId, $announcementId);
         }
         
         return true;
@@ -488,6 +478,20 @@ class NotificationsModel extends Model
             
             if ($userRole === 'student') {
                 // Student notification format
+                // Get counselor name for notification
+                $counselorName = 'the counselor';
+                if (!empty($appointment['counselor_preference']) && $appointment['counselor_preference'] !== 'No preference') {
+                    $counselorInfo = $db->table('counselors')
+                        ->select('name')
+                        ->where('counselor_id', $appointment['counselor_preference'])
+                        ->get()
+                        ->getRowArray();
+                    
+                    if ($counselorInfo && !empty($counselorInfo['name'])) {
+                        $counselorName = trim($counselorInfo['name']);
+                    }
+                }
+                
                 // Get is_read status from notification entry if it exists
                 $isRead = isset($unreadAppointmentMap[$appointment['id']]) ? $unreadAppointmentMap[$appointment['id']] : 0;
                 
@@ -496,7 +500,7 @@ class NotificationsModel extends Model
                     'title' => 'Appointment Update',
                     'message' => "Your appointment for " . date('F j, Y', strtotime($appointment['preferred_date'])) .
                                 " at " . $appointment['preferred_time'] .
-                                " with counselor preference: " . $appointment['counselor_preference'] .
+                                " with Counselor " . $counselorName .
                                 $purposeText .
                                 " has been " . strtolower($appointment['status']) . $reasonText,
                     'created_at' => $appointment['updated_at'],
@@ -531,9 +535,9 @@ class NotificationsModel extends Model
         foreach ($notificationsQuery as $notification) {
             $notificationMessage = $notification['message'];
             
-            // For counselors, replace student_id with student name in follow-up session notifications
-            if ($userRole === 'counselor' && $notification['type'] === 'follow-up') {
-                // Extract student_id from message if present
+            // For counselors, replace student_id with student name in appointment and follow-up notifications
+            if ($userRole === 'counselor' && ($notification['type'] === 'appointment' || $notification['type'] === 'follow-up' || $notification['type'] === 'follow_up_session')) {
+                // Extract student_id from message if present (format: "Student 2023303640" or similar)
                 if (preg_match('/Student\s+(\d{10})/', $notificationMessage, $matches)) {
                     $studentId = $matches[1];
                     // Get student name from student_personal_info
@@ -547,6 +551,30 @@ class NotificationsModel extends Model
                         $studentName = trim($studentInfo['last_name'] . ', ' . $studentInfo['first_name']);
                         // Replace student_id with student name in message
                         $notificationMessage = preg_replace('/Student\s+\d{10}/', 'Student ' . $studentName, $notificationMessage);
+                    }
+                }
+            }
+            
+            // For students, replace counselor ID with counselor name in appointment and follow-up notifications
+            if ($userRole === 'student' && ($notification['type'] === 'appointment' || $notification['type'] === 'follow-up' || $notification['type'] === 'follow_up_session')) {
+                // Extract counselor ID from message if present (format: "Counselor COUN-2025-1234" or similar)
+                if (preg_match('/Counselor\s+([A-Z0-9-]+)/', $notificationMessage, $matches)) {
+                    $counselorId = $matches[1];
+                    // Check if it's already a name (contains spaces or doesn't match ID pattern)
+                    // Only process if it looks like an ID (alphanumeric with dashes, reasonable length)
+                    if (preg_match('/^[A-Z0-9-]+$/', $counselorId) && strlen($counselorId) <= 20) {
+                        // Get counselor name from counselors table
+                        $counselorInfo = $db->table('counselors')
+                            ->select('name')
+                            ->where('counselor_id', $counselorId)
+                            ->get()
+                            ->getRowArray();
+                        
+                        if ($counselorInfo && !empty($counselorInfo['name'])) {
+                            $counselorName = trim($counselorInfo['name']);
+                            // Replace counselor ID with counselor name in message
+                            $notificationMessage = preg_replace('/Counselor\s+' . preg_quote($counselorId, '/') . '/', 'Counselor ' . $counselorName, $notificationMessage);
+                        }
                     }
                 }
             }

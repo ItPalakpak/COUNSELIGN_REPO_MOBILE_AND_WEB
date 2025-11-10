@@ -389,6 +389,7 @@
         window.BASE_URL = "<?= base_url() ?>";
     </script>
     <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_profile.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>

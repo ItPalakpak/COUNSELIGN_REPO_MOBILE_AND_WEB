@@ -71,7 +71,15 @@
                         <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="small text-secondary">Last login: <?= session()->get('last_login') ?></div>
+                <div class="small text-secondary">Last login: <?php 
+                    $lastLogin = session()->get('last_login');
+                    if ($lastLogin) {
+                        $dateTime = new \DateTime($lastLogin);
+                        echo $dateTime->format('M j, g:i A');
+                    } else {
+                        echo 'N/A';
+                    }
+                ?></div>
             </div>
             <div class="ml-auto flex items-center space-x-6">
 

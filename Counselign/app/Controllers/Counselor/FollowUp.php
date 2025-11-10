@@ -365,8 +365,11 @@ public function createFollowUp()
             // Send email notification to student
             $this->sendFollowUpNotificationToStudent($createdFollowUp, 'created');
             
+            // Get counselor name for notification
+            $counselorName = $this->getCounselorName($counselorId);
+            
             // Create notification for student
-            $this->createFollowUpNotification($studentId, $insertId, 'follow_up_session', 'New Follow-up Session Created', 'A new follow-up session has been scheduled for ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
+            $this->createFollowUpNotification($studentId, $insertId, 'follow_up_session', 'New Follow-up Session Created', 'Counselor ' . $counselorName . ' has scheduled a new follow-up session for ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
             
             // Update last_activity for creating follow-up appointment
             $activityHelper = new UserActivityHelper();
@@ -519,8 +522,11 @@ public function createFollowUp()
             // Send email notification to student
             $this->sendFollowUpNotificationToStudent($sessionRow, 'cancelled');
 
+            // Get counselor name for notification
+            $counselorName = $this->getCounselorName($counselorId);
+
             // Create notification for student
-            $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Cancelled', 'Your follow-up session scheduled for ' . date('F j, Y', strtotime($sessionRow['preferred_date'])) . ' at ' . $sessionRow['preferred_time'] . ' has been cancelled. Reason: ' . $reason . '.');
+            $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Cancelled', 'Counselor ' . $counselorName . ' has cancelled your follow-up session scheduled for ' . date('F j, Y', strtotime($sessionRow['preferred_date'])) . ' at ' . $sessionRow['preferred_time'] . '. Reason: ' . $reason . '.');
 
             // Update last_activity for cancelling follow-up
             $activityHelper = new UserActivityHelper();
@@ -613,8 +619,11 @@ public function createFollowUp()
                 // Send email notification to student
                 $this->sendFollowUpNotificationToStudent($updatedSession, 'edited');
 
+                // Get counselor name for notification
+                $counselorName = $this->getCounselorName($counselorId);
+
                 // Create notification for student
-                $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Updated', 'Your follow-up session has been updated. New schedule: ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
+                $this->createFollowUpNotification($sessionRow['student_id'], $sessionId, 'follow_up_session', 'Follow-up Session Updated', 'Counselor ' . $counselorName . ' has updated your follow-up session. New schedule: ' . date('F j, Y', strtotime($preferredDate)) . ' at ' . $preferredTime . '.');
 
                 // Update last_activity for editing follow-up
                 $activityHelper = new UserActivityHelper();
@@ -768,6 +777,33 @@ public function createFollowUp()
         } catch (\Exception $e) {
             log_message('error', 'Error getting student email: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Get counselor name from counselors table
+     * 
+     * @param string $counselorId Counselor ID
+     * @return string Counselor name or counselor ID as fallback
+     */
+    private function getCounselorName(string $counselorId): string
+    {
+        try {
+            $db = \Config\Database::connect();
+            $result = $db->table('counselors')
+                ->select('name')
+                ->where('counselor_id', $counselorId)
+                ->get()
+                ->getRowArray();
+            
+            if ($result && !empty($result['name'])) {
+                return trim($result['name']);
+            }
+            
+            return $counselorId; // Fallback to counselor ID if name not found
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting counselor name: ' . $e->getMessage());
+            return $counselorId; // Fallback to counselor ID on error
         }
     }
 

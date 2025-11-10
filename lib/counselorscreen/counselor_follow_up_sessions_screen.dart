@@ -8,6 +8,7 @@ import 'widgets/weekly_schedule.dart';
 import 'widgets/mini_calendar.dart';
 import 'models/completed_appointment.dart';
 import 'models/follow_up_session.dart';
+import '../../utils/time_utils.dart';
 
 class CounselorFollowUpSessionsScreen extends StatefulWidget {
   const CounselorFollowUpSessionsScreen({super.key});
@@ -1252,10 +1253,14 @@ class _CounselorFollowUpSessionsScreenState
                           dateController.text,
                         );
                         // Clear previous time selection if not valid anymore
-                        final slots =
+                        final rawSlots =
                             _viewModel.counselorAvailability?.timeSlots ??
                             const <String>[];
-                        if (!slots.contains(timeController.text)) {
+                        final timeOptions =
+                            TimeUtils.generateHalfHourRangeLabelsFromSlots(
+                              rawSlots,
+                            );
+                        if (!timeOptions.contains(timeController.text)) {
                           timeController.text = '';
                         }
                       }
@@ -1264,28 +1269,43 @@ class _CounselorFollowUpSessionsScreenState
                   const SizedBox(height: 16),
                   Consumer<CounselorFollowUpSessionsViewModel>(
                     builder: (context, viewModel, child) {
-                      final slots =
+                      final rawSlots =
                           viewModel.counselorAvailability?.timeSlots ??
                           const <String>[];
+                      // Generate 30-minute increments from time slots
+                      final timeOptions =
+                          TimeUtils.generateHalfHourRangeLabelsFromSlots(
+                            rawSlots,
+                          );
+                      // Find matching time range for existing value (handles both range and single time formats)
+                      final matchedTime = TimeUtils.findMatchingTimeRange(
+                        timeController.text,
+                        timeOptions,
+                      );
                       return DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: 'Preferred Time *',
                           border: OutlineInputBorder(),
                         ),
-                        items: slots
-                            .map(
-                              (time) => DropdownMenuItem(
-                                value: time,
-                                child: Text(time),
-                              ),
-                            )
-                            .toList(),
-                        initialValue:
-                            slots.contains(timeController.text) &&
-                                timeController.text.isNotEmpty
-                            ? timeController.text
-                            : null,
-                        onChanged: (value) => timeController.text = value ?? '',
+                        items: timeOptions.isEmpty
+                            ? [
+                                const DropdownMenuItem(
+                                  value: null,
+                                  child: Text('No available time slots'),
+                                ),
+                              ]
+                            : timeOptions
+                                  .map(
+                                    (time) => DropdownMenuItem(
+                                      value: time,
+                                      child: Text(time),
+                                    ),
+                                  )
+                                  .toList(),
+                        initialValue: matchedTime,
+                        onChanged: timeOptions.isEmpty
+                            ? null
+                            : (value) => timeController.text = value ?? '',
                         validator: (value) => (value == null || value.isEmpty)
                             ? 'Please select a time'
                             : null,
@@ -1305,10 +1325,6 @@ class _CounselorFollowUpSessionsScreenState
                         child: Text('Individual Counseling'),
                       ),
                       DropdownMenuItem(
-                        value: 'Group Counseling',
-                        child: Text('Group Counseling'),
-                      ),
-                      DropdownMenuItem(
                         value: 'Career Guidance',
                         child: Text('Career Guidance'),
                       ),
@@ -1323,10 +1339,6 @@ class _CounselorFollowUpSessionsScreenState
                       DropdownMenuItem(
                         value: 'Crisis Intervention',
                         child: Text('Crisis Intervention'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Follow-up Session',
-                        child: Text('Follow-up Session'),
                       ),
                     ],
                     initialValue: consultationTypeController.text.isNotEmpty
@@ -1561,10 +1573,14 @@ class _CounselorFollowUpSessionsScreenState
                           dateController.text,
                         );
                         // Clear previous time selection if not valid anymore
-                        final slots =
+                        final rawSlots =
                             _viewModel.counselorAvailability?.timeSlots ??
                             const <String>[];
-                        if (!slots.contains(timeController.text)) {
+                        final timeOptions =
+                            TimeUtils.generateHalfHourRangeLabelsFromSlots(
+                              rawSlots,
+                            );
+                        if (!timeOptions.contains(timeController.text)) {
                           timeController.text = '';
                         }
                       }
@@ -1573,28 +1589,42 @@ class _CounselorFollowUpSessionsScreenState
                   const SizedBox(height: 16),
                   Consumer<CounselorFollowUpSessionsViewModel>(
                     builder: (context, viewModel, child) {
-                      final slots =
+                      final rawSlots =
                           viewModel.counselorAvailability?.timeSlots ??
                           const <String>[];
+                      // Generate 30-minute increments from time slots
+                      final timeOptions =
+                          TimeUtils.generateHalfHourRangeLabelsFromSlots(
+                            rawSlots,
+                          );
                       return DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: 'Preferred Time *',
                           border: OutlineInputBorder(),
                         ),
-                        items: slots
-                            .map(
-                              (time) => DropdownMenuItem(
-                                value: time,
-                                child: Text(time),
-                              ),
-                            )
-                            .toList(),
+                        items: timeOptions.isEmpty
+                            ? [
+                                const DropdownMenuItem(
+                                  value: null,
+                                  child: Text('No available time slots'),
+                                ),
+                              ]
+                            : timeOptions
+                                  .map(
+                                    (time) => DropdownMenuItem(
+                                      value: time,
+                                      child: Text(time),
+                                    ),
+                                  )
+                                  .toList(),
                         initialValue:
-                            slots.contains(timeController.text) &&
+                            timeOptions.contains(timeController.text) &&
                                 timeController.text.isNotEmpty
                             ? timeController.text
                             : null,
-                        onChanged: (value) => timeController.text = value ?? '',
+                        onChanged: timeOptions.isEmpty
+                            ? null
+                            : (value) => timeController.text = value ?? '',
                         validator: (value) => (value == null || value.isEmpty)
                             ? 'Please select a time'
                             : null,
@@ -1614,10 +1644,6 @@ class _CounselorFollowUpSessionsScreenState
                         child: Text('Individual Counseling'),
                       ),
                       DropdownMenuItem(
-                        value: 'Group Counseling',
-                        child: Text('Group Counseling'),
-                      ),
-                      DropdownMenuItem(
                         value: 'Career Guidance',
                         child: Text('Career Guidance'),
                       ),
@@ -1632,10 +1658,6 @@ class _CounselorFollowUpSessionsScreenState
                       DropdownMenuItem(
                         value: 'Crisis Intervention',
                         child: Text('Crisis Intervention'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Follow-up Session',
-                        child: Text('Follow-up Session'),
                       ),
                     ],
                     onChanged: (value) =>

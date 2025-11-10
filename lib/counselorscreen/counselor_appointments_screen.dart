@@ -640,15 +640,10 @@ class _CounselorAppointmentsScreenState
           return Row(
             children: [
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () =>
-                      _showReasonDialog(context, vm, appt.id, action: 'cancel'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  child: const Text('Cancel'),
+                child: Text(
+                  'No actions available',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
                 ),
               ),
             ],

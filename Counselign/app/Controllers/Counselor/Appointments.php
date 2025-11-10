@@ -253,6 +253,33 @@ class Appointments extends BaseController
     }
 
     /**
+     * Get counselor name from counselors table
+     * 
+     * @param string $counselorId Counselor ID
+     * @return string Counselor name or counselor ID as fallback
+     */
+    private function getCounselorName(string $counselorId): string
+    {
+        try {
+            $db = \Config\Database::connect();
+            $result = $db->table('counselors')
+                ->select('name')
+                ->where('counselor_id', $counselorId)
+                ->get()
+                ->getRowArray();
+            
+            if ($result && !empty($result['name'])) {
+                return trim($result['name']);
+            }
+            
+            return $counselorId; // Fallback to counselor ID if name not found
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting counselor name: ' . $e->getMessage());
+            return $counselorId; // Fallback to counselor ID on error
+        }
+    }
+
+    /**
      * Create notification for appointment status changes
      * 
      * @param array $appointmentData The appointment data
@@ -267,19 +294,23 @@ class Appointments extends BaseController
             $date = isset($appointmentData['preferred_date']) ? date('F j, Y', strtotime($appointmentData['preferred_date'])) : '';
             $time = $appointmentData['preferred_time'] ?? '';
             
+            // Get counselor name for notification
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            $counselorName = $this->getCounselorName($counselorId);
+            
             $title = 'Appointment ' . ucfirst($status);
             $message = '';
             
             if ($status === 'approved') {
-                $message = "Congratulations! Your appointment on {$date} at {$time} has been approved. Please check your scheduled appointments for details.";
+                $message = "Congratulations! Your appointment on {$date} at {$time} with Counselor {$counselorName} has been approved. Please check your scheduled appointments for details.";
             } elseif ($status === 'rejected') {
-                $message = "We're sorry, but your appointment on {$date} at {$time} was rejected.";
+                $message = "We're sorry, but your appointment on {$date} at {$time} with Counselor {$counselorName} was rejected.";
                 if ($rejectionReason) {
                     $message .= " Reason: {$rejectionReason}.";
                 }
                 $message .= " If you have questions, please contact the counseling office.";
             } elseif ($status === 'cancelled') {
-                $message = "Your appointment on {$date} at {$time} has been cancelled by the counselor.";
+                $message = "Your appointment on {$date} at {$time} with Counselor {$counselorName} has been cancelled by the counselor.";
                 if ($rejectionReason) {
                     $message .= " Reason: {$rejectionReason}.";
                 }

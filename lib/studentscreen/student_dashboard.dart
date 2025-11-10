@@ -406,126 +406,112 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
   ) {
     return Container(
       width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 20 : 24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF8FAFD), Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
-        ),
-        borderRadius: BorderRadius.circular(isMobile ? 20 : 24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.08),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.04),
-            blurRadius: 8,
+            color: Colors.black.withAlpha((0.05 * 255).round()),
+            blurRadius: 10,
             offset: const Offset(0, 4),
-            spreadRadius: 0,
           ),
         ],
-        border: Border.all(
-          color: const Color(0xFF060E57).withValues(alpha: 0.06),
-          width: 1,
-        ),
       ),
-      padding: EdgeInsets.all(isMobile ? 24 : 32),
       child: Column(
         children: [
-          // Profile image with modern styling
-          Container(
-            width: isMobile ? 80 : 100,
-            height: isMobile ? 80 : 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(4),
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              padding: const EdgeInsets.all(4),
-              child: CircleAvatar(
-                backgroundImage: _getProfileImageProvider(viewModel),
-                backgroundColor: Colors.white,
-              ),
-            ),
-          ),
-
-          SizedBox(height: isMobile ? 20 : 24),
-
-          // Welcome text with modern typography
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          // First row: Profile Avatar, Profile Info
+          Row(
             children: [
-              Text(
-                'Hi!',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF64748B),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                viewModel.displayName,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: const Color(0xFF060E57),
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              // Hidden user_id display (similar to PHP implementation)
-              if (viewModel.hasName)
-                Text(
-                  viewModel.userId,
-                  style: const TextStyle(
-                    color: Colors.transparent,
-                    fontSize: 0,
-                    height: 0,
+              // Profile Avatar
+              GestureDetector(
+                onTap: () => viewModel.navigateToProfile(context),
+                child: Container(
+                  width: isMobile ? 70 : 90,
+                  height: isMobile ? 70 : 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image(
+                      image: _getProfileImageProvider(viewModel),
+                      width: isMobile ? 70 : 90,
+                      height: isMobile ? 70 : 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'Photos/profile.png',
+                          width: isMobile ? 70 : 90,
+                          height: isMobile ? 70 : 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: isMobile ? 70 : 90,
+                              height: isMobile ? 70 : 90,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.person,
+                                size: isMobile ? 35 : 45,
+                                color: Colors.grey[600],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  'Last login: ${viewModel.formattedLastLogin}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
+              ),
+              SizedBox(width: isMobile ? 15 : 20),
+              // Profile Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hi! ${viewModel.displayName}',
+                      style: TextStyle(
+                        fontSize: isMobile ? 14 : 22,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF003366),
+                      ),
+                    ),
+                    // Hidden user_id display (similar to PHP implementation)
+                    if (viewModel.hasName)
+                      Text(
+                        viewModel.userId,
+                        style: const TextStyle(
+                          color: Colors.transparent,
+                          fontSize: 0,
+                          height: 0,
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Last login: ${viewModel.formattedLastLogin}',
+                      style: TextStyle(
+                        fontSize: isMobile ? 10 : 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: isMobile ? 24 : 32),
-
-          // Action buttons with modern design
+          // Second row: Action buttons (Message and Notification)
+          SizedBox(height: isMobile ? 16 : 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -534,7 +520,6 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
               _buildNotificationButton(viewModel, isMobile),
             ],
           ),
-
           // Selected counselor indicator
           if (viewModel.selectedCounselor != null) ...[
             SizedBox(height: isMobile ? 16 : 20),
