@@ -3,6 +3,18 @@
 ### Current focus
 - **CRITICAL BUG FIX**: Fixed Session class not sending form fields when files parameter is null
 
+### Dec 2025 - Student Dashboard Clear All Notifications Fix
+- Updated `clearAllNotifications` method in `StudentDashboardViewModel` to match JavaScript behavior
+- Now properly handles marking events and announcements as read via `notifications_read` SQL table
+- Implementation:
+  1. Collects all unread notifications (prioritizing `notification_id` if available, then `type`+`related_id` for events/announcements)
+  2. Calls bulk endpoint with `mark_all: true`
+  3. Makes individual API calls for each notification using appropriate parameters:
+     - Regular notifications: uses `notification_id`
+     - Events/announcements: uses `type` + `related_id`
+  4. Waits for all individual marks to complete before updating UI
+- Ensures events and announcements are properly recorded in the `notifications_read` table when marked as read
+
 ### Nov 7, 2025 - Announcements Calendar Alignment
 - Matched counselor announcements screen copy with student announcements UI so headers, error states, and empty placeholders stay consistent across roles.
 - Updated both announcements view models and screens so the calendar badges and selected-day lists surface events only; announcements now stay in list sections without influencing calendar markers.

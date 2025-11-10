@@ -329,14 +329,37 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                   },
                   onNotificationTap: (notification) async {
                     // Mark as read if not already read
+                    // CRITICAL: For events/announcements, ALWAYS use type/related_id
+                    // This ensures proper recording in notifications_read table
                     if (!notification.isRead) {
-                      await viewModel.markNotificationAsRead(
-                        notificationId: notification.id != 0
-                            ? notification.id
-                            : null,
-                        type: notification.type,
-                        relatedId: notification.relatedId,
-                      );
+                      final bool isEventOrAnnouncement =
+                          notification.type == 'event' ||
+                          notification.type == 'announcement';
+
+                      if (isEventOrAnnouncement &&
+                          notification.relatedId != null) {
+                        // Event/announcement: use type and related_id
+                        await viewModel.markNotificationAsRead(
+                          notificationId: null,
+                          type: notification.type,
+                          relatedId: notification.relatedId,
+                        );
+                      } else if (notification.id != 0) {
+                        // Regular notification: use notification_id
+                        await viewModel.markNotificationAsRead(
+                          notificationId: notification.id,
+                          type: null,
+                          relatedId: null,
+                        );
+                      } else if (notification.type.isNotEmpty &&
+                          notification.relatedId != null) {
+                        // Fallback: use type and related_id
+                        await viewModel.markNotificationAsRead(
+                          notificationId: null,
+                          type: notification.type,
+                          relatedId: notification.relatedId,
+                        );
+                      }
                     }
                     // Close notifications dropdown
                     viewModel.closeNotifications();

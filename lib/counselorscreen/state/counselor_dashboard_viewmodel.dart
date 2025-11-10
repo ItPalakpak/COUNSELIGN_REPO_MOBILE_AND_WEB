@@ -38,7 +38,6 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   String get profileImageUrl {
     if (_counselorProfile == null) {
       debugPrint('🖼️ Dashboard: No profile loaded, using default');
-      // Fix: Remove /index.php from baseUrl if it exists for default image too
       String cleanBaseUrl = ApiConfig.currentBaseUrl;
       if (cleanBaseUrl.endsWith('/index.php')) {
         cleanBaseUrl = cleanBaseUrl.replaceAll('/index.php', '');
@@ -142,14 +141,12 @@ class CounselorDashboardViewModel extends ChangeNotifier {
             '🔍 Counselor name fields - first_name: ${data['counselor']?['first_name']}, last_name: ${data['counselor']?['last_name']}, full_name: ${data['counselor']?['full_name']}',
           );
 
-          // Check if profile_picture is in the counselor object instead
           if (data['counselor'] != null) {
             debugPrint(
               '🖼️ Dashboard: counselor profile_picture: ${data['counselor']['profile_picture']}',
             );
           }
 
-          // Create profile data from the response format using the new structure
           final profileData = {
             'id': data['user_id'] ?? 0,
             'user_id': data['user_id'] ?? '',
@@ -223,15 +220,14 @@ class CounselorDashboardViewModel extends ChangeNotifier {
         final data = json.decode(response.body);
         debugPrint('Messages API Data: $data');
         if (data['success'] == true) {
-          // Convert conversations to messages for display
           final conversations = data['conversations'] as List? ?? [];
           _messages = conversations
               .map(
                 (conv) => Message(
-                  id: 0, // Dashboard messages don't need real IDs
+                  id: 0,
                   senderId: conv['other_user_id'] ?? '',
                   senderName: conv['other_username'] ?? 'Unknown',
-                  receiverId: '', // Not needed for dashboard
+                  receiverId: '',
                   messageText: conv['last_message'] ?? '',
                   createdAt:
                       DateTime.tryParse(conv['last_message_time'] ?? '') ??
@@ -259,7 +255,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   Future<void> fetchNotifications() async {
     try {
       debugPrint(
-        '🔍 Fetching notifications from: ${ApiConfig.currentBaseUrl}/counselor/notifications',
+        '🔔 Fetching notifications from: ${ApiConfig.currentBaseUrl}/counselor/notifications',
       );
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/counselor/notifications',
@@ -293,10 +289,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   // Send message
   Future<bool> sendMessage(String message) async {
     try {
-      final formData = {
-        'message': message,
-        'receiver_id': 'admin123', // Admin ID
-      };
+      final formData = {'message': message, 'receiver_id': 'admin123'};
 
       final response = await _session.post(
         '${ApiConfig.currentBaseUrl}/counselor/message/send',
@@ -307,7 +300,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          await fetchMessages(); // Refresh messages
+          await fetchMessages();
           return true;
         }
       }
@@ -318,23 +311,36 @@ class CounselorDashboardViewModel extends ChangeNotifier {
     }
   }
 
-  // Mark notification as read - supports both notification_id and type/related_id
+  // FIXED: Mark notification as read - supports both notification_id and type/related_id
+  // Changed Map<String, String> to Map<String, dynamic> to match JavaScript
   Future<bool> markNotificationAsRead({
     int? notificationId,
     String? type,
     int? relatedId,
   }) async {
     try {
-      final Map<String, String> payload = {};
-      if (notificationId != null) {
-        payload['notification_id'] = notificationId.toString();
-      } else if (type != null && relatedId != null) {
+      // IMPORTANT: Build payload exactly like JavaScript does
+      final Map<String, dynamic> payload = {};
+
+      // Only add notification_id if it's provided AND not 0
+      if (notificationId != null && notificationId != 0) {
+        payload['notification_id'] = notificationId;
+        debugPrint('📤 Marking with notification_id: $notificationId');
+      }
+      // Otherwise, use type and related_id (for events/announcements)
+      else if (type != null && type.isNotEmpty && relatedId != null) {
         payload['type'] = type;
-        payload['related_id'] = relatedId.toString();
+        payload['related_id'] = relatedId;
+        debugPrint('📤 Marking with type: $type, related_id: $relatedId');
       } else {
-        debugPrint('Error: Invalid parameters for markNotificationAsRead');
+        debugPrint('❌ Error: Invalid parameters for markNotificationAsRead');
+        debugPrint(
+          '   notificationId: $notificationId, type: $type, relatedId: $relatedId',
+        );
         return false;
       }
+
+      debugPrint('📤 Final payload: $payload');
 
       final response = await _session.post(
         '${ApiConfig.currentBaseUrl}/counselor/notifications/mark-read',
@@ -342,66 +348,225 @@ class CounselorDashboardViewModel extends ChangeNotifier {
         body: json.encode(payload),
       );
 
+      debugPrint('📥 Response status: ${response.statusCode}');
+      debugPrint('📥 Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' || data['success'] == true) {
+          debugPrint('✅ Successfully marked as read');
+
           // Update local state
-          if (notificationId != null) {
+          if (notificationId != null && notificationId != 0) {
             final notificationIndex = _notifications.indexWhere(
               (n) => n.id == notificationId,
             );
             if (notificationIndex != -1) {
               _notifications[notificationIndex] =
                   _notifications[notificationIndex].copyWith(isRead: true);
+              debugPrint(
+                '✅ Updated local notification at index $notificationIndex',
+              );
             }
           } else if (type != null && relatedId != null) {
-            // Update by type and related_id
+            // Update by type and related_id (for events/announcements)
             for (int i = 0; i < _notifications.length; i++) {
               if (_notifications[i].type == type &&
                   _notifications[i].relatedId == relatedId) {
                 _notifications[i] = _notifications[i].copyWith(isRead: true);
+                debugPrint(
+                  '✅ Updated local notification at index $i (type: $type, relatedId: $relatedId)',
+                );
               }
             }
           }
+
+          // Recalculate unread count
           _unreadNotificationsCount = _notifications
               .where((n) => !n.isRead)
               .length;
+          debugPrint('📊 New unread count: $_unreadNotificationsCount');
+
           notifyListeners();
           return true;
+        } else {
+          debugPrint(
+            '⚠️ Server returned non-success: ${data['message'] ?? 'Unknown error'}',
+          );
         }
+      } else {
+        debugPrint('⚠️ HTTP error: ${response.statusCode}');
       }
       return false;
     } catch (e) {
-      debugPrint('Error marking notification as read: $e');
+      debugPrint('❌ Error marking notification as read: $e');
       return false;
     }
   }
 
-  // Mark all notifications as read
+  // FIXED: Mark all notifications as read - now matches JavaScript exactly
   Future<bool> markAllNotificationsAsRead() async {
     try {
-      final response = await _session.post(
+      debugPrint('🔔 ========== STARTING MARK ALL PROCESS ==========');
+
+      // Step 1: Call bulk endpoint with mark_all: true
+      debugPrint('📤 Step 1: Calling bulk mark-all endpoint...');
+      final bulkResponse = await _session.post(
         '${ApiConfig.currentBaseUrl}/counselor/notifications/mark-read',
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'mark_all': true}),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['status'] == 'success' || data['success'] == true) {
-          // Mark all notifications as read locally
-          _notifications = _notifications
-              .map((n) => n.copyWith(isRead: true))
-              .toList();
-          _unreadNotificationsCount = 0;
-          notifyListeners();
-          return true;
+      debugPrint('📥 Bulk response status: ${bulkResponse.statusCode}');
+      debugPrint('📥 Bulk response body: ${bulkResponse.body}');
+
+      if (bulkResponse.statusCode != 200) {
+        debugPrint('❌ Error: Bulk mark-all request failed');
+        return false;
+      }
+
+      final bulkData = json.decode(bulkResponse.body);
+      if (bulkData['status'] != 'success' && bulkData['success'] != true) {
+        debugPrint('❌ Error: Bulk mark-all response indicates failure');
+        return false;
+      }
+
+      debugPrint('✅ Step 1 complete: Bulk mark-all succeeded');
+
+      // Step 2: Collect all notifications that need individual marking
+      // CRITICAL: This matches JavaScript behavior - collect ALL notifications that need marking,
+      // including events and announcements (which should always be marked individually)
+      debugPrint(
+        '📋 Step 2: Collecting notifications for individual marking...',
+      );
+      final notificationsToMark = <Map<String, dynamic>>[];
+
+      for (final notification in _notifications) {
+        // CRITICAL: Collect all notifications that need individual marking
+        // This matches JavaScript behavior - collect unread notifications AND
+        // events/announcements (which should always be marked individually)
+        final bool isEventOrAnnouncement =
+            notification.type == 'event' || notification.type == 'announcement';
+        final bool shouldMark = !notification.isRead || isEventOrAnnouncement;
+
+        if (shouldMark) {
+          final Map<String, dynamic> payload = {};
+
+          // CRITICAL: For events and announcements, ALWAYS use type and related_id
+          // (even if they have an id, they should be marked by type/related_id)
+          if (isEventOrAnnouncement && notification.relatedId != null) {
+            payload['type'] = notification.type;
+            payload['related_id'] = notification.relatedId;
+            debugPrint(
+              '  → ${notification.type} (related_id: ${notification.relatedId}): ${notification.title}',
+            );
+          }
+          // Regular notifications use notification_id (if id is valid)
+          else if (notification.id != 0) {
+            payload['notification_id'] = notification.id;
+            debugPrint(
+              '  → Notification ID ${notification.id}: ${notification.title}',
+            );
+          }
+          // Fallback: if no valid id but has type and related_id, use those
+          else if (notification.type.isNotEmpty &&
+              notification.relatedId != null) {
+            payload['type'] = notification.type;
+            payload['related_id'] = notification.relatedId;
+            debugPrint(
+              '  → ${notification.type} (related_id: ${notification.relatedId}): ${notification.title}',
+            );
+          } else {
+            debugPrint(
+              '  ⚠️ Skipping notification without valid identifiers: ${notification.title}',
+            );
+            debugPrint(
+              '     ID: ${notification.id}, Type: ${notification.type}, RelatedId: ${notification.relatedId}',
+            );
+          }
+
+          // Only add if we have valid parameters
+          if (payload.isNotEmpty) {
+            notificationsToMark.add(payload);
+          }
         }
       }
-      return false;
+
+      debugPrint(
+        '📊 Found ${notificationsToMark.length} notifications to mark individually',
+      );
+
+      // Step 3: Mark each individual notification
+      if (notificationsToMark.isNotEmpty) {
+        debugPrint('📤 Step 3: Marking individual notifications...');
+        final markPromises = <Future<void>>[];
+
+        for (final payload in notificationsToMark) {
+          markPromises.add(_markIndividualNotification(payload));
+        }
+
+        // Wait for all individual marks to complete
+        await Future.wait(markPromises);
+        debugPrint('✅ Step 3 complete: All individual marks processed');
+      } else {
+        debugPrint('ℹ️ Step 3: No individual notifications to mark');
+      }
+
+      // Step 4: Update local state - mark all as read
+      debugPrint('🔄 Step 4: Updating local state...');
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
+      _unreadNotificationsCount = 0;
+
+      // Step 5: Reload notifications to get fresh data from server
+      debugPrint('🔄 Step 5: Reloading notifications from server...');
+      await fetchNotifications();
+
+      debugPrint('✅ ========== MARK ALL COMPLETE ==========');
+      debugPrint('📊 Final unread count: $_unreadNotificationsCount');
+
+      notifyListeners();
+      return true;
     } catch (e) {
-      debugPrint('Error marking all notifications as read: $e');
+      debugPrint('❌ Error marking all notifications as read: $e');
       return false;
+    }
+  }
+
+  // Helper method to mark individual notification (used by markAllNotificationsAsRead)
+  Future<void> _markIndividualNotification(Map<String, dynamic> payload) async {
+    try {
+      debugPrint('  📤 Marking individual: $payload');
+
+      final response = await _session.post(
+        '${ApiConfig.currentBaseUrl}/counselor/notifications/mark-read',
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
+      );
+
+      debugPrint('  📥 Response status: ${response.statusCode}');
+      debugPrint('  📥 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] != 'success' && data['success'] != true) {
+          debugPrint(
+            '  ⚠️ Warning: Individual mark failed for payload: $payload',
+          );
+          debugPrint('  ⚠️ Error message: ${data['message'] ?? 'Unknown'}');
+        } else {
+          debugPrint('  ✅ Individual mark succeeded for: $payload');
+        }
+      } else {
+        debugPrint(
+          '  ⚠️ Warning: Individual mark request failed (${response.statusCode}) for: $payload',
+        );
+      }
+    } catch (error) {
+      debugPrint(
+        '  ❌ Error marking individual notification: $error for payload: $payload',
+      );
     }
   }
 
@@ -427,7 +592,6 @@ class CounselorDashboardViewModel extends ChangeNotifier {
               return appointment as Map<String, dynamic>;
             }
           } catch (e) {
-            // Appointment not found
             debugPrint('Appointment not found: $appointmentId');
             return null;
           }
@@ -455,7 +619,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   void toggleChat() {
     _isChatOpen = !_isChatOpen;
     if (_isChatOpen) {
-      _isNotificationsOpen = false; // Close notifications if open
+      _isNotificationsOpen = false;
     }
     notifyListeners();
   }
@@ -469,7 +633,7 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   void toggleNotifications() {
     _isNotificationsOpen = !_isNotificationsOpen;
     if (_isNotificationsOpen) {
-      _isChatOpen = false; // Close chat if open
+      _isChatOpen = false;
     }
     notifyListeners();
   }
@@ -509,7 +673,6 @@ class CounselorDashboardViewModel extends ChangeNotifier {
 
   void logout(BuildContext context) async {
     try {
-      // Call logout endpoint to update activity fields in database
       debugPrint('🚪 Calling logout endpoint...');
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/auth/logout',
@@ -518,11 +681,8 @@ class CounselorDashboardViewModel extends ChangeNotifier {
       debugPrint('🚪 Logout response status: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error calling logout endpoint: $e');
-      // Continue with logout even if endpoint call fails
     } finally {
-      // Clear session cookies
       _session.clearCookies();
-      // Navigate back to landing
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }
@@ -551,7 +711,6 @@ class CounselorDashboardViewModel extends ChangeNotifier {
 
   // Polling Methods
   void startPolling() {
-    // Poll for notifications every 10 seconds
     _notificationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       fetchNotifications();
     });

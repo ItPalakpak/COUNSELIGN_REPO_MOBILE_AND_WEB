@@ -1016,15 +1016,93 @@ class StudentDashboardViewModel extends ChangeNotifier {
 
   Future<void> clearAllNotifications(BuildContext context) async {
     try {
-      final response = await _session.post(
+      // Collect all unread notifications that need to be marked
+      // This matches the JavaScript behavior: collect notifications that can be marked as read
+      final notificationsToMark = <Map<String, dynamic>>[];
+
+      for (var notification in _notifications) {
+        if (!notification.isRead) {
+          // Prioritize notification_id if available (matches JavaScript behavior)
+          if (notification.id > 0) {
+            notificationsToMark.add({
+              'notification_id': notification.id,
+              'type': notification.type,
+              'related_id': notification.relatedId,
+            });
+          } else {
+            // For events and announcements without notification_id, use type + related_id
+            final notificationType = notification.type.toLowerCase();
+            if ((notificationType == 'event' ||
+                    notificationType == 'announcement') &&
+                notification.relatedId != null) {
+              notificationsToMark.add({
+                'notification_id': null,
+                'type': notification.type,
+                'related_id': notification.relatedId,
+              });
+            }
+          }
+        }
+      }
+
+      // If no notifications to mark, return early
+      if (notificationsToMark.isEmpty) {
+        return;
+      }
+
+      // First, call the bulk endpoint with mark_all: true
+      final bulkResponse = await _session.post(
         '${ApiConfig.currentBaseUrl}/student/notifications/mark-read',
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'mark_all': true}),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['status'] == 'success') {
+      if (bulkResponse.statusCode == 200) {
+        final bulkData = json.decode(bulkResponse.body);
+        if (bulkData['status'] == 'success') {
+          // Now mark each individual notification based on its type
+          final markPromises = <Future<void>>[];
+
+          for (var notif in notificationsToMark) {
+            final payload = <String, dynamic>{};
+
+            // Handle different notification types
+            if (notif['notification_id'] != null) {
+              payload['notification_id'] = notif['notification_id'];
+            } else if (notif['type'] != null && notif['related_id'] != null) {
+              payload['type'] = notif['type'];
+              payload['related_id'] = notif['related_id'];
+            } else {
+              continue; // Skip invalid entries
+            }
+
+            // Make individual API call for each notification
+            markPromises.add(
+              _session
+                  .post(
+                    '${ApiConfig.currentBaseUrl}/student/notifications/mark-read',
+                    headers: {'Content-Type': 'application/json'},
+                    body: json.encode(payload),
+                  )
+                  .then((response) {
+                    if (response.statusCode == 200) {
+                      final data = json.decode(response.body);
+                      if (data['status'] != 'success') {
+                        debugPrint(
+                          'Error marking notification as read: ${data['message']}',
+                        );
+                      }
+                    }
+                  })
+                  .catchError((error) {
+                    debugPrint('Error marking notification as read: $error');
+                  }),
+            );
+          }
+
+          // Wait for all individual marks to complete
+          await Future.wait(markPromises);
+
           // Mark all notifications as read locally
           for (var notification in _notifications) {
             notification.isRead = true;
@@ -1047,7 +1125,8 @@ class StudentDashboardViewModel extends ChangeNotifier {
           if (context.mounted) {
             showAlertModal(
               context,
-              data['message'] ?? 'Failed to mark all notifications as read.',
+              bulkData['message'] ??
+                  'Failed to mark all notifications as read.',
               'error',
             );
           }

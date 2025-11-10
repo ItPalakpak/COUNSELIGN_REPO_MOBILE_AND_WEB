@@ -206,17 +206,60 @@ class NotificationsDropdown extends StatelessWidget {
                                   ),
                                 ),
 
-                                // Mark as read button
+                                // FIXED: Mark as read button - now properly checks which parameters to send
+                                // CRITICAL: Events and announcements should ALWAYS use type/related_id,
+                                // even if they have an id, to ensure proper recording in notifications_read table
                                 if (showMarkReadBtn)
                                   IconButton(
                                     onPressed: () {
-                                      onMarkAsRead(
-                                        notificationId: notification.id != 0
-                                            ? notification.id
-                                            : null,
-                                        type: notification.type,
-                                        relatedId: notification.relatedId,
-                                      );
+                                      // CRITICAL: For events and announcements, ALWAYS use type and related_id
+                                      // This matches JavaScript behavior - events/announcements must be marked
+                                      // by type/related_id to be recorded in notifications_read table
+                                      final bool isEventOrAnnouncement =
+                                          notification.type == 'event' ||
+                                          notification.type == 'announcement';
+
+                                      if (isEventOrAnnouncement &&
+                                          notification.relatedId != null) {
+                                        // Event/announcement: ALWAYS use type and related_id
+                                        debugPrint(
+                                          '🔘 Individual mark: Using type ${notification.type}, related_id ${notification.relatedId}',
+                                        );
+                                        onMarkAsRead(
+                                          notificationId: null,
+                                          type: notification.type,
+                                          relatedId: notification.relatedId,
+                                        );
+                                      } else if (notification.id != 0) {
+                                        // Regular notification: use notification_id
+                                        debugPrint(
+                                          '🔘 Individual mark: Using notification_id ${notification.id}',
+                                        );
+                                        onMarkAsRead(
+                                          notificationId: notification.id,
+                                          type: null,
+                                          relatedId: null,
+                                        );
+                                      } else if (notification.type.isNotEmpty &&
+                                          notification.relatedId != null) {
+                                        // Fallback: use type and related_id if no valid id
+                                        debugPrint(
+                                          '🔘 Individual mark: Using type ${notification.type}, related_id ${notification.relatedId}',
+                                        );
+                                        onMarkAsRead(
+                                          notificationId: null,
+                                          type: notification.type,
+                                          relatedId: notification.relatedId,
+                                        );
+                                      } else {
+                                        // Invalid notification structure
+                                        debugPrint(
+                                          '⚠️ Warning: Cannot mark notification - no valid identifiers',
+                                        );
+                                        debugPrint(
+                                          '   ID: ${notification.id}, Type: ${notification.type}, RelatedId: ${notification.relatedId}',
+                                        );
+                                      }
                                     },
                                     icon: const Icon(
                                       Icons.check_circle_outline,
