@@ -9,12 +9,41 @@ body {
     display: flex;
     flex-direction: column;
 }
-/* Main Content Styles */
+
+/* Main Wrapper */
 .main-wrapper {
     display: flex;
-    min-height: calc(100vh - 160px);
-    padding: 2rem;
+    margin: 0;
+    padding: 0;
+    min-height: calc(100vh - 140px);
+    background-color: #f7f7f7;
+}
+
+/* Main container styling */
+.container.py-5 {
+    background: linear-gradient(135deg, #f7f7f7 80%, #d1daf0 100%);
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(3, 21, 64, 0.1);
+    padding: 2rem !important;
+    animation: fadeInUp 0.7s;
+    max-width: 1270px !important;
+    margin: 10px auto;
+    width: calc(100% - 20px) !important;
+}
+
+/* Row layout improvements */
+.container.py-5>.row {
+    display: flex;
     gap: 2rem;
+    margin: 0;
+}
+
+/* Column sizing */
+.container.py-5>.row>.col-lg-6 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 /* Sidebar Styles */
@@ -592,10 +621,14 @@ footer {
     border: none;
     border-radius: 6px;
     color: white;
-    font-weight: 500;
-    padding: 0.2rem 0.5rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem; /* Increased padding */
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 51, 102, 0.2);
+    display: inline-flex; /* Use flexbox */
+    align-items: center; /* Vertically center content */
+    white-space: nowrap; /* Prevent wrapping */
+    gap: 0.2rem; /* Space between icon and text */
 }
 
 .action-btn:hover {
@@ -611,7 +644,11 @@ footer {
 }
 
 .action-btn i {
-    margin-right: 0.25rem;
+    margin-right: 0; /* Remove margin since we're using gap */
+}
+
+.action-btn .btn-text {
+    font-size: 0.9rem;
 }
 
 /* Responsive Design for PDS Modal */
@@ -727,9 +764,7 @@ footer {
 }
 
 /* Enhanced button styling */
-.action-btn .btn-text {
-    font-size: 0.9rem;
-}
+
 
 @media (max-width: 480px) {
     .action-btn {

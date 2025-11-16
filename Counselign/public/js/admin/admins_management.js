@@ -36,11 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshButton.addEventListener('click', handleRefreshSchedule);
     }
 
-    // Load counselor schedules on page load
-    loadCounselorSchedules();
+    // Load counselor schedules on page load (without showing success notification)
+    loadCounselorSchedules(false);
 
-    // Auto-refresh every 5 minutes
-    setInterval(loadCounselorSchedules, 300000);
+    // Auto-refresh every 5 minutes (without showing success notification)
+    setInterval(() => loadCounselorSchedules(false), 300000);
 });
 
 /**
@@ -70,8 +70,8 @@ function handleRefreshSchedule(event) {
         icon.classList.add('fa-spin');
     }
     
-    // Load schedules
-    loadCounselorSchedules()
+    // Load schedules with showNotification = true
+    loadCounselorSchedules(true)
         .finally(() => {
             // Re-enable button after operation completes
             refreshButton.disabled = false;
@@ -94,9 +94,10 @@ function confirmLogout() {
 /**
  * Load counselor schedules from the server
  * Fetches and displays weekly counselor availability schedules
+ * @param {boolean} showNotification - Whether to show success notification after loading
  * @returns {Promise<void>}
  */
-function loadCounselorSchedules() {
+function loadCounselorSchedules(showNotification = false) {
     const baseUrl = window.BASE_URL || '/';
     
     SecureLogger.info('Loading counselor schedules...');
@@ -122,7 +123,11 @@ function loadCounselorSchedules() {
             if (data.success) {
                 displayCounselorSchedules(data.schedules);
                 SecureLogger.info(`Loaded schedules for ${data.total_counselors} counselors`);
-                showSuccessNotification('Schedules refreshed successfully');
+                
+                // Only show success notification if explicitly requested (manual refresh)
+                if (showNotification) {
+                    showSuccessNotification('Schedules refreshed successfully');
+                }
             } else {
                 console.error('Failed to load counselor schedules:', data.message);
                 showScheduleError(data.message || 'Failed to load schedules');

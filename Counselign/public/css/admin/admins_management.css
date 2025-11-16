@@ -19,6 +19,33 @@ body {
     background-color: #f7f7f7;
 }
 
+/* Main container styling */
+.container.py-5 {
+    background: linear-gradient(135deg, #f7f7f7 80%, #d1daf0 100%);
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(3, 21, 64, 0.1);
+    padding: 2rem !important;
+    animation: fadeInUp 0.7s;
+    max-width: 1270px !important;
+    margin: 10px auto;
+    width: calc(100% - 20px) !important;
+}
+
+/* Row layout improvements */
+.container.py-5>.row {
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+}
+
+/* Column sizing */
+.container.py-5>.row>.col-lg-6 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 /* Profile Sidebar */
 .profile-sidebar {
     width: 240px;
@@ -128,7 +155,7 @@ body {
 
 .schedule-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
@@ -169,25 +196,25 @@ body {
     gap: 8px;
 }
 
-.refresh-schedule-btn:hover {
+#refreshScheduleBtn:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(6, 14, 87, 0.3);
 }
 
-.refresh-schedule-btn i {
+#refreshScheduleBtn i {
     transition: transform 0.3s ease;
 }
 
-.refresh-schedule-btn:hover i {
+#refreshScheduleBtn:hover i {
     transform: rotate(180deg);
 }
 
-.refresh-schedule-btn:active {
+#refreshScheduleBtn:active {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(6, 14, 87, 0.2);
 }
 
-.refresh-schedule-btn:disabled {
+#refreshScheduleBtn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;

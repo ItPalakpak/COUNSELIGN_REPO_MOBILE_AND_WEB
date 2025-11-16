@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,110 +9,163 @@
     <link rel="icon" href="<?= base_url('Photos/counselign.ico') ?>" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/admin/header.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/admin/resources.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/resources.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/admin/admin_dashboard.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 
 </head>
+
 <body>
-    <!-- Header -->
-    <header class="admin-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
-                    
-                    <button class="admin-navbar-toggler d-lg-none align-items-center" type="button" id="adminNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
-                    </button>
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links">
-                                <li class="nav-item"><a class="nav-link" href="<?= base_url('admin/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-                                <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-                            </ul>
-                        </div>
-                    </nav>
-                </div>
-            </div>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('admin/dashboard') ?>" class="sidebar-link " title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="<?= base_url('admin/admins-management') ?>" class="sidebar-link" title="Management">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="sidebar-text">Management</span>
+                </a>
+                <a href="<?= base_url('admin/appointments') ?>" class="sidebar-link" title="Recent Appointments">
+                    <i class="fas fa-calendar-check"></i>
+                    <span class="sidebar-text">Recent Appointments</span>
+                </a>
+                <a href="<?= base_url('admin/follow-up-sessions') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-calendar-days"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('admin/resources') ?>" class="sidebar-link active" title="Resources">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="sidebar-text">Resources</span>
+                </a>
+                <a href="<?= base_url('admin/announcements') ?>" class="sidebar-link " title="Announcements">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcements</span>
+                </a>
+            </nav>
         </div>
-    </header>
+    </aside>
 
-    <!-- Mobile Drawer -->
-    <div class="admin-navbar-drawer d-lg-none" id="adminNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Menu</h5>
-            <button class="btn-close btn-close-white" id="adminNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('admin/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-        </ul>
-    </div>
-    <div class="admin-navbar-overlay d-lg-none" id="adminNavbarOverlay"></div>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
 
     <!-- Main Content -->
-    <div class="container py-4">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-2"><i class="fas fa-folder-open me-2"></i>Resource Management</h2>
-                    <p class="mb-0 opacity-75">Manage educational resources and helpful links</p>
-                </div>
-                <button class="btn btn-light" id="addResourceBtn">
-                    <i class="fas fa-plus me-2"></i>Add Resource
-                </button>
-            </div>
-        </div>
+    <div class="main-wrapper" id="mainWrapper">
 
-        <!-- Filters -->
-        <div class="filter-section">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Search resources...">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <!-- Page Title Added Here -->
+                <h1 class="page-title-header">
+                    <i class="fas fa-folder-open me-2"></i>
+                    Resource Management
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Admin</span>
+                    </button>
+
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Admin</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('admin/account-settings') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="typeFilter">
-                        <option value="">All Types</option>
-                        <option value="file">Files</option>
-                        <option value="link">Links</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="categoryFilter">
-                        <option value="">All Categories</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="visibilityFilter">
-                        <option value="">All Visibility</option>
-                        <option value="all">All Users</option>
-                        <option value="students">Students Only</option>
-                        <option value="counselors">Counselors Only</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="statusFilter">
-                        <option value="">All Status</option>
-                        <option value="1">Active</option>
-                        <option value="0">Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button class="btn btn-secondary w-100" id="clearFiltersBtn" title="Clear Filters">
-                        <i class="fas fa-times"></i>
+            </div>
+        </header>
+
+        <div class="container py-5">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-0 opacity-75">Manage educational resources and helpful links</p>
+                    </div>
+                    <button class="btn btn-light" id="addResourceBtn">
+                        <i class="fas fa-plus me-2"></i>Add Resource
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Resources List -->
-        <div id="resourcesList">
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <!-- Filters -->
+            <div class="filter-section">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search resources...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="file">Files</option>
+                            <option value="link">Links</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="visibilityFilter">
+                            <option value="">All Visibility</option>
+                            <option value="all">All Users</option>
+                            <option value="students">Students Only</option>
+                            <option value="counselors">Counselors Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-secondary w-100" id="clearFiltersBtn" title="Clear Filters">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resources List -->
+            <div id="resourcesList">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,7 +182,7 @@
                 <form id="resourceForm" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" id="resourceId" name="resource_id">
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Resource Type <span class="text-danger">*</span></label>
                             <div class="btn-group w-100" role="group">
@@ -228,7 +282,7 @@
         </div>
     </div>
 
-    <!-- ====== ADDED: Alert Modal ====== -->
+    <!-- Alert Modal -->
     <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -251,7 +305,7 @@
         </div>
     </div>
 
-    <!-- ====== ADDED: Confirmation Modal ====== -->
+    <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -273,7 +327,7 @@
         </div>
     </div>
 
-    <!-- ====== ADDED: Notice Modal (optional but good to have) ====== -->
+    <!-- Notice Modal -->
     <div class="modal fade" id="noticeModal" tabindex="-1" aria-labelledby="noticeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -296,20 +350,26 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
-
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>window.BASE_URL = "<?= base_url() ?>";</script>
+    
+    <!-- ADDED: Mammoth.js for DOCX preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
+    <!-- ADDED: SheetJS for Excel preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Your Scripts -->
+    <script>
+        window.BASE_URL = "<?= base_url() ?>";
+    </script>
+    <script src="<?= base_url('js/utils/resource-preview.js') ?>"></script>
     <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="<?= base_url('js/admin/resources_management.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
+
 </html>

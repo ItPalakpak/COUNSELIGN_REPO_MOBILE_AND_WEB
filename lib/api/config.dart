@@ -1,5 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 
 class ApiConfig {
   // Optional build-time override (e.g., --dart-define=API_BASE_URL=https://api.example.com)
@@ -31,25 +31,45 @@ class ApiConfig {
     'X-Requested-With': 'XMLHttpRequest',
   };
 
-  // Auto-detect environment
+  // Auto-detect environment and pick the most appropriate base URL.
+  //
+  // Priority:
+  // 1) API_BASE_URL (build-time override via --dart-define) – use this whenever
+  //    you need to point to a different machine/network without editing code.
+  // 2) Release builds – fall back to productionUrl to avoid shipping a build
+  //    that accidentally targets a LAN-only HTTP endpoint.
+  // 3) Debug/dev – use platform-specific local URLs.
   static String get currentBaseUrl {
+    // 1) Build-time override always wins (debug or release).
     if (envBaseUrl.isNotEmpty) {
       return envBaseUrl;
     }
+
+    // 2) In release mode, prefer the configured production URL.
+    if (kReleaseMode) {
+      return productionUrl;
+    }
+
+    // 3) Development / debug fallbacks by platform.
     if (kIsWeb) {
-      // Running on web (use localhost)
-      return localhostUrl;
-    } else if (Platform.isAndroid) {
-      // Running on Android
-      // Use deviceUrl for physical device testing
-      // Use emulatorUrl only when running on Android emulator
-      return deviceUrl; // Use deviceUrl for physical device
-    } else if (Platform.isIOS) {
-      // Use device URL for iOS testing on physical device
-      return deviceUrl;
-    } else {
-      // Desktop (Windows/macOS/Linux)
+      // Running on web (dev server).
       return localhostUrl;
     }
+
+    if (Platform.isAndroid) {
+      // Running on Android.
+      // - For emulators, prefer emulatorUrl via API_BASE_URL override.
+      // - For physical devices, prefer deviceUrl or override via API_BASE_URL.
+      return deviceUrl;
+    }
+
+    if (Platform.isIOS) {
+      // iOS simulators/devices – same pattern as Android: override via
+      // API_BASE_URL when testing against a different host.
+      return deviceUrl;
+    }
+
+    // Desktop (Windows/macOS/Linux).
+    return localhostUrl;
   }
 }

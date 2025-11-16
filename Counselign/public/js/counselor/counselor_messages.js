@@ -1,3 +1,8 @@
+// ==================================================================
+// FINAL FIX FOR COUNSELOR MESSAGES PAGE
+// This file should REPLACE your entire counselor_messages.js
+// ==================================================================
+
 // Global variables
 let currentUserId = null;
 let messageUpdateInterval = null;
@@ -25,60 +30,138 @@ function resolveImageUrl(path) {
     }
 }
 
-// Initialize mobile sidebar functionality
+// Initialize mobile sidebar functionality - COMPLETELY REWRITTEN
 function initializeMobileSidebar() {
     const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
     const conversationsSidebar = document.getElementById('conversationsSidebar');
     const mobileSidebarOverlay = document.getElementById('mobileSidebarOverlay');
+    const mainSidebar = document.getElementById('uniSidebar');
+    const mainSidebarOverlay = document.getElementById('sidebarOverlay');
     
-    if (!mobileSidebarToggle || !conversationsSidebar || !mobileSidebarOverlay) return;
+    if (!mobileSidebarToggle || !conversationsSidebar || !mobileSidebarOverlay) {
+        SecureLogger.info('Conversations sidebar elements not found');
+        return;
+    }
     
-    // Function to close sidebar
-    function closeSidebar() {
+    SecureLogger.info('Initializing mobile conversations sidebar');
+    
+    // Function to close conversations sidebar
+    function closeConversationsSidebar() {
         conversationsSidebar.classList.remove('active');
         mobileSidebarOverlay.classList.remove('active');
         mobileSidebarToggle.classList.remove('hidden');
-        document.body.style.overflow = '';
+        document.body.classList.remove('conversations-sidebar-open');
+        SecureLogger.info('Conversations sidebar closed');
     }
     
-    // Function to open sidebar
-    function openSidebar() {
+    // Function to open conversations sidebar
+    function openConversationsSidebar() {
+        // Only open if main sidebar is NOT active
+        if (mainSidebar && mainSidebar.classList.contains('active')) {
+            SecureLogger.info('Cannot open conversations sidebar - main sidebar is active');
+            return;
+        }
         conversationsSidebar.classList.add('active');
         mobileSidebarOverlay.classList.add('active');
         mobileSidebarToggle.classList.add('hidden');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('conversations-sidebar-open');
+        SecureLogger.info('Conversations sidebar opened');
     }
     
-    // Toggle sidebar when button is clicked
-    mobileSidebarToggle.addEventListener('click', function(e) {
+    // Toggle conversations sidebar - Use mousedown for faster response
+    mobileSidebarToggle.addEventListener('mousedown', function(e) {
         e.stopPropagation();
+        e.preventDefault();
+        
+        SecureLogger.info('Mobile sidebar toggle clicked');
+        
+        // Check if main sidebar is open
+        if (mainSidebar && mainSidebar.classList.contains('active')) {
+            SecureLogger.info('Main sidebar is active, ignoring conversations toggle');
+            return;
+        }
+        
         if (conversationsSidebar.classList.contains('active')) {
-            closeSidebar();
+            closeConversationsSidebar();
         } else {
-            openSidebar();
+            openConversationsSidebar();
         }
     });
     
-    // Close sidebar when overlay is clicked
+    // Close conversations sidebar when overlay is clicked
     mobileSidebarOverlay.addEventListener('click', function(e) {
         e.stopPropagation();
-        closeSidebar();
+        e.preventDefault();
+        SecureLogger.info('Conversations overlay clicked');
+        closeConversationsSidebar();
     });
     
-    // Close sidebar when a conversation is selected (mobile only)
-    document.addEventListener('click', function(e) {
+    // Close conversations sidebar when a conversation is selected (mobile only)
+    conversationsSidebar.addEventListener('click', function(e) {
         const conversationItem = e.target.closest('.conversation-item');
         if (conversationItem && window.innerWidth <= 768) {
+            SecureLogger.info('Conversation item clicked, will close sidebar after selection');
+            // Let the click through first, then close
             setTimeout(() => {
-                closeSidebar();
-            }, 300);
+                closeConversationsSidebar();
+            }, 100);
         }
     });
     
-    // Ensure sidebar is closed on initial load (mobile only)
-    if (window.innerWidth <= 768) {
-        closeSidebar();
+    // Monitor main sidebar state - close conversations sidebar when main opens
+    if (mainSidebar) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (mainSidebar.classList.contains('active')) {
+                        SecureLogger.info('Main sidebar opened, closing conversations sidebar');
+                        closeConversationsSidebar();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(mainSidebar, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
     }
+    
+    // Also listen to main sidebar overlay to close conversations sidebar
+    if (mainSidebarOverlay) {
+        mainSidebarOverlay.addEventListener('click', function() {
+            if (conversationsSidebar.classList.contains('active')) {
+                closeConversationsSidebar();
+            }
+        });
+    }
+    
+    // Ensure conversations sidebar is closed on initial load (mobile only)
+    if (window.innerWidth <= 768) {
+        closeConversationsSidebar();
+    }
+    
+    // Handle window resize for conversations sidebar
+    let conversationsResizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(conversationsResizeTimer);
+        conversationsResizeTimer = setTimeout(function() {
+            if (window.innerWidth > 768) {
+                // Desktop: ensure conversations sidebar is visible and reset
+                conversationsSidebar.classList.remove('active');
+                mobileSidebarOverlay.classList.remove('active');
+                mobileSidebarToggle.classList.add('hidden');
+                document.body.classList.remove('conversations-sidebar-open');
+            } else {
+                // Mobile: ensure proper state
+                if (!conversationsSidebar.classList.contains('active')) {
+                    mobileSidebarToggle.classList.remove('hidden');
+                }
+            }
+        }, 250);
+    });
+    
+    SecureLogger.info('Mobile conversations sidebar initialized successfully');
 }
 
 // Initialize the application
@@ -89,8 +172,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (isLoggedIn) {
             SecureLogger.info('Counselor is logged in, initializing...');
             
-            // Initialize mobile sidebar
-            initializeMobileSidebar();
+            // Wait for sidebar.js to initialize, then initialize conversations sidebar
+            setTimeout(() => {
+                initializeMobileSidebar();
+            }, 500);
             
             // Initialize message input first
             await initializeMessageInput();
@@ -109,17 +194,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Set the global autoSelectUserId
             autoSelectUserId = selectedUserId;
             SecureLogger.info('autoSelectUserId at DOMContentLoaded:', autoSelectUserId);
+            
             // Load conversations
             await loadConversations();
             
             // Remove the stored conversation IDs
             localStorage.removeItem('selectedConversation');
             localStorage.removeItem('highlightConversation');
+            
             // Remove the URL parameter without refreshing
             if (userIdFromUrl) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
-            // Do NOT call selectConversation here anymore
         } else {
             console.error('Counselor is not logged in');
             window.location.href = (window.BASE_URL || '/') + 'auth/logout';
@@ -135,10 +221,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         userList.addEventListener('click', function(e) {
             const card = e.target.closest('.conversation-item');
             if (card && card.dataset.id) {
+                SecureLogger.info('Conversation card clicked:', card.dataset.id);
                 selectConversation(card.dataset.id);
             }
         });
     }
+    
     // Enable sidebar search
     initializeSearch();
 
@@ -151,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const interval = setInterval(() => {
             const card = document.querySelector(`.conversation-item[data-id='${selectedUserId}']`);
             if (card) {
-                // Simulate click or call selectConversation
                 if (typeof selectConversation === 'function') {
                     selectConversation(selectedUserId);
                 } else {
@@ -196,60 +283,6 @@ async function checkSession() {
     }
 }
 
-// Initialize all functions first
-function initializeMobileMenu() {
-    if (!checkSession()) return;
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenu = document.getElementById('mobile-menu');
-
-    if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener('click', function () {
-            mobileMenu.style.display = mobileMenu.style.display === 'block' ? 'none' : 'block';
-        });
-    }
-}
-
-function initializeStickyHeader() {
-    const header = document.querySelector('header');
-    const main = document.querySelector('main');
-    if (header && main) {
-        const headerHeight = header.offsetHeight;
-        const placeholder = document.createElement('div');
-        placeholder.style.height = headerHeight + 'px';
-        placeholder.style.display = 'none';
-        placeholder.id = 'header-placeholder';
-        header.parentNode.insertBefore(placeholder, header.nextSibling);
-
-        window.addEventListener('scroll', function () {
-            if (window.pageYOffset > 10) {
-                header.classList.add("sticky-header");
-                placeholder.style.display = 'block';
-            } else {
-                header.classList.remove("sticky-header");
-                placeholder.style.display = 'none';
-            }
-        });
-    }
-}
-
-function initializeSidebar() {
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    if (sidebarToggle && sidebar && overlay) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-
-        overlay.addEventListener('click', function() {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
-}
-
 function initializeSearch() {
     const searchInput = document.querySelector('.search-input');
     if (!searchInput) return;
@@ -260,7 +293,7 @@ function initializeSearch() {
         
         isSearching = !!searchTerm;
         if (searchTimeout) clearTimeout(searchTimeout);
-        // If searching, pause polling for 10 seconds after last input
+        
         if (isSearching) {
             if (messageUpdateInterval) clearInterval(messageUpdateInterval);
             searchTimeout = setTimeout(() => {
@@ -281,53 +314,23 @@ function initializeSearch() {
     });
 }
 
-function handleFileAttachment(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const attachmentPreview = document.createElement('div');
-        attachmentPreview.className = 'attachment-preview';
-        attachmentPreview.innerHTML = `
-            <i class="fas fa-file"></i>
-            <span>${file.name}</span>
-            <button class="remove-attachment">×</button>
-        `;
-
-        const messageInputContainer = document.querySelector('.message-input-container');
-        if (messageInputContainer) {
-            messageInputContainer.appendChild(attachmentPreview);
-            
-            attachmentPreview.querySelector('.remove-attachment').addEventListener('click', () => {
-                attachmentPreview.remove();
-                event.target.value = '';
-            });
-        }
-    }
-}
-
 // Initialize message input
 async function initializeMessageInput() {
     SecureLogger.info('Initializing message input...');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
-    const attachButton = document.getElementById('attachment-button');
-    const emojiButton = document.getElementById('emoji-button');
 
     if (!messageInput || !sendButton) {
         console.error('Message input or send button not found');
         return;
     }
 
-    // Initialize message input state
     messageInput.disabled = true;
     messageInput.placeholder = 'Select a conversation to reply...';
     sendButton.disabled = true;
-    if (attachButton) attachButton.disabled = true;
-    if (emojiButton) emojiButton.disabled = true;
     
-    // Initialize chat header with default state
     initializeChatHeader();
 
-    // Add event listeners
     sendButton.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -336,22 +339,6 @@ async function initializeMessageInput() {
         }
     });
 
-    // Handle file attachments
-    if (attachButton) {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-
-        attachButton.addEventListener('click', () => {
-            if (!attachButton.disabled) {
-                fileInput.click();
-            }
-        });
-        fileInput.addEventListener('change', handleFileAttachment);
-    }
-
-    // Add auto-resize for textarea
     messageInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
@@ -360,7 +347,6 @@ async function initializeMessageInput() {
     SecureLogger.info('Message input initialized');
 }
 
-// Initialize chat header with default state
 function initializeChatHeader() {
     const chatHeader = document.querySelector('.chat-user-info');
     if (chatHeader) {
@@ -379,21 +365,17 @@ function initializeChatHeader() {
     }
 }
 
-// Start message polling
 async function startMessagePolling() {
     SecureLogger.info('Starting message polling...');
-    // Keep the conversations list static during message polling
     if (messageUpdateInterval) clearInterval(messageUpdateInterval);
     messageUpdateInterval = setInterval(async () => {
         if (!isSearching && currentUserId) {
             await loadMessages(currentUserId);
         }
-        // Update status indicators every 30 seconds
         updateStatusIndicators();
     }, 1500);
 }
 
-// Update status indicators for all conversations
 function updateStatusIndicators() {
     const conversationItems = document.querySelectorAll('.conversation-item');
     conversationItems.forEach(item => {
@@ -407,7 +389,6 @@ function updateStatusIndicators() {
         }
     });
     
-    // Update chat header status if a conversation is selected
     if (currentUserId) {
         const activeCard = document.querySelector(`.conversation-item[data-id="${currentUserId}"]`);
         if (activeCard) {
@@ -426,17 +407,13 @@ function updateStatusIndicators() {
 function highlightConversation(userId) {
     const card = document.querySelector(`.conversation-item[data-id="${userId}"]`);
     if (card) {
-        // Add a temporary highlight class
         card.classList.add('highlight-new-message');
-        
-        // Remove the class after animation completes
         setTimeout(() => {
             card.classList.remove('highlight-new-message');
         }, 2000);
     }
 }
 
-// Load conversations
 async function loadConversations() {
     try {
         const isLoggedIn = await checkSession();
@@ -448,7 +425,6 @@ async function loadConversations() {
         const userList = document.querySelector('.conversations-list');
         if (!userList) return;
 
-        // Only show loading state if there are no conversations yet
         if (!userList.querySelector('.conversation-item')) {
             userList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><span>Loading conversations...</span></div>';
         }
@@ -468,15 +444,12 @@ async function loadConversations() {
 
         const data = await response.json();
         if (data.success) {
-            // Check for new messages and auto-select the newest conversation if needed
             if (Array.isArray(data.conversations) && data.conversations.length > 0) {
-                // Remove loading state if present
                 const loading = userList.querySelector('.loading-state');
                 if (loading) loading.remove();
-                // First, update the conversations list
+                
                 updateConversations(data.conversations);
                 
-                // Find the conversation with the newest message
                 let newestConversation = null;
                 let newestTimestamp = lastGlobalMessageTimestamp || 0;
                 
@@ -490,16 +463,13 @@ async function loadConversations() {
                     }
                 });
                 
-                // If we found a newer message than what we've seen before
                 if (newestConversation && newestTimestamp > lastGlobalMessageTimestamp) {
                     SecureLogger.info('New message detected in conversation:', newestConversation.user_id);
                     lastGlobalMessageTimestamp = newestTimestamp;
                     
-                    // If no conversation is selected yet or auto-switching is allowed, switch to this one
                     if (!currentUserId || newestConversation.user_id === currentUserId) {
                         selectConversation(newestConversation.user_id);
                     } else {
-                        // Make the card flash or indicate new message without switching
                         highlightConversation(newestConversation.user_id);
                     }
                 }
@@ -509,40 +479,34 @@ async function loadConversations() {
         }
     } catch (error) {
         console.error('Error:', error);
-        const userList = document.querySelector('.user-list');
-        if (userList && !userList.querySelector('.student-card')) {
-            userList.innerHTML = `
-                <div class="error-message">
-                    ${error.message}
-                </div>`;
+        const userList = document.querySelector('.conversations-list');
+        if (userList && !userList.querySelector('.conversation-item')) {
+            userList.innerHTML = `<div class="error-message">${error.message}</div>`;
         }
     }
 }
 
 function updateConversations(conversations) {
-        const userList = document.querySelector('.conversations-list');
-        if (!userList) return;
+    const userList = document.querySelector('.conversations-list');
+    if (!userList) return;
 
-        if (!Array.isArray(conversations) || conversations.length === 0) {
-            if (!userList.querySelector('.no-conversations')) {
-                userList.innerHTML = `
-                <div class="no-conversations">
-                    <i class="fas fa-comments"></i>
-                    <p>No conversations yet</p>
-                </div>`;
-            }
-            return;
+    if (!Array.isArray(conversations) || conversations.length === 0) {
+        if (!userList.querySelector('.no-conversations')) {
+            userList.innerHTML = `
+            <div class="no-conversations">
+                <i class="fas fa-comments"></i>
+                <p>No conversations yet</p>
+            </div>`;
         }
+        return;
+    }
 
-    // Create a map of existing conversations
     const existingCards = new Map();
     userList.querySelectorAll('.conversation-item').forEach(card => {
         existingCards.set(card.dataset.id, card);
     });
 
-    // Update or create cards
     conversations.forEach(conv => {
-        // Backend returns other_user_id, other_username, other_profile_picture
         const otherUserId = conv.other_user_id || conv.user_id;
         const otherUserName = conv.other_username || conv.name || 'Unknown';
         const otherAvatar = resolveImageUrl(conv.other_profile_picture || 'Photos/profile.png');
@@ -551,7 +515,6 @@ function updateConversations(conversations) {
         const lastMessageTime = conv.last_message_time ? formatMessageTime(conv.last_message_time) : '';
         const lastMessageType = conv.last_message_type || 'received';
         
-        // Format last message based on who sent it
         let formattedLastMessage = lastMessage;
         if (lastMessageType === 'sent') {
             formattedLastMessage = `You: ${lastMessage}`;
@@ -559,13 +522,12 @@ function updateConversations(conversations) {
             formattedLastMessage = `Sent a Message: ${lastMessage}`;
         }
         
-        // Truncate last message for sidebar preview
         let truncatedLastMessage = formattedLastMessage;
         const maxPreviewLength = 20;
         if (truncatedLastMessage.length > maxPreviewLength) {
             truncatedLastMessage = truncatedLastMessage.substring(0, maxPreviewLength - 3) + '...';
         }
-        // Calculate online status
+        
         const statusInfo = calculateOnlineStatus(conv.last_activity, conv.last_login, conv.logout_time);
         
         const cardHtml = `
@@ -588,12 +550,10 @@ function updateConversations(conversations) {
 
         const existingCard = existingCards.get(String(otherUserId));
         if (existingCard) {
-            // Update existing card content
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = cardHtml;
             const newCard = tempDiv.firstElementChild;
             
-            // Update only the content that changed
             const existingName = existingCard.querySelector('.conversation-name');
             const existingMessage = existingCard.querySelector('.conversation-last-message');
             const existingTime = existingCard.querySelector('.conversation-time');
@@ -616,19 +576,16 @@ function updateConversations(conversations) {
                 existingTime.textContent = newTime.textContent;
             }
             
-            // Update status
             if (existingStatus && newStatus) {
                 existingStatus.textContent = newStatus.textContent;
                 existingStatus.className = newStatus.className;
             } else if (newStatus) {
-                // Add status element if it doesn't exist
                 const conversationDetails = existingCard.querySelector('.conversation-details');
                 if (conversationDetails) {
                     conversationDetails.appendChild(newStatus);
                 }
             }
             
-            // Update badge
             if (existingBadge) {
                 if (newBadge) {
                     existingBadge.textContent = newBadge.textContent;
@@ -639,30 +596,25 @@ function updateConversations(conversations) {
                 existingCard.querySelector('.conversation-meta').appendChild(newBadge);
             }
             
-            // Update active state
             if (otherUserId === currentUserId) {
                 existingCard.classList.add('active');
             } else {
                 existingCard.classList.remove('active');
             }
             
-            // Update dataset
             existingCard.dataset.lastActivity = conv.last_activity || '';
             existingCard.dataset.lastLogin = conv.last_login || '';
             
             existingCards.delete(conv.user_id);
         } else {
-            // Add new card
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = cardHtml;
             userList.appendChild(tempDiv.firstElementChild);
         }
     });
 
-    // Remove cards that no longer exist
     existingCards.forEach(card => card.remove());
 
-    // Highlight conversation card if coming from dashboard
     const highlightId = localStorage.getItem('highlightStudentCard');
     if (highlightId) {
         setTimeout(() => {
@@ -676,7 +628,6 @@ function updateConversations(conversations) {
         }, 300);
     }
 
-    // Auto-select conversation if needed
     SecureLogger.info('autoSelectUserId at updateConversations:', autoSelectUserId);
     if (autoSelectUserId) {
         selectConversation(autoSelectUserId);
@@ -699,13 +650,9 @@ function selectConversation(userId) {
     SecureLogger.info('Selecting conversation:', userId);
     if (!userId) return;
     
-    // Store the last active conversation
     lastActiveConversation = currentUserId;
-    
-    // Reset last message timestamp when switching conversations
     lastMessageTimestamp = null;
     
-    // Clear existing messages
     const messagesContainer = document.getElementById('messages-container');
     if (messagesContainer) {
         messagesContainer.innerHTML = `
@@ -719,13 +666,10 @@ function selectConversation(userId) {
 
     currentUserId = userId;
 
-    // Update active state in the conversation list
     document.querySelectorAll('.conversation-item').forEach(card => {
         card.classList.remove('active');
-        // Ensure string comparison
         if (String(card.getAttribute('data-id')) === String(userId)) {
             card.classList.add('active');
-            // Add highlight effect
             card.classList.add('highlight-new-message');
             setTimeout(() => {
                 card.classList.remove('highlight-new-message');
@@ -734,7 +678,6 @@ function selectConversation(userId) {
         }
     });
 
-    // Update the chat header with user information
     const activeCard = document.querySelector(`.conversation-item[data-id="${userId}"]`);
     if (activeCard) {
         const userName = activeCard.querySelector('.conversation-name').textContent;
@@ -746,7 +689,6 @@ function selectConversation(userId) {
             const headerAvatar = chatHeader.querySelector('.user-avatar');
             if (userNameElement) userNameElement.textContent = userName;
             if (userStatusElement) {
-                // Get the last_activity, last_login, and logout_time from the conversation data
                 const lastActivity = activeCard.dataset.lastActivity;
                 const lastLogin = activeCard.dataset.lastLogin;
                 const logoutTime = activeCard.dataset.logoutTime;
@@ -758,29 +700,10 @@ function selectConversation(userId) {
                 headerAvatar.innerHTML = `<img src="${avatarImg}" alt="avatar" style="width:50px;height:50px;border-radius:50%;object-fit:cover;"/>`;
             }
         }
-    } else {
-        // Reset chat header when no conversation is selected
-        const chatHeader = document.querySelector('.chat-user-info');
-        if (chatHeader) {
-            const userNameElement = chatHeader.querySelector('.user-name');
-            const userStatusElement = chatHeader.querySelector('.user-status');
-            const headerAvatar = chatHeader.querySelector('.user-avatar');
-            if (userNameElement) userNameElement.textContent = 'Messages';
-            if (userStatusElement) {
-                userStatusElement.textContent = 'Select a conversation to start messaging';
-                userStatusElement.className = 'user-status';
-            }
-            if (headerAvatar) {
-                headerAvatar.innerHTML = '<i class="fas fa-user"></i>';
-            }
-        }
     }
 
-    // Enable message input
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
-    const attachButton = document.getElementById('attachment-button');
-    const emojiButton = document.getElementById('emoji-button');
 
     if (messageInput) {
         messageInput.disabled = false;
@@ -788,14 +711,9 @@ function selectConversation(userId) {
         messageInput.focus();
     }
     if (sendButton) sendButton.disabled = false;
-    if (attachButton) attachButton.disabled = false;
-    if (emojiButton) emojiButton.disabled = false;
 
-    // Load messages for the selected user
     loadMessages(userId).then(() => {
-        // After messages are loaded, mark them as read
         markMessagesAsRead(userId);
-        // Resume polling
         resumePolling();
     });
 }
@@ -828,19 +746,15 @@ async function loadMessages(userId) {
         SecureLogger.info('Received messages data:', data);
 
         if (data.success && Array.isArray(data.messages)) {
-            // Filter messages for the current conversation
             const conversationMessages = data.messages.filter(msg => {
                 const isCurrentConversation = (msg.sender_id === userId || msg.receiver_id === userId);
-                SecureLogger.info('Message:', msg, 'Is current conversation:', isCurrentConversation);
                 return isCurrentConversation;
             });
             
-            // Check if there are new messages
             if (conversationMessages.length > 0) {
                 const latestMessage = conversationMessages[conversationMessages.length - 1];
                 const messageTime = new Date(latestMessage.created_at).getTime();
                 
-                // Always update display if it's the first load or if there are new messages
                 if (!lastMessageTimestamp || messageTime > lastMessageTimestamp) {
                     SecureLogger.info('Updating messages display with:', conversationMessages);
                     lastMessageTimestamp = messageTime;
@@ -848,7 +762,6 @@ async function loadMessages(userId) {
                     markMessagesAsRead(userId);
                 }
             } else {
-                // If no messages, still update display to show empty state
                 displayMessages([]);
             }
         } else {
@@ -883,7 +796,6 @@ function displayMessages(messages) {
     emptyState.style.display = 'none';
     let html = '<div class="p-3">';
     
-    // Sort messages by timestamp to ensure correct order
     messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     
     messages.forEach(msg => {
@@ -902,10 +814,8 @@ function displayMessages(messages) {
 
     html += '</div>';
     
-    // Update the messages container
     messagesContainer.innerHTML = html;
     
-    // Scroll to bottom after messages are loaded
     setTimeout(() => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }, 100);
@@ -970,30 +880,26 @@ async function sendMessage() {
 
         const data = await response.json();
         if (data.success) {
-            // Clear input and reset height
             messageInput.value = '';
             messageInput.style.height = 'auto';
 
-            // Create and append the new message immediately
             const messagesContainer = document.getElementById('messages-container');
             const newMessageHtml = `
                 <div class="d-flex justify-content-end mb-3">
                     <div class="message sent">
                         <div class="message-content bg-primary text-white rounded-3 p-2 px-3 shadow-sm">
-                            <p class="mb-1">${messageText}</p>
+                            <p class="mb-1">${escapeHtml(messageText)}</p>
                         </div>
                         <small class="text-white-50 message-time">Just now</small>
                     </div>
                 </div>
             `;
             
-            // Remove empty state if it exists
             const emptyState = document.getElementById('empty-state');
             if (emptyState) {
                 emptyState.style.display = 'none';
             }
 
-            // Append the new message
             if (messagesContainer.innerHTML.includes('empty-state')) {
                 messagesContainer.innerHTML = '<div class="p-3">' + newMessageHtml + '</div>';
             } else {
@@ -1003,13 +909,8 @@ async function sendMessage() {
                 }
             }
 
-            // Scroll to bottom
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            // Update conversation list in the background
             loadConversations();
-            
-            // Resume polling after a short delay
             resumePolling(1000);
         } else {
             throw new Error(data.message || 'Failed to send message');
@@ -1038,28 +939,23 @@ function formatMessageTime(timestamp) {
     const now = new Date();
     const diff = now - date;
     
-    // If less than a minute ago
     if (diff < 60000) {
         return 'Just now';
     }
     
-    // If less than an hour ago
     if (diff < 3600000) {
         const minutes = Math.floor(diff / 60000);
         return `${minutes}m ago`;
     }
     
-    // If today
     if (date.toDateString() === now.toDateString()) {
         return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
     
-    // If this year
     if (date.getFullYear() === now.getFullYear()) {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
     
-    // Otherwise show full date
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -1075,14 +971,11 @@ function showErrorMessage(message) {
     }, 3000);
 }
 
-// Calculate online status based on last_activity, last_login, and logout_time
 function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
-    // Get all available times
     const activityTime = lastActivity ? new Date(lastActivity) : null;
     const loginTime = lastLogin ? new Date(lastLogin) : null;
     const logoutTimeDate = logoutTime ? new Date(logoutTime) : null;
     
-    // Check if logout_time equals last_activity (exact match)
     if (logoutTimeDate && activityTime && logoutTimeDate.getTime() === activityTime.getTime()) {
         return {
             status: 'offline',
@@ -1091,11 +984,9 @@ function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
         };
     }
     
-    // Find the most recent time between last_activity and last_login
     let mostRecentTime = null;
     
     if (activityTime && loginTime) {
-        // Use the more recent of the two
         mostRecentTime = activityTime > loginTime ? activityTime : loginTime;
     } else if (activityTime) {
         mostRecentTime = activityTime;
@@ -1135,17 +1026,6 @@ function calculateOnlineStatus(lastActivity, lastLogin, logoutTime) {
     }
 }
 
-function getStatusHighlightClass(conv) {
-    if (/^online$/i.test(conv.status_text)) {
-        return 'status-online'; // green
-    }
-    if (/^active \d+ (minute|hour)s? ago$/i.test(conv.status_text)) {
-        return 'status-active-recent'; // yellow
-    }
-    return 'status-offline'; // gray
-}
-
-// Basic HTML escaper for message content
 function escapeHtml(text) {
     return String(text)
         .replace(/&/g, '&amp;')

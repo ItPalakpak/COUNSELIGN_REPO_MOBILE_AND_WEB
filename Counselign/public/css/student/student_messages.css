@@ -807,8 +807,8 @@ body {
 .mobile-sidebar-toggle {
   display: none;
   position: fixed;
-  top: 90px;
-  left: 20px;
+  top: 110px;
+  left: 10px;
   width: 50px;
   height: 50px;
   background: var(--accent-gradient);
@@ -979,8 +979,8 @@ body {
   }
 
   .mobile-sidebar-toggle {
-      top: 75px;
-      left: 12px;
+      top: 110px;
+      left: 10px;
       width: 44px;
       height: 44px;
       z-index: 1001;

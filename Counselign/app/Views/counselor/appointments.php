@@ -11,184 +11,230 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/counselor/appointments.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 </head>
 
 <body>
-    <header class="counselor-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="counselor-navbar-toggler d-lg-none align-items-center" type="button" id="counselorNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link active" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-boxes me-2"></i>
+                    Appointments Management
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <button class="top-bar-btn" onclick="window.location.href='<?= base_url('counselor/appointments/scheduled') ?>'" title="Scheduled Appointments">
+                    <i class="fa fa-calendar-alt text-2xl" style="cursor: pointer;"></i>
+                    <span class="btn-label">Scheduled Appointments</span>
+                </button>
+
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links ms-auto">
-                            <li>
-                                    <a href="<?= base_url('counselor/appointments/scheduled') ?>"><i class="fas fa-calendar-alt me-1"></i>Scheduled Appointments</a>
-                                </li>
-                                <li>
-                                    <a href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-
-                                
-                            </ul>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
                         </div>
-                    </nav>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Counselor Navbar Drawer for Small Screens -->
-    <div class="counselor-navbar-drawer d-lg-none" id="counselorNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="counselorNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-        <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/appointments/scheduled') ?>"><i class="fas fa-calendar-alt me-1"></i>Scheduled Appointments</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-            
-        </ul>
+        <main>
+            <div class="container-fluid px-4">
+                <div class="dashboard-header my-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="page-title"><i class="fas fa-boxes me-2"></i>Appointments Management</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row status-cards mb-4">
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <div class="status-card bg-white rounded shadow-sm">
+                            <div class="status-card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="status-title">Pending</h6>
+                                        <h3 class="status-count" id="pendingCount">-</h3>
+                                    </div>
+                                    <div class="status-icon bg-warning text-white rounded-circle">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <div class="status-card bg-white rounded shadow-sm">
+                            <div class="status-card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="status-title">Approved</h6>
+                                        <h3 class="status-count" id="approvedCount">-</h3>
+                                    </div>
+                                    <div class="status-icon bg-success text-white rounded-circle">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <div class="status-card bg-white rounded shadow-sm">
+                            <div class="status-card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="status-title">Completed</h6>
+                                        <h3 class="status-count" id="completedCount">-</h3>
+                                    </div>
+                                    <div class="status-icon bg-primary text-white rounded-circle">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <div class="status-card bg-white rounded shadow-sm">
+                            <div class="status-card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="status-title">Rejected</h6>
+                                        <h3 class="status-count" id="rejectedCount">-</h3>
+                                    </div>
+                                    <div class="status-icon bg-danger text-white rounded-circle">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <div class="status-card bg-white rounded shadow-sm">
+                            <div class="status-card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="status-title">Cancelled</h6>
+                                        <h3 class="status-count" id="cancelledCount">-</h3>
+                                    </div>
+                                    <div class="status-icon bg-secondary text-white rounded-circle">
+                                        <i class="fas fa-ban"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="appointments-container bg-white rounded shadow-sm">
+                    <div class="appointments-header">
+                        <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Appointments List</h5>
+                        <div class="filter-controls d-flex align-items-center">
+                            <label for="dateRangeFilter" class="me-2">Date:</label>
+                            <select class="form-select" id="dateRangeFilter">
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="thisWeek">This Week</option>
+                                <option value="nextWeek">Next Week</option>
+                                <option value="nextMonth">Next Month</option>
+                                <option value="past">Past Appointments</option>
+                            </select>
+                            <label for="statusFilter" class="me-2">Status:</label>
+                            <select id="statusFilter" class="form-select form-select-sm">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="loadingIndicator" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading appointments...</p>
+                    </div>
+
+                    <div id="noAppointmentsMessage" class="text-center py-5 d-none">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p>No appointments found.</p>
+                    </div>
+
+                    <div id="appointmentsList" class="appointments-list d-none"></div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <!-- Overlay for Admin Navbar Drawer -->
-    <div class="counselor-navbar-overlay d-lg-none" id="counselorNavbarOverlay"></div>
-
-    <main>
-        <div class="container-fluid px-4">
-            <div class="dashboard-header my-4">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h2 class="page-title"><i class="fas fa-boxes me-2"></i>Appointments Management</h2>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row status-cards mb-4">
-                <div class="col-md-2 col-sm-6 mb-3">
-                    <div class="status-card bg-white rounded shadow-sm">
-                        <div class="status-card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="status-title">Pending</h6>
-                                    <h3 class="status-count" id="pendingCount">-</h3>
-                                </div>
-                                <div class="status-icon bg-warning text-white rounded-circle">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-3">
-                    <div class="status-card bg-white rounded shadow-sm">
-                        <div class="status-card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="status-title">Approved</h6>
-                                    <h3 class="status-count" id="approvedCount">-</h3>
-                                </div>
-                                <div class="status-icon bg-success text-white rounded-circle">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-3">
-                    <div class="status-card bg-white rounded shadow-sm">
-                        <div class="status-card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="status-title">Completed</h6>
-                                    <h3 class="status-count" id="completedCount">-</h3>
-                                </div>
-                                <div class="status-icon bg-primary text-white rounded-circle">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-3">
-                    <div class="status-card bg-white rounded shadow-sm">
-                        <div class="status-card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="status-title">Rejected</h6>
-                                    <h3 class="status-count" id="rejectedCount">-</h3>
-                                </div>
-                                <div class="status-icon bg-danger text-white rounded-circle">
-                                    <i class="fas fa-times"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-3">
-                    <div class="status-card bg-white rounded shadow-sm">
-                        <div class="status-card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="status-title">Cancelled</h6>
-                                    <h3 class="status-count" id="cancelledCount">-</h3>
-                                </div>
-                                <div class="status-icon bg-secondary text-white rounded-circle">
-                                    <i class="fas fa-ban"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="appointments-container bg-white rounded shadow-sm">
-                <div class="appointments-header">
-                    <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Appointments List</h5>
-                    <div class="filter-controls d-flex align-items-center">
-                        <label for="dateRangeFilter" class="me-2">Date:</label>
-                        <select class="form-select" id="dateRangeFilter">
-                            <option value="all">All Dates</option>
-                            <option value="today">Today</option>
-                            <option value="thisWeek">This Week</option>
-                            <option value="nextWeek">Next Week</option>
-                            <option value="nextMonth">Next Month</option>
-                            <option value="past">Past Appointments</option>
-                        </select>
-                        <label for="statusFilter" class="me-2">Status:</label>
-                        <select id="statusFilter" class="form-select form-select-sm">
-                            <option value="all">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="loadingIndicator" class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading appointments...</p>
-                </div>
-
-                <div id="noAppointmentsMessage" class="text-center py-5 d-none">
-                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                    <p>No appointments found.</p>
-                </div>
-
-                <div id="appointmentsList" class="appointments-list d-none"></div>
-            </div>
-        </div>
-    </main>
 
     <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-labelledby="appointmentDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -395,6 +441,8 @@
     <script src="<?= base_url('js/counselor/appointments.js') ?>" defer></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
 
 </html>

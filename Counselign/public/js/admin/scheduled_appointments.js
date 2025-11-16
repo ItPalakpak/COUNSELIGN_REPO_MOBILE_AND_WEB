@@ -40,8 +40,9 @@ document.addEventListener("DOMContentLoaded", function () {
   function initStickyHeader() {
     const header = document.querySelector("header");
     const main = document.querySelector("main");
+    const mainWrapper = document.getElementById("mainWrapper");
 
-    if (header && main) {
+    if (header && main && mainWrapper) {
       // Store the original header height
       const headerHeight = header.offsetHeight;
 
@@ -49,7 +50,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const placeholder = document.createElement("div");
       placeholder.style.display = "none";
       placeholder.style.height = headerHeight + "px";
-      document.body.insertBefore(placeholder, main);
+      
+      // Insert before main element, but use mainWrapper as parent
+      mainWrapper.insertBefore(placeholder, main);
 
       window.onscroll = function () {
         if (window.pageYOffset > 10) {

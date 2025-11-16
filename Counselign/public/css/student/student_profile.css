@@ -10,60 +10,6 @@ body {
     position: relative;
 }
 
-header {
-    background-color: #060E57;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 15px; /* Default padding for header */
-    display: flex;
-    align-items: center;
-    color: white;
-    width: 100%;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-
-}
-
-.header-container {
-    display: flex !important;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    /* Default padding, will be overridden by media queries for small screens */
-    padding: 0 20px;
-}
-
-.header-container .row {
-    display: flex !important;
-    flex-wrap: nowrap !important; /* Crucial: prevent wrapping */
-    width: 100% !important;
-    margin-left: 0 !important; /* Zero out row margins */
-    margin-right: 0 !important; /* Zero out row margins */
-}
-
-.header-container .row .col-md-3 {
-    flex: 0 0 140px !important; /* Fixed width for logo and title */
-    flex-shrink: 0; /* Prevent shrinking */
-    min-width: 0; /* Allow content to truly shrink if necessary */
-    max-width: 140px !important; /* Ensure it doesn't grow beyond this */
-    padding-left: 0 !important; /* Zero out column padding */
-    padding-right: 0 !important; /* Zero out column padding */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-}
-
-.header-container .row .col-md-9 {
-    flex: 0 0 calc(100% - 140px) !important; /* Take remaining space precisely */
-    flex-shrink: 0; /* Prevent shrinking */
-    min-width: 0; /* Allow content to truly shrink if necessary */
-    padding-left: 0 !important; /* Zero out column padding */
-    padding-right: 0 !important; /* Zero out column padding */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-}
 
 .logo-title-container {
     display: flex;
@@ -86,40 +32,6 @@ h1 {
     font-size: 1.1rem !important; /* Adjust font size to fit */
 }
 
-
-nav {
-    margin-left: auto;
-}
-
-nav ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    justify-content: flex-end;
-    margin: 0;
-}
-
-nav ul li {
-    display: inline-block;
-    margin: 0 0 0 30px;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-}
-
-nav a:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-}
 
 /* Nav link styling with icons */
 .navbar-nav .nav-link {
@@ -294,7 +206,7 @@ nav a:hover {
 
 /* Main content area */
 main {
-    padding: 40px 20px;
+    padding: 5px 20px 5px 20px;
     flex-grow: 1;
     background-color: #f0f4f8;
     position: relative;
@@ -320,6 +232,7 @@ main {
     box-shadow: 0 10px 30px rgba(0, 14, 87, 0.08);
     max-width: 1440px;
     width: 100%;
+    min-height: 640px;
     margin: 0 auto;
     overflow: hidden;
     position: relative;
@@ -452,7 +365,7 @@ main {
 
 /* The scrollable body area; height adapts to viewport */
 .pds-scroll {
-    max-height: min(42vh, 420px);
+    max-height: min(58vh, 580px);
     overflow: auto;
 }
 
@@ -713,32 +626,6 @@ footer {
     .container-fluid {
         padding-left: 0 !important; /* Zero out container-fluid padding */
         padding-right: 0 !important; /* Zero out container-fluid padding */
-    }
-
-    .header-container {
-        padding: 0 5px !important; /* Minimal padding for header container */
-    }
-
-    .header-container .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .header-container .row .col-md-3 {
-        flex: 0 0 100px !important; /* Fixed width for logo/title */
-        max-width: 100px !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-    }
-
-    .header-container .row .col-md-9 {
-        flex: 0 0 calc(100% - 120px) !important; /* Take remaining space precisely */
-        min-width: 0 !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
     }
 
     .custom-navbar-toggler {
@@ -1186,7 +1073,7 @@ footer {
 
     /* On desktop, allow a taller scrollable area */
     .pds-scroll {
-        max-height: min(42vh, 420px);
+        max-height: min(58vh, 580px);
     }
     
     .profile-form {

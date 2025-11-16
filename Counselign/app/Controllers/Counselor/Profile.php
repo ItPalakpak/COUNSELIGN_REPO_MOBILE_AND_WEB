@@ -10,6 +10,103 @@ use App\Controllers\BaseController;
 
 class Profile extends BaseController
 {
+    /**
+     * Get counselor profile data for sidebar/dashboard
+     * Compatible with universal sidebar.js
+     */
+    public function get()
+    {
+        $session = session();
+
+        if (!$session->get('logged_in') || $session->get('role') !== 'counselor') {
+            return $this->response->setJSON([
+                'success' => false, 
+                'message' => 'Unauthorized access'
+            ])->setStatusCode(401);
+        }
+
+        $user_id = $session->get('user_id_display') ?? $session->get('user_id');
+        if (!$user_id) {
+            return $this->response->setJSON([
+                'success' => false, 
+                'message' => 'Invalid session data'
+            ])->setStatusCode(400);
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            
+            // Get user data from users table
+            $builder = $db->table('users');
+            $builder->select('users.user_id, users.username, users.email, users.profile_picture, users.last_login');
+            $builder->where('users.user_id', $user_id);
+            $query = $builder->get();
+            
+            if ($user = $query->getRowArray()) {
+                // Try to get counselor info for full name
+                $counselorBuilder = $db->table('counselors');
+                $counselorBuilder->select('name, degree, contact_number, address');
+                $counselorBuilder->where('counselor_id', $user_id);
+                $counselorInfo = $counselorBuilder->get()->getRowArray();
+                
+                // Add counselor-specific fields if available
+                if ($counselorInfo) {
+                    // Use 'name' field as the counselor's full name
+                    $user['name'] = $counselorInfo['name'] ?? '';
+                    
+                    // Create full_name as alias for compatibility
+                    if (!empty($counselorInfo['name']) && $counselorInfo['name'] !== 'N/A') {
+                        $user['full_name'] = $counselorInfo['name'];
+                    }
+                    
+                    // Add additional counselor details
+                    $user['degree'] = $counselorInfo['degree'] ?? '';
+                    $user['contact_number'] = $counselorInfo['contact_number'] ?? '';
+                    $user['address'] = $counselorInfo['address'] ?? '';
+                }
+                
+                // Add user_id_display for clarity
+                $user['user_id_display'] = $session->get('user_id_display') ?? $user['user_id'];
+                
+                // Normalize profile picture URL
+                if (!empty($user['profile_picture'])) {
+                    // If it's already a full URL, keep it as is
+                    if (strpos($user['profile_picture'], 'http') !== 0) {
+                        // Make it a full URL
+                        $relativePath = '/' . ltrim($user['profile_picture'], '/');
+                        $user['profile_picture'] = base_url($relativePath);
+                    }
+                } else {
+                    // Fallback to default profile picture
+                    $user['profile_picture'] = base_url('Photos/profile.png');
+                }
+                
+                log_message('debug', 'Counselor profile data fetched for sidebar: ' . json_encode($user));
+                
+                return $this->response->setJSON([
+                    'success' => true,
+                    'data' => $user
+                ]);
+            } else {
+                log_message('error', 'No counselor found with user_id: ' . $user_id);
+                return $this->response->setJSON([
+                    'success' => false, 
+                    'message' => 'User data not found'
+                ])->setStatusCode(404);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Counselor profile error for sidebar: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false, 
+                'message' => 'Database error'
+            ])->setStatusCode(500);
+        }
+    }
+
+    /**
+     * Get full counselor profile data (legacy method, kept for compatibility)
+     */
     public function getProfile()
     {
         $session = session();

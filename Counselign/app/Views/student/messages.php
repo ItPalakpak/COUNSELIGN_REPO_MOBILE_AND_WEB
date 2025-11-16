@@ -10,49 +10,99 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="<?= base_url('css/student/student_messages.css') ?>" rel="stylesheet" />
     <link rel="stylesheet" href="<?= base_url('css/student/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 </head>
 
 <body>
-    <header class="text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="logo-title-container">
-                        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="University Logo" class="logo" />
-                        <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
-                    </div>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="custom-navbar-toggler d-lg-none align-items-center" type="button" id="navbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-gear"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('student/dashboard') ?>" class="sidebar-link active" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                <a href="<?= base_url('student/schedule-appointment') ?>" class="sidebar-link" title="Schedule an Appointment">
+                    <i class="fas fa-plus-circle"></i>
+                    <span class="sidebar-text">Schedule an Appointment</span>
+                </a>
+
+                <a href="<?= base_url('student/my-appointments') ?>" class="sidebar-link" title="My Appointments">
+                    <i class="fas fa-list-alt"></i>
+                    <span class="sidebar-text">My Appointments</span>
+                </a>
+
+                <a href="<?= base_url('student/follow-up-sessions') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('student/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-comments me-2"></i>
+                    Messages
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Student</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <ul class="navbar-nav nav-links ms-auto">
-                            <li>
-                                <a href="<?= base_url('student/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-
-                            </li>
-                        </ul>
-
-                    </nav>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Student</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('student/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
-
-
-    <div class="navbar-drawer" id="navbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Student Menu</h5>
-            <button class="btn-close btn-close-white" id="navbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-
-        </ul>
-    </div>
-
-    <div class="navbar-overlay" id="navbarOverlay"></div>
+        </header>
 
     <!-- Mobile Sidebar Toggle Button -->
     <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
@@ -131,13 +181,7 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
+    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -146,6 +190,8 @@
     <script src="<?= base_url('js/student/student_messages.js') ?>" defer></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/student/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 
 </body>
 

@@ -13,13 +13,21 @@
 ## API Configuration
 - `lib/api/config.dart` exposes environment URLs:
   - Web/Desktop: `localhostUrl`
-  - Android: `emulatorUrl` (change to `deviceUrl` for physical device)
+  - Android: `emulatorUrl` / `deviceUrl` (see notes below)
   - iOS: `deviceUrl`
   - Production: `productionUrl`
 - `defaultHeaders`, `connectTimeout`, `receiveTimeout` defined.
 
 ### Nov 7, 2025 - Updates
 - Build-time override added: `API_BASE_URL` via `--dart-define` to select the backend without code changes.
+  - This override now has highest priority for **both debug and release** builds.
+  - Example usage:
+    - Debug run: `flutter run --dart-define=API_BASE_URL=http://192.168.X.Y/Counselign/public`
+    - Release build (Windows example): `flutter build windows --release --dart-define=API_BASE_URL=https://your-domain.example.com/Counselign/public`
+- `currentBaseUrl` behavior:
+  - If `API_BASE_URL` is set → use it.
+  - Else if `kReleaseMode` → use `productionUrl` (must be HTTPS in real deployments).
+  - Else (debug) → use platform-specific defaults (`localhostUrl` / `deviceUrl`).
 - Production URL placeholder now expects HTTPS (`https://your-domain.example.com/Counselign/public`).
 - Android toolchain updated to Java 17:
   - `android/app/build.gradle.kts`: `compileOptions`/`kotlinOptions` set to 17.

@@ -1941,280 +1941,253 @@ document.addEventListener("DOMContentLoaded", function () {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
+// ========== RESOURCES ACCORDION SECTION ==========
+// This should be added at the end of the DOMContentLoaded function in student_dashboard.js
+// Replace the existing resources section (lines ~2000-2200) with this:
 
-  // ========== RESOURCES ACCORDION ==========
-  // Make functions globally accessible
-  window.previewResourceFile = function(resourceId, filePath, fileType) {
-    const baseUrl = window.BASE_URL || '/';
-    const fullPath = baseUrl + filePath;
-    const type = fileType ? fileType.toLowerCase() : '';
-    
-    if (type.includes('pdf')) {
-      window.open(fullPath, '_blank');
-    } else if (type.includes('image')) {
-      const modal = document.createElement('div');
-      modal.className = 'modal fade';
-      modal.innerHTML = `
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Image Preview</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-              <img src="${fullPath}" class="img-fluid" alt="Preview">
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      const bsModal = new bootstrap.Modal(modal);
-      bsModal.show();
-      modal.addEventListener('hidden.bs.modal', () => modal.remove());
-    } else {
-      window.open(fullPath, '_blank');
-    }
-  };
+// Make functions globally accessible (compatibility layer)
+window.previewResourceFile = function(resourceId, filePath, fileType) {
+  const baseUrl = window.BASE_URL || '/';
+  const fullPath = baseUrl + filePath;
+  
+  // For simple preview, just open in new tab
+  // The advanced preview will use the shared module
+  window.open(fullPath, '_blank');
+};
 
-  window.trackResourceDownload = function(resourceId) {
-    // Track download if needed (can be implemented later)
-    console.log('Resource downloaded:', resourceId);
-  };
+window.trackResourceDownload = function(resourceId) {
+  console.log('Resource downloaded:', resourceId);
+};
 
-  window.trackResourceView = function(resourceId) {
-    // Track view if needed (can be implemented later)
-    console.log('Resource viewed:', resourceId);
-  };
+window.trackResourceView = function(resourceId) {
+  console.log('Resource viewed:', resourceId);
+};
 
-  function loadResources() {
-    const baseUrl = window.BASE_URL || '/';
-    const url = baseUrl + 'student/resources/get';
-    const container = document.getElementById('resourcesAccordionContent');
+// Store resources data globally for preview module
+let studentDashboardResources = [];
 
-    if (!container) {
-      return;
-    }
+function loadResources() {
+  const baseUrl = window.BASE_URL || '/';
+  const url = baseUrl + 'student/resources/get';
+  const container = document.getElementById('resourcesAccordionContent');
 
-    container.innerHTML = `
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading resources...</span>
-        </div>
-        <p class="mt-2 text-muted">Loading resources...</p>
-      </div>
-    `;
-
-    fetch(url)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (data.success && data.resources && data.resources.length > 0) {
-          renderResourcesAccordion(data.resources);
-        } else {
-          container.innerHTML = `
-            <div class="text-center py-5">
-              <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-              <p class="text-muted">No resources available at this time.</p>
-            </div>
-          `;
-        }
-      })
-      .catch(error => {
-        console.error('Error loading resources:', error);
-        container.innerHTML = `
-          <div class="text-center py-5">
-            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-            <p class="text-danger">Failed to load resources. Please try again later.</p>
-          </div>
-        `;
-      });
+  if (!container) {
+    return;
   }
 
-  function renderResourcesAccordion(resources) {
-    const container = document.getElementById('resourcesAccordionContent');
-    if (!container) {
-      return;
-    }
+  container.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading resources...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading resources...</p>
+    </div>
+  `;
 
-    if (resources.length === 0) {
-      container.innerHTML = `
-        <div class="text-center py-5">
-          <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-          <p class="text-muted">No resources available at this time.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const baseUrl = window.BASE_URL || '/';
-    let html = '';
-    resources.forEach((resource, index) => {
-      const accordionId = `resourceAccordion${resource.id}`;
-      const collapseId = `resourceCollapse${resource.id}`;
-      const isFirst = index === 0;
-      
-      const resourceTypeIcon = resource.resource_type === 'file' 
-        ? '<i class="fas fa-file-alt text-primary"></i>' 
-        : '<i class="fas fa-link text-info"></i>';
-      
-      const categoryBadge = resource.category 
-        ? `<span class="badge bg-secondary ms-2">${escapeHtml(resource.category)}</span>` 
-        : '';
-      
-      const description = resource.description 
-        ? `<p class="text-muted mb-2">${escapeHtml(resource.description)}</p>` 
-        : '';
-      
-      const tags = resource.tags 
-        ? `<div class="mb-2"><small class="text-muted">Tags: ${escapeHtml(resource.tags)}</small></div>` 
-        : '';
-
-      let resourceContent = '';
-      if (resource.resource_type === 'file') {
-        const fileIcon = getFileIcon(resource.file_type);
-        const fileSize = resource.file_size_formatted || 'Unknown size';
-        const filePathEscaped = escapeHtml(resource.file_path || '');
-        const fileTypeEscaped = escapeHtml(resource.file_type || '');
-        const previewButton = canPreviewFile(resource.file_type) 
-          ? `<button class="btn btn-sm btn-outline-primary me-2 preview-resource-btn" 
-                     data-resource-id="${resource.id}" 
-                     data-file-path="${filePathEscaped}" 
-                     data-file-type="${fileTypeEscaped}">
-               <i class="fas fa-eye me-1"></i>Preview
-             </button>`
-          : '';
-        
-        resourceContent = `
-          <div class="resource-file-info p-3 bg-light rounded">
-            <div class="d-flex align-items-center mb-2">
-              ${fileIcon}
-              <div class="ms-2">
-                <strong>${escapeHtml(resource.file_name || 'File')}</strong>
-                <small class="text-muted d-block">${fileSize}</small>
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              ${previewButton}
-              <a href="${baseUrl}student/resources/download/${resource.id}" 
-                 class="btn btn-sm btn-primary download-resource-btn" 
-                 data-resource-id="${resource.id}"
-                 download>
-                <i class="fas fa-download me-1"></i>Download
-              </a>
-            </div>
-          </div>
-        `;
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success && data.resources && data.resources.length > 0) {
+        studentDashboardResources = data.resources; // Store for preview module
+        renderResourcesAccordion(data.resources);
       } else {
-        resourceContent = `
-          <div class="resource-link-info p-3 bg-light rounded">
-            <a href="${escapeHtml(resource.external_url)}" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               class="btn btn-primary view-resource-link"
-               data-resource-id="${resource.id}">
-              <i class="fas fa-external-link-alt me-1"></i>Open Link
-            </a>
-            <p class="mt-2 mb-0"><small class="text-muted">${escapeHtml(resource.external_url)}</small></p>
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No resources available at this time.</p>
           </div>
         `;
       }
-
-      html += `
-        <div class="accordion-item">
-          <h2 class="accordion-header" id="heading${resource.id}">
-            <button class="accordion-button ${isFirst ? '' : 'collapsed'}" 
-                    type="button" 
-                    data-bs-toggle="collapse" 
-                    data-bs-target="#${collapseId}" 
-                    aria-expanded="${isFirst ? 'true' : 'false'}" 
-                    aria-controls="${collapseId}">
-              <div class="d-flex align-items-center w-100">
-                ${resourceTypeIcon}
-                <span class="ms-2 fw-bold">${escapeHtml(resource.title)}</span>
-                ${categoryBadge}
-                <small class="text-muted ms-auto me-3">${resource.created_at_formatted || ''}</small>
-              </div>
-            </button>
-          </h2>
-          <div id="${collapseId}" 
-               class="accordion-collapse collapse ${isFirst ? 'show' : ''}" 
-               aria-labelledby="heading${resource.id}" 
-               data-bs-parent="#resourcesAccordion">
-            <div class="accordion-body">
-              ${description}
-              ${tags}
-              ${resourceContent}
-              <div class="mt-3 pt-3 border-top">
-                <small class="text-muted">
-                  <i class="fas fa-user me-1"></i>Posted by: ${escapeHtml(resource.uploader_name || 'Admin')}
-                </small>
-              </div>
-            </div>
-          </div>
+    })
+    .catch(error => {
+      console.error('Error loading resources:', error);
+      container.innerHTML = `
+        <div class="text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+          <p class="text-danger">Failed to load resources. Please try again later.</p>
         </div>
       `;
     });
+}
 
-    container.innerHTML = html;
+function renderResourcesAccordion(resources) {
+  const container = document.getElementById('resourcesAccordionContent');
+  if (!container) {
+    return;
   }
 
-  function getFileIcon(fileType) {
-    if (!fileType) return '<i class="fas fa-file text-secondary fa-2x"></i>';
+  if (resources.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No resources available at this time.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const baseUrl = window.BASE_URL || '/';
+  let html = '';
+  resources.forEach((resource, index) => {
+    const collapseId = `resourceCollapse${resource.id}`;
+    const isFirst = index === 0;
     
-    const type = fileType.toLowerCase();
-    if (type.includes('pdf')) return '<i class="fas fa-file-pdf text-danger fa-2x"></i>';
-    if (type.includes('word') || type.includes('doc')) return '<i class="fas fa-file-word text-primary fa-2x"></i>';
-    if (type.includes('excel') || type.includes('sheet')) return '<i class="fas fa-file-excel text-success fa-2x"></i>';
-    if (type.includes('image')) return '<i class="fas fa-file-image text-info fa-2x"></i>';
-    if (type.includes('video')) return '<i class="fas fa-file-video text-warning fa-2x"></i>';
-    if (type.includes('zip') || type.includes('rar')) return '<i class="fas fa-file-archive text-secondary fa-2x"></i>';
-    return '<i class="fas fa-file text-secondary fa-2x"></i>';
-  }
+    const resourceTypeIcon = resource.resource_type === 'file' 
+      ? '<i class="fas fa-file-alt text-primary"></i>' 
+      : '<i class="fas fa-link text-info"></i>';
+    
+    const categoryBadge = resource.category 
+      ? `<span class="badge bg-secondary ms-2">${escapeHtml(resource.category)}</span>` 
+      : '';
+    
+    const description = resource.description 
+      ? `<p class="text-muted mb-2">${escapeHtml(resource.description)}</p>` 
+      : '';
+    
+    const tags = resource.tags 
+      ? `<div class="mb-2"><small class="text-muted">Tags: ${escapeHtml(resource.tags)}</small></div>` 
+      : '';
 
-  function canPreviewFile(fileType) {
-    if (!fileType) return false;
-    const type = fileType.toLowerCase();
-    return type.includes('pdf') || type.includes('image') || type.includes('text');
-  }
-
-  // Set up event delegation for resource buttons
-  document.addEventListener('click', function(e) {
-    const previewBtn = e.target.closest('.preview-resource-btn');
-    if (previewBtn) {
-      e.preventDefault();
-      const resourceId = parseInt(previewBtn.getAttribute('data-resource-id'));
-      const filePath = previewBtn.getAttribute('data-file-path');
-      const fileType = previewBtn.getAttribute('data-file-type');
-      if (window.previewResourceFile) {
-        window.previewResourceFile(resourceId, filePath, fileType);
-      }
-      return;
+    let resourceContent = '';
+    if (resource.resource_type === 'file') {
+      const fileIcon = getFileIcon(resource.file_type);
+      const fileSize = resource.file_size_formatted || 'Unknown size';
+      
+      // CHANGED: Use advanced preview for all file types
+      const previewButton = `
+        <button class="btn btn-sm btn-outline-primary me-2 preview-resource-advanced" 
+               data-resource-id="${resource.id}">
+          <i class="fas fa-eye me-1"></i>Preview
+        </button>
+      `;
+      
+      resourceContent = `
+        <div class="resource-file-info p-3 bg-light rounded">
+          <div class="d-flex align-items-center mb-2">
+            ${fileIcon}
+            <div class="ms-2">
+              <strong>${escapeHtml(resource.file_name || 'File')}</strong>
+              <small class="text-muted d-block">${fileSize}</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            ${previewButton}
+            <a href="${baseUrl}student/resources/download/${resource.id}" 
+               class="btn btn-sm btn-primary download-resource-btn" 
+               data-resource-id="${resource.id}"
+               download>
+              <i class="fas fa-download me-1"></i>Download
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      // CHANGED: Use advanced preview for links too
+      resourceContent = `
+        <div class="resource-link-info p-3 bg-light rounded">
+          <button class="btn btn-primary preview-resource-advanced" 
+                  data-resource-id="${resource.id}">
+            <i class="fas fa-external-link-alt me-1"></i>Open Link
+          </button>
+          <p class="mt-2 mb-0"><small class="text-muted">${escapeHtml(resource.external_url)}</small></p>
+        </div>
+      `;
     }
 
-    const downloadBtn = e.target.closest('.download-resource-btn');
-    if (downloadBtn) {
-      const resourceId = parseInt(downloadBtn.getAttribute('data-resource-id'));
-      if (window.trackResourceDownload) {
-        window.trackResourceDownload(resourceId);
-      }
-      return;
-    }
-
-    const viewLink = e.target.closest('.view-resource-link');
-    if (viewLink) {
-      const resourceId = parseInt(viewLink.getAttribute('data-resource-id'));
-      if (window.trackResourceView) {
-        window.trackResourceView(resourceId);
-      }
-      return;
-    }
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading${resource.id}">
+          <button class="accordion-button ${isFirst ? '' : 'collapsed'}" 
+                  type="button" 
+                  data-bs-toggle="collapse" 
+                  data-bs-target="#${collapseId}" 
+                  aria-expanded="${isFirst ? 'true' : 'false'}" 
+                  aria-controls="${collapseId}">
+            <div class="d-flex align-items-center w-100">
+              ${resourceTypeIcon}
+              <span class="ms-2 fw-bold">${escapeHtml(resource.title)}</span>
+              ${categoryBadge}
+              <small class="text-muted ms-auto me-3">${resource.created_at_formatted || ''}</small>
+            </div>
+          </button>
+        </h2>
+        <div id="${collapseId}" 
+             class="accordion-collapse collapse ${isFirst ? 'show' : ''}" 
+             aria-labelledby="heading${resource.id}" 
+             data-bs-parent="#resourcesAccordion">
+          <div class="accordion-body">
+            ${description}
+            ${tags}
+            ${resourceContent}
+            <div class="mt-3 pt-3 border-top">
+              <small class="text-muted">
+                <i class="fas fa-user me-1"></i>Posted by: ${escapeHtml(resource.uploader_name || 'Admin')}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   });
 
-  // Load resources on page load
-  loadResources();
-  // ========== END RESOURCES ACCORDION ==========
+  container.innerHTML = html;
+}
+
+function getFileIcon(fileType) {
+  if (!fileType) return '<i class="fas fa-file text-secondary fa-2x"></i>';
+  
+  const type = fileType.toLowerCase();
+  if (type.includes('pdf')) return '<i class="fas fa-file-pdf text-danger fa-2x"></i>';
+  if (type.includes('word') || type.includes('doc')) return '<i class="fas fa-file-word text-primary fa-2x"></i>';
+  if (type.includes('excel') || type.includes('sheet')) return '<i class="fas fa-file-excel text-success fa-2x"></i>';
+  if (type.includes('image')) return '<i class="fas fa-file-image text-info fa-2x"></i>';
+  if (type.includes('video')) return '<i class="fas fa-file-video text-warning fa-2x"></i>';
+  if (type.includes('zip') || type.includes('rar')) return '<i class="fas fa-file-archive text-secondary fa-2x"></i>';
+  return '<i class="fas fa-file text-secondary fa-2x"></i>';
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// CHANGED: Use advanced preview from shared module
+document.addEventListener('click', function(e) {
+  const previewBtn = e.target.closest('.preview-resource-advanced');
+  if (previewBtn) {
+    e.preventDefault();
+    const resourceId = parseInt(previewBtn.getAttribute('data-resource-id'));
+    
+    // Use the shared preview module
+    if (window.ResourcePreview && typeof window.ResourcePreview.previewResource === 'function') {
+      window.ResourcePreview.previewResource(resourceId, studentDashboardResources);
+    } else {
+      console.error('ResourcePreview module not loaded');
+      alert('Preview feature is not available. Please refresh the page.');
+    }
+    return;
+  }
+
+  const downloadBtn = e.target.closest('.download-resource-btn');
+  if (downloadBtn) {
+    const resourceId = parseInt(downloadBtn.getAttribute('data-resource-id'));
+    if (window.trackResourceDownload) {
+      window.trackResourceDownload(resourceId);
+    }
+    return;
+  }
+});
+
+// Load resources on page load
+loadResources();
+// ========== END RESOURCES ACCORDION ==========
 });

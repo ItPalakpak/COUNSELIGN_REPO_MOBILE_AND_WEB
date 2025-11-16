@@ -4,4 +4,3 @@ window.confirmLogout = function confirmLogout() {
     window.location.href = baseUrl + 'auth/logout';
 };
 
-

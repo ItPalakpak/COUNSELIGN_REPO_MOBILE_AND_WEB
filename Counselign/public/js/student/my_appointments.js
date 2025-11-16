@@ -1987,55 +1987,54 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
- // Save Changes Modal
-const confirmSaveBtn = document.getElementById("confirmSaveChangesBtn");
-if (confirmSaveBtn) {
-  confirmSaveBtn.addEventListener("click", async function () {
-    if (pendingSaveContext) {
-      // Show loading state
-      showButtonLoading(confirmSaveBtn, "Saving Changes...");
+  // Save Changes Modal
+  const confirmSaveBtn = document.getElementById("confirmSaveChangesBtn");
+  if (confirmSaveBtn) {
+    confirmSaveBtn.addEventListener("click", async function () {
+      if (pendingSaveContext) {
+        // Show loading state
+        showButtonLoading(confirmSaveBtn, "Saving Changes...");
 
-      try {
-        await updatePendingAppointment(
-          pendingSaveContext.appointmentId,
-          pendingSaveContext.form
-        );
-        
-        // Hide modal after successful update
-        const modalElement = document.getElementById("saveChangesModal");
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        if (modalInstance) {
-          modalInstance.hide();
-        }
-        
-        // Reset context
-        pendingSaveContext = null;
-        
-        // Reset button state after a short delay (to ensure modal closes smoothly)
-        setTimeout(() => {
+        try {
+          await updatePendingAppointment(
+            pendingSaveContext.appointmentId,
+            pendingSaveContext.form
+          );
+
+          // Hide modal after successful update
+          const modalElement = document.getElementById("saveChangesModal");
+          const modalInstance = bootstrap.Modal.getInstance(modalElement);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+
+          // Reset context
+          pendingSaveContext = null;
+
+          // Reset button state after a short delay (to ensure modal closes smoothly)
+          setTimeout(() => {
+            hideButtonLoading(confirmSaveBtn, "Save Changes");
+          }, 300);
+        } catch (error) {
+          // Reset button state on error
           hideButtonLoading(confirmSaveBtn, "Save Changes");
-        }, 300);
-        
-      } catch (error) {
-        // Reset button state on error
-        hideButtonLoading(confirmSaveBtn, "Save Changes");
-        console.error("Error saving changes:", error);
+          console.error("Error saving changes:", error);
+        }
       }
-    }
-  });
-}
+    });
+  }
 
-// Reset button state when modal is closed/hidden (handles X button, backdrop clicks, etc.)
-const saveChangesModal = document.getElementById("saveChangesModal");
-if (saveChangesModal) {
-  saveChangesModal.addEventListener('hidden.bs.modal', function () {
-    const confirmBtn = document.getElementById("confirmSaveChangesBtn");
-    if (confirmBtn) {
-      // Reset button to original state whenever modal is hidden
-      hideButtonLoading(confirmBtn, "Save Changes");
-    }
-  });
-}
+  // Reset button state when modal is closed/hidden (handles X button, backdrop clicks, etc.)
+  const saveChangesModal = document.getElementById("saveChangesModal");
+  if (saveChangesModal) {
+    saveChangesModal.addEventListener("hidden.bs.modal", function () {
+      const confirmBtn = document.getElementById("confirmSaveChangesBtn");
+      if (confirmBtn) {
+        // Reset button to original state whenever modal is hidden
+        hideButtonLoading(confirmBtn, "Save Changes");
+      }
+    });
+  }
 
   // Cancel Modal
   const confirmCancelBtn = document.getElementById("confirmCancellationBtn");
@@ -2079,6 +2078,40 @@ if (saveChangesModal) {
       }
     });
   }
+
+  (function () {
+    const toggleBtn = document.getElementById("counselorsCalendarToggleBtn");
+    const drawer = document.getElementById("counselorsCalendarDrawer");
+    const overlay = document.getElementById("counselorsCalendarOverlay");
+    const closeBtn = document.getElementById("counselorsCalendarCloseBtn");
+    function openDrawer() {
+      if (drawer && overlay && toggleBtn) {
+        drawer.classList.add("open");
+        overlay.classList.add("active");
+        toggleBtn.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+    }
+    function closeDrawer() {
+      if (drawer && overlay && toggleBtn) {
+        drawer.classList.remove("open");
+        overlay.classList.remove("active");
+        toggleBtn.classList.remove("active");
+        document.body.style.overflow = "";
+      }
+    }
+    if (toggleBtn) toggleBtn.addEventListener("click", openDrawer);
+    if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
+    if (overlay) overlay.addEventListener("click", closeDrawer);
+  })();
+
+  // Debug QRCode library loading
+  window.addEventListener("load", function () {
+    console.log("QRCode library loaded:", typeof qrcode !== "undefined");
+    if (typeof qrcode !== "undefined") {
+      console.log("QRCode library available");
+    }
+  });
 });
 
 // Check for counselor conflicts before editing appointment

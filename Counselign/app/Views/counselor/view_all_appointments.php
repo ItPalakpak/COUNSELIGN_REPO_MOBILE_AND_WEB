@@ -14,176 +14,222 @@
     <link rel="stylesheet" href="<?= base_url('css/counselor/view_all_appointments.css') ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 </head>
 
 <body>
-    <header class="counselor-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="counselor-navbar-toggler d-lg-none align-items-center" type="button" id="counselorNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link active" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Appointment Reports
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links ms-auto">
-                                <li>
-                                    <a href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-                            </ul>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
                         </div>
-                    </nav>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Counselor Navbar Drawer for Small Screens -->
-    <div class="counselor-navbar-drawer d-lg-none" id="counselorNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="counselorNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-        </ul>
-    </div>
+        <div class="main-content">
+            <div class="container report-container">
+                <div class="page-header">
+                    <h2><i class="fas fa-chart-line"></i>Counselor: <span id="counselorName">Loading...</span></h2>
+                    <p class="text-muted">View and analyze your appointment statistics</p>
+                </div>
 
-    <!-- Overlay for Counselor Navbar Drawer -->
-    <div class="counselor-navbar-overlay d-lg-none" id="counselorNavbarOverlay"></div>
+                <div class="filter-section">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <select class="form-select" id="timeRange">
+                                    <option value="daily">Daily Report</option>
+                                    <option value="weekly" selected>Weekly Report</option>
+                                    <option value="monthly">Monthly Report</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="<?= base_url('counselor/history-reports') ?>" class="btn btn-secondary w-100">
+                                <i class="fas fa-history"></i> View Past Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="main-content">
-        <div class="container report-container">
-            <div class="page-header">
-                <h2><i class="fas fa-chart-line"></i> Appointment Reports - Counselor: <span id="counselorName">Loading...</span></h2>
-                <p class="text-muted">View and analyze your appointment statistics</p>
-            </div>
+                <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="historyModalLabel">Report History</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date Generated</th>
+                                                <th>Report Type</th>
+                                                <th>Total Appointments</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="historyTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="filter-section">
-                <div class="row g-3 align-items-center">
+                <div class="row stats-summary">
+                    <div class="col-md-2">
+                        <div class="stat-card completed">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-details">
+                                <h3 id="completedCount">0</h3>
+                                <p>Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="stat-card approved">
+                            <div class="stat-icon"><i class="fas fa-thumbs-up"></i></div>
+                            <div class="stat-details">
+                                <h3 id="approvedCount">0</h3>
+                                <p>Approved</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="stat-card rejected">
+                            <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                            <div class="stat-details">
+                                <h3 id="rejectedCount">0</h3>
+                                <p>Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="stat-card pending">
+                            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                            <div class="stat-details">
+                                <h3 id="pendingCount">0</h3>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="stat-card cancelled">
+                            <div class="stat-icon"><i class="fas fa-ban"></i></div>
+                            <div class="stat-details">
+                                <h3 id="cancelledCount">0</h3>
+                                <p>Cancelled</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row charts-section">
                     <div class="col-md-8">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                            <select class="form-select" id="timeRange">
-                                <option value="daily">Daily Report</option>
-                                <option value="weekly" selected>Weekly Report</option>
-                                <option value="monthly">Monthly Report</option>
-                            </select>
+                        <div class="chart-container trend-chart shadow rounded p-4 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="m-0">
+                                    <i class="fas fa-chart-line text-primary"></i>
+                                    <span class="ms-2 fw-bold">Appointment Trends</span>
+                                </h4>
+                            </div>
+                            <div class="chart-wrapper" style="height: 400px;">
+                                <canvas id="appointmentTrendChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <a href="<?= base_url('counselor/history-reports') ?>" class="btn btn-secondary w-100">
-                            <i class="fas fa-history"></i> View Past Reports
-                        </a>
+                        <div class="chart-container pie-chart">
+                            <h4><i class="fas fa-chart-pie"></i> Status Distribution</h4>
+                            <canvas id="statusPieChart"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="historyModalLabel">Report History</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date Generated</th>
-                                            <th>Report Type</th>
-                                            <th>Total Appointments</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="historyTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="row stats-summary">
-                <div class="col-md-2">
-                    <div class="stat-card completed">
-                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-details">
-                            <h3 id="completedCount">0</h3>
-                            <p>Completed</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="stat-card approved">
-                        <div class="stat-icon"><i class="fas fa-thumbs-up"></i></div>
-                        <div class="stat-details">
-                            <h3 id="approvedCount">0</h3>
-                            <p>Approved</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="stat-card rejected">
-                        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
-                        <div class="stat-details">
-                            <h3 id="rejectedCount">0</h3>
-                            <p>Rejected</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="stat-card pending">
-                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                        <div class="stat-details">
-                            <h3 id="pendingCount">0</h3>
-                            <p>Pending</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="stat-card cancelled">
-                        <div class="stat-icon"><i class="fas fa-ban"></i></div>
-                        <div class="stat-details">
-                            <h3 id="cancelledCount">0</h3>
-                            <p>Cancelled</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts -->
-            <div class="row charts-section">
-                <div class="col-md-8">
-                    <div class="chart-container trend-chart shadow rounded p-4 bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="m-0">
-                                <i class="fas fa-chart-line text-primary"></i>
-                                <span class="ms-2 fw-bold">Appointment Trends</span>
-                            </h4>
-                        </div>
-                        <div class="chart-wrapper" style="height: 400px;">
-                            <canvas id="appointmentTrendChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="chart-container pie-chart">
-                        <h4><i class="fas fa-chart-pie"></i> Status Distribution</h4>
-                        <canvas id="statusPieChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            
                 <div class="appointment-container">
                     <div class="row mb-4">
                         <div class="col-12">
@@ -474,19 +520,13 @@
                         </div>
                     </div>
                 </div>
-            
+
+            </div>
         </div>
     </div>
 
 
-
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
+    
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -499,6 +539,8 @@
     <script src="<?= base_url('js/counselor/view_all_appointments.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
 
 </html>

@@ -15,7 +15,7 @@ main {
     padding: 30px 40px;
     flex-grow: 1;
     max-width: 1600px;
-    margin: 0 auto;
+    margin: 10px auto;
     width: 100%;
     box-sizing: border-box;
     position: relative;

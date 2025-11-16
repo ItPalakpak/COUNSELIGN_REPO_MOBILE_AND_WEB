@@ -16,218 +16,259 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="<?= base_url('css/counselor/counselor_profile.css') ?>" rel="stylesheet" />
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 </head>
 
 <body>
-    <header class="counselor-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="counselor-navbar-toggler d-lg-none align-items-center" type="button" id="counselorNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link active" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-user-cog me-2"></i>
+                    Account Settings
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links">
-                                <li>
-                                    <a href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-
-                                <li>
-                                    <a onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-                                </li>
-
-                            </ul>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
                         </div>
-                    </nav>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Counselor Navbar Drawer for Small Screens -->
-    <div class="counselor-navbar-drawer d-lg-none" id="counselorNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="counselorNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-        </ul>
+        <main>
+            <!-- Account ID displayed at the top -->
+            <div class="container-fluid">
+                <div class="row gy-4 align-items-start">
+                    <div class="col-12 col-lg-5">
+                        <div class="profile-container">
+                            <div class="profile-header">
+                                <div class="profile-avatar">
+                                    <img id="profile-img" src="<?= base_url('Photos/profile.png') ?>" alt="Counselor Avatar" />
+                                </div>
+                            </div>
+
+                            <div class="profile-details">
+                                <!-- Enhanced form with title and better styling -->
+                                <div class="profile-form">
+                                    <div class="form-title">Account Settings</div>
+
+                                    <div class="user-name">Account ID: <span class="user-id" id="display-userid"></span></div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Username:</label>
+                                        <input type="text" class="form-input" id="display-username" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Email:</label>
+                                        <input type="email" class="form-input" id="display-email" readonly>
+                                    </div>
+
+                                    <!-- Enhanced button group -->
+                                    <div class="btn-group">
+                                        <button class="btn btn-password" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                            <i class="fas fa-key"></i> Change Password
+                                        </button>
+                                        <button class="btn btn-update" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
+                                            <i class="fas fa-edit"></i> Update Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Section -->
+                    <div class="col-12 col-lg-7">
+                        <div class="profile-container">
+                            <div class="profile-details scroll-inner">
+                                <div class="profile-form">
+                                    <div class="form-title">Personal Information</div>
+
+                                    <div class="container-fluid p-0">
+                                        <div class="row g-3">
+                                            <div class="col-12 col-lg-6">
+                                                <label class="form-label">Full name</label>
+                                                <input type="text" class="form-control" id="pi-fullname" readonly>
+                                            </div>
+                                            <div class="col-12 col-lg-4">
+                                                <label class="form-label">Date of Birth</label>
+                                                <input type="date" class="form-control" id="pi-birthdate" readonly>
+                                            </div>
+
+                                            <div class="col-12 col-lg-2">
+                                                <label class="form-label">Sex</label>
+                                                <input type="text" class="form-control" id="pi-sex" readonly>
+                                            </div>
+
+                                            <div class="col-12 col-lg-7">
+                                                <label class="form-label">Degree</label>
+                                                <input type="text" class="form-control" id="pi-degree" readonly>
+                                            </div>
+
+
+                                            <div class="col-12 col-lg-2">
+                                                <label class="form-label">Civil Status</label>
+                                                <input type="text" class="form-control" id="pi-civil" readonly>
+                                            </div>
+
+                                            <div class="col-12 col-lg-3">
+                                                <label class="form-label">Contact Number</label>
+                                                <input type="text" class="form-control" id="pi-contact" readonly>
+                                            </div>
+
+                                            <div class="col-12 col-lg-7">
+                                                <label class="form-label">Email</label>
+                                                <input type="text" class="form-control" id="pi-email" readonly>
+                                            </div>
+
+
+                                            <div class="col-12">
+                                                <label class="form-label">Address</label>
+                                                <input type="text" class="form-control" id="pi-address" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <button class="btn btn-update" data-bs-toggle="modal" data-bs-target="#updatePersonalInfoModal">
+                                            <i class="fas fa-edit"></i> Edit Personal Info
+                                        </button>
+                                    </div>
+
+                                    <hr class="my-4" />
+                                    <div class="form-title">Availability</div>
+                                    <div class="container-fluid p-0">
+                                        <div id="availability-edit-fields" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">Available Days</label>
+                                                <div class="d-flex flex-wrap gap-3" id="availability-days">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Monday" id="day-Monday">
+                                                        <label class="form-check-label" for="day-Monday">Monday</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Tuesday" id="day-Tuesday">
+                                                        <label class="form-check-label" for="day-Tuesday">Tuesday</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Wednesday" id="day-Wednesday">
+                                                        <label class="form-check-label" for="day-Wednesday">Wednesday</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Thursday" id="day-Thursday">
+                                                        <label class="form-check-label" for="day-Thursday">Thursday</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Friday" id="day-Friday">
+                                                        <label class="form-check-label" for="day-Friday">Friday</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Available Times (per selected day)</label>
+                                                <div class="row g-2 align-items-end" id="availability-times">
+                                                    <div class="col-12 col-md-5">
+                                                        <label class="form-label">From</label>
+                                                        <select class="form-select" id="time-from"></select>
+                                                    </div>
+                                                    <div class="col-12 col-md-5">
+                                                        <label class="form-label">To</label>
+                                                        <select class="form-select" id="time-to"></select>
+                                                    </div>
+                                                    <div class="col-12 col-md-2 d-grid">
+                                                        <button type="button" class="btn btn-update" id="add-time-slot" style="display:none;">Add</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Always-visible display of availability chips (day and time) -->
+                                        <div class="col-12 mt-2">
+                                            <div id="time-slots-list" class="border rounded p-2" style="min-height:40px;"></div>
+                                        </div>
+                                        <div class="d-flex gap-2 availability-actions">
+                                            <button type="button" class="btn btn-password" id="edit-availability"><i class="fas fa-edit"></i> Edit Availability</button>
+                                            <button type="button" class="btn btn-password" id="save-availability" style="display:none;"><i class="fas fa-save"></i> Save Availability</button>
+                                            <button type="button" class="btn btn-cancel" id="cancel-availability" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <!-- Overlay for Counselor Navbar Drawer -->
-    <div class="counselor-navbar-overlay d-lg-none" id="counselorNavbarOverlay"></div>
-
-    <main>
-        <!-- Account ID displayed at the top -->
-        <div class="container-fluid">
-            <div class="row gy-4 align-items-start">
-                <div class="col-12 col-lg-5">
-                    <div class="profile-container">
-                        <div class="profile-header">
-                            <div class="profile-avatar">
-                                <img id="profile-img" src="<?= base_url('Photos/profile.png') ?>" alt="Counselor Avatar" />
-                            </div>
-                        </div>
-
-                        <div class="profile-details">
-                            <!-- Enhanced form with title and better styling -->
-                            <div class="profile-form">
-                                <div class="form-title">Account Settings</div>
-
-                                <div class="user-name">Account ID: <span class="user-id" id="display-userid"></span></div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Username:</label>
-                                    <input type="text" class="form-input" id="display-username" readonly>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Email:</label>
-                                    <input type="email" class="form-input" id="display-email" readonly>
-                                </div>
-
-                                <!-- Enhanced button group -->
-                                <div class="btn-group">
-                                    <button class="btn btn-password" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                                        <i class="fas fa-key"></i> Change Password
-                                    </button>
-                                    <button class="btn btn-update" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
-                                        <i class="fas fa-edit"></i> Update Profile
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Information Section -->
-                <div class="col-12 col-lg-7">
-                    <div class="profile-container">
-                        <div class="profile-details scroll-inner">
-                            <div class="profile-form">
-                                <div class="form-title">Personal Information</div>
-
-                                <div class="container-fluid p-0">
-                                    <div class="row g-3">
-                                        <div class="col-12 col-lg-6">
-                                            <label class="form-label">Full name</label>
-                                            <input type="text" class="form-control" id="pi-fullname" readonly>
-                                        </div>
-                                        <div class="col-12 col-lg-4">
-                                            <label class="form-label">Date of Birth</label>
-                                            <input type="date" class="form-control" id="pi-birthdate" readonly>
-                                        </div>
-
-                                        <div class="col-12 col-lg-2">
-                                            <label class="form-label">Sex</label>
-                                            <input type="text" class="form-control" id="pi-sex" readonly>
-                                        </div>
-
-                                        <div class="col-12 col-lg-7">
-                                            <label class="form-label">Degree</label>
-                                            <input type="text" class="form-control" id="pi-degree" readonly>
-                                        </div>
-
-
-                                        <div class="col-12 col-lg-2">
-                                            <label class="form-label">Civil Status</label>
-                                            <input type="text" class="form-control" id="pi-civil" readonly>
-                                        </div>
-
-                                        <div class="col-12 col-lg-3">
-                                            <label class="form-label">Contact Number</label>
-                                            <input type="text" class="form-control" id="pi-contact" readonly>
-                                        </div>
-
-                                        <div class="col-12 col-lg-7">
-                                            <label class="form-label">Email</label>
-                                            <input type="text" class="form-control" id="pi-email" readonly>
-                                        </div>
-
-
-                                        <div class="col-12">
-                                            <label class="form-label">Address</label>
-                                            <input type="text" class="form-control" id="pi-address" readonly>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-3">
-                                    <button class="btn btn-update" data-bs-toggle="modal" data-bs-target="#updatePersonalInfoModal">
-                                        <i class="fas fa-edit"></i> Edit Personal Info
-                                    </button>
-                                </div>
-                                
-                                <hr class="my-4" />
-                                <div class="form-title">Availability</div>
-                                <div class="container-fluid p-0">
-                                    <div id="availability-edit-fields" style="display:none;">
-                                        <div class="mb-3">
-                                            <label class="form-label">Available Days</label>
-                                            <div class="d-flex flex-wrap gap-3" id="availability-days">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="Monday" id="day-Monday">
-                                                    <label class="form-check-label" for="day-Monday">Monday</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="Tuesday" id="day-Tuesday">
-                                                    <label class="form-check-label" for="day-Tuesday">Tuesday</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="Wednesday" id="day-Wednesday">
-                                                    <label class="form-check-label" for="day-Wednesday">Wednesday</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="Thursday" id="day-Thursday">
-                                                    <label class="form-check-label" for="day-Thursday">Thursday</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="Friday" id="day-Friday">
-                                                    <label class="form-check-label" for="day-Friday">Friday</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Available Times (per selected day)</label>
-                                            <div class="row g-2 align-items-end" id="availability-times">
-                                                <div class="col-12 col-md-5">
-                                                    <label class="form-label">From</label>
-                                                    <select class="form-select" id="time-from"></select>
-                                                </div>
-                                                <div class="col-12 col-md-5">
-                                                    <label class="form-label">To</label>
-                                                    <select class="form-select" id="time-to"></select>
-                                                </div>
-                                                <div class="col-12 col-md-2 d-grid">
-                                                    <button type="button" class="btn btn-update" id="add-time-slot" style="display:none;">Add</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Always-visible display of availability chips (day and time) -->
-                                    <div class="col-12 mt-2">
-                                        <div id="time-slots-list" class="border rounded p-2" style="min-height:40px;"></div>
-                                    </div>
-                                    <div class="d-flex gap-2 availability-actions">
-                                        <button type="button" class="btn btn-password" id="edit-availability"><i class="fas fa-edit"></i> Edit Availability</button>
-                                        <button type="button" class="btn btn-password" id="save-availability" style="display:none;"><i class="fas fa-save"></i> Save Availability</button>
-                                        <button type="button" class="btn btn-cancel" id="cancel-availability" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
 
     <!-- Update Profile Modal -->
     <div class="modal fade" id="updateProfileModal" tabindex="-1" aria-labelledby="updateProfileModalLabel"
@@ -374,14 +415,6 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
-
     <?php echo view('modals/student_dashboard_modals'); ?>
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -390,6 +423,7 @@
     </script>
     <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
     <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_profile.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>

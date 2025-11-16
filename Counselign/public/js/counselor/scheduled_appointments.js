@@ -9,27 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
     let originalAppointments = [];
     let filteredAppointments = [];
 
-    initStickyHeader();
     initSearchFunctionality();
     loadAppointments();
     loadCounselorSchedule();
 
-    function initStickyHeader() {
-        const header = document.querySelector('header');
-        const main = document.querySelector('main');
-        if (header && main) {
-            const headerHeight = header.offsetHeight;
-            const placeholder = document.createElement('div');
-            placeholder.style.display = 'none';
-            placeholder.style.height = headerHeight + 'px';
-            document.body.insertBefore(placeholder, main);
-            window.onscroll = function () {
-                if (window.pageYOffset > 10) { header.classList.add("sticky-header"); placeholder.style.display = 'block'; }
-                else { header.classList.remove("sticky-header"); placeholder.style.display = 'none'; }
-            };
-            window.addEventListener('resize', function () { placeholder.style.height = header.offsetHeight + 'px'; });
-        }
-    }
+    
 
     /**
      * Initialize search functionality for appointments table

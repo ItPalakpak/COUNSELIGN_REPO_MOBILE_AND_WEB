@@ -12,132 +12,116 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="<?= base_url('Photos/counselign.ico') ?>" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('css/admin/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/admin/admin_dashboard.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/admin/view_all_appointments.css') ?>">
 
+    <style>
+
+    </style>
 </head>
 
 <body>
-    <header class="admin-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="admin-navbar-toggler d-lg-none align-items-center" type="button" id="adminNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('admin/dashboard') ?>" class="sidebar-link active" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="<?= base_url('admin/admins-management') ?>" class="sidebar-link" title="Management">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="sidebar-text">Management</span>
+                </a>
+                <a href="<?= base_url('admin/appointments') ?>" class="sidebar-link" title="Recent Appointments">
+                    <i class="fas fa-calendar-check"></i>
+                    <span class="sidebar-text">Recent Appointments</span>
+                </a>
+                <a href="<?= base_url('admin/follow-up-sessions') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-calendar-days"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('admin/resources') ?>" class="sidebar-link" title="Resources">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="sidebar-text">Resources</span>
+                </a>
+                <a href="<?= base_url('admin/announcements') ?>" class="sidebar-link" title="Announcements">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcements</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Appointment Reports
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+                <!-- Quote Modal Button -->
+                <button class="top-bar-btn" id="openQuotesModalBtn" title="Manage Quotes">
+                    <i class="fas fa-quote-right"></i>
+                    <span class="btn-label">Quotes</span>
+                </button>
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Admin</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links">
-                                <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-                            </ul>
-                        </div>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Admin Navbar Drawer for Small Screens -->
-    <div class="admin-navbar-drawer d-lg-none" id="adminNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Admin Menu</h5>
-            <button class="btn-close btn-close-white" id="adminNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-        </ul>
-    </div>
-
-    <!-- Overlay for Admin Navbar Drawer -->
-    <div class="admin-navbar-overlay d-lg-none" id="adminNavbarOverlay"></div>
-
-    <div class="container pt-3 mb-3">
-        <div class="profile-display flex justify-between items-center">
-            <div class="col-12">
-                <div class="flex-container">
-                    <!-- Profile Row (Line 1) -->
-                    <div class="profile-row">
-                        <a class="profile-avatar" href="<?= base_url('admin/account-settings') ?>" onclick="redirectToProfilePage()"
-                            onKeyPress="if(event.key === 'Enter') redirectToProfilePage()">
-                            <img id="profile-img" src="<?= base_url('Photos/UGC-Logo.png') ?>"
-                                alt="User Avatar" class="profile-img admin-avatar" />
-                            <div class="overlay">
-                                <p>Profile</p>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Admin</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
                             </div>
-                        </a>
-                        <div class="profile-details-wrapper">
-                            <div class="fs-12 fw-bold" style="color: #003366;">Hello! <span
-                                    class="text-primary"><i id="adminName">Admin</i></span></div>
-                            <div id="lastLogin" class="small text-secondary">Login at: Loading...</div>
                         </div>
-                    </div>
-
-                    <!-- Action Buttons Row (Line 2) - Mobile/Tablet Only -->
-                    <div class="actions-row d-lg-none">
-                        <a href="<?= base_url('admin/admins-management') ?>" class="btn btn-primary action-btn" title="Management">
-                            <i class="fas fa-users-cog me-1"></i><span class="btn-text">Management</span>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('admin/account-settings') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
                         </a>
-                        <a href="<?= base_url('admin/appointments') ?>" class="btn btn-success action-btn" title="Manage Appointments">
-                            <i class="fas fa-calendar-check me-1"></i><span class="btn-text">Recent Appointments</span>
-                        </a>
-                        <a href="<?= base_url('admin/follow-up-sessions') ?>" class="btn btn-warning action-btn" title="Follow-up Sessions">
-                            <i class="fas fa-calendar-days me-1"></i><span class="btn-text">Follow-up Sessions</span>
-                        </a>
-
-                        <a href="<?= base_url('admin/resources') ?>" class="btn btn-secondary action-btn" title="Manage Resources">
-                            <i class="fas fa-folder-open me-1"></i><span class="btn-text">Resources</span>
-                        </a>
-
-                        <a href="<?= base_url('admin/announcements') ?>" class="btn btn-info action-btn" title="Manage Announcements">
-                            <i class="fa-solid fa-bullhorn me-1"></i><span class="btn-text">Announcements</span>
-                        </a>
-
-                        <button type="button" class="btn btn-primary action-btn" id="openQuotesModalBtnMobile" title="Manage Quotes">
-                            <i class="fas fa-quote-right me-1"></i><span class="btn-text">Quotes</span>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
                         </button>
-
-                        
-
-                    </div>
-
-                    <!-- Desktop Action Buttons (Original Layout) -->
-                    <div class="d-none d-lg-flex ms-auto">
-                        <a href="<?= base_url('admin/admins-management') ?>" class="btn btn-primary ms-auto" title="Management">
-                            <i class="fas fa-users-cog me-1"></i>Management
-                        </a>
-                        <a href="<?= base_url('admin/appointments') ?>" class="btn btn-success ms-3" title="Manage Appointments">
-                            <i class="fas fa-list-alt me-1"></i>All Appointments
-                        </a>
-                        <a href="<?= base_url('admin/follow-up-sessions') ?>" class="btn btn-warning ms-3" title="Follow-up Sessions">
-                            <i class="fas fa-calendar-check me-1"></i>Follow-up Sessions
-                        </a>
-
-                        <a href="<?= base_url('admin/resources') ?>" class="btn btn-secondary ms-3" title="Manage Resources">
-                            <i class="fas fa-folder-open me-1"></i>Resources
-                        </a>
-                        
-                        <a href="<?= base_url('admin/announcements') ?>" class="ms-3" title="Manage Announcements">
-                            <i class="fa-solid fa-bullhorn announcement-dashboard-icon"></i>
-                        </a>
-                        <button type="button" class="btn btn-primary ms-3" id="openQuotesModalBtn" title="Manage Quotes">
-                            <i class="fas fa-quote-right me-1"></i>
-                        </button>
-                       
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Migrated main content from admin/view_all_appointments (excluding header/footer) -->
-        <div class="main-content">
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Migrated main content from admin/view_all_appointments -->
             <div class="container report-container">
-                <div class="page-header">
-                    <h2><i class="fas fa-chart-line"></i> Appointment Reports</h2>
+                <div class="page-header" hidden>
                     <p class="text-muted">View and analyze appointment statistics</p>
                 </div>
 
@@ -622,11 +606,7 @@
                     </div>
                 </div>
             </div>
-
-
-        </div>
-
-
+        </main>
     </div>
 
     <!-- Quotes Management Modal -->
@@ -741,7 +721,7 @@
         </div>
     </div>
 
-    <!-- Shared Confirmation Modal (used for quote approvals and other confirms) -->
+    <!-- Shared Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -758,7 +738,7 @@
         </div>
     </div>
 
-    <!-- Shared Alert Modal (utility compatible) -->
+    <!-- Shared Alert Modal -->
     <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -777,14 +757,6 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -793,7 +765,7 @@
     <script>
         window.BASE_URL = "<?= base_url() ?>";
     </script>
-    <script src="<?= base_url('js/admin/admin_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
     <script src="<?= base_url('js/admin/admin_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/admin/profile_sync.js') ?>"></script>
     <script src="<?= base_url('js/admin/view_all_appointments.js') ?>"></script>

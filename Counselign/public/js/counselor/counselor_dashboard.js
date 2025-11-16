@@ -2494,6 +2494,8 @@ function formatQuoteDate(dateString) {
   }
   
   // ========== END DAILY QUOTE MODAL FEATURE ==========
+
+  loadResources();
 });
 
 // Function to handle logout action
@@ -2508,49 +2510,30 @@ function handleLogout() {
   }
 }
 
-// ========== RESOURCES ACCORDION ==========
-// Make functions globally accessible
+// ========== RESOURCES ACCORDION SECTION ==========
+// This should be added at the end of the DOMContentLoaded function in student_dashboard.js
+// Replace the existing resources section (lines ~2000-2200) with this:
+
+// Make functions globally accessible (compatibility layer)
 window.previewResourceFile = function(resourceId, filePath, fileType) {
   const baseUrl = window.BASE_URL || '/';
   const fullPath = baseUrl + filePath;
-  const type = fileType ? fileType.toLowerCase() : '';
   
-  if (type.includes('pdf')) {
-    window.open(fullPath, '_blank');
-  } else if (type.includes('image')) {
-    const modal = document.createElement('div');
-    modal.className = 'modal fade';
-    modal.innerHTML = `
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Image Preview</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body text-center">
-            <img src="${fullPath}" class="img-fluid" alt="Preview">
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-    modal.addEventListener('hidden.bs.modal', () => modal.remove());
-  } else {
-    window.open(fullPath, '_blank');
-  }
+  // For simple preview, just open in new tab
+  // The advanced preview will use the shared module
+  window.open(fullPath, '_blank');
 };
 
 window.trackResourceDownload = function(resourceId) {
-  // Track download if needed (can be implemented later)
   console.log('Resource downloaded:', resourceId);
 };
 
 window.trackResourceView = function(resourceId) {
-  // Track view if needed (can be implemented later)
   console.log('Resource viewed:', resourceId);
 };
+
+// Store resources data globally for preview module
+let studentDashboardResources = [];
 
 function loadResources() {
   const baseUrl = window.BASE_URL || '/';
@@ -2579,6 +2562,7 @@ function loadResources() {
     })
     .then(data => {
       if (data.success && data.resources && data.resources.length > 0) {
+        studentDashboardResources = data.resources; // Store for preview module
         renderResourcesAccordion(data.resources);
       } else {
         container.innerHTML = `
@@ -2642,16 +2626,14 @@ function renderResourcesAccordion(resources) {
     if (resource.resource_type === 'file') {
       const fileIcon = getFileIcon(resource.file_type);
       const fileSize = resource.file_size_formatted || 'Unknown size';
-      const filePathEscaped = escapeHtml(resource.file_path || '');
-      const fileTypeEscaped = escapeHtml(resource.file_type || '');
-      const previewButton = canPreviewFile(resource.file_type) 
-        ? `<button class="btn btn-sm btn-outline-primary me-2 preview-resource-btn" 
-                   data-resource-id="${resource.id}" 
-                   data-file-path="${filePathEscaped}" 
-                   data-file-type="${fileTypeEscaped}">
-             <i class="fas fa-eye me-1"></i>Preview
-           </button>`
-        : '';
+      
+      // CHANGED: Use advanced preview for all file types
+      const previewButton = `
+        <button class="btn btn-sm btn-outline-primary me-2 preview-resource-advanced" 
+               data-resource-id="${resource.id}">
+          <i class="fas fa-eye me-1"></i>Preview
+        </button>
+      `;
       
       resourceContent = `
         <div class="resource-file-info p-3 bg-light rounded">
@@ -2664,7 +2646,7 @@ function renderResourcesAccordion(resources) {
           </div>
           <div class="d-flex gap-2">
             ${previewButton}
-            <a href="${baseUrl}counselor/resources/download/${resource.id}" 
+            <a href="${baseUrl}student/resources/download/${resource.id}" 
                class="btn btn-sm btn-primary download-resource-btn" 
                data-resource-id="${resource.id}"
                download>
@@ -2674,15 +2656,13 @@ function renderResourcesAccordion(resources) {
         </div>
       `;
     } else {
+      // CHANGED: Use advanced preview for links too
       resourceContent = `
         <div class="resource-link-info p-3 bg-light rounded">
-          <a href="${escapeHtml(resource.external_url)}" 
-             target="_blank" 
-             rel="noopener noreferrer"
-             class="btn btn-primary view-resource-link"
-             data-resource-id="${resource.id}">
+          <button class="btn btn-primary preview-resource-advanced" 
+                  data-resource-id="${resource.id}">
             <i class="fas fa-external-link-alt me-1"></i>Open Link
-          </a>
+          </button>
           <p class="mt-2 mb-0"><small class="text-muted">${escapeHtml(resource.external_url)}</small></p>
         </div>
       `;
@@ -2740,12 +2720,6 @@ function getFileIcon(fileType) {
   return '<i class="fas fa-file text-secondary fa-2x"></i>';
 }
 
-function canPreviewFile(fileType) {
-  if (!fileType) return false;
-  const type = fileType.toLowerCase();
-  return type.includes('pdf') || type.includes('image') || type.includes('text');
-}
-
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;")
@@ -2755,16 +2729,19 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
-// Set up event delegation for resource buttons
+// CHANGED: Use advanced preview from shared module
 document.addEventListener('click', function(e) {
-  const previewBtn = e.target.closest('.preview-resource-btn');
+  const previewBtn = e.target.closest('.preview-resource-advanced');
   if (previewBtn) {
     e.preventDefault();
     const resourceId = parseInt(previewBtn.getAttribute('data-resource-id'));
-    const filePath = previewBtn.getAttribute('data-file-path');
-    const fileType = previewBtn.getAttribute('data-file-type');
-    if (window.previewResourceFile) {
-      window.previewResourceFile(resourceId, filePath, fileType);
+    
+    // Use the shared preview module
+    if (window.ResourcePreview && typeof window.ResourcePreview.previewResource === 'function') {
+      window.ResourcePreview.previewResource(resourceId, studentDashboardResources);
+    } else {
+      console.error('ResourcePreview module not loaded');
+      alert('Preview feature is not available. Please refresh the page.');
     }
     return;
   }
@@ -2777,21 +2754,11 @@ document.addEventListener('click', function(e) {
     }
     return;
   }
-
-  const viewLink = e.target.closest('.view-resource-link');
-  if (viewLink) {
-    const resourceId = parseInt(viewLink.getAttribute('data-resource-id'));
-    if (window.trackResourceView) {
-      window.trackResourceView(resourceId);
-    }
-    return;
-  }
 });
 
 // Load resources on page load
-document.addEventListener('DOMContentLoaded', function() {
-  loadResources();
-});
+
+
 // ========== END RESOURCES ACCORDION ==========
 
 

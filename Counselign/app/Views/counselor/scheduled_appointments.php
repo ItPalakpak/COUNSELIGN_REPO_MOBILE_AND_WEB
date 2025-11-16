@@ -10,53 +10,48 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/counselor/scheduled_appointments.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 
 <body>
-    <header class="counselor-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="counselor-navbar-toggler d-lg-none align-items-center" type="button" id="counselorNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
-                    </button>
-
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links">
-                                <li>
-                                    <a href="<?= base_url('counselor/appointments') ?>"><i class="fa fa-list-alt"></i> Appointments</a>
-                                </li>
-                                <li>
-                                    <a href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-
-
-                            </ul>
-                        </div>
-                    </nav>
-                </div>
-            </div>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link " title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link active" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
         </div>
-    </header>
+    </aside>
 
-    <!-- Counselor Navbar Drawer for Small Screens -->
-    <div class="counselor-navbar-drawer d-lg-none" id="counselorNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="counselorNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/appointments') ?>"><i class="fa fa-list-alt"></i> Appointments</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        </ul>
-    </div>
-
-    <!-- Overlay for Counselor Navbar Drawer -->
-    <div class="counselor-navbar-overlay d-lg-none" id="counselorNavbarOverlay"></div>
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="statusToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -69,10 +64,20 @@
         </div>
     </div>
 
-    <main class="bg-light p-4">
-        <div class="container-fluid px-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="h2 fw-bold text-primary mb-0">Consultation Schedule Queries</h2>
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Consultation Schedule Queries
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
                 <div class="search-container">
                     <div class="input-group" style="max-width: 300px;">
                         <span class="input-group-text bg-white border-end-0">
@@ -84,75 +89,113 @@
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="csq-layout">
-                <div class="csq-left">
-                    <div class="csq-card">
-                        <div id="loading-indicator" class="text-center py-5 d-none">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                <button class="top-bar-btn" onclick="window.location.href='<?= base_url('counselor/appointments') ?>'" title="Appointments">
+                    <i class="fa fa-list-alt text-2xl" style="cursor: pointer;"></i>
+                    <span class="btn-label">Appointments</span>
+                </button>
+
+
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
+                    </button>
+
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
                             </div>
-                            <p class="mt-2">Loading appointments...</p>
                         </div>
-
-                        <div id="empty-message" class="alert alert-info text-center d-none">
-                            <i class="fas fa-info-circle me-2"></i> No scheduled appointments found.
-                        </div>
-
-                        <div class="table-bordered csq-table-wrap overflow-auto" id="appointments-table-container" style="overflow-x: auto;">
-                            <table class="table csq-table" id="appointments-table">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Student ID</th>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Appointed Date</th>
-                                        <th scope="col">Time</th>
-                                        <th scope="col">Method</th>
-                                        <th scope="col">Consultation Type</th>
-                                        <th scope="col">Appointment Type</th>
-                                        <th scope="col">Purpose</th>
-                                        <th scope="col" class="text-center">Status</th>
-                                        <th scope="col" class="text-center">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="appointments-body"></tbody>
-                            </table>
-                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
                     </div>
                 </div>
+            </div>
+        </header>
+        <main class="bg-light p-4">
+            <div class="container-fluid px-4">
+                <div class="csq-layout">
+                    <div class="csq-left">
+                        <div class="csq-card">
+                            <div id="loading-indicator" class="text-center py-5 d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading appointments...</p>
+                            </div>
 
-                <aside class="csq-right">
-                    <div class="csq-card csq-sidebar-container">
-                        <div class="sidebar-card">
-                            <h6 class="mb-3">Your Weekly Consultation Schedules</h6>
-                            <div class="schedule-list">
-                                <div class="schedule-row"><span>Monday</span><span>8:00am–11:00am</span></div>
-                                <div class="schedule-row"><span>Tuesday</span><span>2:00pm–4:00pm</span></div>
-                                <div class="schedule-row"><span>Thursday</span><span>8:00am–4:00pm</span></div>
+                            <div id="empty-message" class="alert alert-info text-center d-none">
+                                <i class="fas fa-info-circle me-2"></i> No scheduled appointments found.
                             </div>
-                        </div>
 
-                        <div class="sidebar-card mini-calendar-card">
-                            <div class="mini-cal-header">
-                                <button class="mini-cal-btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
-                                <div class="mini-cal-title" id="monthYear"></div>
-                                <button class="mini-cal-btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
-                            </div>
-                            <div class="mini-cal-week">
-                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                            </div>
-                            <div class="mini-cal-days" id="calendarDays"></div>
-                            <div class="mini-cal-legend">
-                                <div class="legend-item"><span class="legend-dot has-appointment"></span><span>Has Appointments</span></div>
-                                <div class="legend-item"><span class="legend-dot today"></span><span>Today</span></div>
+                            <div class="table-bordered csq-table-wrap overflow-auto" id="appointments-table-container" style="overflow-x: auto;">
+                                <table class="table csq-table" id="appointments-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Student ID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Appointed Date</th>
+                                            <th scope="col">Time</th>
+                                            <th scope="col">Method</th>
+                                            <th scope="col">Consultation Type</th>
+                                            <th scope="col">Appointment Type</th>
+                                            <th scope="col">Purpose</th>
+                                            <th scope="col" class="text-center">Status</th>
+                                            <th scope="col" class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="appointments-body"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                </aside>
+
+                    <aside class="csq-right">
+                        <div class="csq-card csq-sidebar-container">
+                            <div class="sidebar-card">
+                                <h6 class="mb-3">Your Weekly Consultation Schedules</h6>
+                                <div class="schedule-list">
+                                    <div class="schedule-row"><span>Monday</span><span>8:00am–11:00am</span></div>
+                                    <div class="schedule-row"><span>Tuesday</span><span>2:00pm–4:00pm</span></div>
+                                    <div class="schedule-row"><span>Thursday</span><span>8:00am–4:00pm</span></div>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-card mini-calendar-card">
+                                <div class="mini-cal-header">
+                                    <button class="mini-cal-btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                                    <div class="mini-cal-title" id="monthYear"></div>
+                                    <button class="mini-cal-btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <div class="mini-cal-week">
+                                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                                </div>
+                                <div class="mini-cal-days" id="calendarDays"></div>
+                                <div class="mini-cal-legend">
+                                    <div class="legend-item"><span class="legend-dot has-appointment"></span><span>Has Appointments</span></div>
+                                    <div class="legend-item"><span class="legend-dot today"></span><span>Today</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <div class="modal fade" id="cancellationReasonModal" tabindex="-1" aria-labelledby="cancellationReasonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -176,14 +219,6 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.BASE_URL = "<?= base_url() ?>";
@@ -192,8 +227,8 @@
     <script src="<?= base_url('js/counselor/scheduled_appointments.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
-
-
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
 
 </html>

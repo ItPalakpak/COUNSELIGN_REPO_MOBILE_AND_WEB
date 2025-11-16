@@ -14,99 +14,138 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= base_url('css/counselor/follow_up.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
-</head>
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>"
+        </head>
 
 <body>
-    <header class="counselor-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
 
-                    <button class="counselor-navbar-toggler d-lg-none align-items-center" type="button" id="counselorNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link " title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link active" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Interactive Profile Picture Section -->
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    For follow-up Session
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links ms-auto">
-                                <li>
-                                    <a href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-                            </ul>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
                         </div>
-                    </nav>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
-
-    <!-- Counselor Navbar Drawer for Small Screens -->
-    <div class="counselor-navbar-drawer d-lg-none" id="counselorNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="counselorNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-        </ul>
-    </div>
-
-    <!-- Overlay for Counselor Navbar Drawer -->
-    <div class="counselor-navbar-overlay d-lg-none" id="counselorNavbarOverlay"></div>
+        </header>
 
 
-    <main>
-        <div class="container-fluid px-2">
-            <div class="row">
-                <div class="col-12">
-                    <div class="follow-up-container">
-                        <div class="section-header">
-                            <h2 class="section-title">
-                                <i class="fas fa-calendar-check me-2"></i>
-                                For follow-up Session
-                            </h2>
-                            <p class="section-subtitle">Manage follow-up sessions for completed appointments</p>
-                        </div>
+        <main>
+            <div class="container-fluid px-2">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="follow-up-container">
 
-                        <!-- Completed Appointments Section -->
-                        <div class="completed-appointments-section">
-                            <div class="section-header-bar">
-                                <div class="section-title-wrapper">
-                                    <h3 class="subsection-title mb-0">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        Completed Appointments
-                                    </h3>
-                                    <p class="section-description">View and manage follow-up sessions for completed appointments</p>
-                                </div>
-                                <div class="search-container">
-                                    <div class="input-group search-wrapper">
-                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                        <input type="text" class="form-control" id="searchInput" placeholder="Search appointments...">
-                                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display: none;">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                            <!-- Completed Appointments Section -->
+                            <div class="completed-appointments-section">
+                                <div class="section-header-bar">
+                                    <div class="section-title-wrapper">
+                                        <h3 class="subsection-title mb-0">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Completed Appointments
+                                        </h3>
+                                        <p class="section-description">View and manage follow-up sessions for completed appointments</p>
+                                    </div>
+                                    <div class="search-container">
+                                        <div class="input-group search-wrapper">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control" id="searchInput" placeholder="Search appointments...">
+                                            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display: none;">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="completedAppointmentsContainer" class="appointments-grid">
-                                <!-- Completed appointments will be loaded here -->
-                            </div>
-                            <div id="noCompletedAppointments" class="no-data-message" style="display: none;">
-                                <i class="fas fa-info-circle"></i>
-                                <p>No completed appointments found. Complete some appointments to create follow-up sessions.</p>
-                            </div>
-                            <div id="noSearchResults" class="no-data-message" style="display: none;">
-                                <i class="fas fa-search"></i>
-                                <p>No appointments found matching your search criteria.</p>
+                                <div id="completedAppointmentsContainer" class="appointments-grid">
+                                    <!-- Completed appointments will be loaded here -->
+                                </div>
+                                <div id="noCompletedAppointments" class="no-data-message" style="display: none;">
+                                    <i class="fas fa-info-circle"></i>
+                                    <p>No completed appointments found. Complete some appointments to create follow-up sessions.</p>
+                                </div>
+                                <div id="noSearchResults" class="no-data-message" style="display: none;">
+                                    <i class="fas fa-search"></i>
+                                    <p>No appointments found matching your search criteria.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <!-- Follow-up Sessions Modal -->
     <div class="modal fade" id="followUpSessionsModal" tabindex="-1" aria-labelledby="followUpSessionsModalLabel" aria-hidden="true">
@@ -186,7 +225,7 @@
                         <input type="hidden" id="parentAppointmentId" name="parent_appointment_id">
                         <input type="hidden" id="studentId" name="student_id">
                         <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
@@ -203,7 +242,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="consultationType" class="form-label">Consultation Type <span class="text-danger">*</span></label>
                             <select class="form-control" id="consultationType" name="consultation_type" required>
@@ -215,12 +254,12 @@
                                 <option value="Crisis Intervention">Crisis Intervention</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="description" class="form-label">Description</label>
                             <textarea class="form-control" id="description" name="description" rows="3" placeholder="Brief description of the follow-up session"></textarea>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="reason" class="form-label">Reason for Follow-up</label>
                             <textarea class="form-control" id="reason" name="reason" rows="2" placeholder="Reason for scheduling this follow-up session"></textarea>
@@ -253,7 +292,7 @@
                     <form id="editFollowUpForm">
                         <input type="hidden" id="editFollowUpId" name="id">
                         <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
@@ -270,7 +309,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="editConsultationType" class="form-label">Consultation Type <span class="text-danger">*</span></label>
                             <select class="form-control" id="editConsultationType" name="consultation_type" required>
@@ -282,12 +321,12 @@
                                 <option value="Crisis Intervention">Crisis Intervention</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="editDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="editDescription" name="description" rows="3" placeholder="Brief description of the follow-up session"></textarea>
                         </div>
-                        
+
                         <div class="form-group mb-3">
                             <label for="editReason" class="form-label">Reason for Follow-up</label>
                             <textarea class="form-control" id="editReason" name="reason" rows="2" placeholder="Reason for scheduling this follow-up session"></textarea>
@@ -347,31 +386,17 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-
-        </div>
-    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         window.BASE_URL = "<?= base_url() ?>";
     </script>
+
     <script src="<?= base_url('js/counselor/follow_up.js') ?>" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
-    <script>
-        // Wire confirm cancel button
-        document.addEventListener('DOMContentLoaded', function() {
-            const btn = document.getElementById('confirmCancelFollowUpBtn');
-            if (btn && typeof confirmCancelFollowUp === 'function') {
-                btn.addEventListener('click', confirmCancelFollowUp);
-            }
-        });
-    </script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
 
 </html>

@@ -12,95 +12,106 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= base_url('css/counselor/counselor_dashboard.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/resources.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 
 
 </head>
 
 <body>
-    <header class="text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="logo-title-container">
-                        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Counselign logo" class="logo" />
-                        <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
-                    </div>
-                    <button class="custom-navbar-toggler align-items-center" type="button" id="navbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-gear"></i></span>
-                    </button>
-                </div>
-            </div>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('counselor/dashboard') ?>" class="sidebar-link active" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                
+                <a href="<?= base_url('counselor/appointments/scheduled') ?>" class="sidebar-link" title="Scheduled Appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="sidebar-text">Scheduled Appointments</span>
+                </a>
+                <a href="<?= base_url('counselor/follow-up') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('counselor/announcements') ?>" class="sidebar-link" title="Announcement">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcement</span>
+                </a>
+            </nav>
         </div>
-    </header>
+    </aside>
 
-    <!-- Navbar Drawer (always available) -->
-    <div class="navbar-drawer" id="navbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Counselor Menu</h5>
-            <button class="btn-close btn-close-white" id="navbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/announcements') ?>"><i class="fas fa-bullhorn"></i> Announcements</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/appointments/scheduled') ?>"><i class="fas fa-calendar-alt"></i> Scheduled Appointments</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/follow-up') ?>"><i class="fas fa-clipboard-list"></i>For Follow-up Session</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('counselor/profile') ?>"><i class="fas fa-user"></i> Profile</a></li>
-            <li class="nav-item"><a class="nav-link" href="#" id="logoutFromDrawer"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-        </ul>
-    </div>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Overlay for Navbar Drawer -->
-    <div class="navbar-overlay" id="navbarOverlay"></div>
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
 
-    <main class="flex-grow py-4 px-8">
+    <div class="main-wrapper" id="mainWrapper">
         <!-- Interactive Profile Picture Section -->
 
-        <div class="profile-display flex justify-between items-center">
-            <div class="flex items-center space-x-4"></div>
-            <button class="profile-avatar" type="button">
-                <img id="profile-img" src="<?= base_url('Photos/profile.png') ?>" alt="User Avatar" class="profile-img" />
-            </button>
-            <div class="profile-details-wrapper">
-                <?php
-                $userDisplayHelper = new \App\Helpers\UserDisplayHelper();
-                $userInfo = $userDisplayHelper->getUserDisplayInfo(session()->get('user_id_display'), session()->get('role'));
-                ?>
-                <div class="fs-12 fw-bold" style="color: #003366;">
-                    Hello!
-                    <span class="text-primary">
-                        <i><?= $userInfo['display_name'] ?></i>
-                    </span>
-                    <?php if ($userInfo['has_name']): ?>
-                        <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
-                    <?php endif; ?>
-                </div>
-                <div class="small text-secondary">Last login: <?php
-                                                                $lastLogin = session()->get('last_login');
-                                                                if ($lastLogin) {
-                                                                    $dateTime = new \DateTime($lastLogin);
-                                                                    echo $dateTime->format('M j, g:i A');
-                                                                } else {
-                                                                    echo 'N/A';
-                                                                }
-                                                                ?></div>
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <h1 class="page-title-header">
+                    <i class="fas fa-user-tie me-2"></i>
+                    Counselor Dashboard
+                </h1>
             </div>
 
-           
+            <div class="top-bar-right">
 
-            <div class="ml-auto flex items-center space-x-6">
-                <!-- Quote Button -->
-                <div class="relative">
-                    <i class="fas fa-quote-right text-2xl" id="openQuoteModalBtn" title="Quotes"
-                        style="color: #003366; cursor: pointer;"></i>
-                </div>
-
-                <!-- Notification Icon -->
+                <button class="top-bar-btn" id="openQuoteModalBtn" title="Quotes">
+                    <i class="fas fa-quote-right text-2xl" style="cursor: pointer;"></i>
+                </button>
                 <div class="relative notification-icon-container">
-                    <i class="fas fa-bell text-2xl" id="notificationIcon" title="Notifications"
-                        style="color: #003366; cursor: pointer;"></i>
-                    <span id="notificationBadge" class="notification-badge hidden">0</span>
+                    <button class="top-bar-btn" id="notificationIcon" title="Notifications">
+                        <i class="fas fa-bell text-2xl" style="cursor: pointer;"></i>
+                        <span id="notificationBadge" class="notification-badge">0</span>
+                    </button>
+                </div>
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Counselor</span>
+                    </button>
+
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/profile.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Counselor</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('counselor/profile') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Content Panel -->
         <div class="content-panel mt-4">
@@ -172,7 +183,7 @@
         </div>
 
         <!-- Resources Accordion Section -->
-        <section class="resources-section mt-5 mb-4">
+        <section class="resources-section m-4">
             <div class="container-fluid px-0">
                 <div class="accordion" id="resourcesParentAccordion">
                     <div class="accordion-item">
@@ -200,7 +211,7 @@
                 </div>
             </div>
         </section>
-    </main>
+    </div>
 
     <!-- Chat Popup -->
     <div id="chatPopup" class="chat-popup">
@@ -236,15 +247,6 @@
             </form>
         </div>
     </div>
-
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-
-        </div>
-    </footer>
 
     <!-- Appointment Details Modal -->
     <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-labelledby="appointmentDetailsLabel" aria-hidden="true">
@@ -466,11 +468,33 @@
         </div>
     </div>
 
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="previewModalTitle">Resource Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="previewModalBody" style="min-height: 400px;">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ADDED: Shared Resource Preview Module -->
+    <script src="<?= base_url('js/utils/resource-preview.js') ?>"></script>
+
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
-    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
     <script src="<?= base_url('js/counselor/counselor_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/counselor/logout.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
     <script>
         window.BASE_URL = "<?= base_url() ?>";
     </script>

@@ -7,38 +7,9 @@ body {
     flex-direction: column;
 }
 
-header {
-    background-color: #060E57;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 10px 15px; /* Default padding for header */
-    display: flex;
-    align-items: center;
-    color: white;
-    width: 100%;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    min-height: 64px; /* Set a minimum height for consistency */
 
-}
 
-.header-container {
-    display: flex !important;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    /* Default padding, will be overridden by media queries for small screens */
-    padding: 0 20px;
-}
 
-.header-container .row {
-    display: flex !important;
-    flex-wrap: nowrap !important; /* Crucial: prevent wrapping */
-    width: 100% !important;
-    margin-left: 0 !important; /* Zero out row margins */
-    margin-right: 0 !important; /* Zero out row margins */
-}
 .d-flex.align-items-center {
     display: flex;
     align-items: center;
@@ -46,28 +17,7 @@ header {
     width: 100%;
 }
 
-.header-container .row .col-md-3 {
-    flex: 0 0 140px !important; /* Fixed width for logo and title */
-    flex-shrink: 0; /* Prevent shrinking */
-    min-width: 0; /* Allow content to truly shrink if necessary */
-    max-width: 140px !important; /* Ensure it doesn't grow beyond this */
-    padding-left: 0 !important; /* Zero out column padding */
-    padding-right: 0 !important; /* Zero out column padding */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-}
 
-.header-container .row .col-md-9 {
-    flex: 0 0 calc(100% - 140px) !important; /* Take remaining space precisely */
-    flex-shrink: 0; /* Prevent shrinking */
-    min-width: 0; /* Allow content to truly shrink if necessary */
-    padding-left: 0 !important; /* Zero out column padding */
-    padding-right: 0 !important; /* Zero out column padding */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-}
 
 .logo-title-container {
     display: flex;
@@ -84,11 +34,6 @@ header {
     margin-bottom: 0;
 }
 
-h1 {
-    margin-bottom: 0 !important;
-    white-space: nowrap !important; /* Crucial: prevent text wrapping */
-    font-size: 1.1rem !important; /* Adjust font size to fit */
-}
 
 .navbar-nav.nav-links.ms-auto {
     display: flex;
@@ -299,11 +244,12 @@ main {
     border: 1px solid rgba(25, 25, 112, 0.1);
     position: relative;
     overflow: hidden;
-    width: 100%;
+    width: 96%;
     text-align: center;
     transition: box-shadow 0.3s ease;
     transform: none !important;
     z-index: 1;
+    margin: 50px auto;
 }
 
 /* Add decorative elements with royal blue accents */
@@ -476,18 +422,23 @@ footer {
     font-weight: normal; /* Make span text normal weight even if link is bold */
 }
 
+
+
+/* Notification Badge */
 .notification-badge {
     background: linear-gradient(to bottom right, #ff4444, #ff6b6b);
     color: white;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 12px;
+    font-size: 10px; /* Smaller font size */
+    padding: 3px 6px;
+    border-radius: 10px;
     position: absolute;
-    top: -5px;
+    top: -10px;
     right: -5px;
-    box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
-    border: 2px solid white;
-    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(255, 68, 68, 0.2);
+    border: 1.5px solid white;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
 }
 
 .notification-icon-container {
@@ -644,22 +595,7 @@ footer {
     color: #64748b;
 }
 
-/* Notification Badge */
-.notification-badge {
-    background: linear-gradient(to bottom right, #ff4444, #ff6b6b);
-    color: white;
-    font-size: 10px; /* Smaller font size */
-    padding: 3px 6px;
-    border-radius: 10px;
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    box-shadow: 0 2px 6px rgba(255, 68, 68, 0.2);
-    border: 1.5px solid white;
-    font-weight: 600;
-    min-width: 18px;
-    text-align: center;
-}
+
 
 /* Notifications List Container */
 .notifications-list {
@@ -1156,33 +1092,6 @@ footer {
         padding-left: 0 !important; /* Zero out container-fluid padding */
         padding-right: 0 !important; /* Zero out container-fluid padding */
     }
-
-    .header-container {
-        padding: 0 5px !important; /* Minimal padding for header container */
-    }
-
-    .header-container .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .header-container .row .col-md-3 {
-        flex: 0 0 100px !important; /* Fixed width for logo/title */
-        max-width: 100px !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-    }
-
-    .header-container .row .col-md-9 {
-        flex: 0 0 calc(100% - 120px) !important; /* Take remaining space precisely */
-        min-width: 0 !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
-    }
-
     
 
     .logo-title-container {
@@ -1264,31 +1173,6 @@ footer {
         padding-right: 0 !important; /* Zero out container-fluid padding */
     }
 
-    .header-container {
-        padding: 0 5px !important; /* Minimal padding for header container */
-    }
-
-    .header-container .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .header-container .row .col-md-3 {
-        flex: 0 0 100px !important; /* Fixed width for logo/title */
-        max-width: 100px !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-    }
-
-    .header-container .row .col-md-9 {
-        flex: 0 0 calc(100% - 120px) !important; /* Take remaining space precisely */
-        min-width: 0 !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
-    }
 
 
     .logo-title-container {
@@ -1392,31 +1276,6 @@ footer {
         padding-right: 0 !important; /* Zero out container-fluid padding */
     }
 
-    .header-container {
-        padding: 0 5px !important; /* Minimal padding for header container */
-    }
-
-    .header-container .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .header-container .row .col-md-3 {
-        flex: 0 0 100px !important; /* Fixed width for logo/title */
-        max-width: 100px !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-    }
-
-    .header-container .row .col-md-9 {
-        flex: 0 0 calc(100% - 120px) !important; /* Take remaining space precisely */
-        min-width: 0 !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
-    }
 
     
 
@@ -1515,32 +1374,6 @@ footer {
     .container-fluid {
         padding-left: 0 !important; /* Zero out container-fluid padding */
         padding-right: 0 !important; /* Zero out container-fluid padding */
-    }
-
-    .header-container {
-        padding: 0 5px !important; /* Minimal padding for header container */
-    }
-
-    .header-container .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .header-container .row .col-md-3 {
-        flex: 0 0 100px !important; /* Fixed width for logo/title */
-        max-width: 100px !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-    }
-
-    .header-container .row .col-md-9 {
-        flex: 0 0 calc(100% - 120px) !important; /* Take remaining space precisely */
-        min-width: 0 !important;
-        padding-left: 0 !important; /* Zero out column padding */
-        padding-right: 0 !important; /* Zero out column padding */
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
     }
 
     .logo-title-container {

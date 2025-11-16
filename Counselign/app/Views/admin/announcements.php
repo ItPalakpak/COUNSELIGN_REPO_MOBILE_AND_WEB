@@ -10,88 +10,142 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/admin/admin_announcements.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/admin/header.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
 </head>
 
 <body>
-    
-    <header class="admin-header text-white p-1" style="background-color: #060E57;">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="UGC Logo" class="logo" />
-                    <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
-                    <button class="admin-navbar-toggler d-lg-none align-items-center" type="button" id="adminNavbarDrawerToggler">
-                        <span class="navbar-toggler-icon"><i class="fas fa-bars"></i></span>
+
+    <aside class="sidebar" id="uniSidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Logo" class="sidebar-logo">
+                <span class="sidebar-brand-text">Counselign</span>
+            </button>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="<?= base_url('admin/dashboard') ?>" class="sidebar-link " title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="<?= base_url('admin/admins-management') ?>" class="sidebar-link" title="Management">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="sidebar-text">Management</span>
+                </a>
+                <a href="<?= base_url('admin/appointments') ?>" class="sidebar-link" title="Recent Appointments">
+                    <i class="fas fa-calendar-check"></i>
+                    <span class="sidebar-text">Recent Appointments</span>
+                </a>
+                <a href="<?= base_url('admin/follow-up-sessions') ?>" class="sidebar-link" title="Follow-up Sessions">
+                    <i class="fas fa-calendar-days"></i>
+                    <span class="sidebar-text">Follow-up Sessions</span>
+                </a>
+                <a href="<?= base_url('admin/resources') ?>" class="sidebar-link" title="Resources">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="sidebar-text">Resources</span>
+                </a>
+                <a href="<?= base_url('admin/announcements') ?>" class="sidebar-link active" title="Announcements">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span class="sidebar-text">Announcements</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Sidebar Toggle for Mobile (shows when sidebar is hidden) -->
+    <button class="floating-sidebar-toggle" id="floatingSidebarToggle" title="Open Menu">
+        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Menu">
+    </button>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper" id="mainWrapper">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <!-- Page Title Added Here -->
+                <h1 class="page-title-header">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    Announcements and Events
+                </h1>
+            </div>
+
+            <div class="top-bar-right">
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <button class="top-bar-btn profile-btn" id="profileDropdownBtn">
+                        <img id="profile-img-top" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-small">
+                        <span class="btn-label" id="uniNameTop">Admin</span>
                     </button>
 
-                    <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links">
-                                <li class="nav-item"><a class="nav-link" href="<?= base_url('admin/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-                                <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-                            </ul>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <img id="profile-img-dropdown" src="<?= base_url('Photos/UGC-Logo.png') ?>" alt="Profile" class="profile-img-large">
+                            <div class="profile-info">
+                                <div class="profile-name" id="uniNameDropdown">Admin</div>
+                                <div class="profile-subtitle" id="lastLoginDropdown">Loading...</div>
+                            </div>
                         </div>
-                    </nav>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="<?= base_url('admin/account-settings') ?>" class="profile-dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
+        
+        <div class="container py-5">
 
-    <!-- Admin Navbar Drawer for Small Screens -->
-    <div class="admin-navbar-drawer d-lg-none" id="adminNavbarDrawer">
-        <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
-            <h5 class="m-0">Admin Menu</h5>
-            <button class="btn-close btn-close-white" id="adminNavbarDrawerClose" aria-label="Close"></button>
-        </div>
-        <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('admin/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
-        </ul>
-    </div>
-
-    <!-- Overlay for Admin Navbar Drawer -->
-    <div class="admin-navbar-overlay d-lg-none" id="adminNavbarOverlay"></div>
-
-    <div class="container py-5">
-        <div class="row">
-            <!-- Announcements Column -->
-            <div class="col-lg-6 col-12">
-                <div class="section-header">
-                    <i class="fas fa-bullhorn me-2 text-primary fs-3"></i>
-                    <h2 class="fw-bold text-primary">Announcements</h2>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-end mb-3">
-                            <button type="button" class="btn btn-add-announcement" onclick="openAnnouncementModal()">
-                                <i class="fas fa-plus me-1"></i> Add Announcement
-                            </button>
-                        </div>
-                        <div class="category-container">
-                            <div id="announcements-list" class="scrollable-list">
-                                <!-- Announcement items will be loaded here -->
+            <div class="row">
+                <!-- Announcements Column -->
+                <div class="col-lg-6 col-12">
+                    <div class="section-header">
+                        <i class="fas fa-bullhorn me-2 text-primary fs-3"></i>
+                        <h2 class="fw-bold text-primary">Announcements</h2>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button type="button" class="btn btn-add-announcement" onclick="openAnnouncementModal()">
+                                    <i class="fas fa-plus me-1"></i> Add Announcement
+                                </button>
+                            </div>
+                            <div class="category-container">
+                                <div id="announcements-list" class="scrollable-list">
+                                    <!-- Announcement items will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Events Column -->
-            <div class="col-lg-6 col-12">
-                <div class="section-header">
-                    <i class="fas fa-calendar-alt me-2 text-primary fs-3"></i>
-                    <h2 class="fw-bold text-primary">Events</h2>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-end mb-3">
-                            <button type="button" class="btn btn-add-announcement" onclick="openEventModal()">
-                                <i class="fas fa-calendar-plus me-1"></i> Add Event
-                            </button>
-                        </div>
-                        <div class="category-container">
-                            <div id="events-list" class="scrollable-list">
-                                <!-- Event items will be loaded here -->
+                <!-- Events Column -->
+                <div class="col-lg-6 col-12">
+                    <div class="section-header">
+                        <i class="fas fa-calendar-alt me-2 text-primary fs-3"></i>
+                        <h2 class="fw-bold text-primary">Events</h2>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button type="button" class="btn btn-add-announcement" onclick="openEventModal()">
+                                    <i class="fas fa-calendar-plus me-1"></i> Add Event
+                                </button>
+                            </div>
+                            <div class="category-container">
+                                <div id="events-list" class="scrollable-list">
+                                    <!-- Event items will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -100,13 +154,6 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="copyright">
-                <b>© 2025 Counselign Team. All rights reserved.</b>
-            </div>
-        </div>
-    </footer>
 
     <!-- Event Modal -->
     <div id="eventModal" class="modal">
@@ -195,6 +242,7 @@
         </div>
     </div>
 
+
     <!-- Edit Event Modal -->
     <div id="editEventModal" class="modal">
         <div class="modal-content">
@@ -257,6 +305,7 @@
     <script src="<?= base_url('js/admin/admin_announcements.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/utils/sidebar.js') ?>"></script>
 </body>
 
 </html>

@@ -11,16 +11,32 @@ body {
     position: relative;
 }
 
-/* Main content styling */
-main {
-    padding: 40px 0;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-    box-sizing: border-box;
+
+/* Main container styling */
+.container.py-5 {
+    background: linear-gradient(135deg, #f7f7f7 80%, #d1daf0 100%);
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(3, 21, 64, 0.1);
+    padding: 2rem !important;
+    animation: fadeInUp 0.7s;
+    max-width: 1270px !important;
+    margin: 10px auto;
+    width: calc(100% - 20px) !important;
+}
+
+/* Row layout improvements */
+.container.py-5>.row {
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+}
+
+/* Column sizing */
+.container.py-5>.row>.col-lg-6 {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    min-width: 0;
 }
 
 /* Enhanced appointment form styling */
@@ -425,15 +441,6 @@ footer {
 
 /* Responsive Design */
 @media (max-width: 992px) {
-    /* Match dashboard mobile header behavior */
-    .container-fluid { padding-left: 12px !important; padding-right: 12px !important; }
-    header { padding: 10px 0; }
-    .header-container { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 0 !important; max-width: none; margin: 0; }
-    .logo-title-container { margin-bottom: 0 !important; flex-direction: row; text-align: left; }
-    header img.logo { width: auto !important; max-width: 36px; height: auto; }
-    h1 { margin: 0 0 0 8px !important; font-size: 1.1rem !important; text-align: left !important; white-space: nowrap !important; }
-    /* Hide standard nav on small screens to use drawer instead */
-    nav { display: none !important; }
 
     .appointment-container {
         padding: 20px;
@@ -453,15 +460,6 @@ footer {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    /* Match dashboard mobile header behavior */
-    .container-fluid { padding-left: 12px !important; padding-right: 12px !important; }
-    header { padding: 10px 0; }
-    .header-container { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 0 !important; max-width: none; margin: 0; }
-    .logo-title-container { margin-bottom: 0 !important; flex-direction: row; text-align: left; }
-    header img.logo { width: auto !important; max-width: 36px; height: auto; }
-    h1 { margin: 0 0 0 8px !important; font-size: 1.1rem !important; text-align: left !important; white-space: nowrap !important; }
-    /* Hide standard nav on small screens to use drawer instead */
-    nav { display: none !important; }
 
     .appointment-container {
         padding: 20px;
@@ -479,21 +477,9 @@ footer {
     .team-members span:not(:last-child):after { display: none; }
 }
 
-/* Unified header behavior overrides */
-.header-container { justify-content: space-between !important; align-items: center !important; width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 20px; }
-.logo-title-container { display: flex; align-items: center; }
-header img.logo { width: auto !important; max-width: 40px; height: auto; }
-h1 { margin: 0 0 0 8px; font-size: 1.1rem; }
+
 @media (max-width: 576px) {
-    /* Match dashboard mobile header behavior */
-    .container-fluid { padding-left: 12px !important; padding-right: 12px !important; }
-    header { padding: 10px 0; }
-    .header-container { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 0 !important; max-width: none; margin: 0; }
-    .logo-title-container { margin-bottom: 0 !important; flex-direction: row; text-align: left; }
-    header img.logo { width: auto !important; max-width: 36px; height: auto; }
-    h1 { margin: 0 0 0 8px !important; font-size: 1.1rem !important; text-align: left !important; white-space: nowrap !important; }
-    /* Hide standard nav on small screens to use drawer instead */
-    nav { display: none !important; }
+    
 
     .appointment-container {
         padding: 20px;
@@ -543,19 +529,6 @@ h1 { margin: 0 0 0 8px; font-size: 1.1rem; }
     to { transform: rotate(360deg); }
 }
 
-/* Sticky header - Updated */
-header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    transition: box-shadow 0.3s ease;
-    width: 100%;
-}
-
-header.sticky-header {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
 
 /* Remove this animation entirely */
 @keyframes slideDown {
@@ -570,12 +543,14 @@ header.sticky-header {
 
 /* Follow-up Appointments Styling */
 .follow-up-container {
-    max-width: 100%;
-    margin: 0 15px;
-    padding: 30px 20px;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #f7f7f7 80%, #d1daf0 100%);
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(3, 21, 64, 0.1);
+    padding: 2.5rem !important;
+    animation: fadeInUp 0.7s;
+    max-width: 1270px !important;
+    margin: 10px;
+    width: calc(100% - 20px) !important;
 }
 
 .section-header {
