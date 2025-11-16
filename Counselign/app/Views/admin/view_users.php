@@ -215,19 +215,25 @@
                                             <i class="fas fa-graduation-cap me-2"></i>Academic Information
                                         </h6>
                                         <div class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="info-item">
                                                     <label class="info-label">Course</label>
                                                     <div class="info-value" id="pdsCourse">Not specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <div class="info-item">
+                                                    <label class="info-label">Major or Strand</label>
+                                                    <div class="info-value" id="pdsMajorOrStrand">Not specified</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
                                                 <div class="info-item">
                                                     <label class="info-label">Year Level</label>
                                                     <div class="info-value" id="pdsYearLevel">Not specified</div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="info-item">
                                                     <label class="info-label">Academic Status</label>
                                                     <div class="info-value" id="pdsAcademicStatus">Not specified</div>
@@ -780,6 +786,9 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="pdsPreviewBtn" onclick="openPDSPreview()" style="display: none;">
+                        <i class="fas fa-file-pdf me-2"></i>Preview PDS
                     </button>
                 </div>
             </div>

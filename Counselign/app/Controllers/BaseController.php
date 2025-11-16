@@ -55,6 +55,13 @@ abstract class BaseController extends Controller
 
         // Preload any models, libraries, etc, here.
 
+        // Set Manila timezone for all operations
+        date_default_timezone_set('Asia/Manila');
+        
+        // Set timezone for database operations
+        $db = \Config\Database::connect();
+        $db->query("SET time_zone = '+08:00'");
+
         // E.g.: $this->session = service('session');
     }
 }

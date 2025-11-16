@@ -593,7 +593,7 @@ footer {
     border-radius: 6px;
     color: white;
     font-weight: 500;
-    padding: 0.5rem 1rem;
+    padding: 0.2rem 0.5rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 51, 102, 0.2);
 }
@@ -611,7 +611,7 @@ footer {
 }
 
 .action-btn i {
-    margin-right: 0.5rem;
+    margin-right: 0.25rem;
 }
 
 /* Responsive Design for PDS Modal */

@@ -180,9 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('pdsContent').style.display = 'block';
     }
 
+    // Store current user ID for preview
+    let currentPDSUserId = null;
+
     // Function to load student PDS data
     async function loadStudentPDSData(userId) {
         try {
+            // Store user ID for preview
+            currentPDSUserId = userId;
+            
             const response = await fetch((window.BASE_URL || '/') + `admin/users/pds/${userId}`, {
                 method: 'GET',
                 credentials: 'include',
@@ -200,12 +206,27 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 populatePDSModal(data.user_info, data.pds_data);
                 showPDSContent();
+                // Show preview button
+                const previewBtn = document.getElementById('pdsPreviewBtn');
+                if (previewBtn) {
+                    previewBtn.style.display = 'inline-block';
+                }
             } else {
                 showPDSErrorState(data.message || 'Failed to load student PDS data');
+                // Hide preview button on error
+                const previewBtn = document.getElementById('pdsPreviewBtn');
+                if (previewBtn) {
+                    previewBtn.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('Error loading student PDS data:', error);
             showPDSErrorState('An error occurred while loading student data');
+            // Hide preview button on error
+            const previewBtn = document.getElementById('pdsPreviewBtn');
+            if (previewBtn) {
+                previewBtn.style.display = 'none';
+            }
         }
     }
 
@@ -234,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Academic Information
         if (pdsData.academic_info) {
             setPDSValue('pdsCourse', pdsData.academic_info.course);
+            setPDSValue('pdsMajorOrStrand', pdsData.academic_info.major_or_strand);
             setPDSValue('pdsYearLevel', pdsData.academic_info.year_level);
             setPDSValue('pdsAcademicStatus', pdsData.academic_info.academic_status);
             setPDSValue('pdsSchoolLastAttended', pdsData.academic_info.school_last_attended);
@@ -711,6 +733,36 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(message);
     }
 
+    // Function to open PDS preview in new tab
+    function openPDSPreview() {
+        if (!currentPDSUserId) {
+            showError('No student data loaded');
+            return;
+        }
+        
+        const previewUrl = (window.BASE_URL || '/') + `admin/users/pds/${currentPDSUserId}/preview`;
+        window.open(previewUrl, '_blank');
+    }
+
+    // Make function globally available
+    window.openPDSPreview = openPDSPreview;
+
+    // Function to reset PDS modal state
+    function resetPDSModal() {
+        const previewBtn = document.getElementById('pdsPreviewBtn');
+        if (previewBtn) {
+            previewBtn.style.display = 'none';
+        }
+        currentPDSUserId = null;
+    }
+
+    // Reset modal when it's closed
+    const pdsModal = document.getElementById('studentPDSModal');
+    if (pdsModal) {
+        pdsModal.addEventListener('hidden.bs.modal', function() {
+            resetPDSModal();
+        });
+    }
 
     // Update user activity status periodically
     function updateUserActivity() {

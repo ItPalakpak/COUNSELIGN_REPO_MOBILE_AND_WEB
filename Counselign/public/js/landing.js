@@ -553,8 +553,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('signUpUserIdError').classList.remove('d-none');
             document.getElementById('signUpWarning').classList.remove('d-none');
             isValid = false;
-        } else if (selectedRole === 'student' && !/^\d{10}$/.test(userId)) {
-            document.getElementById('signUpUserIdError').textContent = "User ID must be exactly 10 digits.";
+        } else if (selectedRole === 'student' && !/^\d{1,10}$/.test(userId)) {
+            document.getElementById('signUpUserIdError').textContent = "User ID must be 1 to 10 digits.";
             document.getElementById('signUpUserIdError').classList.remove('d-none');
             document.getElementById('signUpWarning').classList.remove('d-none');
             isValid = false;
@@ -718,8 +718,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!trimmedInput) return false;
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (emailRegex.test(trimmedInput)) return true;
-            const userIdRegex = /^[a-zA-Z0-9]{3,}$/;
-            if (userIdRegex.test(trimmedInput)) return true;
+            // Accept 1-10 digit numeric user IDs (student) OR >=3 alphanumeric (others)
+            if (/^\d{1,10}$/.test(trimmedInput)) return true;
+            if (/^[a-zA-Z0-9]{3,}$/.test(trimmedInput)) return true;
             return false;
         }
 
@@ -990,9 +991,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedRole = this.value;
         const signUpUserIdInput = document.getElementById('signUpUserIdInput');
         if (selectedRole === 'student') {
-            signUpUserIdInput.placeholder = 'Preferred User ID (10 digits)';
-            signUpUserIdInput.setAttribute('pattern', '[0-9]{10}');
-            signUpUserIdInput.setAttribute('title', 'Preferred User ID must be exactly 10 digits.');
+            signUpUserIdInput.placeholder = 'Preferred User ID (up to 10 digits)';
+            signUpUserIdInput.setAttribute('pattern', '[0-9]{1,10}');
+            signUpUserIdInput.setAttribute('title', 'Preferred User ID must be 1 to 10 digits.');
         } else if (selectedRole === 'counselor') {
             signUpUserIdInput.placeholder = 'Preferred Counselor ID(Valid)';
             signUpUserIdInput.removeAttribute('pattern');
@@ -1003,9 +1004,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize placeholder based on default selected role
     const initialSignUpRole = document.getElementById('signUpRole').value;
     if (initialSignUpRole === 'student') {
-        signUpUserIdInput.placeholder = 'Preferred User ID (10 digits)';
-        signUpUserIdInput.setAttribute('pattern', '[0-9]{10}');
-        signUpUserIdInput.setAttribute('title', 'Preferred User ID must be exactly 10 digits.');
+        signUpUserIdInput.placeholder = 'Preferred User ID (up to 10 digits)';
+        signUpUserIdInput.setAttribute('pattern', '[0-9]{1,10}');
+        signUpUserIdInput.setAttribute('title', 'Preferred User ID must be 1 to 10 digits.');
     } else if (initialSignUpRole === 'counselor') {
         signUpUserIdInput.placeholder = 'Preferred Counselor ID(Valid)';
         signUpUserIdInput.removeAttribute('pattern');

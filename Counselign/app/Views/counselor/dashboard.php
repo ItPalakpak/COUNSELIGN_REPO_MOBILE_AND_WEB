@@ -53,11 +53,11 @@
 
     <main class="flex-grow py-4 px-8">
         <!-- Interactive Profile Picture Section -->
+
         <div class="profile-display flex justify-between items-center">
             <div class="flex items-center space-x-4"></div>
             <button class="profile-avatar" type="button">
                 <img id="profile-img" src="<?= base_url('Photos/profile.png') ?>" alt="User Avatar" class="profile-img" />
-
             </button>
             <div class="profile-details-wrapper">
                 <?php
@@ -73,17 +73,27 @@
                         <span class="small text-muted" style="display: none;" id="user-id-display"><?= $userInfo['user_id_display'] ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="small text-secondary">Last login: <?php 
-                    $lastLogin = session()->get('last_login');
-                    if ($lastLogin) {
-                        $dateTime = new \DateTime($lastLogin);
-                        echo $dateTime->format('M j, g:i A');
-                    } else {
-                        echo 'N/A';
-                    }
-                ?></div>
+                <div class="small text-secondary">Last login: <?php
+                                                                $lastLogin = session()->get('last_login');
+                                                                if ($lastLogin) {
+                                                                    $dateTime = new \DateTime($lastLogin);
+                                                                    echo $dateTime->format('M j, g:i A');
+                                                                } else {
+                                                                    echo 'N/A';
+                                                                }
+                                                                ?></div>
             </div>
+
+           
+
             <div class="ml-auto flex items-center space-x-6">
+                <!-- Quote Button -->
+                <div class="relative">
+                    <i class="fas fa-quote-right text-2xl" id="openQuoteModalBtn" title="Quotes"
+                        style="color: #003366; cursor: pointer;"></i>
+                </div>
+
+                <!-- Notification Icon -->
                 <div class="relative notification-icon-container">
                     <i class="fas fa-bell text-2xl" id="notificationIcon" title="Notifications"
                         style="color: #003366; cursor: pointer;"></i>
@@ -140,8 +150,13 @@
                     </div>
                 </div>
             </div>
+
             <div class="wave"></div>
         </div>
+
+        <!-- Add this section after line 129 in dashboard.php, after the </div> that closes the row with Messages and Appointments -->
+
+
 
         <!-- Notifications Dropdown -->
         <div id="notificationsDropdown" class="absolute bg-white rounded-lg shadow-lg border">
@@ -155,6 +170,36 @@
                 <!-- Notifications will be dynamically populated here -->
             </div>
         </div>
+
+        <!-- Resources Accordion Section -->
+        <section class="resources-section mt-5 mb-4">
+            <div class="container-fluid px-0">
+                <div class="accordion" id="resourcesParentAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="resourcesParentHeading">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#resourcesParentCollapse" aria-expanded="true" aria-controls="resourcesParentCollapse">
+                                <i class="fas fa-folder-open me-2"></i>
+                                <span class="fw-bold">Resources</span>
+                            </button>
+                        </h2>
+                        <div id="resourcesParentCollapse" class="accordion-collapse collapse show" aria-labelledby="resourcesParentHeading" data-bs-parent="#resourcesParentAccordion">
+                            <div class="accordion-body">
+                                <div class="accordion" id="resourcesAccordion">
+                                    <div id="resourcesAccordionContent">
+                                        <div class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading resources...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Loading resources...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Chat Popup -->
@@ -272,6 +317,150 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Quote Submission Modal -->
+    <div class="modal fade" id="quoteSubmissionModal" tabindex="-1" aria-labelledby="quoteSubmissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #060E57, #0A1875); color: white;">
+                    <h5 class="modal-title" id="quoteSubmissionModalLabel">
+                        <i class="fas fa-quote-left me-2"></i>Share a Daily Quote
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Inspire students by submitting motivational quotes. Your submissions will be reviewed by admins before being displayed.
+                    </p>
+
+                    <form id="quoteSubmissionForm">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="quoteText" class="form-label fw-bold">
+                                    Quote <span class="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    class="form-control"
+                                    id="quoteText"
+                                    name="quote_text"
+                                    rows="4"
+                                    maxlength="500"
+                                    placeholder="Enter an inspirational quote..."
+                                    required></textarea>
+                                <div class="form-text d-flex justify-content-between">
+                                    <span>Share wisdom that inspires and motivates</span>
+                                    <span class="fw-bold"><span id="charCount">0</span>/500</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="authorName" class="form-label fw-bold">
+                                    Author <span class="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="authorName"
+                                    name="author_name"
+                                    maxlength="255"
+                                    placeholder="e.g., Maya Angelou"
+                                    required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="category" class="form-label fw-bold">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="" disabled selected>Select a category</option>
+                                    <option value="Inspirational">✨ Inspirational</option>
+                                    <option value="Motivational">💪 Motivational</option>
+                                    <option value="Wisdom">🦉 Wisdom</option>
+                                    <option value="Life">🌱 Life</option>
+                                    <option value="Success">🎯 Success</option>
+                                    <option value="Education">📚 Education</option>
+                                    <option value="Perseverance">🏔️ Perseverance</option>
+                                    <option value="Courage">🦁 Courage</option>
+                                    <option value="Hope">🌟 Hope</option>
+                                    <option value="Kindness">💝 Kindness</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="source" class="form-label fw-bold">
+                                    Source <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="source"
+                                    name="source"
+                                    maxlength="255"
+                                    placeholder="e.g., Book title, Speech, Movie">
+                                <div class="form-text">Where this quote is from (optional)</div>
+                            </div>
+                        </div>
+
+                        <!-- Alert Container -->
+                        <div id="quoteAlertContainer" class="mt-3"></div>
+                    </form>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-primary" id="viewMyQuotesBtn">
+                        <i class="fas fa-history me-2"></i>My Submissions
+                    </button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitQuoteBtn" form="quoteSubmissionForm">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Quote
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Quotes List Modal -->
+    <div class="modal fade" id="myQuotesModal" tabindex="-1" aria-labelledby="myQuotesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #060E57, #0A1875); color: white;">
+                    <h5 class="modal-title" id="myQuotesModalLabel">
+                        <i class="fas fa-history me-2"></i>My Submitted Quotes
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Status Guide:</strong>
+                        <span class="badge bg-warning ms-2">Pending Review</span>
+                        <span class="badge bg-success ms-1">Approved</span>
+                        <span class="badge bg-danger ms-1">Rejected</span>
+                    </div>
+
+                    <div id="myQuotesList" class="d-flex flex-column gap-3">
+                        <!-- Quotes will be loaded here -->
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                            <p class="mt-2 text-muted">Loading your quotes...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-primary" id="openQuoteSubmissionFromMyQuotes">
+                        <i class="fas fa-plus me-2"></i>New Quote
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Close
+                    </button>
                 </div>
             </div>
         </div>

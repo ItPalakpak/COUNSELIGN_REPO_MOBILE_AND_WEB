@@ -57,7 +57,7 @@
     <div class="admin-navbar-overlay d-lg-none" id="adminNavbarOverlay"></div>
 
     <div class="container pt-3 mb-3">
-        <div class="row mb-2">
+        <div class="profile-display flex justify-between items-center">
             <div class="col-12">
                 <div class="flex-container">
                     <!-- Profile Row (Line 1) -->
@@ -88,9 +88,21 @@
                         <a href="<?= base_url('admin/follow-up-sessions') ?>" class="btn btn-warning action-btn" title="Follow-up Sessions">
                             <i class="fas fa-calendar-days me-1"></i><span class="btn-text">Follow-up Sessions</span>
                         </a>
+
+                        <a href="<?= base_url('admin/resources') ?>" class="btn btn-secondary action-btn" title="Manage Resources">
+                            <i class="fas fa-folder-open me-1"></i><span class="btn-text">Resources</span>
+                        </a>
+
                         <a href="<?= base_url('admin/announcements') ?>" class="btn btn-info action-btn" title="Manage Announcements">
                             <i class="fa-solid fa-bullhorn me-1"></i><span class="btn-text">Announcements</span>
                         </a>
+
+                        <button type="button" class="btn btn-primary action-btn" id="openQuotesModalBtnMobile" title="Manage Quotes">
+                            <i class="fas fa-quote-right me-1"></i><span class="btn-text">Quotes</span>
+                        </button>
+
+                        
+
                     </div>
 
                     <!-- Desktop Action Buttons (Original Layout) -->
@@ -104,9 +116,18 @@
                         <a href="<?= base_url('admin/follow-up-sessions') ?>" class="btn btn-warning ms-3" title="Follow-up Sessions">
                             <i class="fas fa-calendar-check me-1"></i>Follow-up Sessions
                         </a>
+
+                        <a href="<?= base_url('admin/resources') ?>" class="btn btn-secondary ms-3" title="Manage Resources">
+                            <i class="fas fa-folder-open me-1"></i>Resources
+                        </a>
+                        
                         <a href="<?= base_url('admin/announcements') ?>" class="ms-3" title="Manage Announcements">
                             <i class="fa-solid fa-bullhorn announcement-dashboard-icon"></i>
                         </a>
+                        <button type="button" class="btn btn-primary ms-3" id="openQuotesModalBtn" title="Manage Quotes">
+                            <i class="fas fa-quote-right me-1"></i>
+                        </button>
+                       
                     </div>
                 </div>
             </div>
@@ -608,6 +629,154 @@
 
     </div>
 
+    <!-- Quotes Management Modal -->
+    <div class="modal fade" id="quotesManagementModal" tabindex="-1" aria-labelledby="quotesManagementModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #060E57, #0A1875); color: white;">
+                    <h5 class="modal-title" id="quotesManagementModalLabel">
+                        <i class="fas fa-quote-left me-2"></i>Manage Quotes
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="quoteTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-quotes" type="button" role="tab">
+                                <i class="fas fa-clock me-1"></i>Pending
+                                <span class="badge bg-warning ms-2" id="pending-count">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-quotes" type="button" role="tab">
+                                <i class="fas fa-check-circle me-1"></i>Approved
+                                <span class="badge bg-success ms-2" id="approved-count">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-quotes" type="button" role="tab">
+                                <i class="fas fa-times-circle me-1"></i>Rejected
+                                <span class="badge bg-danger ms-2" id="rejected-count">0</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="quoteTabContent">
+                        <!-- Pending Quotes Tab -->
+                        <div class="tab-pane fade show active" id="pending-quotes" role="tabpanel">
+                            <div id="pendingQuotesList" class="d-flex flex-column gap-3">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                    <p class="mt-2 text-muted">Loading quotes...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Quotes Tab -->
+                        <div class="tab-pane fade" id="approved-quotes" role="tabpanel">
+                            <div id="approvedQuotesList" class="d-flex flex-column gap-3">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                    <p class="mt-2 text-muted">Loading quotes...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rejected Quotes Tab -->
+                        <div class="tab-pane fade" id="rejected-quotes" role="tabpanel">
+                            <div id="rejectedQuotesList" class="d-flex flex-column gap-3">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                    <p class="mt-2 text-muted">Loading quotes...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div class="modal fade" id="rejectionReasonModal" tabindex="-1" aria-labelledby="rejectionReasonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectionReasonModalLabel">
+                        <i class="fas fa-times-circle me-2 text-danger"></i>Reject Quote
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Please provide a reason for rejecting this quote:</p>
+                    <form id="rejectionReasonForm">
+                        <div class="mb-3">
+                            <label for="rejectionReason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                            <textarea
+                                class="form-control"
+                                id="rejectionReason"
+                                name="rejection_reason"
+                                rows="4"
+                                maxlength="500"
+                                placeholder="Enter the reason for rejection..."
+                                required></textarea>
+                            <div class="form-text">This reason will be visible to the counselor who submitted the quote.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmRejectionBtn">
+                        <i class="fas fa-times-circle me-2"></i>Reject Quote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Confirmation Modal (used for quote approvals and other confirms) -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmationMessageContent">Are you sure?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmationConfirmBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Alert Modal (utility compatible) -->
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertModalLabel">Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex align-items-start gap-2">
+                    <span id="alertIcon"><i class="fas fa-info-circle text-primary"></i></span>
+                    <span id="alertMessageContent">Message</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-content">
             <div class="copyright">
@@ -628,6 +797,8 @@
     <script src="<?= base_url('js/admin/admin_dashboard.js') ?>"></script>
     <script src="<?= base_url('js/admin/profile_sync.js') ?>"></script>
     <script src="<?= base_url('js/admin/view_all_appointments.js') ?>"></script>
+    <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
+    <script src="<?= base_url('js/admin/quotes_management.js') ?>"></script>
     <script src="<?= base_url('js/admin/logout.js') ?>" defer></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
 </body>

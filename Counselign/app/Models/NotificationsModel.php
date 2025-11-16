@@ -104,21 +104,33 @@ class NotificationsModel extends Model
                     ->find();
     }
 
+    /**
+     * Delete a single notification instead of marking as read
+     * 
+     * @param int $notificationId Notification ID to delete
+     * @param string $userId User ID to verify ownership
+     * @return bool True if deleted, false otherwise
+     */
     public function markAsRead($notificationId, $userId)
     {
+        // Delete the notification instead of marking as read
         return $this->where('id', $notificationId)
                     ->where('user_id', $userId)
-                    ->set(['is_read' => 1])
-                    ->update();
+                    ->delete();
     }
 
+    /**
+     * Delete all notifications for a user instead of marking as read
+     * Deletes notifications from notifications table and marks events/announcements as read in notification_reads
+     * 
+     * @param string $userId User ID
+     * @return bool True on success
+     */
     public function markAllAsRead($userId)
     {
-        // Mark all notifications in notifications table as read
+        // Delete all notifications in notifications table (appointments, follow-up sessions, etc.)
         $this->where('user_id', $userId)
-             ->where('is_read', 0)
-             ->set(['is_read' => 1])
-             ->update();
+             ->delete();
         
         // Mark all events and announcements as read using the EXACT same logic as getRecentNotifications()
         // This ensures we mark exactly what is currently visible in the notifications popup
@@ -199,16 +211,25 @@ class NotificationsModel extends Model
         return true;
     }
 
+    /**
+     * Mark event as read by adding to notification_reads and deleting from notifications table
+     * 
+     * @param string $userId User ID
+     * @param int $eventId Event ID
+     * @return void
+     */
     public function markEventAsRead($userId, $eventId)
     {
         $db = \Config\Database::connect();
-        // Check if already marked as read
+        
+        // Check if already marked as read in notification_reads
         $exists = $db->table('notification_reads')
             ->where('user_id', $userId)
             ->where('notification_type', 'event')
             ->where('related_id', $eventId)
             ->countAllResults();
         
+        // Add to notification_reads if not already there (permanent tracking)
         if ($exists === 0) {
             $db->table('notification_reads')->insert([
                 'user_id' => $userId,
@@ -217,24 +238,32 @@ class NotificationsModel extends Model
             ]);
         }
         
-        // Also mark notifications table entries as read
+        // Delete notifications table entries instead of marking as read
         $this->where('user_id', $userId)
              ->where('type', 'event')
              ->where('related_id', $eventId)
-             ->set(['is_read' => 1])
-             ->update();
+             ->delete();
     }
 
+    /**
+     * Mark announcement as read by adding to notification_reads and deleting from notifications table
+     * 
+     * @param string $userId User ID
+     * @param int $announcementId Announcement ID
+     * @return void
+     */
     public function markAnnouncementAsRead($userId, $announcementId)
     {
         $db = \Config\Database::connect();
-        // Check if already marked as read
+        
+        // Check if already marked as read in notification_reads
         $exists = $db->table('notification_reads')
             ->where('user_id', $userId)
             ->where('notification_type', 'announcement')
             ->where('related_id', $announcementId)
             ->countAllResults();
         
+        // Add to notification_reads if not already there (permanent tracking)
         if ($exists === 0) {
             $db->table('notification_reads')->insert([
                 'user_id' => $userId,
@@ -243,12 +272,11 @@ class NotificationsModel extends Model
             ]);
         }
         
-        // Also mark notifications table entries as read
+        // Delete notifications table entries instead of marking as read
         $this->where('user_id', $userId)
              ->where('type', 'announcement')
              ->where('related_id', $announcementId)
-             ->set(['is_read' => 1])
-             ->update();
+             ->delete();
     }
 
     public function createNotification($data)
@@ -354,11 +382,13 @@ class NotificationsModel extends Model
         
         $announcementsQuery = $announcementsQuery->get()->getResultArray();
 
-        // Get notifications from notifications table (appointments and follow-ups)
+        // Get notifications from notifications table (appointments and follow-ups only)
+        // Exclude announcements and events since they're fetched directly from their respective tables
         $notificationsQuery = $db->table('notifications')
             ->select('id, user_id, type, title, message, related_id, is_read, created_at, appointment_date, event_date')
             ->where('user_id', $userId)
             ->where('is_read', 0)
+            ->whereNotIn('type', ['announcement', 'event'])
             ->orderBy('created_at', 'DESC')
             ->get()
             ->getResultArray();
@@ -676,6 +706,56 @@ class NotificationsModel extends Model
         } catch (\Exception $e) {
             log_message('error', 'Error getting user role: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Delete all read notifications from the notifications table
+     * This method deletes all rows where is_read = 1 to reduce data load
+     * 
+     * @return array Returns array with 'success' status and 'deleted_count' of deleted rows
+     */
+    public function deleteReadNotifications(): array
+    {
+        try {
+            $db = \Config\Database::connect();
+            
+            // Count how many rows will be deleted for logging
+            $deletedCount = $db->table('notifications')
+                ->where('is_read', 1)
+                ->countAllResults();
+            
+            if ($deletedCount === 0) {
+                return [
+                    'success' => true,
+                    'deleted_count' => 0,
+                    'message' => 'No read notifications to delete'
+                ];
+            }
+            
+            // Delete all read notifications
+            $db->table('notifications')
+                ->where('is_read', 1)
+                ->delete();
+            
+            // Log the cleanup operation
+            log_message('info', sprintf(
+                'Notifications cleanup: Deleted %d read notification(s)',
+                $deletedCount
+            ));
+            
+            return [
+                'success' => true,
+                'deleted_count' => $deletedCount,
+                'message' => sprintf('Successfully deleted %d read notification(s)', $deletedCount)
+            ];
+        } catch (\Exception $e) {
+            log_message('error', 'Error deleting read notifications: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'deleted_count' => 0,
+                'message' => 'Failed to delete read notifications: ' . $e->getMessage()
+            ];
         }
     }
 } 

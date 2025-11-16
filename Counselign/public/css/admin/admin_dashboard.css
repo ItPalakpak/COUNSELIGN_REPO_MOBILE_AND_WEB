@@ -1,6 +1,6 @@
 body {
-    background-color: #f8fafc;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f7f7f7;
+    font-family: Arial, Helvetica, sans-serif;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -10,24 +10,31 @@ body {
     flex-direction: column;
 }
 
+
+main {
+    padding: 30px 40px;
+    flex-grow: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
 /* Enhanced Profile avatar styling */
 .profile-display {
-    background: linear-gradient(to right, #ffffff, #f8faff);
+    
     border-radius: 20px;
-    padding: 10px 25px;
     display: flex;
     align-items: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
-    margin-bottom: 10px;
-    border: 1px solid rgba(0, 51, 102, 0.08);
     transition: box-shadow 0.3s ease;
     width: 100%;
     gap: 20px;
     transform: none !important;
     position: sticky;
-    top: 10px;
+    top: 88px; /* CHANGED: Changed from 10px to 0 */
     z-index: 999;
-    background: linear-gradient(to right, #ffffff, #f8faff);
+    
 }
 
 .profile-avatar {
@@ -202,6 +209,10 @@ footer {
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     margin-bottom: 10px;
+    transform: none !important;
+    position: sticky;
+    top: 88px; /* CHANGED: Changed from 10px to 0 */
+    z-index: 999;
 }
 
 #appointmentTabs {

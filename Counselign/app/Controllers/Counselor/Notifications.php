@@ -135,7 +135,7 @@ class Notifications extends \CodeIgniter\Controller
             $markAll = $input['mark_all'] ?? false;
 
             if ($markAll) {
-                // Mark all notifications as read
+                // Delete all notifications
                 $this->notificationsModel->markAllAsRead($userId);
                 
                 // Update last_activity for viewing notifications
@@ -144,18 +144,18 @@ class Notifications extends \CodeIgniter\Controller
 
                 return $this->respond([
                     'status' => 'success',
-                    'message' => 'All notifications marked as read.'
+                    'message' => 'All notifications cleared.'
                 ]);
             } else if ($notificationId) {
-                // Mark single notification as read
+                // Delete single notification
                 $this->notificationsModel->markAsRead($notificationId, $userId);
                 
                 return $this->respond([
                     'status' => 'success',
-                    'message' => 'Notification marked as read.'
+                    'message' => 'Notification cleared.'
                 ]);
             } else if ($notificationType && $relatedId) {
-                // Mark event or announcement as read
+                // Delete event or announcement notification
                 if ($notificationType === 'event') {
                     $this->notificationsModel->markEventAsRead($userId, (int)$relatedId);
                 } else if ($notificationType === 'announcement') {
@@ -166,14 +166,14 @@ class Notifications extends \CodeIgniter\Controller
                 
                 return $this->respond([
                     'status' => 'success',
-                    'message' => 'Notification marked as read.'
+                    'message' => 'Notification cleared.'
                 ]);
             } else {
                 return $this->fail('Missing required parameters');
             }
         } catch (\Exception $e) {
-            log_message('error', 'Error marking counselor notifications as read: ' . $e->getMessage());
-            return $this->failServerError('Failed to mark notifications as read');
+            log_message('error', 'Error clearing counselor notifications: ' . $e->getMessage());
+            return $this->failServerError('Failed to clear notifications');
         }
     }
 

@@ -1,3 +1,31 @@
+## Student Dashboard Events & Quotes Pattern
+
+**Purpose**: Deliver a welcoming dashboard experience that highlights upcoming counseling events and rotates inspirational quotes for students.
+
+**Components**:
+- **Events Carousel**: Auto-advancing slider that surfaces the next approved events with date, time, and location details.
+- **Quotes Showcase**: Three-card layout that cycles through approved quotes to reinforce supportive messaging.
+- **Empty States**: Friendly fallback messaging when no events or quotes are available.
+
+**Data Sources**:
+- Events fetched from `student/events/all`, filtered to future dates and sorted chronologically.
+- Quotes fetched from `student/quotes/approved-quotes`, with graceful degradation to curated defaults.
+
+**Interactions**:
+- Carousel navigation supports dots and previous/next controls with keyboard and mouse support.
+- Quote cards fade between entries every six seconds with staggered timing per column.
+- Sections refresh on a schedule (events: every 10 minutes, quotes: every 5 minutes) for up-to-date content.
+
+**Implementation Files**:
+- `app/Views/student/dashboard.php` – Added event carousel and welcome quotes markup with accessible placeholders.
+- `public/js/student/student_dashboard.js` – Integrated data fetching, rotation logic, and resilient state management.
+- `public/css/student/student_dashboard.css` – Styled the new sections with responsive behaviour and consistent branding.
+
+**Quality Notes**:
+- Uses `escapeHtml` sanitisation before rendering dynamic content.
+- Rotations clear intervals/timeouts before reinitialising to prevent leaks.
+- Maintains type-safe, descriptive JavaScript and avoids modifying unrelated dashboard logic.
+
 ## Resend Reset Code Modal Pattern
 
 **Purpose**: Professional modal interface for resending password reset codes with improved user experience
@@ -330,6 +358,20 @@ Counselor
 Notifications Model
 - `NotificationsModel::getRecentNotifications(userId, lastActiveTime)` aggregates events, announcements, appointments (by `student_id`), and messages (student↔counselor).
 - `getUnreadCount(userId)` mirrors same sources since last activity.
+- `deleteReadNotifications()` deletes all rows in notifications table where `is_read = 1` to reduce data load. Returns array with success status and deleted count.
+
+Notifications Cleanup Command
+- Command: `cleanup:read-notifications` (Maintenance group)
+- Location: `app/Commands/CleanupReadNotifications.php`
+- Purpose: Automatically deletes all read notifications (`is_read = 1`) from the database every minute to reduce data load when retrieving notifications
+- Usage: `php spark cleanup:read-notifications`
+- Scheduling: Can be set up to run every minute via cron (Linux/Unix) or Windows Task Scheduler (Windows)
+- Implementation: Uses `NotificationsModel::deleteReadNotifications()` method with proper error handling and logging
+- Automated Setup Files:
+  - `cleanup-notifications.bat`: Windows batch file for Task Scheduler (recommended)
+  - `cleanup-notifications.ps1`: PowerShell script alternative
+  - `SCHEDULER_SETUP.md`: Complete setup instructions with troubleshooting guide
+- Windows Setup: Pre-configured batch file can be directly scheduled in Windows Task Scheduler to run every minute automatically
 ## Counselor Routes (Appointments & Reports)
 
 - Base group: `counselor` → namespace `App\Controllers\Counselor`
@@ -798,23 +840,24 @@ Inline mini-calendar embedded on the page (drawer removed).
 - `GET /counselor/follow-up/completed-appointments` → `Counselor\\FollowUp::getCompletedAppointments` (get completed appointments for logged-in counselor)
 - `GET /counselor/follow-up/sessions?parent_appointment_id={id}` → `Counselor\\FollowUp::getFollowUpSessions` (get follow-up sessions for specific parent appointment)
 - `GET /counselor/follow-up/availability?date={date}` → `Counselor\\FollowUp::getCounselorAvailability` (get counselor availability for specific date)
+- `GET /counselor/follow-up/availability-by-weekday` → `Counselor\\FollowUp::getAvailabilityByWeekday` (returns weekdays that have scheduled time slots)
 - `POST /counselor/follow-up/create` → `Counselor\\FollowUp::createFollowUp` (create new follow-up appointment)
 
 ### Validation & Filters (Auth-related)
 
 - Server-side Validation (CI4):
   - Signup:
-    - `userId`: required, regex_match[/^\\d{10}$/] (exactly 10 digits)
+    - `userId`: required, regex_match[/^\\d{1,10}$/] (1 to 10 digits)
     - `email`: required, valid_email, is_unique[users.email]
     - `password`: required, min_length[8], complexity regex, matches[confirmPassword]
   - Login:
-    - `user_id`: required, regex_match[/^\\d{10}$/] (exactly 10 digits)
+    - `identifier`: email OR (`user_id` as 1–10 digit numeric) OR (>=3 alphanumeric ID)
     - `password`: required, min_length[8], complexity regex
     - Redirects based on role: user → `user/dashboard`, counselor → `counselor/dashboard`, admin → `user/dashboard`
   - Admin Verification:
     - `verify-admin`: requires `user_id`, `password`; verifies admin role and hashed password; sets session and redirects to `admin/dashboard` on success; if unverified, returns prompt redirect
   - Forgot Password:
-    - `sendCode`: `input` required (valid email format OR exactly 10-digit `user_id` resolving to email)
+    - `sendCode`: `input` required (valid email OR 1–10 digit `user_id` resolving to email)
     - `setPassword`: password required, min_length[8], complexity regex
   - Contact Form:
     - name, email (valid), subject, message are required

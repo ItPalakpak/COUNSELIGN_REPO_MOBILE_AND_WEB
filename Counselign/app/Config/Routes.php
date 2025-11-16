@@ -37,11 +37,14 @@ $routes->post('resend-verification-email', 'Auth::resendVerificationEmail');
 
 $routes->get('/services', 'Services::index');
 
+// Maintenance routes (protected by secret key)
+$routes->get('maintenance/cleanup-notifications', 'Maintenance::cleanupNotifications');
+
 // Debug route (remove in production)
 $routes->get('/debug/session', 'Debug::session');
 
 // Admin routes
-$routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($routes) {
+$routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->get('dashboard/data', 'Dashboard::getAdminData');
     $routes->get('appointments', 'Appointments::index');
@@ -79,6 +82,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->post('admin/profile/password', 'AdminProfileApi::updatePassword');
     $routes->get('users/api', 'UsersApi::getAllUsers');
     $routes->get('users/pds/(:num)', 'UsersApi::getStudentPDSData/$1');
+    $routes->get('users/pds/(:num)/preview', 'UsersApi::previewPDS/$1');
     $routes->get('counselors/api', 'CounselorsApi::index');
     $routes->post('counselors/api', 'CounselorsApi::save');
     $routes->delete('counselors/api', 'CounselorsApi::delete');
@@ -93,17 +97,30 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('history-reports', 'HistoryReports::index');
     $routes->get('history-reports/data', 'HistoryReports::getHistoryData');
     $routes->get('history-reports/historical-data', 'HistoryReports::getHistoricalData');
-    
+
     // Filter data endpoints
     $routes->get('filter-data/counselors', 'FilterData::getCounselors');
     $routes->get('filter-data/students', 'FilterData::getStudents');
     $routes->get('filter-data/courses', 'FilterData::getCourses');
     $routes->get('filter-data/year-levels', 'FilterData::getYearLevels');
     $routes->get('filter-data/student-academic-map', 'FilterData::getStudentAcademicMap');
+
+    // Quote management endpoints
+    $routes->get('quotes/all', 'Dashboard::getAllQuotes');
+    $routes->post('quotes/approve/(:num)', 'Dashboard::approveQuote/$1');
+    $routes->post('quotes/reject/(:num)', 'Dashboard::rejectQuote/$1');
+    
+    $routes->get('resources', 'Resources::index');
+    $routes->get('resources/get', 'Resources::getResources');
+    $routes->post('resources/create', 'Resources::create');
+    $routes->post('resources/update/(:num)', 'Resources::update/$1');
+    $routes->delete('resources/delete/(:num)', 'Resources::delete/$1');
+    $routes->get('resources/download/(:num)', 'Resources::download/$1');
+    $routes->get('resources/categories', 'Resources::getCategories');
 });
 
 // Student routes
-$routes->group('student', ['namespace' => 'App\Controllers\Student'], function($routes) {
+$routes->group('student', ['namespace' => 'App\Controllers\Student'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->get('dashboard/get-profile-data', 'Dashboard::getProfileData');
     $routes->get('session/check', 'SessionCheck::index');
@@ -125,10 +142,10 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
     $routes->get('calendar/daily-stats', 'Appointment::getCalendarDailyStats');
     $routes->get('profile', 'Profile::profile');
     $routes->post('profile/update', 'Profile::updateProfile');
-    $routes->match(['POST','OPTIONS'], 'profile/picture', 'Profile::updateProfilePicture');
+    $routes->match(['POST', 'OPTIONS'], 'profile/picture', 'Profile::updateProfilePicture');
     $routes->post('appointment/save', 'Appointment::save');
     $routes->get('my-appointments', 'Appointment::viewAppointments');
-    
+
     // Add notification routes
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/unread-count', 'Notifications::getUnreadCount');
@@ -149,34 +166,39 @@ $routes->group('student', ['namespace' => 'App\Controllers\Student'], function($
 
 
 
-// Follow-up routes
-    
+    // Follow-up routes
+
     // PDS (Personal Data Sheet) routes
     $routes->get('pds/load', 'PDS::loadPDS');
     $routes->post('pds/save', 'PDS::savePDS');
-    
+    $routes->get('pds/preview', 'PDS::preview');
+
     // Follow-up Sessions routes
     $routes->get('follow-up-sessions', 'FollowUpSessions::index');
     $routes->get('follow-up-sessions/completed-appointments', 'FollowUpSessions::getCompletedAppointments');
     $routes->get('follow-up-sessions/sessions', 'FollowUpSessions::getFollowUpSessions');
+
+    $routes->get('quotes/approved-quotes', 'Dashboard::getApprovedQuotes');
+    $routes->get('resources/get', 'Dashboard::getResources');
+    $routes->get('resources/download/(:num)', 'Admin\Resources::download/$1');
 });
 
 // Counselor routes
-$routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], function($routes) {
+$routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->get('dashboard/recent-pending-appointments', 'Dashboard::getRecentPendingAppointments');
     $routes->get('session/check', 'SessionCheck::index');
     $routes->get('profile/get', 'Profile::getProfile');
     $routes->get('profile', 'Profile::profile');
     $routes->post('profile/update', 'Profile::updateProfile');
-    $routes->match(['POST','OPTIONS'], 'profile/picture', 'Profile::updateProfilePicture');
+    $routes->match(['POST', 'OPTIONS'], 'profile/picture', 'Profile::updateProfilePicture');
     $routes->match(['GET'], 'profile/counselor-info', 'Profile::getProfile');
-    $routes->match(['POST','OPTIONS'], 'profile/counselor-info', 'Profile::updatePersonalInfo');
+    $routes->match(['POST', 'OPTIONS'], 'profile/counselor-info', 'Profile::updatePersonalInfo');
 
     // Availability management
     $routes->get('profile/availability', 'Availability::get');
-    $routes->match(['POST','OPTIONS'], 'profile/availability', 'Availability::save');
-    $routes->match(['DELETE','OPTIONS'], 'profile/availability', 'Availability::delete');
+    $routes->match(['POST', 'OPTIONS'], 'profile/availability', 'Availability::save');
+    $routes->match(['DELETE', 'OPTIONS'], 'profile/availability', 'Availability::delete');
 
     // Appointments routes (duplicates of admin for counselors)
     $routes->get('appointments', 'Appointments::index');
@@ -218,12 +240,13 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('follow-up/completed-appointments', 'FollowUp::getCompletedAppointments');
     $routes->get('follow-up/sessions', 'FollowUp::getFollowUpSessions');
     $routes->get('follow-up/availability', 'FollowUp::getCounselorAvailability');
+    $routes->get('follow-up/availability-by-weekday', 'FollowUp::getAvailabilityByWeekday');
     $routes->get('follow-up/booked-times', 'FollowUp::getBookedTimesForDate');
     $routes->post('follow-up/create', 'FollowUp::createFollowUp');
     $routes->post('follow-up/edit', 'FollowUp::editFollowUp');
     $routes->post('follow-up/complete', 'FollowUp::completeFollowUp');
     $routes->post('follow-up/cancel', 'FollowUp::cancelFollowUp');
-    
+
     // Filter data endpoints for counselor
     $routes->get('filter-data/students', 'FilterData::getStudents');
     $routes->get('filter-data/courses', 'FilterData::getCourses');
@@ -231,6 +254,12 @@ $routes->group('counselor', ['namespace' => 'App\Controllers\Counselor'], functi
     $routes->get('filter-data/student-academic-map', 'FilterData::getStudentAcademicMap');
     // Counselor timezone test route
     $routes->get('appointments/test-timezone', 'Appointments::testManilaTimezone');
+
+    $routes->post('quotes/submit', 'Dashboard::submitQuote');
+    $routes->get('quotes/my-quotes', 'Dashboard::getMyQuotes');
+    $routes->get('quotes/approved-quotes', 'Dashboard::getApprovedQuotes');
+    $routes->put('quotes/update/(:num)', 'Dashboard::updateQuote/$1');
+    $routes->delete('quotes/delete/(:num)', 'Dashboard::deleteQuote/$1');
+    $routes->get('resources/get', 'Dashboard::getResources');
+    $routes->get('resources/download/(:num)', 'Admin\Resources::download/$1');
 });
-
-

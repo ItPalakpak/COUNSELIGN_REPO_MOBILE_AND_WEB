@@ -433,6 +433,252 @@ async function confirmCancelFollowUp() {
     }
 }
 
+// Cache for availability data
+let availabilityCache = {
+    weekdaysWithSlots: null,
+    lastFetch: null
+};
+
+// Cache duration: 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
+
+/**
+ * Fetch counselor availability by weekday
+ * @returns {Promise<string[]>} Array of weekday names with time slots
+ */
+async function fetchAvailabilityByWeekday() {
+    // Check cache first
+    const now = Date.now();
+    if (availabilityCache.weekdaysWithSlots && availabilityCache.lastFetch && 
+        (now - availabilityCache.lastFetch) < CACHE_DURATION) {
+        return availabilityCache.weekdaysWithSlots;
+    }
+
+    try {
+        const response = await fetch((window.BASE_URL || '/') + 'counselor/follow-up/availability-by-weekday', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'success' && Array.isArray(data.weekdays_with_slots)) {
+            // Update cache
+            availabilityCache.weekdaysWithSlots = data.weekdays_with_slots;
+            availabilityCache.lastFetch = now;
+            return data.weekdays_with_slots;
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('Error fetching availability by weekday:', error);
+        return [];
+    }
+}
+
+/**
+ * Check if a date is fully booked (all 30-minute ranges are booked)
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ * @param {string[]} timeSlots - Available time slots for the date
+ * @returns {Promise<boolean>} True if fully booked, false otherwise
+ */
+async function isDateFullyBooked(dateStr, timeSlots) {
+    if (!timeSlots || timeSlots.length === 0) {
+        return true; // No slots means fully booked
+    }
+
+    try {
+        // Get booked times for this date
+        const response = await fetch((window.BASE_URL || '/') + `counselor/follow-up/booked-times?date=${dateStr}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            return false; // If we can't check, assume not fully booked
+        }
+
+        const data = await response.json();
+        
+        if (data.status !== 'success' || !Array.isArray(data.booked)) {
+            return false;
+        }
+
+        const bookedSet = new Set(data.booked);
+        
+        // Generate all possible 30-minute ranges from time slots
+        const allRanges = generateHalfHourRangeLabelsFromSlots(timeSlots);
+        
+        // Check if all ranges are booked
+        return allRanges.length > 0 && allRanges.every(range => bookedSet.has(range));
+    } catch (error) {
+        console.error('Error checking if date is fully booked:', error);
+        return false; // On error, assume not fully booked
+    }
+}
+
+/**
+ * Get weekday name from date string
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ * @returns {string} Weekday name (Monday, Tuesday, etc.)
+ */
+function getWeekdayFromDate(dateStr) {
+    const date = new Date(dateStr + 'T00:00:00');
+    const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return weekdays[date.getDay()];
+}
+
+/**
+ * Disable dates in the calendar input that don't have availability or are fully booked
+ * @param {HTMLInputElement} dateInput - The date input element
+ */
+async function disableUnavailableDates(dateInput) {
+    if (!dateInput) {
+        return;
+    }
+
+    try {
+        // Get weekdays with time slots
+        const weekdaysWithSlots = await fetchAvailabilityByWeekday();
+        
+        // Get min date from input
+        const minDateStr = dateInput.getAttribute('min');
+        if (!minDateStr) {
+            return;
+        }
+
+        // Calculate max date (3 months from min date)
+        const minDate = new Date(minDateStr + 'T00:00:00');
+        const maxDate = new Date(minDate);
+        maxDate.setMonth(maxDate.getMonth() + 3);
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+        dateInput.setAttribute('max', maxDateStr);
+
+        // First pass: disable dates without weekday availability
+        const datesToDisable = [];
+        const datesToCheck = [];
+        const currentDate = new Date(minDate);
+        
+        while (currentDate <= maxDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const weekday = getWeekdayFromDate(dateStr);
+            
+            // Check if weekday has no time slots
+            if (!weekdaysWithSlots.includes(weekday)) {
+                datesToDisable.push(dateStr);
+            } else {
+                // Add to list for further checking
+                datesToCheck.push(dateStr);
+            }
+            
+            // Move to next day
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Second pass: Check dates with weekday availability in parallel batches
+        // Process in batches of 10 to avoid overwhelming the server
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < datesToCheck.length; i += BATCH_SIZE) {
+            const batch = datesToCheck.slice(i, i + BATCH_SIZE);
+            const batchPromises = batch.map(async (dateStr) => {
+                try {
+                    // Get time slots for this date
+                    const availResponse = await fetch((window.BASE_URL || '/') + `counselor/follow-up/availability?date=${dateStr}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+
+                    if (availResponse.ok) {
+                        const availData = await availResponse.json();
+                        if (availData.status === 'success' && Array.isArray(availData.time_slots)) {
+                            const fullyBooked = await isDateFullyBooked(dateStr, availData.time_slots);
+                            if (fullyBooked) {
+                                return dateStr;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error checking availability for ${dateStr}:`, error);
+                }
+                return null;
+            });
+
+            const batchResults = await Promise.all(batchPromises);
+            batchResults.forEach(result => {
+                if (result) {
+                    datesToDisable.push(result);
+                }
+            });
+        }
+
+        // Store disabled dates in a data attribute for validation
+        dateInput.setAttribute('data-disabled-dates', JSON.stringify(datesToDisable));
+        
+        // Check if validation handlers are already attached
+        if (dateInput.hasAttribute('data-validation-attached')) {
+            // Handlers already attached, just update the disabled dates list
+            // The existing handlers will use the updated list from the data attribute
+            return;
+        }
+        
+        // Mark that validation handlers are attached
+        dateInput.setAttribute('data-validation-attached', 'true');
+        
+        // Add validation on change
+        dateInput.addEventListener('change', function() {
+            const selectedDate = this.value;
+            if (!selectedDate) {
+                this.setCustomValidity('');
+                return;
+            }
+            
+            const disabledDates = JSON.parse(this.getAttribute('data-disabled-dates') || '[]');
+            if (disabledDates.includes(selectedDate)) {
+                this.setCustomValidity('No available time slots for this date');
+                this.reportValidity();
+                this.value = '';
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+        
+        // Add validation on input for immediate feedback
+        dateInput.addEventListener('input', function() {
+            const selectedDate = this.value;
+            if (!selectedDate) {
+                this.setCustomValidity('');
+                return;
+            }
+            
+            const disabledDates = JSON.parse(this.getAttribute('data-disabled-dates') || '[]');
+            if (disabledDates.includes(selectedDate)) {
+                this.setCustomValidity('This date is not available or is fully booked');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+    } catch (error) {
+        console.error('Error disabling unavailable dates:', error);
+    }
+}
+
 // Open create follow-up modal
 function openCreateFollowUpModal() {
     // Set the parent appointment ID and student ID
@@ -446,12 +692,16 @@ function openCreateFollowUpModal() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const minDate = tomorrow.toISOString().split('T')[0];
-    document.getElementById('preferredDate').setAttribute('min', minDate);
-    document.getElementById('preferredDate').value = minDate;
+    const dateInput = document.getElementById('preferredDate');
+    dateInput.setAttribute('min', minDate);
+    dateInput.value = minDate;
 
     // Clear time options
     const timeSelect = document.getElementById('preferredTime');
     timeSelect.innerHTML = '<option value="">Select a time</option>';
+
+    // Disable dates without availability or fully booked
+    disableUnavailableDates(dateInput);
 
     // Load availability for tomorrow
     loadCounselorAvailability(minDate);
@@ -578,7 +828,21 @@ function setupModalEventListeners() {
         });
     }
 
-    // Edit date field is read-only, so no event listener needed
+    const editPreferredDateInput = document.getElementById('editPreferredDate');
+    if (editPreferredDateInput) {
+        editPreferredDateInput.addEventListener('change', function() {
+            if (this.value) {
+                loadCounselorAvailabilityForEdit(this.value);
+            }
+        });
+    }
+
+    const editPreferredTimeSelect = document.getElementById('editPreferredTime');
+    if (editPreferredTimeSelect) {
+        editPreferredTimeSelect.addEventListener('change', function() {
+            this.dataset.currentValue = this.value || '';
+        });
+    }
 }
 
 
@@ -947,13 +1211,14 @@ function openEditFollowUpModal(sessionId) {
     // Set minimum date to today
     const today = new Date();
     const minDate = today.toISOString().split('T')[0];
-    document.getElementById('editPreferredDate').setAttribute('min', minDate);
+    const dateInput = document.getElementById('editPreferredDate');
+    dateInput.setAttribute('min', minDate);
 
     // Parse and set the date
     if (sessionDate) {
         const dateObj = new Date(sessionDate);
         if (!isNaN(dateObj.getTime())) {
-            document.getElementById('editPreferredDate').value = dateObj.toISOString().split('T')[0];
+            dateInput.value = dateObj.toISOString().split('T')[0];
         }
     }
 
@@ -968,6 +1233,7 @@ function openEditFollowUpModal(sessionId) {
         option.selected = true;
         timeSelect.appendChild(option);
     }
+    timeSelect.dataset.currentValue = sessionTime || '';
 
     // Set consultation type
     if (sessionType) {
@@ -978,8 +1244,12 @@ function openEditFollowUpModal(sessionId) {
     document.getElementById('editDescription').value = sessionDescription;
     document.getElementById('editReason').value = sessionReason;
 
-    // Date and time fields are read-only, so we don't need to load availability
-    // They will display the original values chosen by the counselor
+    // Disable dates without availability or fully booked
+    disableUnavailableDates(dateInput);
+
+    if (dateInput.value) {
+        loadCounselorAvailabilityForEdit(dateInput.value);
+    }
 
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('editFollowUpModal'));
@@ -1030,10 +1300,12 @@ async function loadCounselorAvailabilityForEdit(date) {
 // Populate time options for edit modal
 function populateTimeOptionsForEdit(timeSlots, bookedTimes = []) {
     const timeSelect = document.getElementById('editPreferredTime');
-    const currentValue = timeSelect.value;
+    const storedValue = timeSelect.dataset.currentValue || '';
+    const currentValue = timeSelect.value || storedValue;
     
     if (timeSlots.length === 0) {
         timeSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+        timeSelect.disabled = true;
         return;
     }
 
@@ -1042,11 +1314,13 @@ function populateTimeOptionsForEdit(timeSlots, bookedTimes = []) {
 
     if (incrementTimes.length === 0) {
         timeSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+        timeSelect.disabled = true;
         return;
     }
 
     timeSelect.innerHTML = '<option value="">Select a time</option>';
-    
+    timeSelect.disabled = false;
+
     // If current value isn't part of availability anymore, keep it selectable and selected
     const bookedSet = new Set(bookedTimes);
     const filtered = incrementTimes.filter(t => !bookedSet.has(t) || t === currentValue);
@@ -1069,6 +1343,8 @@ function populateTimeOptionsForEdit(timeSlots, bookedTimes = []) {
         }
         timeSelect.appendChild(option);
     });
+    
+    timeSelect.dataset.currentValue = timeSelect.value || '';
 }
 
 // Update follow-up appointment

@@ -52,7 +52,10 @@ class Database extends Config
             'date'     => 'Y-m-d',
             'datetime' => 'Y-m-d H:i:s',
             'time'     => 'H:i:s',
+        
         ],
+        'timezone'     => '+08:00',
+        
     ];
 
     //    /**

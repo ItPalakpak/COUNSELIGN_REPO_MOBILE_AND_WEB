@@ -68,7 +68,8 @@ class Auth extends BaseController
         if ($isEmail) {
             $user = $this->userModel->where('email', $identifier)->first();
         } else {
-            if (!preg_match('/^[a-zA-Z0-9]{3,}$/', $identifier)) {
+            // Accept either 1-10 digit numeric IDs (students) or >=3 alphanumeric IDs (others)
+            if (!preg_match('/^\\d{1,10}$/', $identifier) && !preg_match('/^[a-zA-Z0-9]{3,}$/', $identifier)) {
                 return $this->response->setJSON([
                     'status' => 'error',
                     'message' => 'Invalid User ID format'
@@ -170,10 +171,10 @@ class Auth extends BaseController
             $validation->setRules([
                 'userId' => [
                     'label' => 'User ID',
-                    'rules' => 'required|regex_match[/^\\d{10}$/]',
+                    'rules' => 'required|regex_match[/^\\d{1,10}$/]',
                     'errors' => [
                         'required' => 'User ID is required',
-                        'regex_match' => 'User ID must be exactly 10 digits.',
+                        'regex_match' => 'User ID must be 1 to 10 digits.',
                     ],
                 ],
                 'email' => [

@@ -117,6 +117,13 @@ public/js/user/user_dashboard.js      → JavaScript functions only
 - **Team Collaboration**: Clear file responsibilities
 - **Debugging**: Easier to isolate and fix issues
 
+### Student Dashboard UX Refresh
+- `app/Views/student/dashboard.php` renders an events carousel and welcome quotes section that welcome students on login.
+- `public/js/student/student_dashboard.js` fetches `student/events/all` and `student/quotes/approved-quotes`, rotates content on timers, and sanitises all injected text.
+- `public/css/student/student_dashboard.css` provides responsive styling, gradients, and accessible control states for the new sections.
+- Auto-refresh cadence keeps content current (events reload every 10 minutes, quotes every 5 minutes).
+- Defensive guards clear timers before reinitialisation and fall back to curated quotes when APIs return empty or error responses.
+
 ### PDS (Personal Data Sheet) System
 
 #### Architecture:
@@ -195,3 +202,68 @@ public/js/user/user_dashboard.js      → JavaScript functions only
 - **Fallback Handling**: Returns empty structures for missing data to maintain API consistency
 - **Logging**: Comprehensive error logging for debugging data retrieval issues
 - **Session Management**: Maintains existing user activity tracking functionality
+
+### Counselor Follow-up Availability Enhancements
+
+- **Endpoint**: `GET counselor/follow-up/availability-by-weekday` in `App\Controllers\Counselor\FollowUp` returns weekdays that contain scheduled time slots for the logged-in counselor.
+- **Frontend Logic**: `public/js/counselor/follow_up.js` caches weekday availability for 5 minutes, batches per-date availability checks, and disables dates that either lack schedules or have every 30-minute slot booked.
+- **Edit Modal Updates**: Enabled date and time inputs in `app/Views/counselor/follow_up.php`; the JS re-fetches availability when the counselor changes the preferred date and keeps the chosen time value synchronized.
+
+### Notifications Cleanup Command
+
+**ENHANCED FEATURE**: Automated cleanup of read notifications to reduce database load.
+
+#### Command Architecture:
+- **Command Class**: `App\Commands\CleanupReadNotifications` extends `CodeIgniter\CLI\BaseCommand`
+- **Model Method**: `NotificationsModel::deleteReadNotifications()` handles the deletion logic
+- **Auto-Discovery**: CodeIgniter 4 automatically discovers commands in `App\Commands` namespace
+- **Command Group**: Maintenance group for system maintenance tasks
+
+#### Command Features:
+- **Purpose**: Deletes all rows in notifications table where `is_read = 1` to reduce data load
+- **Usage**: `php spark cleanup:read-notifications`
+- **Output**: Colored CLI output with success/error messages and deleted count
+- **Error Handling**: Comprehensive exception handling with proper logging
+- **Type Safety**: Fully type-safe implementation with proper return types
+
+#### Scheduling Setup:
+
+**For Linux/Unix (cron):**
+```bash
+# Add to crontab (crontab -e)
+* * * * * cd /path/to/project && php spark cleanup:read-notifications >> /path/to/logs/cleanup.log 2>&1
+```
+
+**For Windows (Task Scheduler) - AUTOMATED SETUP:**
+
+The system includes automated setup files for Windows Task Scheduler:
+
+1. **Batch File Method (Recommended)**:
+   - File: `cleanup-notifications.bat` in project root
+   - Automatically configured for XAMPP paths
+   - Can be directly scheduled in Windows Task Scheduler
+
+2. **PowerShell Script Method**:
+   - File: `cleanup-notifications.ps1` in project root
+   - Alternative to batch file with enhanced logging
+
+3. **Setup Instructions**:
+   - See `SCHEDULER_SETUP.md` for detailed step-by-step instructions
+   - Includes troubleshooting guide and verification steps
+
+4. **Quick Setup Steps**:
+   - Open Windows Task Scheduler
+   - Create Basic Task: "Cleanup Read Notifications"
+   - Trigger: Daily, repeat every 1 minute
+   - Action: Start program → `C:\xampp\htdocs\Counselign\cleanup-notifications.bat`
+   - Configure to run whether user is logged on or not
+   - Set to run with highest privileges if needed
+
+**Note**: The batch file and PowerShell script are pre-configured for the default XAMPP installation path. If your installation differs, update the paths in the respective files.
+
+#### Implementation Details:
+- **Database Operation**: Uses CodeIgniter Query Builder for safe deletion
+- **Logging**: Logs cleanup operations with deleted count
+- **Performance**: Efficient deletion query with proper indexing
+- **Safety**: Only deletes read notifications (`is_read = 1`), preserves unread notifications
+- **Return Value**: Returns array with success status, deleted count, and message for monitoring

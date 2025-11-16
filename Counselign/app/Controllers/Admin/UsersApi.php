@@ -181,6 +181,7 @@ class UsersApi extends BaseController
             return [
                 'academic_info' => $academicData ?: [
                     'course' => null,
+                    'major_or_strand' => null,
                     'year_level' => null,
                     'academic_status' => null,
                     'school_last_attended' => null,
@@ -333,6 +334,55 @@ class UsersApi extends BaseController
                 'message' => 'An error occurred while fetching student PDS data.',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Display PDS preview page for a student
+     * 
+     * @param string $userId The student's user ID
+     * @return \CodeIgniter\HTTP\Response View with student PDS data
+     */
+    public function previewPDS($userId)
+    {
+        try {
+            // Validate user ID format
+            if (!preg_match('/^\d{10}$/', $userId)) {
+                return redirect()->to('admin/view-users')->with('error', 'Invalid user ID format');
+            }
+
+            // Check if user exists and is a student
+            $db = \Config\Database::connect();
+            $userQuery = $db->query("
+                SELECT user_id, username, email, profile_picture
+                FROM users 
+                WHERE user_id = ? AND role = 'student'
+            ", [$userId]);
+            
+            $user = $userQuery->getRowArray();
+            if (!$user) {
+                return redirect()->to('admin/view-users')->with('error', 'Student not found');
+            }
+
+            // Get comprehensive student data
+            $studentData = $this->getComprehensiveStudentData($userId);
+
+            // Prepare data for view
+            $data = [
+                'user_info' => [
+                    'user_id' => $user['user_id'],
+                    'username' => $user['username'],
+                    'email' => $user['email'],
+                    'profile_picture' => $user['profile_picture'] ?? 'Photos/profile.png'
+                ],
+                'pds_data' => $studentData
+            ];
+
+            return view('PDS_preview', $data);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error in UsersApi::previewPDS: ' . $e->getMessage());
+            return redirect()->to('admin/view-users')->with('error', 'An error occurred while loading the preview.');
         }
     }
 

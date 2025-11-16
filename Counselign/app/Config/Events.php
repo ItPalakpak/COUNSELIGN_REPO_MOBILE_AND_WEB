@@ -53,3 +53,20 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+
+// Set Manila timezone for all requests
+Events::on('pre_system', function () {
+    // Set PHP timezone
+    date_default_timezone_set('Asia/Manila');
+    
+    // Set database timezone
+    try {
+        $db = \Config\Database::connect();
+        $db->query("SET time_zone = '+08:00'");
+        
+        log_message('info', 'Manila timezone (Asia/Manila, +08:00) set successfully');
+    } catch (\Exception $e) {
+        log_message('error', 'Failed to set database timezone: ' . $e->getMessage());
+    }
+});

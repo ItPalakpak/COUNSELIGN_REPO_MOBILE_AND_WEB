@@ -52,6 +52,71 @@ class PDS extends BaseController
     }
 
     /**
+     * Render the PDS Preview for the logged-in student
+     */
+    public function preview()
+    {
+        $session = session();
+
+        if (!$session->get('logged_in') || $session->get('role') !== 'student') {
+            return redirect()->to('auth')->with('error', 'Unauthorized access');
+        }
+
+        $userId = $session->get('user_id_display') ?? $session->get('user_id');
+        $userId = (string) $userId;
+        if (!$userId) {
+            return redirect()->to('student/profile')->with('error', 'Invalid session data');
+        }
+
+        try {
+            // Fetch comprehensive PDS data
+            $rawPdsData = $this->pdsModel->getCompletePDS($userId);
+
+            // Transform data structure to match PDS_preview.php view expectations
+            // The view expects keys like 'academic_info', 'personal_info', etc.
+            // but getCompletePDS returns 'academic', 'personal', etc.
+            $studentData = [
+                'academic_info' => $rawPdsData['academic'] ?? [],
+                'personal_info' => $rawPdsData['personal'] ?? [],
+                'address_info' => $rawPdsData['address'] ?? [],
+                'family_info' => $rawPdsData['family'] ?? [],
+                'residence_info' => $rawPdsData['residence'] ?? [],
+                'special_circumstances' => $rawPdsData['circumstances'] ?? [],
+                'other_info' => $rawPdsData['other_info'] ?? [],
+                'services_needed' => $rawPdsData['services_needed'] ?? [],
+                'services_availed' => $rawPdsData['services_availed'] ?? [],
+                'gcs_activities' => $rawPdsData['gcs_activities'] ?? [],
+                'awards' => $rawPdsData['awards'] ?? []
+            ];
+
+            // Fetch user info (email, username, profile picture)
+            $user = $this->userModel->find($userId);
+            if (!$user) {
+                $user = $this->userModel->where('user_id', $userId)->first();
+            }
+
+            if (!$user) {
+                return redirect()->to('student/profile')->with('error', 'User not found');
+            }
+
+            $data = [
+                'user_info' => [
+                    'user_id' => $user['user_id'],
+                    'username' => $user['username'],
+                    'email' => $user['email'],
+                    'profile_picture' => $user['profile_picture'] ?? 'Photos/profile.png'
+                ],
+                'pds_data' => $studentData
+            ];
+
+            return view('PDS_preview', $data);
+        } catch (\Exception $e) {
+            log_message('error', 'Student PDS preview error: ' . $e->getMessage());
+            return redirect()->to('student/profile')->with('error', 'Failed to load PDS preview');
+        }
+    }
+
+    /**
      * Load complete PDS data for the logged-in student
      */
     public function loadPDS()
@@ -173,7 +238,8 @@ class PDS extends BaseController
             // NEW FIELDS
             'school_last_attended' => $request->getPost('schoolLastAttended') ?: 'N/A',
             'location_of_school' => $request->getPost('locationOfSchool') ?: 'N/A',
-            'previous_course_grade' => $request->getPost('previousCourseGrade') ?: 'N/A'
+            'previous_course_grade' => $request->getPost('previousCourseGrade') ?: 'N/A',
+            'major_or_strand' => $request->getPost('majorOrStrand') ?: ''
         ];
 
         // ========================================

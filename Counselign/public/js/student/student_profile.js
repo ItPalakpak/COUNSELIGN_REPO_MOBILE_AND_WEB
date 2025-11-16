@@ -194,6 +194,16 @@ document.addEventListener('DOMContentLoaded', function () {
     handleCivilStatusChange();
     handlePWDChange();
     handleHealthConditionChange();
+    
+    // Initialize course select change handler for major/strand and year level
+    handleCourseSelectChange();
+    
+    // Initialize major/strand field visibility on page load
+    const courseSelect = document.getElementById('courseSelect');
+    if (courseSelect) {
+        updateMajorOrStrandOptions(courseSelect.value);
+        updateYearLevelOptions(courseSelect.value);
+    }
 
     // Add image preview functionality
     const pictureInput = document.getElementById('update-picture');
@@ -313,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
             payload.append('schoolLastAttended', getVal('schoolLastAttended'));
             payload.append('locationOfSchool', getVal('locationOfSchool'));
             payload.append('previousCourseGrade', getVal('previousCourseGrade'));
+            payload.append('majorOrStrand', getVal('majorOrStrandSelect'));
 
             // PERSONAL INFO (ADD NEW FIELDS)
             payload.append('lastName', getVal('lastName'));
@@ -605,11 +616,17 @@ function populatePDSForm(pdsData) {
     // Academic Information
     if (pdsData.academic) {
         setValue('courseSelect', pdsData.academic.course);
+        // Update major/strand and year options based on course selection
+        updateMajorOrStrandOptions(pdsData.academic.course);
+        updateYearLevelOptions(pdsData.academic.course);
         setValue('yearSelect', pdsData.academic.year_level);
         setValue('academicStatusSelect', pdsData.academic.academic_status);
         setValue('schoolLastAttended', pdsData.academic.school_last_attended);
         setValue('locationOfSchool', pdsData.academic.location_of_school);
         setValue('previousCourseGrade', pdsData.academic.previous_course_grade);
+        if (pdsData.academic.major_or_strand) {
+            setValue('majorOrStrandSelect', pdsData.academic.major_or_strand);
+        }
     }
 
     // Personal Information
@@ -1341,5 +1358,110 @@ function initializePwdProofDisplayBox() {
             SecureLogger.info('PWD Proof file download initiated');
         });
     }
+}
+
+/**
+ * Handle course select change to update major/strand and year level options
+ */
+function handleCourseSelectChange() {
+    const courseSelect = document.getElementById('courseSelect');
+    if (!courseSelect) return;
+
+    courseSelect.addEventListener('change', function () {
+        const selectedCourse = this.value;
+        updateMajorOrStrandOptions(selectedCourse);
+        updateYearLevelOptions(selectedCourse);
+        // Clear major/strand selection when course changes
+        const majorOrStrandSelect = document.getElementById('majorOrStrandSelect');
+        if (majorOrStrandSelect) {
+            majorOrStrandSelect.value = '';
+        }
+    });
+}
+
+/**
+ * Update major or strand options based on selected course
+ * @param {string} selectedCourse - The selected course value
+ */
+function updateMajorOrStrandOptions(selectedCourse) {
+    const majorOrStrandSelect = document.getElementById('majorOrStrandSelect');
+    if (!majorOrStrandSelect) return;
+
+    // Clear existing options except the first one
+    majorOrStrandSelect.innerHTML = '<option value="">Select Major or Strand</option>';
+
+    // Define options based on course
+    let options = [];
+    if (selectedCourse === 'BSA') {
+        options = [
+            { value: 'Dairy Science', text: 'Dairy Science' },
+            { value: 'Animal Science', text: 'Animal Science' },
+            { value: 'Crop Science', text: 'Crop Science' }
+        ];
+    } else if (selectedCourse === 'Senior High School') {
+        options = [
+            { value: 'STEM', text: 'STEM' },
+            { value: 'HUMSS', text: 'HUMSS' },
+            { value: 'GAS', text: 'GAS' },
+            { value: 'ABM', text: 'ABM' },
+            { value: 'TVL - HE', text: 'TVL - HE' },
+            { value: 'TVL - ICT', text: 'TVL - ICT' }
+        ];
+    }
+
+    // Add options to select
+    options.forEach(function (option) {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        majorOrStrandSelect.appendChild(optionElement);
+    });
+
+    // Show/hide the select based on whether options are available
+    const parentDiv = majorOrStrandSelect.closest('.col-md-4');
+    if (parentDiv) {
+        if (options.length > 0) {
+            parentDiv.style.display = '';
+        } else {
+            parentDiv.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Update year level options based on selected course
+ * @param {string} selectedCourse - The selected course value
+ */
+function updateYearLevelOptions(selectedCourse) {
+    const yearSelect = document.getElementById('yearSelect');
+    if (!yearSelect) return;
+
+    // Clear existing options except the first one
+    yearSelect.innerHTML = '<option value="">Select Year</option>';
+
+    // Define options based on course
+    let options = [];
+    if (selectedCourse === 'Senior High School') {
+        options = [
+            { value: 'Grade 11', text: 'Grade 11' },
+            { value: 'Grade 12', text: 'Grade 12' }
+        ];
+    } else {
+        // Default options for other courses
+        options = [
+            { value: 'I', text: 'I' },
+            { value: 'II', text: 'II' },
+            { value: 'III', text: 'III' },
+            { value: 'IV', text: 'IV' }
+        ];
+    }
+
+    // Add options to select
+    options.forEach(function (option) {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        yearSelect.appendChild(optionElement);
+    });
 }
 

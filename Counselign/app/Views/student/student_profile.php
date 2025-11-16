@@ -102,6 +102,9 @@
                         <button type="button" id="pdsSaveBtn" class="btn btn-primary btn-compact" disabled>
                             <i class="fas fa-save"></i> Save Changes
                         </button>
+                        <a href="<?= base_url('student/pds/preview') ?>" target="_blank" rel="noopener" class="btn btn-outline-primary btn-compact">
+                            <i class="fas fa-file-pdf"></i> Preview / Print PDS
+                        </a>
                     </div>
                 </div>
                 <!-- PDS CONTAINER (responsive + inner scrolling) -->
@@ -144,7 +147,7 @@
                                         <h6 class="text-primary mb-3"><i class="fas fa-graduation-cap me-2"></i>Academic Information</h6>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label">Course/Track <span class="text-danger">*</span></label>
                                         <select class="form-select" id="courseSelect">
                                             <option value="">Select Course</option>
@@ -159,10 +162,18 @@
                                             <option value="BSAF">BSAF</option>
                                             <option value="BTLED">BTLED</option>
                                             <option value="DAT-BAT">DAT-BAT</option>
+                                            <option value="Senior High School">Senior High School</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Major or Strand</label>
+                                        <select class="form-select" id="majorOrStrandSelect">
+                                            <option value="">Select Major or Strand</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3">
                                         <label class="form-label">Grade/Year Level <span class="text-danger">*</span></label>
                                         <select class="form-select" id="yearSelect">
                                             <option value="">Select Year</option>
@@ -173,7 +184,7 @@
                                         </select>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label">Academic Status <span class="text-danger">*</span></label>
                                         <select class="form-select" id="academicStatusSelect">
                                             <option value="">Select Status</option>

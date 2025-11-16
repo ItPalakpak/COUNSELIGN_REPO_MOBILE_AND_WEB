@@ -122,8 +122,7 @@ class CounselorsApi extends BaseController
             // Join with users table to include verification status and profile picture from users table
             $builder = $db->table('counselors c');
             $builder->select('c.counselor_id, c.name, c.degree, c.email, 
-                             c.contact_number, c.address, c.time_scheduled, 
-                             c.available_days, c.created_at, c.civil_status, c.sex, c.birthdate,
+                             c.contact_number, c.address, c.created_at, c.civil_status, c.sex, c.birthdate,
                              u.is_verified, u.username, u.email as user_email, u.profile_picture');
             $builder->join('users u', 'u.user_id = c.counselor_id', 'left');
             // Pending verification first, then by name (avoid identifier escaping on SQL function)
@@ -262,9 +261,7 @@ class CounselorsApi extends BaseController
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 civil_status VARCHAR(20),
                 sex VARCHAR(10),
-                birthdate DATE,
-                time_scheduled VARCHAR(50),
-                available_days TEXT
+                birthdate DATE
             )");
 
             $post = $this->request->getPost();

@@ -4,10 +4,14 @@ namespace App\Controllers\Admin;
 
 
 use App\Helpers\SecureLogHelper;
+use App\Helpers\TimezoneHelper;
 use App\Controllers\BaseController;
+use CodeIgniter\API\ResponseTrait;
+use App\Models\QuoteModel;
 
 class Dashboard extends BaseController
 {
+    use ResponseTrait;
     public function index()
     {
         // Check if user is logged in and is admin
@@ -89,5 +93,121 @@ class Dashboard extends BaseController
     public function adminsManagement()
     {
         return view('admin/admins_management');
+    }
+
+    /**
+     * Get all quotes for admin moderation
+     */
+    public function getAllQuotes()
+    {
+        if (!session()->get('logged_in') || session()->get('role') !== 'admin') {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 401);
+        }
+
+        try {
+            $quoteModel = new QuoteModel();
+            $quotes = $quoteModel->getAllQuotesForModeration();
+
+            // Format dates
+            foreach ($quotes as &$quote) {
+                if (isset($quote['created_at'])) {
+                    $quote['submitted_at'] = $quote['created_at'];
+                    $quote['submitted_at_formatted'] = TimezoneHelper::formatManilaDateTime($quote['created_at']);
+                }
+                if (isset($quote['moderated_at']) && $quote['moderated_at']) {
+                    $quote['moderated_at_formatted'] = TimezoneHelper::formatManilaDateTime($quote['moderated_at']);
+                }
+            }
+
+            return $this->respond([
+                'success' => true,
+                'quotes' => $quotes
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', '[Admin Quotes] Error fetching quotes: ' . $e->getMessage());
+            return $this->respond([
+                'success' => false,
+                'message' => 'Failed to load quotes',
+                'quotes' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Approve a quote
+     */
+    public function approveQuote($quoteId)
+    {
+        if (!session()->get('logged_in') || session()->get('role') !== 'admin') {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 401);
+        }
+
+        $quoteModel = new QuoteModel();
+        $adminId = session()->get('user_id');
+
+        $quote = $quoteModel->find($quoteId);
+        if (!$quote) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Quote not found'
+            ], 404);
+        }
+
+        if ($quoteModel->approveQuote($quoteId, $adminId)) {
+            log_message('info', '[Admin Quotes] Quote approved by admin: ' . $adminId . ' - Quote ID: ' . $quoteId);
+            return $this->respond([
+                'success' => true,
+                'message' => 'Quote approved successfully'
+            ]);
+        } else {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Failed to approve quote'
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject a quote with reason
+     */
+    public function rejectQuote($quoteId)
+    {
+        if (!session()->get('logged_in') || session()->get('role') !== 'admin') {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 401);
+        }
+
+        $quoteModel = new QuoteModel();
+        $adminId = session()->get('user_id');
+        $reason = $this->request->getPost('reason') ?? '';
+
+        $quote = $quoteModel->find($quoteId);
+        if (!$quote) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Quote not found'
+            ], 404);
+        }
+
+        if ($quoteModel->rejectQuote($quoteId, $adminId, $reason)) {
+            log_message('info', '[Admin Quotes] Quote rejected by admin: ' . $adminId . ' - Quote ID: ' . $quoteId);
+            return $this->respond([
+                'success' => true,
+                'message' => 'Quote rejected successfully'
+            ]);
+        } else {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Failed to reject quote'
+            ], 500);
+        }
     }
 } 

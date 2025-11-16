@@ -258,13 +258,13 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="editPreferredDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="editPreferredDate" name="preferred_date" required readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                                    <input type="date" class="form-control" id="editPreferredDate" name="preferred_date" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="editPreferredTime" class="form-label">Preferred Time <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="editPreferredTime" name="preferred_time" required disabled style="background-color: #e9ecef; cursor: not-allowed;">
+                                    <select class="form-control" id="editPreferredTime" name="preferred_time" required>
                                         <option value="">Select a time</option>
                                     </select>
                                 </div>

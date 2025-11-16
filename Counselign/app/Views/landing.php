@@ -270,7 +270,7 @@
                     </div>
                     <div class="mb-3">
                         <input id="signUpUserIdInput" type="text" placeholder="Preferred User ID" class="form-control"
-                            maxlength="10" pattern="[0-9]{10}" title="User ID must be exactly 10 digits.">
+                            maxlength="10" pattern="[0-9]{1,10}" title="User ID must be 1 to 10 digits.">
                     </div>
                     <div class="mb-3">
                         <input id="signUpUsernameInput" type="text" placeholder="Preferred Username" class="form-control">
@@ -466,7 +466,7 @@
                 <div class="modal-body">
                     <div class="mb-4">
                         <h6 class="fw-bold mb-3">Get in Touch</h6>
-                        <p class="text-muted">Have questions or need assistance? We're here to help!</p>
+                        <p class="text-muted">Have questions about the system or need assistance with technical issues? We're here to help!</p>
                     </div>
                     <div class="mb-3">
                         <label for="contactName" class="form-label">Your Name</label>

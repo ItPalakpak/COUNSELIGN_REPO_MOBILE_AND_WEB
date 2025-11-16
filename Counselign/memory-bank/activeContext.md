@@ -1,3 +1,27 @@
+## Current Focus (2025-11-11)
+- Adjust authentication to accept student `user_id` lengths of 1–10 digits (reject >10), while still allowing email identifiers everywhere (login, forgot password, resend code).
+- Keep counselor IDs unchanged (>=3 alphanumeric still valid).
+
+## Recent Changes
+- Admin resource management:
+  - Fixed 500 error when adding resources by storing the correct uploader identifier (`user_id_display`) and aligning model validation to accept alphanumeric IDs with proper joins to `users.user_id`.
+  - Update/Delete operations now persist validation requirements by reusing existing `resource_type` and `uploaded_by` values during updates.
+  - Enhanced admin resource modals with shared Bootstrap markup, non-overlapping alert/confirmation flows, and button loading states for create/update/delete.
+- Student Dashboard experience refreshed:
+  - Added an auto-advancing "Upcoming Events" carousel using the `student/events/all` API with graceful empty-state handling.
+  - Replaced the legacy compact quotes carousel with a welcome quotes section that rotates through approved quotes from `student/quotes/approved-quotes`.
+  - Updated `app/Views/student/dashboard.php`, `public/js/student/student_dashboard.js`, and `public/css/student/student_dashboard.css` to support the new layout.
+- Frontend:
+  - `public/js/landing.js`: Updated student signup validation to `^\d{1,10}$`, updated resend reset code validator to accept 1–10 digit numeric IDs, and updated placeholders/titles accordingly.
+  - `app/Views/landing.php`: Signup input `pattern` set to `[0-9]{1,10}` and updated title to “1 to 10 digits.”
+- Backend:
+  - `app/Controllers/Auth.php`: 
+    - Signup (student): regex from exactly 10 digits to 1–10 digits.
+    - Login: identifier check accepts email OR 1–10 digit numeric OR >=3 alphanumeric.
+
+## Next Steps
+- Verify end-to-end login/signup/forgot flows with 1–10 digit student IDs and ensure >10 digits are rejected.
+- Monitor logs for unexpected identifier parsing edge cases.
 - Inline calendar integrated into Student and Counselor Announcements pages
   - Removed old drawer/toggle calendar UI
   - Smaller calendar with badges and overlaid event titles on day cells
@@ -7,6 +31,27 @@
     - JS: `public/js/student/student_announcements.js`, `public/js/counselor/counselor_announcements.js`
     - CSS: `public/css/student/student_announcements.css`, `public/css/counselor/counselor_announcements.css`
   - SystemPatterns updated to reflect inline mini-calendar pattern
+- Focus: Notifications Cleanup System - Automated deletion of read notifications to reduce data load
+Recent Changes:
+- **NOTIFICATIONS CLEANUP SYSTEM**: Implemented automated cleanup of read notifications
+  - ✅ **Model Method**: Added `deleteReadNotifications()` to `NotificationsModel`
+    - ✅ Deletes all rows in notifications table where `is_read = 1`
+    - ✅ Returns array with success status, deleted count, and message
+    - ✅ Comprehensive error handling and logging
+    - ✅ Type-safe implementation with proper return types
+  - ✅ **Command Class**: Created `CleanupReadNotifications` command
+    - ✅ Location: `app/Commands/CleanupReadNotifications.php`
+    - ✅ Command: `cleanup:read-notifications` (Maintenance group)
+    - ✅ Proper CLI output with colored messages
+    - ✅ Error handling with exit codes
+    - ✅ Auto-discovered by CodeIgniter 4
+  - ✅ **Testing**: Command tested and verified working
+    - ✅ Successfully deleted 31 read notifications in test run
+    - ✅ No linter errors or warnings
+    - ✅ Type-safe coding practices maintained
+  - ✅ **Documentation**: Updated memory bank files
+    - ✅ SystemPatterns.md: Added notifications cleanup pattern
+    - ✅ TechContext.md: Added command setup instructions
 - Focus: Enhanced Resend Reset Code Modal Implementation with Professional UI/UX Design and Type-Safe Coding Standards
 Recent Changes:
  - ADMIN ACCOUNT SEED: Added `AdminSeeder` and seeded default admin user
@@ -1561,6 +1606,10 @@ Next Steps
   - Frontend: `public/js/student/student_schedule_appointment.js` now calls eligibility endpoint on load and disables the form if student has pending, approved upcoming, or pending follow-up appointment
    - Routes: Registered under student group in `app/Config/Routes.php`
    - Scope-limited: No unrelated functions changed
+- Enabled counselor follow-up session rescheduling controls:
+  - Backend: Added `GET counselor/follow-up/availability-by-weekday` to `App\Controllers\Counselor\FollowUp` for weekday availability lookup.
+  - View: `app/Views/counselor/follow_up.php` now keeps edit modal date/time inputs enabled.
+  - Frontend: `public/js/counselor/follow_up.js` loads availability on demand, caches weekday slots, disables fully booked days, and keeps editable select state in sync.
 - Implemented CI4 Validation in `app/Controllers/Auth.php`:
   - `signup`: `userId` required|regex_match[/^\\d{10}$/]; `email` required|valid_email|is_unique[users.email]; `password` required|min_length[8]|complexity regex|matches[confirmPassword].
   - `login`: `user_id` required|regex_match[/^\\d{10}$/]; `password` required|min_length[8]|complexity regex.

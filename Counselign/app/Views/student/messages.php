@@ -18,42 +18,41 @@
             <div class="row align-items-center">
                 <div class="d-flex align-items-center">
                     <div class="logo-title-container">
-                        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="Counselign logo" class="logo" />
+                        <img src="<?= base_url('Photos/counselign_logo.png') ?>" alt="University Logo" class="logo" />
                         <h1 class="h4 fw-bold ms-2 mb-0">Counselign</h1>
                     </div>
+
+                    <button class="custom-navbar-toggler d-lg-none align-items-center" type="button" id="navbarDrawerToggler">
+                        <span class="navbar-toggler-icon"><i class="fas fa-gear"></i></span>
+                    </button>
+
                     <nav class="navbar navbar-expand-lg navbar-dark">
-                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                            <ul class="navbar-nav nav-links ms-auto">
-                                <li>
-                                    <a href="<?= base_url('student/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
-                                </li>
-                            </ul>
-                        </div>
+                        <ul class="navbar-nav nav-links ms-auto">
+                            <li>
+                                <a href="<?= base_url('student/dashboard') ?>"><i class="fas fa-home"></i> Home</a>
+
+                            </li>
+                        </ul>
+
                     </nav>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Student Navbar Drawer for Small Screens -->
-    <div class="navbar-drawer d-lg-none" id="navbarDrawer">
+
+    <div class="navbar-drawer" id="navbarDrawer">
         <div class="drawer-header d-flex justify-content-between align-items-center p-3 text-white" style="background-color: #060E57;">
             <h5 class="m-0">Student Menu</h5>
             <button class="btn-close btn-close-white" id="navbarDrawerClose" aria-label="Close"></button>
         </div>
         <ul class="navbar-nav nav-links p-3">
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/announcements') ?>"><i class="fas fa-bullhorn"></i> Announcements</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/schedule-appointment') ?>"><i class="fas fa-plus-circle"></i> Schedule an Appointment</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/my-appointments') ?>"><i class="fas fa-list-alt"></i> My Appointments</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/follow-up-sessions') ?>"><i class="fas fa-clipboard-list"></i> Follow Up Sessions</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/messages') ?>"><i class="fas fa-comments"></i> Messages</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/profile') ?>"><i class="fas fa-user"></i> User Profile</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
+            <li class="nav-item"><a class="nav-link" href="<?= base_url('student/dashboard') ?>"><i class="fas fa-home"></i> Home</a></li>
+
         </ul>
     </div>
 
-    <!-- Overlay for Navbar Drawer -->
-    <div class="navbar-overlay d-lg-none" id="navbarOverlay"></div>
+    <div class="navbar-overlay" id="navbarOverlay"></div>
 
     <!-- Mobile Sidebar Toggle Button -->
     <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">

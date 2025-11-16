@@ -228,4 +228,18 @@ class App extends BaseConfig
 
     public $sessionDriver = 'CodeIgniter\Session\Handlers\FileHandler';
     public $sessionCookieName = 'ci_session';
+
+    /**
+     * --------------------------------------------------------------------------
+     * Maintenance Secret Key
+     * --------------------------------------------------------------------------
+     *
+     * Secret key for accessing maintenance endpoints (e.g., cleanup-notifications)
+     * Set this via environment variable MAINTENANCE_SECRET_KEY or update here
+     * 
+     * IMPORTANT: Change this in production to a strong, random secret key
+     * 
+     * @var string
+     */
+    public string $maintenanceSecretKey = 'default-secret-key-change-in-production';
 }

@@ -712,6 +712,108 @@ if (markAllReadBtn) {
       });
   }
 
+  // Add this to counselor_dashboard.js
+// Place it after the fetchUserIdAndInitialize() function call
+
+  // ========== DAILY QUOTES CAROUSEL ==========
+  
+  function loadDailyQuotesCarousel() {
+    fetch(window.BASE_URL + 'counselor/quotes/approved-quotes')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.quotes && data.quotes.length > 0) {
+          displayQuotesCarousel(data.quotes);
+        } else {
+          displayEmptyQuotesCarousel();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading quotes carousel:', error);
+        displayEmptyQuotesCarousel();
+      });
+  }
+  
+  // Update this function in counselor_dashboard.js
+
+function displayQuotesCarousel(quotes) {
+  const carouselInner = document.getElementById('quotesCarouselInner');
+  
+  if (!carouselInner) return;
+  
+  carouselInner.innerHTML = '';
+  
+  quotes.forEach((quote, index) => {
+    // Create carousel item
+    const carouselItem = document.createElement('div');
+    carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+    
+    const categoryIcon = getCategoryIcon(quote.category);
+    
+    // Truncate long quotes for compact display
+    const maxLength = 120;
+    let displayText = quote.quote_text;
+    if (displayText.length > maxLength) {
+      displayText = displayText.substring(0, maxLength) + '...';
+    }
+    
+    carouselItem.innerHTML = `
+      <div class="quote-carousel-card" title="${escapeHtml(quote.quote_text)}">
+        <div class="quote-carousel-text">${escapeHtml(displayText)}</div>
+        <div class="quote-carousel-author">${escapeHtml(quote.author_name)}</div>
+        <div class="quote-carousel-meta">
+          <span class="quote-category-badge">${categoryIcon} ${escapeHtml(quote.category)}</span>
+        </div>
+      </div>
+    `;
+    
+    carouselInner.appendChild(carouselItem);
+  });
+  
+  // Reinitialize carousel
+  const carouselElement = document.getElementById('dailyQuotesCarousel');
+  if (carouselElement && typeof bootstrap !== 'undefined') {
+    // Dispose existing carousel if any
+    const existingCarousel = bootstrap.Carousel.getInstance(carouselElement);
+    if (existingCarousel) {
+      existingCarousel.dispose();
+    }
+    
+    // Create new carousel instance
+    new bootstrap.Carousel(carouselElement, {
+      interval: 8000,
+      wrap: true,
+      keyboard: true,
+      pause: 'hover'
+    });
+  }
+}
+
+function displayEmptyQuotesCarousel() {
+  const carouselInner = document.getElementById('quotesCarouselInner');
+  
+  if (!carouselInner) return;
+  
+  carouselInner.innerHTML = `
+    <div class="carousel-item active">
+      <div class="quote-carousel-card">
+        <div class="quote-empty-state">
+          <i class="fas fa-quote-left"></i>
+          <p class="mb-0">No quotes available yet.<br><small>Submit one to inspire students!</small></p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+  
+  
+  // Load carousel on page load
+  loadDailyQuotesCarousel();
+  
+  // Refresh carousel every 5 minutes
+  setInterval(loadDailyQuotesCarousel, 5 * 60 * 1000);
+  
+  // ========== END DAILY QUOTES CAROUSEL ==========
+
   function initializeChat() {
     const messageForm = document.getElementById("messageForm");
     const messageInput = document.getElementById("messageInput");
@@ -1554,6 +1656,844 @@ if (markAllReadBtn) {
       link.classList.add("drawer-item-click");
     });
   });
+
+  // Add this code at the end of the DOMContentLoaded function in counselor_dashboard.js
+// Replace the previous quote submission code with this:
+
+  // ========== DAILY QUOTE MODAL FEATURE ==========
+  
+  const openQuoteModalBtn = document.getElementById('openQuoteModalBtn');
+  const quoteSubmissionModal = document.getElementById('quoteSubmissionModal');
+  const myQuotesModal = document.getElementById('myQuotesModal');
+  const quoteForm = document.getElementById('quoteSubmissionForm');
+  const quoteTextArea = document.getElementById('quoteText');
+  const charCount = document.getElementById('charCount');
+  const submitQuoteBtn = document.getElementById('submitQuoteBtn');
+  const viewMyQuotesBtn = document.getElementById('viewMyQuotesBtn');
+  const openQuoteSubmissionFromMyQuotesBtn = document.getElementById('openQuoteSubmissionFromMyQuotes');
+  const alertModalElement = document.getElementById('alertModal');
+  
+  let quoteModalReturnAction = null;
+  
+  function setQuoteModalReturnAction(action) {
+    quoteModalReturnAction = action;
+  }
+  
+  if (alertModalElement) {
+    alertModalElement.addEventListener('hidden.bs.modal', () => {
+      if (quoteModalReturnAction) {
+        const action = quoteModalReturnAction;
+        quoteModalReturnAction = null;
+        action();
+      }
+    });
+  }
+  
+  function showMyQuotesModalWithReload() {
+    if (!myQuotesModal) return;
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(myQuotesModal);
+    modalInstance.show();
+    loadMyQuotes();
+  }
+  
+  // Character counter for quote text
+  if (quoteTextArea && charCount) {
+    quoteTextArea.addEventListener('input', function() {
+      const length = this.value.length;
+      charCount.textContent = length;
+      
+      // Change color based on character count
+      if (length > 450) {
+        charCount.style.color = '#dc3545'; // Red
+      } else if (length > 400) {
+        charCount.style.color = '#ffc107'; // Yellow
+      } else {
+        charCount.style.color = '#060E57'; // Blue
+      }
+    });
+  }
+  
+  // Open quote modal with animation
+  if (openQuoteModalBtn) {
+    openQuoteModalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Add click animation
+      openQuoteModalBtn.classList.remove('quote-click');
+      void openQuoteModalBtn.offsetWidth;
+      openQuoteModalBtn.classList.add('quote-click');
+      
+      // Show My Quotes modal
+      if (myQuotesModal) {
+        const myQuotesModalInstance = bootstrap.Modal.getOrCreateInstance(myQuotesModal);
+        myQuotesModalInstance.show();
+        loadMyQuotes();
+      }
+    });
+  }
+  
+  // Remove active state when modal is hidden
+  if (quoteSubmissionModal) {
+    quoteSubmissionModal.addEventListener('hidden.bs.modal', function() {
+      if (openQuoteModalBtn) {
+        openQuoteModalBtn.classList.remove('active');
+      }
+      
+      // Reset form and edit state
+      if (quoteForm) {
+        quoteForm.reset();
+        quoteForm.removeAttribute('data-edit-quote-id');
+        quoteForm.removeAttribute('data-return-to-my-quotes');
+        if (charCount) charCount.textContent = '0';
+        
+        // Restore submit button to original state
+        const submitBtn = document.getElementById('submitQuoteBtn');
+        if (submitBtn) {
+          const originalText = submitBtn.getAttribute('data-original-text');
+          if (originalText) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.removeAttribute('data-original-text');
+          } else {
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Quote';
+          }
+          submitBtn.disabled = false;
+        }
+      }
+      
+      // Clear any alerts
+      const alertContainer = document.getElementById('quoteAlertContainer');
+      if (alertContainer) {
+        alertContainer.innerHTML = '';
+      }
+    });
+  }
+  
+  // Quote submission form handler
+  if (quoteForm) {
+    quoteForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!submitQuoteBtn) return;
+      
+      // Store original button state
+      const originalBtnText = submitQuoteBtn.innerHTML;
+      const originalBtnDisabled = submitQuoteBtn.disabled;
+      
+      // Set loading state
+      submitQuoteBtn.disabled = true;
+      
+      // Check if this is an edit operation
+      const editQuoteId = quoteForm.getAttribute('data-edit-quote-id');
+      const isEdit = editQuoteId !== null && editQuoteId !== '';
+      const returnToMyQuotes = quoteForm.getAttribute('data-return-to-my-quotes') === 'true';
+      
+      // Update button to show loading state
+      if (isEdit) {
+        submitQuoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+      } else {
+        submitQuoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+      }
+      
+      let url = window.BASE_URL + 'counselor/quotes/submit';
+      let method = 'POST';
+      let requestBody;
+      let headers = {};
+      
+      if (isEdit) {
+        url = window.BASE_URL + 'counselor/quotes/update/' + editQuoteId;
+        method = 'PUT';
+        // For PUT requests, convert FormData to URLSearchParams for better compatibility
+        const formData = new FormData(quoteForm);
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+          params.append(key, value);
+        }
+        requestBody = params.toString();
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      } else {
+        // For POST requests, use FormData as normal
+        requestBody = new FormData(quoteForm);
+      }
+      
+      fetch(url, {
+        method: method,
+        headers: headers,
+        body: requestBody
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Show success message using alert modal (not in quoteSubmissionModal)
+          const successMsg = isEdit ? (data.message || 'Quote updated successfully!') : (data.message || 'Quote submitted successfully!');
+          
+          if (typeof openAlertModal === 'function') {
+            setQuoteModalReturnAction(() => {
+              showMyQuotesModalWithReload();
+            });
+            openAlertModal(successMsg, 'success');
+          } else {
+            alert(successMsg);
+            showMyQuotesModalWithReload();
+          }
+          
+          // Reset form and clear edit flag
+          quoteForm.reset();
+          quoteForm.removeAttribute('data-edit-quote-id');
+          quoteForm.removeAttribute('data-return-to-my-quotes');
+          if (charCount) charCount.textContent = '0';
+          
+          // Restore submit button to original state
+          const storedOriginalText = submitQuoteBtn.getAttribute('data-original-text');
+          if (storedOriginalText) {
+            submitQuoteBtn.innerHTML = storedOriginalText;
+            submitQuoteBtn.removeAttribute('data-original-text');
+          } else {
+            submitQuoteBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Quote';
+          }
+          submitQuoteBtn.disabled = false;
+          
+          // Close quote submission modal
+          const modalInstance = bootstrap.Modal.getInstance(quoteSubmissionModal);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+          
+          // (Return action already queued above)
+        } else {
+          let errorMsg = data.message || (isEdit ? 'Failed to update quote' : 'Failed to submit quote');
+          if (data.errors) {
+            const errorList = Array.isArray(data.errors) ? data.errors : Object.values(data.errors);
+            errorMsg += '<br><small>' + errorList.join('<br>') + '</small>';
+          }
+          
+          // Show error in alert modal (not in quoteSubmissionModal)
+          if (typeof openAlertModal === 'function') {
+            openAlertModal(errorMsg, 'danger');
+          } else {
+            alert(errorMsg);
+          }
+          
+          // Restore button state on error
+          const storedOriginalText = submitQuoteBtn.getAttribute('data-original-text');
+          if (storedOriginalText) {
+            submitQuoteBtn.innerHTML = storedOriginalText;
+            submitQuoteBtn.removeAttribute('data-original-text');
+          } else {
+            submitQuoteBtn.innerHTML = originalBtnText;
+          }
+          submitQuoteBtn.disabled = false;
+          
+          // If this was an edit, return to myQuotesModal even on error
+          if (returnToMyQuotes || isEdit) {
+            // Keep the edit modal open so user can fix errors, but don't return to myQuotesModal yet
+            // User can manually close and return
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error ' + (isEdit ? 'updating' : 'submitting') + ' quote:', error);
+        
+        // Show error in alert modal
+        if (typeof openAlertModal === 'function') {
+          openAlertModal('An error occurred. Please try again.', 'danger');
+        } else {
+          alert('An error occurred. Please try again.');
+        }
+        
+        // Restore button state on error
+        const storedOriginalText = submitQuoteBtn.getAttribute('data-original-text');
+        if (storedOriginalText) {
+          submitQuoteBtn.innerHTML = storedOriginalText;
+          submitQuoteBtn.removeAttribute('data-original-text');
+        } else {
+          submitQuoteBtn.innerHTML = originalBtnText;
+        }
+        submitQuoteBtn.disabled = false;
+      });
+    });
+  }
+  
+  // View my quotes button handler
+  if (viewMyQuotesBtn) {
+    viewMyQuotesBtn.addEventListener('click', function() {
+      // Hide submission modal
+      const submissionModalInstance = bootstrap.Modal.getInstance(quoteSubmissionModal);
+      if (submissionModalInstance) {
+        submissionModalInstance.hide();
+      }
+      
+      // Show my quotes modal
+      const myQuotesModalInstance = new bootstrap.Modal(myQuotesModal);
+      myQuotesModalInstance.show();
+      
+      // Load quotes
+      loadMyQuotes();
+    });
+  }
+
+  if (openQuoteSubmissionFromMyQuotesBtn) {
+    openQuoteSubmissionFromMyQuotesBtn.addEventListener('click', () => {
+      if (myQuotesModal) {
+        const myQuotesModalInstance = bootstrap.Modal.getInstance(myQuotesModal);
+        if (myQuotesModalInstance) {
+          myQuotesModalInstance.hide();
+        }
+      }
+      
+      setTimeout(() => {
+        if (quoteSubmissionModal) {
+          const submissionModalInstance = bootstrap.Modal.getOrCreateInstance(quoteSubmissionModal);
+          if (quoteForm) {
+            quoteForm.reset();
+            quoteForm.removeAttribute('data-edit-quote-id');
+            quoteForm.removeAttribute('data-return-to-my-quotes');
+            if (charCount) charCount.textContent = '0';
+          }
+          submissionModalInstance.show();
+        }
+      }, 200);
+    });
+  }
+  
+  // Load counselor's submitted quotes
+  function loadMyQuotes() {
+    const quotesList = document.getElementById('myQuotesList');
+    if (!quotesList) return;
+    
+    quotesList.innerHTML = `
+      <div class="text-center py-4">
+        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+        <p class="mt-2 text-muted">Loading your quotes...</p>
+      </div>
+    `;
+    
+    fetch(window.BASE_URL + 'counselor/quotes/my-quotes')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.quotes && data.quotes.length > 0) {
+          displayMyQuotes(data.quotes);
+        } else {
+          quotesList.innerHTML = `
+            <div class="empty-quotes-state">
+              <i class="fas fa-quote-left"></i>
+              <h5 class="mt-3">No Quotes Submitted Yet</h5>
+              <p class="text-muted">Share your first inspirational quote to get started!</p>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error loading quotes:', error);
+        quotesList.innerHTML = `
+          <div class="text-center py-4 text-danger">
+            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+            <p>Failed to load quotes. Please try again.</p>
+          </div>
+        `;
+      });
+  }
+  
+  // Display quotes with enhanced styling
+  function displayMyQuotes(quotes) {
+    const quotesList = document.getElementById('myQuotesList');
+    if (!quotesList) return;
+    
+    quotesList.innerHTML = '';
+    
+    quotes.forEach(quote => {
+      const statusClass = 'status-' + quote.status;
+      const statusBadge = getQuoteStatusBadge(quote.status);
+      const quoteCard = document.createElement('div');
+      quoteCard.className = `quote-card ${statusClass}`;
+      
+      let rejectionReason = '';
+      if (quote.status === 'rejected' && quote.rejection_reason) {
+        rejectionReason = `
+          <div class="rejection-alert mt-2">
+            <strong><i class="fas fa-info-circle me-1"></i>Rejection Reason:</strong><br>
+            ${escapeHtml(quote.rejection_reason)}
+          </div>
+        `;
+      }
+      
+      let moderationInfo = '';
+      if (quote.moderated_at) {
+        const action = quote.status === 'approved' ? 'Approved' : 'Rejected';
+        moderationInfo = `
+          <small class="text-muted d-block mt-2">
+            <i class="fas fa-user-check me-1"></i>
+            ${action} on ${formatQuoteDate(quote.moderated_at)}
+          </small>
+        `;
+      }
+      
+      const categoryIcon = getCategoryIcon(quote.category);
+      
+      // Action buttons based on status
+      let actionButtons = '';
+      if (quote.status === 'pending') {
+        // Pending: Show both edit and delete
+        actionButtons = `
+          <div class="quote-actions mt-3 d-flex gap-2">
+            <button class="btn btn-sm btn-primary edit-quote-btn" data-quote-id="${quote.id}" title="Edit Quote">
+              <i class="fas fa-edit me-1"></i>Edit
+            </button>
+            <button class="btn btn-sm btn-danger delete-quote-btn" data-quote-id="${quote.id}" title="Delete Quote">
+              <i class="fas fa-trash me-1"></i>Delete
+            </button>
+          </div>
+        `;
+      } else {
+        // Approved or Rejected: Show only delete
+        actionButtons = `
+          <div class="quote-actions mt-3 d-flex gap-2">
+            <button class="btn btn-sm btn-danger delete-quote-btn" data-quote-id="${quote.id}" title="Delete Quote">
+              <i class="fas fa-trash me-1"></i>Delete
+            </button>
+          </div>
+        `;
+      }
+      
+      quoteCard.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="author-name mb-0">
+            <i class="fas fa-user me-2"></i>${escapeHtml(quote.author_name)}
+          </h6>
+          ${statusBadge}
+        </div>
+        
+        <p class="quote-text mb-2">${escapeHtml(quote.quote_text)}</p>
+        
+        <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+          <span class="badge bg-secondary">
+            ${categoryIcon} ${escapeHtml(quote.category)}
+          </span>
+          ${quote.source ? `
+            <span class="badge bg-info">
+              <i class="fas fa-book me-1"></i>${escapeHtml(quote.source)}
+            </span>
+          ` : ''}
+          <small class="text-muted ms-auto">
+            <i class="fas fa-calendar me-1"></i>
+            Submitted ${formatQuoteDate(quote.submitted_at)}
+          </small>
+        </div>
+        
+        ${moderationInfo}
+        ${rejectionReason}
+        ${actionButtons}
+      `;
+      
+      quotesList.appendChild(quoteCard);
+    });
+    
+    // Attach event listeners for edit and delete buttons
+    attachQuoteActionListeners();
+  }
+  
+  // Attach event listeners for quote actions
+  function attachQuoteActionListeners() {
+    // Edit buttons
+    document.querySelectorAll('.edit-quote-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const quoteId = this.getAttribute('data-quote-id');
+        editQuote(quoteId);
+      });
+    });
+    
+    // Delete buttons
+    document.querySelectorAll('.delete-quote-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const quoteId = this.getAttribute('data-quote-id');
+        deleteQuote(quoteId);
+      });
+    });
+  }
+  
+  // Edit quote function
+  function editQuote(quoteId) {
+    // Close myQuotesModal immediately
+    const myQuotesModal = document.getElementById('myQuotesModal');
+    if (myQuotesModal) {
+      const myQuotesModalInstance = bootstrap.Modal.getInstance(myQuotesModal);
+      if (myQuotesModalInstance) {
+        myQuotesModalInstance.hide();
+      }
+    }
+    
+    // Find the quote data from the current quotes list
+    fetch(window.BASE_URL + 'counselor/quotes/my-quotes')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.quotes) {
+          const quote = data.quotes.find(q => q.id == quoteId);
+          if (!quote) {
+            showQuoteAlert('danger', 'Quote not found');
+            // Reopen myQuotesModal if quote not found
+            if (myQuotesModal) {
+              const modalInstance = new bootstrap.Modal(myQuotesModal);
+              modalInstance.show();
+              loadMyQuotes();
+            }
+            return;
+          }
+          
+          if (quote.status !== 'pending') {
+            showQuoteAlert('warning', 'You can only edit pending quotes');
+            // Reopen myQuotesModal if status is not pending
+            if (myQuotesModal) {
+              const modalInstance = new bootstrap.Modal(myQuotesModal);
+              modalInstance.show();
+              loadMyQuotes();
+            }
+            return;
+          }
+          
+          // Populate the form with quote data
+          document.getElementById('quoteText').value = quote.quote_text || '';
+          document.getElementById('authorName').value = quote.author_name || '';
+          document.getElementById('category').value = quote.category || '';
+          document.getElementById('source').value = quote.source || '';
+          document.getElementById('charCount').textContent = (quote.quote_text || '').length;
+          
+          // Store quote ID for update and reference to myQuotesModal
+          const quoteForm = document.getElementById('quoteSubmissionForm');
+          quoteForm.setAttribute('data-edit-quote-id', quoteId);
+          quoteForm.setAttribute('data-return-to-my-quotes', 'true');
+          
+          // Change submit button text
+          const submitBtn = document.getElementById('submitQuoteBtn');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Quote';
+          submitBtn.setAttribute('data-original-text', originalText);
+          
+          // Open the edit modal
+          const quoteSubmissionModal = document.getElementById('quoteSubmissionModal');
+          const modal = new bootstrap.Modal(quoteSubmissionModal);
+          modal.show();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading quote:', error);
+        showQuoteAlert('danger', 'Failed to load quote data');
+        // Reopen myQuotesModal on error
+        if (myQuotesModal) {
+          const modalInstance = new bootstrap.Modal(myQuotesModal);
+          modalInstance.show();
+          loadMyQuotes();
+        }
+      });
+  }
+  
+  // Delete quote function
+  function deleteQuote(quoteId) {
+    const myQuotesModal = document.getElementById('myQuotesModal');
+    
+    // Close myQuotesModal immediately before showing confirmation
+    if (myQuotesModal) {
+      const myQuotesModalInstance = bootstrap.Modal.getInstance(myQuotesModal);
+      if (myQuotesModalInstance) {
+        myQuotesModalInstance.hide();
+      }
+    }
+    
+    // Use the shared confirmation modal
+    if (typeof openConfirmationModal === 'function') {
+      openConfirmationModal(
+        'Are you sure you want to delete this quote? This action cannot be undone.',
+        function() {
+          // User confirmed deletion - show loading state
+          const deleteButtons = document.querySelectorAll(`.delete-quote-btn[data-quote-id="${quoteId}"]`);
+          deleteButtons.forEach(btn => {
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+            btn.setAttribute('data-original-html', originalHtml);
+          });
+          
+          // Perform deletion
+          fetch(window.BASE_URL + 'counselor/quotes/delete/' + quoteId, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'include'
+          })
+          .then(response => response.json())
+          .then(data => {
+            // Restore button state
+            deleteButtons.forEach(btn => {
+              const originalHtml = btn.getAttribute('data-original-html');
+              if (originalHtml) {
+                btn.innerHTML = originalHtml;
+                btn.removeAttribute('data-original-html');
+              }
+              btn.disabled = false;
+            });
+            
+            if (data.success) {
+              setQuoteModalReturnAction(() => {
+                showMyQuotesModalWithReload();
+              });
+              
+              // Show success message using alert modal (not in quoteSubmissionModal)
+              if (typeof openAlertModal === 'function') {
+                openAlertModal(data.message || 'Quote deleted successfully', 'success');
+              } else {
+                alert(data.message || 'Quote deleted successfully');
+                showMyQuotesModalWithReload();
+              }
+            } else {
+              setQuoteModalReturnAction(() => {
+                showMyQuotesModalWithReload();
+              });
+              
+              // Show error and reopen myQuotesModal
+              if (typeof openAlertModal === 'function') {
+                openAlertModal(data.message || 'Failed to delete quote', 'danger');
+              } else {
+                alert(data.message || 'Failed to delete quote');
+                showMyQuotesModalWithReload();
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting quote:', error);
+            
+            // Show error and reopen myQuotesModal
+            setQuoteModalReturnAction(() => {
+              showMyQuotesModalWithReload();
+            });
+            
+            if (typeof openAlertModal === 'function') {
+              openAlertModal('An error occurred while deleting the quote', 'danger');
+            } else {
+              alert('An error occurred while deleting the quote');
+              showMyQuotesModalWithReload();
+            }
+            
+            // Restore button state on error
+            deleteButtons.forEach(btn => {
+              const originalHtml = btn.getAttribute('data-original-html');
+              if (originalHtml) {
+                btn.innerHTML = originalHtml;
+                btn.removeAttribute('data-original-html');
+              }
+              btn.disabled = false;
+            });
+          });
+        }
+      );
+    } else {
+      // Fallback if modal function not available
+      if (confirm('Are you sure you want to delete this quote? This action cannot be undone.')) {
+        const deleteButtons = document.querySelectorAll(`.delete-quote-btn[data-quote-id="${quoteId}"]`);
+        deleteButtons.forEach(btn => {
+          const originalHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+          btn.setAttribute('data-original-html', originalHtml);
+        });
+        
+        fetch(window.BASE_URL + 'counselor/quotes/delete/' + quoteId, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+          deleteButtons.forEach(btn => {
+            const originalHtml = btn.getAttribute('data-original-html');
+            if (originalHtml) {
+              btn.innerHTML = originalHtml;
+              btn.removeAttribute('data-original-html');
+            }
+            btn.disabled = false;
+          });
+          
+          if (data.success) {
+            if (typeof openAlertModal === 'function') {
+              setQuoteModalReturnAction(() => {
+                showMyQuotesModalWithReload();
+              });
+              openAlertModal(data.message || 'Quote deleted successfully', 'success');
+            } else {
+              alert(data.message || 'Quote deleted successfully');
+              showMyQuotesModalWithReload();
+            }
+          } else {
+            if (typeof openAlertModal === 'function') {
+              setQuoteModalReturnAction(() => {
+                showMyQuotesModalWithReload();
+              });
+              openAlertModal(data.message || 'Failed to delete quote', 'danger');
+            } else {
+              alert(data.message || 'Failed to delete quote');
+              showMyQuotesModalWithReload();
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting quote:', error);
+          
+          // Show error and reopen myQuotesModal
+          if (typeof openAlertModal === 'function') {
+            setQuoteModalReturnAction(() => {
+              showMyQuotesModalWithReload();
+            });
+            openAlertModal('An error occurred while deleting the quote', 'danger');
+          } else {
+            alert('An error occurred while deleting the quote');
+            showMyQuotesModalWithReload();
+          }
+          
+          deleteButtons.forEach(btn => {
+            const originalHtml = btn.getAttribute('data-original-html');
+            if (originalHtml) {
+              btn.innerHTML = originalHtml;
+              btn.removeAttribute('data-original-html');
+            }
+            btn.disabled = false;
+          });
+        });
+      }
+    }
+  }
+  
+  // Get status badge HTML with icons
+  function getQuoteStatusBadge(status) {
+    const badges = {
+      'pending': '<span class="badge bg-warning quote-status-badge"><i class="fas fa-clock me-1"></i>PENDING REVIEW</span>',
+      'approved': '<span class="badge bg-success quote-status-badge"><i class="fas fa-check-circle me-1"></i>APPROVED</span>',
+      'rejected': '<span class="badge bg-danger quote-status-badge"><i class="fas fa-times-circle me-1"></i>REJECTED</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary quote-status-badge">UNKNOWN</span>';
+  }
+  
+  // Get category icon
+  function getCategoryIcon(category) {
+    const icons = {
+      'Inspirational': '✨',
+      'Motivational': '💪',
+      'Wisdom': '🦉',
+      'Life': '🌱',
+      'Success': '🎯',
+      'Education': '📚',
+      'Perseverance': '🏔️',
+      'Courage': '🦁',
+      'Hope': '🌟',
+      'Kindness': '💝'
+    };
+    return icons[category] || '📝';
+  }
+  
+  // Replace this function in counselor_dashboard.js
+// Fix the date calculation bug
+
+function formatQuoteDate(dateString) {
+  if (!dateString) return 'N/A';
+  
+  try {
+    // Parse the date string - ensure it's treated as Manila time
+    const date = new Date(dateString);
+    
+    // Get current date in Manila timezone
+    const now = new Date();
+    const manilaOffset = 8 * 60; // Manila is UTC+8
+    const localOffset = now.getTimezoneOffset(); // Local offset in minutes
+    const offsetDiff = manilaOffset + localOffset;
+    
+    // Adjust current time to Manila timezone
+    const manilaTime = new Date(now.getTime() + (offsetDiff * 60 * 1000));
+    
+    // Create date-only comparisons (without time)
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayOnly = new Date(manilaTime.getFullYear(), manilaTime.getMonth(), manilaTime.getDate());
+    
+    // Calculate difference in days
+    const diffTime = todayOnly.getTime() - dateOnly.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Return appropriate string
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays > 1 && diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays === 7) {
+      return '1 week ago';
+    } else if (diffDays > 7 && diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    } else {
+      // For older dates, show the actual date
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+}
+  
+  // Show alert message in modal
+  function showQuoteAlert(type, message, autoClose = false) {
+    const alertContainer = document.getElementById('quoteAlertContainer');
+    if (!alertContainer) return;
+    
+    const iconMap = {
+      'success': 'fa-check-circle',
+      'danger': 'fa-exclamation-circle',
+      'warning': 'fa-exclamation-triangle',
+      'info': 'fa-info-circle'
+    };
+    
+    const icon = iconMap[type] || 'fa-info-circle';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.setAttribute('role', 'alert');
+    alertDiv.innerHTML = `
+      <i class="fas ${icon} me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alertDiv);
+    
+    // Auto-dismiss success messages
+    if (autoClose && type === 'success') {
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 5000);
+    }
+  }
+  
+  // Ensure escapeHtml function exists (reuse from earlier in the file or add it)
+  if (typeof escapeHtml !== 'function') {
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+  }
+  
+  // ========== END DAILY QUOTE MODAL FEATURE ==========
 });
 
 // Function to handle logout action
@@ -1567,3 +2507,292 @@ function handleLogout() {
     }
   }
 }
+
+// ========== RESOURCES ACCORDION ==========
+// Make functions globally accessible
+window.previewResourceFile = function(resourceId, filePath, fileType) {
+  const baseUrl = window.BASE_URL || '/';
+  const fullPath = baseUrl + filePath;
+  const type = fileType ? fileType.toLowerCase() : '';
+  
+  if (type.includes('pdf')) {
+    window.open(fullPath, '_blank');
+  } else if (type.includes('image')) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Image Preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="${fullPath}" class="img-fluid" alt="Preview">
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    modal.addEventListener('hidden.bs.modal', () => modal.remove());
+  } else {
+    window.open(fullPath, '_blank');
+  }
+};
+
+window.trackResourceDownload = function(resourceId) {
+  // Track download if needed (can be implemented later)
+  console.log('Resource downloaded:', resourceId);
+};
+
+window.trackResourceView = function(resourceId) {
+  // Track view if needed (can be implemented later)
+  console.log('Resource viewed:', resourceId);
+};
+
+function loadResources() {
+  const baseUrl = window.BASE_URL || '/';
+  const url = baseUrl + 'counselor/resources/get';
+  const container = document.getElementById('resourcesAccordionContent');
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading resources...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading resources...</p>
+    </div>
+  `;
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success && data.resources && data.resources.length > 0) {
+        renderResourcesAccordion(data.resources);
+      } else {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No resources available at this time.</p>
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error loading resources:', error);
+      container.innerHTML = `
+        <div class="text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+          <p class="text-danger">Failed to load resources. Please try again later.</p>
+        </div>
+      `;
+    });
+}
+
+function renderResourcesAccordion(resources) {
+  const container = document.getElementById('resourcesAccordionContent');
+  if (!container) {
+    return;
+  }
+
+  if (resources.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No resources available at this time.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const baseUrl = window.BASE_URL || '/';
+  let html = '';
+  resources.forEach((resource, index) => {
+    const collapseId = `resourceCollapse${resource.id}`;
+    const isFirst = index === 0;
+    
+    const resourceTypeIcon = resource.resource_type === 'file' 
+      ? '<i class="fas fa-file-alt text-primary"></i>' 
+      : '<i class="fas fa-link text-info"></i>';
+    
+    const categoryBadge = resource.category 
+      ? `<span class="badge bg-secondary ms-2">${escapeHtml(resource.category)}</span>` 
+      : '';
+    
+    const description = resource.description 
+      ? `<p class="text-muted mb-2">${escapeHtml(resource.description)}</p>` 
+      : '';
+    
+    const tags = resource.tags 
+      ? `<div class="mb-2"><small class="text-muted">Tags: ${escapeHtml(resource.tags)}</small></div>` 
+      : '';
+
+    let resourceContent = '';
+    if (resource.resource_type === 'file') {
+      const fileIcon = getFileIcon(resource.file_type);
+      const fileSize = resource.file_size_formatted || 'Unknown size';
+      const filePathEscaped = escapeHtml(resource.file_path || '');
+      const fileTypeEscaped = escapeHtml(resource.file_type || '');
+      const previewButton = canPreviewFile(resource.file_type) 
+        ? `<button class="btn btn-sm btn-outline-primary me-2 preview-resource-btn" 
+                   data-resource-id="${resource.id}" 
+                   data-file-path="${filePathEscaped}" 
+                   data-file-type="${fileTypeEscaped}">
+             <i class="fas fa-eye me-1"></i>Preview
+           </button>`
+        : '';
+      
+      resourceContent = `
+        <div class="resource-file-info p-3 bg-light rounded">
+          <div class="d-flex align-items-center mb-2">
+            ${fileIcon}
+            <div class="ms-2">
+              <strong>${escapeHtml(resource.file_name || 'File')}</strong>
+              <small class="text-muted d-block">${fileSize}</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            ${previewButton}
+            <a href="${baseUrl}counselor/resources/download/${resource.id}" 
+               class="btn btn-sm btn-primary download-resource-btn" 
+               data-resource-id="${resource.id}"
+               download>
+              <i class="fas fa-download me-1"></i>Download
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      resourceContent = `
+        <div class="resource-link-info p-3 bg-light rounded">
+          <a href="${escapeHtml(resource.external_url)}" 
+             target="_blank" 
+             rel="noopener noreferrer"
+             class="btn btn-primary view-resource-link"
+             data-resource-id="${resource.id}">
+            <i class="fas fa-external-link-alt me-1"></i>Open Link
+          </a>
+          <p class="mt-2 mb-0"><small class="text-muted">${escapeHtml(resource.external_url)}</small></p>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading${resource.id}">
+          <button class="accordion-button ${isFirst ? '' : 'collapsed'}" 
+                  type="button" 
+                  data-bs-toggle="collapse" 
+                  data-bs-target="#${collapseId}" 
+                  aria-expanded="${isFirst ? 'true' : 'false'}" 
+                  aria-controls="${collapseId}">
+            <div class="d-flex align-items-center w-100">
+              ${resourceTypeIcon}
+              <span class="ms-2 fw-bold">${escapeHtml(resource.title)}</span>
+              ${categoryBadge}
+              <small class="text-muted ms-auto me-3">${resource.created_at_formatted || ''}</small>
+            </div>
+          </button>
+        </h2>
+        <div id="${collapseId}" 
+             class="accordion-collapse collapse ${isFirst ? 'show' : ''}" 
+             aria-labelledby="heading${resource.id}" 
+             data-bs-parent="#resourcesAccordion">
+          <div class="accordion-body">
+            ${description}
+            ${tags}
+            ${resourceContent}
+            <div class="mt-3 pt-3 border-top">
+              <small class="text-muted">
+                <i class="fas fa-user me-1"></i>Posted by: ${escapeHtml(resource.uploader_name || 'Admin')}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function getFileIcon(fileType) {
+  if (!fileType) return '<i class="fas fa-file text-secondary fa-2x"></i>';
+  
+  const type = fileType.toLowerCase();
+  if (type.includes('pdf')) return '<i class="fas fa-file-pdf text-danger fa-2x"></i>';
+  if (type.includes('word') || type.includes('doc')) return '<i class="fas fa-file-word text-primary fa-2x"></i>';
+  if (type.includes('excel') || type.includes('sheet')) return '<i class="fas fa-file-excel text-success fa-2x"></i>';
+  if (type.includes('image')) return '<i class="fas fa-file-image text-info fa-2x"></i>';
+  if (type.includes('video')) return '<i class="fas fa-file-video text-warning fa-2x"></i>';
+  if (type.includes('zip') || type.includes('rar')) return '<i class="fas fa-file-archive text-secondary fa-2x"></i>';
+  return '<i class="fas fa-file text-secondary fa-2x"></i>';
+}
+
+function canPreviewFile(fileType) {
+  if (!fileType) return false;
+  const type = fileType.toLowerCase();
+  return type.includes('pdf') || type.includes('image') || type.includes('text');
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Set up event delegation for resource buttons
+document.addEventListener('click', function(e) {
+  const previewBtn = e.target.closest('.preview-resource-btn');
+  if (previewBtn) {
+    e.preventDefault();
+    const resourceId = parseInt(previewBtn.getAttribute('data-resource-id'));
+    const filePath = previewBtn.getAttribute('data-file-path');
+    const fileType = previewBtn.getAttribute('data-file-type');
+    if (window.previewResourceFile) {
+      window.previewResourceFile(resourceId, filePath, fileType);
+    }
+    return;
+  }
+
+  const downloadBtn = e.target.closest('.download-resource-btn');
+  if (downloadBtn) {
+    const resourceId = parseInt(downloadBtn.getAttribute('data-resource-id'));
+    if (window.trackResourceDownload) {
+      window.trackResourceDownload(resourceId);
+    }
+    return;
+  }
+
+  const viewLink = e.target.closest('.view-resource-link');
+  if (viewLink) {
+    const resourceId = parseInt(viewLink.getAttribute('data-resource-id'));
+    if (window.trackResourceView) {
+      window.trackResourceView(resourceId);
+    }
+    return;
+  }
+});
+
+// Load resources on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadResources();
+});
+// ========== END RESOURCES ACCORDION ==========
+
+
+

@@ -21,7 +21,8 @@ class StudentAcademicInfoModel extends Model
         // NEW FIELDS
         'school_last_attended',
         'location_of_school',
-        'previous_course_grade'
+        'previous_course_grade',
+        'major_or_strand'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';

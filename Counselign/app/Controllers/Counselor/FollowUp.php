@@ -191,6 +191,56 @@ class FollowUp extends BaseController
     }
 
     /**
+     * Get counselor availability grouped by weekday for date disabling
+     * Returns weekdays that have time slots scheduled
+     */
+    public function getAvailabilityByWeekday()
+    {
+        try {
+            if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 401);
+            }
+
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            
+            if (!$counselorId) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Invalid session data'
+                ], 400);
+            }
+
+            $availabilityModel = new CounselorAvailabilityModel();
+            $availability = $availabilityModel->getGroupedByDay($counselorId);
+            
+            // Extract weekdays that have time_scheduled (not null)
+            $weekdaysWithSlots = [];
+            foreach ($availability as $day => $slots) {
+                foreach ($slots as $slot) {
+                    if (!empty($slot['time_scheduled'])) {
+                        $weekdaysWithSlots[] = $day;
+                        break; // Only need to know if the day has at least one slot
+                    }
+                }
+            }
+
+            return $this->respond([
+                'status' => 'success',
+                'weekdays_with_slots' => array_unique($weekdaysWithSlots)
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting availability by weekday: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Server error'
+            ], 500);
+        }
+    }
+
+    /**
      * Get booked time ranges for the counselor for a specific date (approved regular appointments and pending/approved follow-ups)
      * Returns an array of strings matching the preferred_time values (e.g., "10:00 AM - 10:30 AM").
      */
