@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/config.dart';
 import '../../utils/session.dart';
 import '../../utils/secure_logger.dart';
+import '../../routes.dart';
 import '../models/notification.dart' as user_notification;
 import '../models/message.dart';
 import '../models/user_profile.dart';
@@ -296,25 +297,31 @@ class StudentDashboardViewModel extends ChangeNotifier {
 
   void logout(BuildContext context) async {
     closeDrawer();
+    debugPrint('🚪 Student ViewModel: logout started');
     try {
       // Call logout endpoint to update activity fields in database
-      debugPrint('🚪 Calling logout endpoint...');
+      debugPrint('🚪 Student ViewModel: calling logout endpoint...');
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/auth/logout',
         headers: {'Content-Type': 'application/json'},
       );
-      debugPrint('🚪 Logout response status: ${response.statusCode}');
+      debugPrint('🚪 Student ViewModel: logout response status: ${response.statusCode}');
     } catch (e) {
-      debugPrint('Error calling logout endpoint: $e');
+      debugPrint('🚪 Student ViewModel: error calling logout endpoint: $e');
       // Continue with logout even if endpoint call fails
-    } finally {
-      // Clear session cookies
-      _session.clearCookies();
-      // Navigate back to landing
-      if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-      }
     }
+
+    // Clear session cookies
+    debugPrint('🚪 Student ViewModel: clearing session cookies');
+    _session.clearCookies();
+
+    // Wait a brief moment to ensure any UI updates complete
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Navigate back to landing (logout) using centralized navigation helper
+    debugPrint('🚪 Student ViewModel: navigating to landing page');
+    AppRoutes.navigateToLandingRoot();
+    debugPrint('🚪 Student ViewModel: navigation called');
   }
 
   // Notification Methods

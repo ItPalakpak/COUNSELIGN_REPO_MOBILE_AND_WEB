@@ -79,115 +79,119 @@ class _CounselorSelectionContentState
               return bTime != null ? 1 : -1; // non-null first
             }
           });
-        return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
-          appBar: AppHeader(onMenu: viewModel.toggleDrawer),
-          body: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        return Stack(
+          children: [
+            Scaffold(
+              backgroundColor: const Color(0xFFF0F4F8),
+              appBar: AppHeader(onMenu: viewModel.toggleDrawer),
+              body: Stack(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.people, color: Color(0xFF003366)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Select a Counselor',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF003366),
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.people, color: Color(0xFF003366)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Select a Counselor',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF003366),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: _buildSearchField(),
-                  ),
-                  Expanded(
-                    child: viewModel.isLoadingCounselors
-                        ? const Center(child: CircularProgressIndicator())
-                        : sorted.isEmpty
-                        ? const _EmptyCounselors()
-                        : ListView.builder(
-                            itemCount: sorted.length,
-                            itemBuilder: (context, index) {
-                              final counselor = sorted[index];
-                              final meta =
-                                  latestByCounselor[counselor.counselorId];
-                              final hasUnread = viewModel.hasUnreadMessages(
-                                counselor.counselorId,
-                              );
-                              return _CounselorListItem(
-                                counselor: counselor,
-                                latestText: meta?.text,
-                                isIncomingLatest: meta?.isIncoming ?? false,
-                                hasUnreadMessages: hasUnread,
-                                createdAt: meta?.createdAt,
-                                onTap: () {
-                                  viewModel.selectCounselor(counselor);
-                                  if (context.mounted) {
-                                    Navigator.of(context).pushNamed(
-                                      '/student/conversation',
-                                      arguments: counselor,
-                                    );
-                                  }
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: _buildSearchField(),
+                      ),
+                      Expanded(
+                        child: viewModel.isLoadingCounselors
+                            ? const Center(child: CircularProgressIndicator())
+                            : sorted.isEmpty
+                            ? const _EmptyCounselors()
+                            : ListView.builder(
+                                itemCount: sorted.length,
+                                itemBuilder: (context, index) {
+                                  final counselor = sorted[index];
+                                  final meta =
+                                      latestByCounselor[counselor.counselorId];
+                                  final hasUnread = viewModel.hasUnreadMessages(
+                                    counselor.counselorId,
+                                  );
+                                  return _CounselorListItem(
+                                    counselor: counselor,
+                                    latestText: meta?.text,
+                                    isIncomingLatest: meta?.isIncoming ?? false,
+                                    hasUnreadMessages: hasUnread,
+                                    createdAt: meta?.createdAt,
+                                    onTap: () {
+                                      viewModel.selectCounselor(counselor);
+                                      if (context.mounted) {
+                                        Navigator.of(context).pushNamed(
+                                          '/student/conversation',
+                                          arguments: counselor,
+                                        );
+                                      }
+                                    },
+                                  );
                                 },
-                              );
-                            },
-                          ),
+                              ),
+                      ),
+                    ],
                   ),
+                  if (viewModel.showNotifications)
+                    StudentNotificationsDropdown(viewModel: viewModel),
                 ],
               ),
-              if (viewModel.isDrawerOpen)
-                GestureDetector(
-                  onTap: viewModel.closeDrawer,
-                  child: Container(
-                    color: Colors.black.withAlpha(128),
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-              StudentNavigationDrawer(
-                isOpen: viewModel.isDrawerOpen,
-                onClose: viewModel.closeDrawer,
-                onNavigateToAnnouncements: () =>
-                    viewModel.navigateToAnnouncements(context),
-                onNavigateToScheduleAppointment: () =>
-                    viewModel.navigateToScheduleAppointment(context),
-                onNavigateToMyAppointments: () =>
-                    viewModel.navigateToMyAppointments(context),
-                onNavigateToProfile: () => viewModel.navigateToProfile(context),
-                onLogout: () => viewModel.logout(context),
+              bottomNavigationBar: ModernBottomNavigationBar(
+                currentIndex: 0,
+                onTap: (index) {
+                  switch (index) {
+                    case 0:
+                      Navigator.of(context).pushNamed('/student/dashboard');
+                      break;
+                    case 1:
+                      viewModel.navigateToScheduleAppointment(context);
+                      break;
+                    case 2:
+                      viewModel.navigateToMyAppointments(context);
+                      break;
+                    case 3:
+                      viewModel.navigateToFollowUpSessions(context);
+                      break;
+                  }
+                },
+                isStudent: true,
               ),
-              if (viewModel.showNotifications)
-                StudentNotificationsDropdown(viewModel: viewModel),
-            ],
-          ),
-          bottomNavigationBar: ModernBottomNavigationBar(
-            currentIndex: 0,
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  Navigator.of(context).pushNamed('/student/dashboard');
-                  break;
-                case 1:
-                  viewModel.navigateToScheduleAppointment(context);
-                  break;
-                case 2:
-                  viewModel.navigateToMyAppointments(context);
-                  break;
-                case 3:
-                  viewModel.navigateToFollowUpSessions(context);
-                  break;
-              }
-            },
-            isStudent: true,
-          ),
+            ),
+            if (viewModel.isDrawerOpen)
+              GestureDetector(
+                onTap: viewModel.closeDrawer,
+                child: Container(
+                  color: Colors.black.withAlpha(128),
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+              ),
+            StudentNavigationDrawer(
+              isOpen: viewModel.isDrawerOpen,
+              onClose: viewModel.closeDrawer,
+              onNavigateToAnnouncements: () =>
+                  viewModel.navigateToAnnouncements(context),
+              onNavigateToScheduleAppointment: () =>
+                  viewModel.navigateToScheduleAppointment(context),
+              onNavigateToMyAppointments: () =>
+                  viewModel.navigateToMyAppointments(context),
+              onNavigateToProfile: () => viewModel.navigateToProfile(context),
+              onLogout: () => viewModel.logout(context),
+            ),
+          ],
         );
       },
     );

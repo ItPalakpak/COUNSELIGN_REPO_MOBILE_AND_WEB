@@ -42,40 +42,40 @@ class _ConversationContent extends StatelessWidget {
           });
         }
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Stack(
-            children: [
-              Column(
+        return Stack(
+          children: [
+            Scaffold(
+              backgroundColor: Colors.white,
+              body: Column(
                 children: [
                   _buildHeader(context, viewModel),
                   Expanded(child: _buildMessagesArea(context, viewModel)),
                   _buildInputArea(context, viewModel),
                 ],
               ),
-              if (viewModel.isDrawerOpen)
-                GestureDetector(
-                  onTap: viewModel.closeDrawer,
-                  child: Container(
-                    color: Colors.black.withAlpha(128),
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
+            ),
+            if (viewModel.isDrawerOpen)
+              GestureDetector(
+                onTap: viewModel.closeDrawer,
+                child: Container(
+                  color: Colors.black.withAlpha(128),
+                  width: double.infinity,
+                  height: double.infinity,
                 ),
-              StudentNavigationDrawer(
-                isOpen: viewModel.isDrawerOpen,
-                onClose: viewModel.closeDrawer,
-                onNavigateToAnnouncements: () =>
-                    viewModel.navigateToAnnouncements(context),
-                onNavigateToScheduleAppointment: () =>
-                    viewModel.navigateToScheduleAppointment(context),
-                onNavigateToMyAppointments: () =>
-                    viewModel.navigateToMyAppointments(context),
-                onNavigateToProfile: () => viewModel.navigateToProfile(context),
-                onLogout: () => viewModel.logout(context),
               ),
-            ],
-          ),
+            StudentNavigationDrawer(
+              isOpen: viewModel.isDrawerOpen,
+              onClose: viewModel.closeDrawer,
+              onNavigateToAnnouncements: () =>
+                  viewModel.navigateToAnnouncements(context),
+              onNavigateToScheduleAppointment: () =>
+                  viewModel.navigateToScheduleAppointment(context),
+              onNavigateToMyAppointments: () =>
+                  viewModel.navigateToMyAppointments(context),
+              onNavigateToProfile: () => viewModel.navigateToProfile(context),
+              onLogout: () => viewModel.logout(context),
+            ),
+          ],
         );
       },
     );

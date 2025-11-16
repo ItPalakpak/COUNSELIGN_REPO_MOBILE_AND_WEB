@@ -29,6 +29,9 @@ import 'counselorscreen/counselor_reports_screen.dart';
 import 'servicesscreen/services_screen.dart';
 
 class AppRoutes {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static const String landing = '/';
   static const String studentDashboard = '/student/dashboard';
   static const String myAppointments = '/student/my-appointments';
@@ -134,6 +137,34 @@ class AppRoutes {
         ),
       );
     }
+  }
+
+  /// Navigate to landing screen and clear the entire navigation stack.
+  /// This is used for logout so users always end up on the public landing page
+  /// with no back arrow.
+  static void navigateToLandingRoot() {
+    debugPrint('🚪 navigateToLandingRoot: called');
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      debugPrint('🚪 navigateToLandingRoot: ERROR - navigatorKey.currentState is null!');
+      return;
+    }
+
+    debugPrint('🚪 navigateToLandingRoot: navigator state found, pushing landing screen');
+    navigator.pushAndRemoveUntil(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          debugPrint('🚪 navigateToLandingRoot: building LandingScreen');
+          return const LandingScreen();
+        },
+        transitionsBuilder:
+            (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+      (route) => false,
+    );
+    debugPrint('🚪 navigateToLandingRoot: pushAndRemoveUntil completed');
   }
 
   static void navigateToCounselorDashboard(BuildContext context) {

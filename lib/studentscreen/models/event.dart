@@ -5,6 +5,8 @@ class Event {
   final DateTime? date;
   final String? time;
   final String? location;
+  final String? type;
+  final String? category;
 
   Event({
     required this.id,
@@ -13,6 +15,8 @@ class Event {
     this.date,
     this.time,
     this.location,
+    this.type,
+    this.category,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class Event {
       date: _parseDateTime(json['date']),
       time: json['time']?.toString(),
       location: json['location']?.toString(),
+      type: json['type']?.toString() ?? json['event_type']?.toString(),
+      category: json['category']?.toString() ?? json['event_category']?.toString(),
     );
   }
 
@@ -82,5 +88,17 @@ class Event {
       'Dec',
     ];
     return months[date!.toLocal().month - 1];
+  }
+
+  bool get isUpcoming {
+    if (date == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDate = DateTime(date!.year, date!.month, date!.day);
+    return eventDate.isAfter(today) || eventDate.isAtSameMomentAs(today);
+  }
+
+  String get badgeLabel {
+    return type ?? category ?? 'Event';
   }
 }

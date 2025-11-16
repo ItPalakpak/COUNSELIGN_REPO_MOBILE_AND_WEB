@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Counselign',
       debugShowCheckedModeBanner: false,
+      navigatorKey: AppRoutes.navigatorKey,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme:

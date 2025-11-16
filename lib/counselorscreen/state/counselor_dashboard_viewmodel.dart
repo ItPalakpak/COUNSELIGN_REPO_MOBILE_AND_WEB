@@ -3,6 +3,7 @@ import '../../utils/session.dart';
 import 'dart:convert';
 import 'dart:async';
 import '../../api/config.dart';
+import '../../routes.dart';
 import '../../utils/secure_logger.dart';
 import '../models/counselor_profile.dart';
 import '../models/message.dart';
@@ -672,21 +673,29 @@ class CounselorDashboardViewModel extends ChangeNotifier {
   }
 
   void logout(BuildContext context) async {
+    debugPrint('🚪 Counselor ViewModel: logout started');
     try {
-      debugPrint('🚪 Calling logout endpoint...');
+      debugPrint('🚪 Counselor ViewModel: calling logout endpoint...');
       final response = await _session.get(
         '${ApiConfig.currentBaseUrl}/auth/logout',
         headers: {'Content-Type': 'application/json'},
       );
-      debugPrint('🚪 Logout response status: ${response.statusCode}');
+      debugPrint('🚪 Counselor ViewModel: logout response status: ${response.statusCode}');
     } catch (e) {
-      debugPrint('Error calling logout endpoint: $e');
-    } finally {
-      _session.clearCookies();
-      if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-      }
+      debugPrint('🚪 Counselor ViewModel: error calling logout endpoint: $e');
     }
+
+    // Clear session cookies
+    debugPrint('🚪 Counselor ViewModel: clearing session cookies');
+    _session.clearCookies();
+
+    // Wait a brief moment to ensure any UI updates complete
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Navigate back to landing page using centralized navigation helper
+    debugPrint('🚪 Counselor ViewModel: navigating to landing page');
+    AppRoutes.navigateToLandingRoot();
+    debugPrint('🚪 Counselor ViewModel: navigation called');
   }
 
   // Fetch recent pending appointments

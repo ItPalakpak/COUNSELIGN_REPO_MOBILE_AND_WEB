@@ -86,12 +86,12 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
-      appBar: AppHeader(onMenu: _toggleDrawer),
-      body: Stack(
-        children: [
-          AnimatedBuilder(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFF0F4F8),
+          appBar: AppHeader(onMenu: _toggleDrawer),
+          body: AnimatedBuilder(
             animation: _viewModel,
             builder: (context, child) {
               return SingleChildScrollView(
@@ -105,50 +105,56 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
               );
             },
           ),
-          if (_isDrawerOpen)
-            GestureDetector(
-              onTap: _closeDrawer,
-              child: Container(
-                color: Colors.black.withAlpha(128),
-                width: double.infinity,
-                height: double.infinity,
-              ),
-            ),
-          StudentNavigationDrawer(
-            isOpen: _isDrawerOpen,
-            onClose: _closeDrawer,
-            onNavigateToAnnouncements: () => _navigateToAnnouncements(context),
-            onNavigateToScheduleAppointment: () =>
-                _navigateToScheduleAppointment(context),
-            onNavigateToMyAppointments: () =>
-                _navigateToMyAppointments(context),
-            onNavigateToProfile: () => _navigateToProfile(context),
-            onLogout: () => _logout(context),
+          bottomNavigationBar: ModernBottomNavigationBar(
+            currentIndex:
+                0, // Home is highlighted since profile is accessed from home
+            onTap: (index) {
+              // Handle navigation based on index
+              switch (index) {
+                case 0: // Home
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/student/dashboard',
+                  );
+                  break;
+                case 1: // Schedule Appointment
+                  Navigator.pushNamed(
+                    context,
+                    '/student/schedule-appointment',
+                  );
+                  break;
+                case 2: // My Appointments
+                  Navigator.pushNamed(context, '/student/my-appointments');
+                  break;
+                case 3: // Follow-up Sessions
+                  Navigator.pushNamed(context, '/student/follow-up-sessions');
+                  break;
+              }
+            },
+            isStudent: true,
           ),
-        ],
-      ),
-      bottomNavigationBar: ModernBottomNavigationBar(
-        currentIndex:
-            0, // Home is highlighted since profile is accessed from home
-        onTap: (index) {
-          // Handle navigation based on index
-          switch (index) {
-            case 0: // Home
-              Navigator.pushReplacementNamed(context, '/student/dashboard');
-              break;
-            case 1: // Schedule Appointment
-              Navigator.pushNamed(context, '/student/schedule-appointment');
-              break;
-            case 2: // My Appointments
-              Navigator.pushNamed(context, '/student/my-appointments');
-              break;
-            case 3: // Follow-up Sessions
-              Navigator.pushNamed(context, '/student/follow-up-sessions');
-              break;
-          }
-        },
-        isStudent: true,
-      ),
+        ),
+        if (_isDrawerOpen)
+          GestureDetector(
+            onTap: _closeDrawer,
+            child: Container(
+              color: Colors.black.withAlpha(128),
+              width: double.infinity,
+              height: double.infinity,
+            ),
+          ),
+        StudentNavigationDrawer(
+          isOpen: _isDrawerOpen,
+          onClose: _closeDrawer,
+          onNavigateToAnnouncements: () => _navigateToAnnouncements(context),
+          onNavigateToScheduleAppointment: () =>
+              _navigateToScheduleAppointment(context),
+          onNavigateToMyAppointments: () =>
+              _navigateToMyAppointments(context),
+          onNavigateToProfile: () => _navigateToProfile(context),
+          onLogout: () => _logout(context),
+        ),
+      ],
     );
   }
 

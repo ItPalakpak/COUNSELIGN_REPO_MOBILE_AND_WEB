@@ -9,6 +9,9 @@ import '../widgets/app_header.dart';
 import 'widgets/notifications_dropdown.dart';
 import 'widgets/chat_popup.dart';
 import 'widgets/counselor_selection_dialog.dart';
+import 'widgets/event_carousel.dart';
+import 'widgets/quotes_carousel.dart';
+import 'widgets/resources_accordion.dart';
 import '../api/config.dart';
 import 'utils/image_url_helper.dart';
 import 'models/counselor.dart';
@@ -104,68 +107,72 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
   Widget build(BuildContext context) {
     return Consumer<StudentDashboardViewModel>(
       builder: (context, viewModel, child) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
-          appBar: AppHeader(onMenu: viewModel.toggleDrawer),
-          body: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 100),
-                child: _buildMainContent(context, viewModel),
-              ),
-              if (viewModel.isDrawerOpen)
-                GestureDetector(
-                  onTap: viewModel.closeDrawer,
-                  child: Container(
-                    color: Colors.black.withAlpha(128),
-                    width: double.infinity,
-                    height: double.infinity,
+        return Stack(
+          children: [
+            Scaffold(
+              backgroundColor: const Color(0xFFF0F4F8),
+              appBar: AppHeader(onMenu: viewModel.toggleDrawer),
+              body: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    child: _buildMainContent(context, viewModel),
                   ),
-                ),
-              StudentNavigationDrawer(
-                isOpen: viewModel.isDrawerOpen,
-                onClose: viewModel.closeDrawer,
-                onNavigateToAnnouncements: () =>
-                    viewModel.navigateToAnnouncements(context),
-                onNavigateToScheduleAppointment: () =>
-                    viewModel.navigateToScheduleAppointment(context),
-                onNavigateToMyAppointments: () =>
-                    viewModel.navigateToMyAppointments(context),
-                onNavigateToProfile: () => viewModel.navigateToProfile(context),
-                onLogout: () => viewModel.logout(context),
+                  if (viewModel.showNotifications)
+                    StudentNotificationsDropdown(viewModel: viewModel),
+                  // Modals replaced by dedicated screens; keep imports for backward compatibility
+                  // PDS Reminder Modal
+                  if (_showPdsReminder)
+                    Positioned(
+                      top: 20,
+                      left: 20,
+                      child: _buildPdsReminderModal(context, viewModel),
+                    ),
+                ],
               ),
-              if (viewModel.showNotifications)
-                StudentNotificationsDropdown(viewModel: viewModel),
-              // Modals replaced by dedicated screens; keep imports for backward compatibility
-              // PDS Reminder Modal
-              if (_showPdsReminder)
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  child: _buildPdsReminderModal(context, viewModel),
+              bottomNavigationBar: ModernBottomNavigationBar(
+                currentIndex: 0, // Home is selected by default
+                onTap: (index) {
+                  // Handle navigation based on index
+                  switch (index) {
+                    case 0: // Home - already on dashboard
+                      break;
+                    case 1: // Schedule Appointment
+                      viewModel.navigateToScheduleAppointment(context);
+                      break;
+                    case 2: // My Appointments
+                      viewModel.navigateToMyAppointments(context);
+                      break;
+                    case 3: // Follow-up Sessions
+                      viewModel.navigateToFollowUpSessions(context);
+                      break;
+                  }
+                },
+                isStudent: true,
+              ),
+            ),
+            if (viewModel.isDrawerOpen)
+              GestureDetector(
+                onTap: viewModel.closeDrawer,
+                child: Container(
+                  color: Colors.black.withAlpha(128),
+                  width: double.infinity,
+                  height: double.infinity,
                 ),
-            ],
-          ),
-          bottomNavigationBar: ModernBottomNavigationBar(
-            currentIndex: 0, // Home is selected by default
-            onTap: (index) {
-              // Handle navigation based on index
-              switch (index) {
-                case 0: // Home - already on dashboard
-                  break;
-                case 1: // Schedule Appointment
-                  viewModel.navigateToScheduleAppointment(context);
-                  break;
-                case 2: // My Appointments
-                  viewModel.navigateToMyAppointments(context);
-                  break;
-                case 3: // Follow-up Sessions
-                  viewModel.navigateToFollowUpSessions(context);
-                  break;
-              }
-            },
-            isStudent: true,
-          ),
+              ),
+            StudentNavigationDrawer(
+              isOpen: viewModel.isDrawerOpen,
+              onClose: viewModel.closeDrawer,
+              onNavigateToAnnouncements: () =>
+                  viewModel.navigateToAnnouncements(context),
+              onNavigateToScheduleAppointment: () =>
+                  viewModel.navigateToScheduleAppointment(context),
+              onNavigateToMyAppointments: () =>
+                  viewModel.navigateToMyAppointments(context),
+              onNavigateToProfile: () => viewModel.navigateToProfile(context),
+              onLogout: () => viewModel.logout(context),
+            ),
+          ],
         );
       },
     );
@@ -391,8 +398,10 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
       child: Column(
         children: [
           _buildProfileDisplay(context, viewModel, isMobile),
+          const EventCarousel(),
           SizedBox(height: isMobile ? 20 : 24),
           _buildContentPanel(context, isMobile),
+          const ResourcesAccordion(),
         ],
       ),
     );
@@ -420,15 +429,14 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
       ),
       child: Column(
         children: [
-          // First row: Profile Avatar, Profile Info
           Row(
             children: [
               // Profile Avatar
               GestureDetector(
                 onTap: () => viewModel.navigateToProfile(context),
                 child: Container(
-                  width: isMobile ? 70 : 90,
-                  height: isMobile ? 70 : 90,
+                  width: isMobile ? 60 : 70,
+                  height: isMobile ? 60 : 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
@@ -443,26 +451,26 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                   child: ClipOval(
                     child: Image(
                       image: _getProfileImageProvider(viewModel),
-                      width: isMobile ? 70 : 90,
-                      height: isMobile ? 70 : 90,
+                      width: isMobile ? 60 : 70,
+                      height: isMobile ? 60 : 70,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Image.asset(
                           'Photos/profile.png',
-                          width: isMobile ? 70 : 90,
-                          height: isMobile ? 70 : 90,
+                          width: isMobile ? 60 : 70,
+                          height: isMobile ? 60 : 70,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              width: isMobile ? 70 : 90,
-                              height: isMobile ? 70 : 90,
+                              width: isMobile ? 60 : 70,
+                              height: isMobile ? 60 : 70,
                               decoration: BoxDecoration(
                                 color: Colors.grey[300],
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.person,
-                                size: isMobile ? 35 : 45,
+                                size: isMobile ? 30 : 35,
                                 color: Colors.grey[600],
                               ),
                             );
@@ -473,21 +481,23 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                   ),
                 ),
               ),
-              SizedBox(width: isMobile ? 15 : 20),
+              SizedBox(width: isMobile ? 12 : 16),
               // Profile Info
               Expanded(
+                flex: 3,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Hi! ${viewModel.displayName}',
                       style: TextStyle(
-                        fontSize: isMobile ? 14 : 22,
+                        fontSize: isMobile ? 14 : 18,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF003366),
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    // Hidden user_id display (similar to PHP implementation)
                     if (viewModel.hasName)
                       Text(
                         viewModel.userId,
@@ -497,26 +507,22 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
                           height: 0,
                         ),
                       ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       'Last login: ${viewModel.formattedLastLogin}',
                       style: TextStyle(
-                        fontSize: isMobile ? 10 : 14,
+                        fontSize: isMobile ? 9 : 12,
                         color: Colors.grey[600],
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          // Second row: Action buttons (Message and Notification)
-          SizedBox(height: isMobile ? 16 : 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+              SizedBox(width: isMobile ? 8 : 12),
+              // Action buttons inline
               _buildMessageButton(context, viewModel, isMobile),
-              SizedBox(width: isMobile ? 20 : 24),
+              SizedBox(width: isMobile ? 8 : 12),
               _buildNotificationButton(viewModel, isMobile),
             ],
           ),
@@ -537,23 +543,9 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
   ) {
     final hasUnreadMessages = viewModel.totalUnreadMessagesCount > 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: null,
-        color: const Color(0xFFF8FAFD),
-        borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
-        border: Border.all(
-          color: const Color(0xFF060E57).withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return SizedBox(
+      width: isMobile ? 44 : 50,
+      height: isMobile ? 44 : 50,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -565,57 +557,55 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
               : () => Navigator.of(
                   context,
                 ).pushNamed('/student/counselor-selection'),
-          borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
-          child: Container(
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.message_rounded,
-                  color: const Color(0xFF060E57),
-                  size: isMobile ? 24 : 28,
-                ),
-                if (hasUnreadMessages)
-                  Positioned(
-                    top: -8,
-                    right: -8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.message_rounded,
+                color: const Color(0xFF060E57),
+                size: isMobile ? 28 : 32,
+              ),
+              if (hasUnreadMessages)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFEF4444,
-                            ).withValues(alpha: 0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: isMobile ? 20 : 22,
-                        minHeight: isMobile ? 20 : 22,
-                      ),
+                      ],
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: isMobile ? 18 : 20,
+                      minHeight: isMobile ? 18 : 20,
+                    ),
+                    child: Center(
                       child: Text(
                         viewModel.totalUnreadMessagesCount > 9
                             ? '9+'
                             : viewModel.totalUnreadMessagesCount.toString(),
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: isMobile ? 10 : 11,
+                          fontSize: isMobile ? 9 : 10,
                           fontWeight: FontWeight.w700,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -626,95 +616,64 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
     StudentDashboardViewModel viewModel,
     bool isMobile,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: viewModel.showNotifications
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
-              )
-            : null,
-        color: viewModel.showNotifications ? null : const Color(0xFFF8FAFD),
-        borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
-        border: Border.all(
-          color: viewModel.showNotifications
-              ? Colors.transparent
-              : const Color(0xFF060E57).withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: viewModel.showNotifications
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
+    return SizedBox(
+      width: isMobile ? 44 : 50,
+      height: isMobile ? 44 : 50,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: viewModel.toggleNotifications,
-          borderRadius: BorderRadius.circular(isMobile ? 16 : 18),
-          child: Container(
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
-            child: Stack(
-              children: [
-                Icon(
-                  Icons.notifications_rounded,
-                  color: viewModel.showNotifications
-                      ? Colors.white
-                      : const Color(0xFF060E57),
-                  size: isMobile ? 24 : 28,
-                ),
-                if (viewModel.unreadNotificationCount > 0)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.notifications_rounded,
+                color: viewModel.showNotifications
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFF060E57),
+                size: isMobile ? 28 : 32,
+              ),
+              if (viewModel.unreadNotificationCount > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFEF4444,
-                            ).withValues(alpha: 0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: isMobile ? 20 : 22,
-                        minHeight: isMobile ? 20 : 22,
-                      ),
+                      ],
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: isMobile ? 18 : 20,
+                      minHeight: isMobile ? 18 : 20,
+                    ),
+                    child: Center(
                       child: Text(
                         viewModel.unreadNotificationCount > 9
                             ? '9+'
                             : viewModel.unreadNotificationCount.toString(),
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: isMobile ? 10 : 11,
+                          fontSize: isMobile ? 9 : 10,
                           fontWeight: FontWeight.w700,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -722,142 +681,125 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
   }
 
   Widget _buildContentPanel(BuildContext context, bool isMobile) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
-        ),
-        borderRadius: BorderRadius.circular(isMobile ? 24 : 28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.08),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-        border: Border.all(
-          color: const Color(0xFF060E57).withValues(alpha: 0.06),
-          width: 1,
-        ),
-      ),
-      padding: EdgeInsets.all(isMobile ? 32 : 80),
-      child: Column(
-        children: [
-          // Decorative accent
-          Container(
-            width: 60,
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
-              ),
-              borderRadius: BorderRadius.circular(2),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
             ),
-          ),
-
-          SizedBox(height: isMobile ? 32 : 48),
-
-          // Main title
-          Text(
-            'Welcome to Your Safe Space',
-            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-              color: const Color(0xFF060E57),
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          SizedBox(height: isMobile ? 24 : 32),
-
-          // Quote container
-          Container(
-            padding: EdgeInsets.all(isMobile ? 24 : 40),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
+            borderRadius: BorderRadius.circular(isMobile ? 24 : 28),
+            boxShadow: [
+              BoxShadow(
                 color: const Color(0xFF060E57).withValues(alpha: 0.08),
-                width: 1,
+                blurRadius: 40,
+                offset: const Offset(0, 20),
+                spreadRadius: 0,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF060E57).withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Quote icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF060E57).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.format_quote,
-                    color: Color(0xFF060E57),
-                    size: 24,
-                  ),
-                ),
-
-                SizedBox(height: isMobile ? 16 : 20),
-
-                Text(
-                  'At our University Guidance Counseling, we understand that opening up can be challenging. However, we want to assure you that you are not alone. We are here to listen and support you without judgment.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF1E293B),
-                    fontStyle: FontStyle.italic,
-                    height: 1.7,
-                    letterSpacing: 0.2,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              BoxShadow(
+                color: const Color(0xFF060E57).withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+                spreadRadius: 0,
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFF060E57).withValues(alpha: 0.06),
+              width: 1,
             ),
           ),
-
-          SizedBox(height: isMobile ? 32 : 48),
-
-          // Call to action hint
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF060E57).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.touch_app, color: const Color(0xFF060E57), size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Use the menu to explore features',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF060E57),
-                    fontWeight: FontWeight.w500,
+          padding: EdgeInsets.all(isMobile ? 32 : 40),
+          child: Column(
+            children: [
+              // Decorative accent
+              Container(
+                width: 60,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
                   ),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ],
-            ),
+              ),
+
+              SizedBox(height: isMobile ? 24 : 32),
+
+              // Main title
+              Text(
+                'Welcome to Your Safe Space',
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  color: const Color(0xFF060E57),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 1.1,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              SizedBox(height: isMobile ? 20 : 24),
+
+              // Static message
+              Container(
+                padding: EdgeInsets.all(isMobile ? 20 : 24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.08),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF060E57).withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Quote icon
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF060E57).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.format_quote,
+                        color: Color(0xFF060E57),
+                        size: 20,
+                      ),
+                    ),
+
+                    SizedBox(height: isMobile ? 12 : 16),
+
+                    Text(
+                      'At our University Guidance Counseling, we understand that opening up can be challenging. However, we want to assure you that you are not alone. We are here to listen and support you without judgment.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: const Color(0xFF1E293B),
+                        fontStyle: FontStyle.italic,
+                        height: 1.6,
+                        letterSpacing: 0.2,
+                        fontSize: isMobile ? 14 : 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: isMobile ? 20 : 24),
+        // Quotes carousel
+        const QuotesCarousel(),
+      ],
     );
   }
 
