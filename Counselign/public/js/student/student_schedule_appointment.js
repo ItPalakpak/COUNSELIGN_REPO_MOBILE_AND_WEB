@@ -27,6 +27,9 @@ function scheduleAppointment() {
     scrollToTop();
 }
 
+// Global calendar picker instance
+let preferredDatePicker = null;
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize sticky header
     initStickyHeader();
@@ -38,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     checkAppointmentEligibility().then(() => {
         // Only proceed with other initializations if no pending appointment
         setMinimumAppointmentDate();
+        initializeCustomCalendarPicker();
         loadCounselors();
         setupFormSubmission();
         setupCounselorAvailabilityFiltering();
@@ -49,6 +53,43 @@ document.addEventListener('DOMContentLoaded', function () {
         setupAcknowledgmentValidation();
     });
 });
+
+// Initialize custom calendar picker
+function initializeCustomCalendarPicker() {
+    if (typeof CustomCalendarPicker === 'undefined') {
+        console.warn('CustomCalendarPicker not loaded');
+        return;
+    }
+
+    preferredDatePicker = new CustomCalendarPicker({
+        inputId: 'preferredDate',
+        userRole: 'student',
+        onDateSelect: (dateString) => {
+            // Refresh time slots when date is selected from calendar
+            refreshTimeSlotsForDate(dateString);
+        }
+    });
+
+    // Update calendar when counselor or consultation type changes
+    const counselorSelect = document.getElementById('counselorPreference');
+    const consultationTypeSelect = document.getElementById('consultationType');
+
+    if (counselorSelect) {
+        counselorSelect.addEventListener('change', () => {
+            if (preferredDatePicker) {
+                preferredDatePicker.updateCounselorId(counselorSelect.value);
+            }
+        });
+    }
+
+    if (consultationTypeSelect) {
+        consultationTypeSelect.addEventListener('change', () => {
+            if (preferredDatePicker) {
+                preferredDatePicker.updateConsultationType(consultationTypeSelect.value);
+            }
+        });
+    }
+}
 
 // Check for appointment eligibility (pending, approved, pending follow-up)
 async function checkAppointmentEligibility() {
@@ -304,6 +345,74 @@ function getDayOfWeek(dateString) {
     return days[date.getDay()];
 }
 
+// Load counselors who have schedules on a specific day of week
+function loadCounselorsForDay(dayOfWeek) {
+    const counselorSelect = document.getElementById('counselorPreference');
+    if (!counselorSelect) return;
+
+    // Show loading state
+    counselorSelect.disabled = true;
+    counselorSelect.innerHTML = '<option value="">Loading counselors...</option>';
+
+    fetch((window.BASE_URL || '/') + 'student/get-counselor-schedules', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('User not logged in');
+                }
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Clear loading state
+            counselorSelect.innerHTML = '<option value="">Select a counselor</option>';
+            
+            if (data.status === 'success' && data.schedules) {
+                // Get counselors who have schedules on the selected day
+                const counselorsForDay = data.schedules[dayOfWeek] || [];
+                
+                if (counselorsForDay.length > 0) {
+                    // Create a Set to avoid duplicates
+                    const addedCounselors = new Set();
+                    
+                    counselorsForDay.forEach(schedule => {
+                        if (schedule.counselor_id && !addedCounselors.has(schedule.counselor_id)) {
+                            const option = document.createElement('option');
+                            option.value = schedule.counselor_id;
+                            option.textContent = schedule.counselor_name || `Counselor ${schedule.counselor_id}`;
+                            counselorSelect.appendChild(option);
+                            addedCounselors.add(schedule.counselor_id);
+                        }
+                    });
+                } else {
+                    // No counselors available on this day
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = `No counselors available on ${dayOfWeek}s`;
+                    option.disabled = true;
+                    counselorSelect.appendChild(option);
+                }
+            } else {
+                throw new Error('Invalid data format received from server');
+            }
+        })
+        .catch(error => {
+            SecureLogger.info('Error loading counselors for day:', error.message);
+            counselorSelect.innerHTML = '<option value="">Error loading counselors</option>';
+        })
+        .finally(() => {
+            counselorSelect.disabled = false;
+        });
+}
+
 // Setup counselor availability filtering based on date and time changes
 function setupCounselorAvailabilityFiltering() {
     const preferredDateInput = document.getElementById('preferredDate');
@@ -315,27 +424,38 @@ function setupCounselorAvailabilityFiltering() {
         return;
     }
 
-    // Function to filter counselors when both date and time are selected
-    function filterCounselorsByAvailability() {
+    // Function to load counselors based on selected date (day of week)
+    function loadCounselorsForSelectedDate() {
         const selectedDate = preferredDateInput.value;
-        const selectedTime = preferredTimeSelect.value;
-
-        // Only filter if both date and time are selected
-        if (selectedDate && selectedTime) {
-            loadCounselorsByAvailability(selectedDate, selectedTime);
+        
+        if (selectedDate) {
+            const dayOfWeek = getDayOfWeek(selectedDate);
+            loadCounselorsForDay(dayOfWeek);
         } else {
-            // If either date or time is not selected, load all counselors
+            // If no date selected, load all counselors
             loadCounselors();
         }
     }
 
-    // Add event listeners for date and time changes
-    preferredDateInput.addEventListener('change', () => { refreshTimeSlotsForDate(preferredDateInput.value); filterCounselorsByAvailability(); });
-    preferredTimeSelect.addEventListener('change', filterCounselorsByAvailability);
+    // Add event listeners
+    preferredDateInput.addEventListener('change', () => { 
+        refreshTimeSlotsForDate(preferredDateInput.value); 
+        loadCounselorsForSelectedDate();
+    });
+    
+    // When counselor changes, refresh time slots for that counselor
+    counselorSelect.addEventListener('change', () => {
+        const selectedDate = preferredDateInput.value;
+        if (selectedDate) {
+            refreshTimeSlotsForDate(selectedDate);
+        }
+    });
 
-    // Initial load - if both date and time are already selected, filter immediately
-    if (preferredDateInput.value) { refreshTimeSlotsForDate(preferredDateInput.value); }
-    if (preferredDateInput.value && preferredTimeSelect.value) { filterCounselorsByAvailability(); }
+    // Initial load - if date is already selected, filter counselors and time slots
+    if (preferredDateInput.value) { 
+        refreshTimeSlotsForDate(preferredDateInput.value);
+        loadCounselorsForSelectedDate();
+    }
 }
 
 // Refresh the Preferred Time <select> to show only counselor-available 30-min ranges for the selected date,

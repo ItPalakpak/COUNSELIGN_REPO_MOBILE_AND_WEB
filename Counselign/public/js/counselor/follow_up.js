@@ -2,6 +2,8 @@
 let currentParentAppointmentId = null;
 let currentStudentId = null;
 let currentFollowUpSequence = 1;
+let preferredDatePicker = null;
+let editPreferredDatePicker = null;
 
 function navigateToHome() {
   window.location.href = (window.BASE_URL || "/") + "counselor/dashboard";
@@ -41,6 +43,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Setup modal event listeners
   setupModalEventListeners();
+
+  // Initialize custom calendar pickers for follow-up modals
+  initializeFollowUpCalendarPickers();
 });
 
 // Load completed appointments for the logged-in counselor
@@ -916,6 +921,74 @@ function populateTimeOptions(timeSlots, bookedTimes = []) {
     });
 }
 
+// Initialize custom calendar pickers for follow-up modals
+function initializeFollowUpCalendarPickers() {
+  if (typeof CustomCalendarPicker === 'undefined') {
+    console.warn('CustomCalendarPicker not loaded');
+    return;
+  }
+
+  // Initialize for create follow-up modal
+  const createModal = document.getElementById('createFollowUpModal');
+  if (createModal) {
+    createModal.addEventListener('shown.bs.modal', () => {
+      // Destroy existing picker if any
+      if (preferredDatePicker) {
+        preferredDatePicker.destroy();
+      }
+
+      // Create new picker
+      preferredDatePicker = new CustomCalendarPicker({
+        inputId: 'preferredDate',
+        userRole: 'counselor',
+        onDateSelect: (dateString) => {
+          // Load availability when date is selected
+          loadCounselorAvailability(dateString);
+        }
+      });
+    });
+
+    // Clean up when modal is hidden
+    createModal.addEventListener('hidden.bs.modal', () => {
+      if (preferredDatePicker) {
+        preferredDatePicker.destroy();
+        preferredDatePicker = null;
+      }
+    });
+  }
+
+  // Initialize for edit follow-up modal
+  const editModal = document.getElementById('editFollowUpModal');
+  if (editModal) {
+    editModal.addEventListener('shown.bs.modal', () => {
+      // Destroy existing picker if any
+      if (editPreferredDatePicker) {
+        editPreferredDatePicker.destroy();
+      }
+
+      // Create new picker
+      editPreferredDatePicker = new CustomCalendarPicker({
+        inputId: 'editPreferredDate',
+        userRole: 'counselor',
+        onDateSelect: (dateString) => {
+          // Load availability when date is selected
+          const dateInput = document.getElementById('editPreferredDate');
+          const sessionId = dateInput?.getAttribute('data-session-id');
+          loadCounselorAvailabilityForEdit(dateString, sessionId);
+        }
+      });
+    });
+
+    // Clean up when modal is hidden
+    editModal.addEventListener('hidden.bs.modal', () => {
+      if (editPreferredDatePicker) {
+        editPreferredDatePicker.destroy();
+        editPreferredDatePicker = null;
+      }
+    });
+  }
+}
+
 // Setup modal event listeners
 function setupModalEventListeners() {
   // Create new follow-up button
@@ -964,7 +1037,8 @@ function setupModalEventListeners() {
   if (editPreferredDateInput) {
     editPreferredDateInput.addEventListener("change", function () {
       if (this.value) {
-        loadCounselorAvailabilityForEdit(this.value);
+        const sessionId = this.getAttribute("data-session-id");
+        loadCounselorAvailabilityForEdit(this.value, sessionId);
       }
     });
   }
@@ -1334,94 +1408,104 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Open edit follow-up modal
-function openEditFollowUpModal(sessionId) {
-  // Get the session data from the displayed card
-  const sessionCard = document
-    .querySelector(
-      `.follow-up-session-card button[onclick*="openEditFollowUpModal(${sessionId})"]`
-    )
-    ?.closest(".follow-up-session-card");
-  if (!sessionCard) {
-    showError("Session data not found");
-    return;
-  }
+async function openEditFollowUpModal(sessionId) {
+  try {
+    // Fetch the session data from backend to get accurate data
+    const response = await fetch(
+      (window.BASE_URL || "/") + `counselor/follow-up/session?id=${sessionId}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Cache-Control": "no-cache",
+        },
+      }
+    );
 
-  // Extract session data from the card
-  const sessionDate =
-    sessionCard.querySelector(".session-date span")?.textContent;
-  const sessionTime =
-    sessionCard.querySelector(".session-time span")?.textContent;
-  const sessionType =
-    sessionCard.querySelector(".session-type span")?.textContent;
-  const sessionDescription =
-    sessionCard
-      .querySelector(".session-description")
-      ?.textContent?.replace("Description: ", "") || "";
-  const sessionReason =
-    sessionCard
-      .querySelector(".session-reason")
-      ?.textContent?.replace(
-        /^(Reason For Follow-up:|Reason For Cancellation:)/,
-        ""
-      )
-      .trim() || "";
-
-  // Set the session ID
-  document.getElementById("editFollowUpId").value = sessionId;
-
-  // Set minimum date to today
-  const today = new Date();
-  const minDate = today.toISOString().split("T")[0];
-  const dateInput = document.getElementById("editPreferredDate");
-  dateInput.setAttribute("min", minDate);
-
-  // Parse and set the date
-  if (sessionDate) {
-    const dateObj = new Date(sessionDate);
-    if (!isNaN(dateObj.getTime())) {
-      dateInput.value = dateObj.toISOString().split("T")[0];
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+
+    if (data.status !== "success" || !data.session) {
+      showError("Failed to load session data");
+      return;
+    }
+
+    const session = data.session;
+
+    // Set the session ID
+    document.getElementById("editFollowUpId").value = sessionId;
+
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDate = tomorrow.toISOString().split("T")[0];
+    const dateInput = document.getElementById("editPreferredDate");
+    dateInput.setAttribute("min", minDate);
+
+    // Set the date directly from backend data (YYYY-MM-DD format)
+    if (session.preferred_date) {
+      dateInput.value = session.preferred_date;
+    }
+
+    // Clear and populate time options
+    const timeSelect = document.getElementById("editPreferredTime");
+    timeSelect.innerHTML = '<option value="">Select a time</option>';
+
+    if (session.preferred_time) {
+      const option = document.createElement("option");
+      option.value = session.preferred_time;
+      option.textContent = session.preferred_time;
+      option.selected = true;
+      timeSelect.appendChild(option);
+    }
+    timeSelect.dataset.currentValue = session.preferred_time || "";
+
+    // Set consultation type
+    if (session.consultation_type) {
+      document.getElementById("editConsultationType").value =
+        session.consultation_type;
+    }
+
+    // Set description and reason
+    document.getElementById("editDescription").value =
+      session.description || "";
+    document.getElementById("editReason").value = session.reason || "";
+
+    // Store session ID for later use in availability checks
+    dateInput.setAttribute("data-session-id", sessionId);
+    timeSelect.setAttribute("data-session-id", sessionId);
+
+    // Disable dates without availability or fully booked
+    disableUnavailableDates(dateInput);
+
+    if (dateInput.value) {
+      loadCounselorAvailabilityForEdit(dateInput.value, sessionId);
+    }
+
+    // Show the modal
+    const modal = new bootstrap.Modal(
+      document.getElementById("editFollowUpModal")
+    );
+    modal.show();
+  } catch (error) {
+    console.error("Error loading session for edit:", error);
+    showError("Error loading session data: " + error.message);
   }
-
-  // Clear and populate time options
-  const timeSelect = document.getElementById("editPreferredTime");
-  timeSelect.innerHTML = '<option value="">Select a time</option>';
-
-  if (sessionTime) {
-    const option = document.createElement("option");
-    option.value = sessionTime;
-    option.textContent = sessionTime;
-    option.selected = true;
-    timeSelect.appendChild(option);
-  }
-  timeSelect.dataset.currentValue = sessionTime || "";
-
-  // Set consultation type
-  if (sessionType) {
-    document.getElementById("editConsultationType").value = sessionType;
-  }
-
-  // Set description and reason
-  document.getElementById("editDescription").value = sessionDescription;
-  document.getElementById("editReason").value = sessionReason;
-
-  // Disable dates without availability or fully booked
-  disableUnavailableDates(dateInput);
-
-  if (dateInput.value) {
-    loadCounselorAvailabilityForEdit(dateInput.value);
-  }
-
-  // Show the modal
-  const modal = new bootstrap.Modal(
-    document.getElementById("editFollowUpModal")
-  );
-  modal.show();
 }
 
 // Load counselor availability for edit modal
-async function loadCounselorAvailabilityForEdit(date) {
+async function loadCounselorAvailabilityForEdit(date, sessionId = null) {
   try {
+    // Get session ID from parameter or from the date input's data attribute
+    if (!sessionId) {
+      const dateInput = document.getElementById("editPreferredDate");
+      sessionId = dateInput?.getAttribute("data-session-id");
+    }
+
     const response = await fetch(
       (window.BASE_URL || "/") +
         `counselor/follow-up/availability?date=${date}`,
@@ -1442,21 +1526,26 @@ async function loadCounselorAvailabilityForEdit(date) {
     const data = await response.json();
 
     if (data.status === "success") {
-      // Also fetch booked ranges to filter out
+      // Also fetch booked ranges to filter out, excluding current session
       let booked = [];
       try {
-        const bookedRes = await fetch(
+        let bookedUrl =
           (window.BASE_URL || "/") +
-            `counselor/follow-up/booked-times?date=${date}`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
+          `counselor/follow-up/booked-times?date=${date}`;
+        
+        // Exclude current session from booked times to allow keeping the same time
+        if (sessionId) {
+          bookedUrl += `&exclude_follow_up_id=${sessionId}`;
+        }
+
+        const bookedRes = await fetch(bookedUrl, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache",
+          },
+        });
         if (bookedRes.ok) {
           const bookedData = await bookedRes.json();
           if (

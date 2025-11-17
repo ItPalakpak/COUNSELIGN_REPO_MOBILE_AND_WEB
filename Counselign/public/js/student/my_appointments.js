@@ -67,6 +67,9 @@ function extractStartEnd24h(rangeStr) {
   return { start: start, end: end };
 }
 
+// Global calendar picker instance
+let editDatePicker = null;
+
 document.addEventListener("DOMContentLoaded", function () {
   // Initialize variables
   let allAppointments = [];
@@ -82,6 +85,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Add event listeners
   if (searchInput) searchInput.addEventListener("input", filterAppointments);
   if (dateFilter) dateFilter.addEventListener("change", filterAppointments);
+
+  // Initialize custom calendar picker for edit modal
+  initializeEditModalCalendarPicker();
 
   // Setup counselor schedules in drawer
   setupCounselorSchedulesInDrawer();
@@ -475,6 +481,15 @@ document.addEventListener("DOMContentLoaded", function () {
                           appointment.preferred_date
                         }" disabled>
                     </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Counselor Preference</label>
+                        <select class="form-control" name="counselor_preference" disabled>${counselorOptions}</select>
+                    </div>
+                    
+                </div>
+                <div class="row g-3 align-items-center mt-1">
+
                     <div class="col-md-4">
                         <label class="form-label mb-1">Preferred Time</label>
                         <select class="form-control" name="preferred_time" disabled>
@@ -483,13 +498,6 @@ document.addEventListener("DOMContentLoaded", function () {
                               appointment.preferred_time
                             }" selected>${appointment.preferred_time}</option>
                         </select>
-                    </div>
-                </div>
-                <div class="row g-3 align-items-center mt-1">
-
-                    <div class="col-md-4">
-                        <label class="form-label mb-1">Counselor Preference</label>
-                        <select class="form-control" name="counselor_preference" disabled>${counselorOptions}</select>
                     </div>
                     
                     <div class="col-md-4">
@@ -588,6 +596,38 @@ document.addEventListener("DOMContentLoaded", function () {
             enableBtn.textContent = "Cancel Edit";
             enableBtn.dataset.editing = "true";
 
+            // Initialize custom calendar picker for this date input
+            if (dateInput && typeof CustomCalendarPicker !== 'undefined') {
+              // Wrap date input if not already wrapped
+              if (!dateInput.parentElement.classList.contains('custom-calendar-input-wrapper')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-calendar-input-wrapper';
+                dateInput.parentNode.insertBefore(wrapper, dateInput);
+                wrapper.appendChild(dateInput);
+              }
+
+              // Give input a unique ID if it doesn't have one
+              if (!dateInput.id) {
+                dateInput.id = `pending-date-${appointment.id}`;
+              }
+
+              // Initialize calendar picker
+              const pendingDatePicker = new CustomCalendarPicker({
+                inputId: dateInput.id,
+                userRole: 'student',
+                counselorId: appointment.counselor_preference,
+                consultationType: appointment.consultation_type,
+                onDateSelect: (dateString) => {
+                  // Trigger change event to refresh time slots
+                  const event = new Event('change', { bubbles: true });
+                  dateInput.dispatchEvent(event);
+                }
+              });
+
+              // Store picker instance to destroy later
+              form.dataset.calendarPicker = 'initialized';
+            }
+
             // When entering edit mode, load time slots for the selected counselor only
             if (
               dateInput &&
@@ -654,6 +694,14 @@ document.addEventListener("DOMContentLoaded", function () {
             saveBtn.disabled = true;
             enableBtn.textContent = "Enable Edit";
             enableBtn.dataset.editing = "false";
+
+            // Clean up calendar picker button if exists
+            if (dateInput) {
+              const calendarBtn = dateInput.parentElement?.querySelector('.custom-calendar-btn');
+              if (calendarBtn) {
+                calendarBtn.remove();
+              }
+            }
           }
         });
         saveBtn.addEventListener("click", function () {
@@ -1292,6 +1340,16 @@ document.addEventListener("DOMContentLoaded", function () {
                             )}</p>
                         </div>
                     </div>
+
+                    <div class="detail-item">
+                        <i class="fas fa-user-md detail-icon"></i>
+                        <div class="detail-content">
+                            <div class="detail-label">Counselor</div>
+                            <p class="detail-value">${
+                              appointment.counselor_name || "Not assigned"
+                            }</p>
+                        </div>
+                    </div>
                     
                     <div class="detail-item">
                         <i class="fas fa-clock detail-icon"></i>
@@ -1299,16 +1357,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             <div class="detail-label">Time</div>
                             <p class="detail-value">${
                               appointment.preferred_time
-                            }</p>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-item">
-                        <i class="fas fa-user-md detail-icon"></i>
-                        <div class="detail-content">
-                            <div class="detail-label">Counselor</div>
-                            <p class="detail-value">${
-                              appointment.counselor_name || "Not assigned"
                             }</p>
                         </div>
                     </div>
@@ -2877,7 +2925,7 @@ function setupEditModalEventListeners() {
   }
 }
 
-// Update counselor options for edit modal based on availability
+// Update counselor options for edit modal based on day of week
 async function updateCounselorOptionsForEditModal(
   preferredDate,
   preferredTime,
@@ -2891,33 +2939,16 @@ async function updateCounselorOptionsForEditModal(
 
   try {
     const dayOfWeek = getDayOfWeek(preferredDate);
-    const normalizedTimeRange = normalizePreferredTimeTo24hRange(preferredTime);
-    const timeBounds = extractStartEnd24h(preferredTime);
 
-    const url = new URL(
-      (window.BASE_URL || "/") + "student/get-counselors-by-availability"
-    );
-    url.searchParams.append("date", preferredDate);
-    url.searchParams.append("day", dayOfWeek);
-    if (preferredTime) {
-      url.searchParams.append("time", normalizedTimeRange || preferredTime);
-      if (timeBounds) {
-        url.searchParams.append("from", timeBounds.start);
-        url.searchParams.append("to", timeBounds.end);
-        url.searchParams.append("timeMode", "overlap");
+    // Fetch counselor schedules to filter by day of week
+    const response = await fetch(
+      (window.BASE_URL || "/") + "student/get-counselor-schedules",
+      {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "application/json", "Cache-Control": "no-cache" },
       }
-    } else {
-      url.searchParams.append("time", "00:00-23:59");
-      url.searchParams.append("from", "00:00");
-      url.searchParams.append("to", "23:59");
-      url.searchParams.append("timeMode", "overlap");
-    }
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      credentials: "include",
-      headers: { Accept: "application/json", "Cache-Control": "no-cache" },
-    });
+    );
 
     if (!response.ok) throw new Error("Network error");
     const data = await response.json();
@@ -2928,28 +2959,42 @@ async function updateCounselorOptionsForEditModal(
       '<option value="No preference">No preference</option>'
     );
 
-    if (data.status === "success" && Array.isArray(data.counselors)) {
-      data.counselors.forEach((c) => {
-        const opt = document.createElement("option");
-        opt.value = c.counselor_id;
-        opt.textContent = c.name;
-        counselorSelect.appendChild(opt);
-      });
+    if (data.status === "success" && data.schedules) {
+      // Get counselors who have schedules on the selected day
+      const counselorsForDay = data.schedules[dayOfWeek] || [];
 
-      if (currentValue || originalValue) {
-        counselorSelect.value = currentValue || originalValue;
-      }
+      if (counselorsForDay.length > 0) {
+        // Create a Set to avoid duplicates
+        const addedCounselors = new Set();
 
-      if (data.counselors.length === 0) {
+        counselorsForDay.forEach((schedule) => {
+          if (
+            schedule.counselor_id &&
+            !addedCounselors.has(schedule.counselor_id)
+          ) {
+            const opt = document.createElement("option");
+            opt.value = schedule.counselor_id;
+            opt.textContent =
+              schedule.counselor_name || `Counselor ${schedule.counselor_id}`;
+            counselorSelect.appendChild(opt);
+            addedCounselors.add(schedule.counselor_id);
+          }
+        });
+
+        // Restore selected counselor if available
+        if (currentValue || originalValue) {
+          counselorSelect.value = currentValue || originalValue;
+        }
+      } else {
         const opt = document.createElement("option");
         opt.value = "";
-        opt.textContent = "No counselors available for the selected date/time.";
+        opt.textContent = `No counselors available on ${dayOfWeek}s`;
         opt.disabled = true;
         counselorSelect.appendChild(opt);
       }
     }
   } catch (e) {
-    console.error("Error loading counselors by availability:", e);
+    console.error("Error loading counselors by day:", e);
     counselorSelect.innerHTML =
       '<option value="">Error loading counselors</option>';
   } finally {
@@ -3007,4 +3052,64 @@ function formatMinutesTo12h_student(total) {
   if (h12 === 0) h12 = 12;
   const mm = String(minutes).padStart(2, "0");
   return `${h12}:${mm} ${ampm}`;
+}
+
+// Initialize custom calendar picker for edit modal
+function initializeEditModalCalendarPicker() {
+  if (typeof CustomCalendarPicker === 'undefined') {
+    console.warn('CustomCalendarPicker not loaded');
+    return;
+  }
+
+  // Initialize when edit modal is shown
+  const editModal = document.getElementById('editAppointmentModal');
+  if (editModal) {
+    editModal.addEventListener('shown.bs.modal', () => {
+      // Destroy existing picker if any
+      if (editDatePicker) {
+        editDatePicker.destroy();
+      }
+
+      // Create new picker for edit modal
+      editDatePicker = new CustomCalendarPicker({
+        inputId: 'editDate',
+        userRole: 'student',
+        onDateSelect: (dateString) => {
+          // Refresh time slots when date is selected from calendar
+          const counselorId = document.getElementById('editCounselorPreference')?.value || '';
+          const consultationType = document.getElementById('editConsultationType')?.value || '';
+          const currentTime = document.getElementById('editTime')?.value || '';
+          refreshEditModalTimeSlots(dateString, currentTime, counselorId, consultationType);
+        }
+      });
+
+      // Update calendar when counselor or consultation type changes
+      const counselorSelect = document.getElementById('editCounselorPreference');
+      const consultationTypeSelect = document.getElementById('editConsultationType');
+
+      if (counselorSelect) {
+        counselorSelect.addEventListener('change', () => {
+          if (editDatePicker) {
+            editDatePicker.updateCounselorId(counselorSelect.value);
+          }
+        });
+      }
+
+      if (consultationTypeSelect) {
+        consultationTypeSelect.addEventListener('change', () => {
+          if (editDatePicker) {
+            editDatePicker.updateConsultationType(consultationTypeSelect.value);
+          }
+        });
+      }
+    });
+
+    // Clean up when modal is hidden
+    editModal.addEventListener('hidden.bs.modal', () => {
+      if (editDatePicker) {
+        editDatePicker.destroy();
+        editDatePicker = null;
+      }
+    });
+  }
 }

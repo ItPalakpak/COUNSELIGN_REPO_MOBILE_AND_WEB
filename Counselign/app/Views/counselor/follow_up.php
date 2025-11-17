@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= base_url('css/counselor/follow_up.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/counselor/header.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>"
+    <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/customCalendarPicker.css') ?>">
         </head>
 
 <body>
@@ -392,6 +393,7 @@
         window.BASE_URL = "<?= base_url() ?>";
     </script>
 
+    <script src="<?= base_url('js/utils/customCalendarPicker.js') ?>"></script>
     <script src="<?= base_url('js/counselor/follow_up.js') ?>" defer></script>
     <script src="<?= base_url('js/counselor/counselor_drawer.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>

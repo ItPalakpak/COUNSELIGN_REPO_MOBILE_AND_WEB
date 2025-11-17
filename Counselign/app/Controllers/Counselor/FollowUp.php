@@ -144,6 +144,47 @@ class FollowUp extends BaseController
     }
 
     /**
+     * Get a specific follow-up session by ID
+     */
+    public function getFollowUpSession()
+    {
+        // Check if user is logged in and is counselor
+        if (!session()->get('logged_in') || session()->get('role') !== 'counselor') {
+            return $this->failUnauthorized('User not logged in or not authorized');
+        }
+
+        try {
+            $sessionId = $this->request->getGet('id');
+            
+            if (!$sessionId) {
+                return $this->fail('Session ID is required');
+            }
+
+            $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
+            $followUpModel = new FollowUpAppointmentModel();
+            $session = $followUpModel->find($sessionId);
+
+            if (!$session) {
+                return $this->failNotFound('Follow-up session not found');
+            }
+
+            // Ensure counselor owns this follow-up
+            if ($session['counselor_id'] !== $counselorId) {
+                return $this->failForbidden('You are not authorized to view this follow-up session');
+            }
+
+            return $this->respond([
+                'status' => 'success',
+                'session' => $session
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting follow-up session: ' . $e->getMessage());
+            return $this->fail('Failed to retrieve follow-up session');
+        }
+    }
+
+    /**
      * Get counselor availability for a specific date
      */
     public function getCounselorAvailability()
@@ -241,7 +282,10 @@ class FollowUp extends BaseController
     }
 
     /**
-     * Get booked time ranges for the counselor for a specific date (approved regular appointments and pending/approved follow-ups)
+     * Get booked time ranges for the counselor for a specific date
+     * Checks:
+     * - Pending OR approved appointments (from appointments table)
+     * - Pending follow-ups (from follow_up_appointments table)
      * Returns an array of strings matching the preferred_time values (e.g., "10:00 AM - 10:30 AM").
      */
     public function getBookedTimesForDate()
@@ -255,36 +299,49 @@ class FollowUp extends BaseController
             }
 
             $date = trim((string) $this->request->getGet('date'));
-            if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            if ($date === '' || !preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date)) {
                 return $this->respond([
                     'status' => 'error',
                     'message' => 'Invalid or missing date'
                 ], 400);
             }
 
+            // Get optional exclude_follow_up_id to exclude current session being edited
+            $excludeFollowUpId = $this->request->getGet('exclude_follow_up_id');
+            $excludeFollowUpId = $excludeFollowUpId ? (int)$excludeFollowUpId : null;
+
             $counselorId = session()->get('user_id_display') ?? session()->get('user_id');
             $db = \Config\Database::connect();
 
-            // Approved regular appointments for this counselor
+            // Get pending OR approved appointments for this counselor on the selected date
             $appointments = $db->table('appointments')
                 ->select('preferred_time')
                 ->where('preferred_date', $date)
-                ->where('status', 'approved')
                 ->where('counselor_preference', $counselorId)
+                ->whereIn('status', ['pending', 'approved'])
                 ->get()->getResultArray();
 
-            // Pending/approved follow-ups for this counselor
-            $followUps = $db->table('follow_up_appointments')
+            // Get pending follow-ups for this counselor on the selected date (excluding current session if editing)
+            $followUpsQuery = $db->table('follow_up_appointments')
                 ->select('preferred_time')
                 ->where('preferred_date', $date)
                 ->where('counselor_id', $counselorId)
-                ->whereIn('status', ['pending','approved'])
-                ->get()->getResultArray();
+                ->where('status', 'pending');
+            
+            // Exclude the current follow-up session being edited
+            if ($excludeFollowUpId !== null) {
+                $followUpsQuery->where('id !=', $excludeFollowUpId);
+            }
+            
+            $followUps = $followUpsQuery->get()->getResultArray();
 
+            // Merge and deduplicate time slots
             $times = [];
-            foreach (array_merge($appointments, $followUps) as $r) {
-                $t = trim((string) ($r['preferred_time'] ?? ''));
-                if ($t !== '') { $times[] = $t; }
+            foreach (array_merge($appointments, $followUps) as $record) {
+                $timeSlot = trim((string) ($record['preferred_time'] ?? ''));
+                if ($timeSlot !== '') {
+                    $times[] = $timeSlot;
+                }
             }
 
             $times = array_values(array_unique($times));

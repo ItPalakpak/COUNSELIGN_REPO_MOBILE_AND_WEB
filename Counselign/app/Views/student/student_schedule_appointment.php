@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="<?= base_url('css/student/student_schedule_appointment.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/student/header.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/utils/customCalendarPicker.css') ?>">
 </head>
 
 <body>
@@ -143,6 +144,16 @@
                                 <small>Select a date at least one day in the future</small>
                             </div>
 
+                            <!-- Counselor & Consultation Type Section -->
+                            <div class="form-group">
+                                <label for="counselorPreference">
+                                    Counselor Preference <span class="required-asterisk">*</span>
+                                </label>
+                                <select id="counselorPreference" name="counselorPreference" class="form-control" required>
+                                    <option value="">Select a counselor</option>
+                                </select>
+                            </div>
+
                             <div class="form-group">
                                 <label for="preferredTime">
                                     Preferred Time <span class="required-asterisk">*</span>
@@ -167,15 +178,7 @@
                                 </select>
                             </div>
 
-                            <!-- Counselor & Consultation Type Section -->
-                            <div class="form-group">
-                                <label for="counselorPreference">
-                                    Counselor Preference <span class="required-asterisk">*</span>
-                                </label>
-                                <select id="counselorPreference" name="counselorPreference" class="form-control" required>
-                                    <option value="">Select a counselor</option>
-                                </select>
-                            </div>
+                            
 
                             <div class="form-group">
                                 <label for="methodType">
@@ -386,6 +389,7 @@
     <script src="<?= base_url('js/modals/student_dashboard_modals.js') ?>"></script>
     <script src="<?= base_url('js/utils/timeFormatter.js') ?>"></script>
     <script src="<?= base_url('js/student/student_header_drawer.js') ?>"></script>
+    <script src="<?= base_url('js/utils/customCalendarPicker.js') ?>"></script>
     <script src="<?= base_url('js/student/student_schedule_appointment.js') ?>" defer></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
     <script src="<?= base_url('js/student/logout.js') ?>"></script>

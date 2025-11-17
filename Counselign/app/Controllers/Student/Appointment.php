@@ -801,11 +801,12 @@ class Appointment extends BaseController
                 }
                 
             } else {
-                // No consultation type specified - use old logic (backward compatibility)
+                // No consultation type specified - block all pending and approved appointments regardless of type
+                // This ensures double-booking prevention even when consultation type is not yet selected
                 $builder = $db->table('appointments')
                     ->select('preferred_time')
                     ->where('preferred_date', $date)
-                    ->where('status', 'approved');
+                    ->whereIn('status', ['pending', 'approved']);
                 if ($counselorId !== '' && $counselorId !== 'No preference') {
                     $builder->where('counselor_preference', $counselorId);
                 }

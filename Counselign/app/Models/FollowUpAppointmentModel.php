@@ -224,17 +224,20 @@ class FollowUpAppointmentModel extends Model
     }
 
     /**
-     * Check if counselor has follow-up conflicts on specific date/time
+     * Check if counselor has conflicts on specific date/time
+     * Checks:
+     * - Pending OR approved appointments (from appointments table)
+     * - Pending follow-ups (from follow_up_appointments table)
      * 
      * @param string $counselorId
      * @param string $date Format: YYYY-MM-DD
-     * @param string $time
+     * @param string $time Time range format: "HH:MM AM - HH:MM PM"
      * @param int|null $excludeFollowUpId Optional follow-up ID to exclude from check (for updates)
      * @return bool True if conflict exists, false if available
      */
     public function hasCounselorFollowUpConflict(string $counselorId, string $date, string $time, ?int $excludeFollowUpId = null): bool
     {
-        // Get all pending follow-up sessions for the counselor on the specified date
+        // Check 1: Get all pending follow-up sessions for the counselor on the specified date
         $builder = $this->where('preferred_date', $date)
                         ->where('counselor_id', $counselorId)
                         ->where('status', 'pending');
@@ -252,21 +255,43 @@ class FollowUpAppointmentModel extends Model
             }
         }
         
+        // Check 2: Get all pending OR approved appointments for the counselor on the specified date
+        $db = \Config\Database::connect();
+        $appointments = $db->table('appointments')
+                          ->select('preferred_time')
+                          ->where('preferred_date', $date)
+                          ->where('counselor_preference', $counselorId)
+                          ->whereIn('status', ['pending', 'approved'])
+                          ->get()
+                          ->getResultArray();
+        
+        // Check if any of the existing appointments overlap with the requested time
+        foreach ($appointments as $appointment) {
+            if ($this->timeRangesOverlap($time, $appointment['preferred_time'])) {
+                return true;
+            }
+        }
+        
         return false;
     }
 
     /**
-     * Get counselor follow-up conflicts on specific date/time
+     * Get counselor conflicts on specific date/time
+     * Checks:
+     * - Pending OR approved appointments (from appointments table)
+     * - Pending follow-ups (from follow_up_appointments table)
      * 
      * @param string $counselorId
      * @param string $date Format: YYYY-MM-DD
-     * @param string $time
+     * @param string $time Time range format: "HH:MM AM - HH:MM PM"
      * @param int|null $excludeFollowUpId Optional follow-up ID to exclude from check
-     * @return array Array of conflicting follow-up appointments
+     * @return array Array of conflicting appointments and follow-ups
      */
     public function getCounselorFollowUpConflicts(string $counselorId, string $date, string $time, ?int $excludeFollowUpId = null): array
     {
-        // Get all pending follow-up sessions for the counselor on the specified date
+        $conflicts = [];
+        
+        // Check 1: Get all pending follow-up sessions for the counselor on the specified date
         $builder = $this->where('preferred_date', $date)
                         ->where('counselor_id', $counselorId)
                         ->where('status', 'pending');
@@ -278,14 +303,35 @@ class FollowUpAppointmentModel extends Model
         $followUpSessions = $builder->findAll();
         
         // Filter to only return sessions that overlap with the requested time
-        $conflictingSessions = [];
         foreach ($followUpSessions as $session) {
             if ($this->timeRangesOverlap($time, $session['preferred_time'])) {
-                $conflictingSessions[] = $session;
+                $conflicts[] = [
+                    'type' => 'follow_up',
+                    'data' => $session
+                ];
             }
         }
         
-        return $conflictingSessions;
+        // Check 2: Get all pending OR approved appointments for the counselor on the specified date
+        $db = \Config\Database::connect();
+        $appointments = $db->table('appointments')
+                          ->where('preferred_date', $date)
+                          ->where('counselor_preference', $counselorId)
+                          ->whereIn('status', ['pending', 'approved'])
+                          ->get()
+                          ->getResultArray();
+        
+        // Filter to only return appointments that overlap with the requested time
+        foreach ($appointments as $appointment) {
+            if ($this->timeRangesOverlap($time, $appointment['preferred_time'])) {
+                $conflicts[] = [
+                    'type' => 'appointment',
+                    'data' => $appointment
+                ];
+            }
+        }
+        
+        return $conflicts;
     }
 
     /**
