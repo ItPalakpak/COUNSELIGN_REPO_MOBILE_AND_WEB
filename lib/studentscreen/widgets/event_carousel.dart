@@ -15,8 +15,8 @@ class _EventCarouselState extends State<EventCarousel> {
   List<Event> _events = [];
   bool _isLoading = true;
   int _currentIndex = 0;
+  bool _isForward = true;
   Timer? _autoScrollTimer;
-  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -27,7 +27,6 @@ class _EventCarouselState extends State<EventCarousel> {
   @override
   void dispose() {
     _autoScrollTimer?.cancel();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -55,14 +54,30 @@ class _EventCarouselState extends State<EventCarousel> {
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
-      if (_events.isEmpty || !_pageController.hasClients) return;
-      
-      final nextIndex = (_currentIndex + 1) % _events.length;
-      _pageController.animateToPage(
-        nextIndex,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+      if (!mounted || _events.isEmpty) {
+        return;
+      }
+      _goToNextEvent();
+    });
+  }
+
+  void _goToPreviousEvent() {
+    if (_events.length <= 1) {
+      return;
+    }
+    setState(() {
+      _isForward = false;
+      _currentIndex = (_currentIndex - 1 + _events.length) % _events.length;
+    });
+  }
+
+  void _goToNextEvent() {
+    if (_events.length <= 1) {
+      return;
+    }
+    setState(() {
+      _isForward = true;
+      _currentIndex = (_currentIndex + 1) % _events.length;
     });
   }
 
@@ -144,8 +159,8 @@ class _EventCarouselState extends State<EventCarousel> {
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(vertical: isMobile ? 16 : 20),
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      margin: EdgeInsets.symmetric(vertical: isMobile ? 12 : 16),
+      padding: EdgeInsets.all(isMobile ? 14 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -196,24 +211,38 @@ class _EventCarouselState extends State<EventCarousel> {
               ),
             ],
           ),
-          SizedBox(height: isMobile ? 12 : 16),
+          SizedBox(height: isMobile ? 8 : 12),
 
-          // Carousel
-          SizedBox(
-            height: isMobile ? 200 : 250,
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() => _currentIndex = index);
+          // Carousel (single card with dynamic height + slide/fade animation)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                final isForward = _isForward;
+                final offsetTween = Tween<Offset>(
+                  begin: Offset(isForward ? 0.15 : -0.15, 0),
+                  end: Offset.zero,
+                );
+                return SlideTransition(
+                  position: animation.drive(offsetTween),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                );
               },
-              itemCount: _events.length,
-              itemBuilder: (context, index) {
-                return _buildEventCard(_events[index], isMobile);
-              },
+              child: KeyedSubtree(
+                key: ValueKey<int>(_currentIndex),
+                child: _buildEventCard(_events[_currentIndex], isMobile),
+              ),
             ),
           ),
 
-          SizedBox(height: isMobile ? 12 : 16),
+          SizedBox(height: isMobile ? 10 : 12),
 
           // Controls
           Row(
@@ -223,12 +252,8 @@ class _EventCarouselState extends State<EventCarousel> {
               IconButton(
                 onPressed: _events.length > 1
                     ? () {
-                        final prevIndex = (_currentIndex - 1 + _events.length) % _events.length;
-                        _pageController.animateToPage(
-                          prevIndex,
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOut,
-                        );
+                        _goToPreviousEvent();
+                        _startAutoScroll();
                       }
                     : null,
                 icon: const Icon(Icons.chevron_left),
@@ -258,12 +283,8 @@ class _EventCarouselState extends State<EventCarousel> {
               IconButton(
                 onPressed: _events.length > 1
                     ? () {
-                        final nextIndex = (_currentIndex + 1) % _events.length;
-                        _pageController.animateToPage(
-                          nextIndex,
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOut,
-                        );
+                        _goToNextEvent();
+                        _startAutoScroll();
                       }
                     : null,
                 icon: const Icon(Icons.chevron_right),
@@ -388,20 +409,17 @@ class _EventCarouselState extends State<EventCarousel> {
                 ),
             ],
           ),
-          SizedBox(height: isMobile ? 8 : 12),
+          SizedBox(height: isMobile ? 6 : 8),
 
           // Description
-          Expanded(
-            child: Text(
-              event.description,
-              style: TextStyle(
-                fontSize: isMobile ? 12 : 14,
-                color: const Color(0xFF475569),
-                height: 1.5,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+          Text(
+            event.description,
+            style: TextStyle(
+              fontSize: isMobile ? 12 : 14,
+              color: const Color(0xFF475569),
+              height: 1.5,
             ),
+            softWrap: true,
           ),
         ],
       ),

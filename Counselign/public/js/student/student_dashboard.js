@@ -2077,12 +2077,11 @@ function renderResourcesAccordion(resources) {
           </div>
           <div class="d-flex gap-2">
             ${previewButton}
-            <a href="${baseUrl}student/resources/download/${resource.id}" 
-               class="btn btn-sm btn-primary download-resource-btn" 
-               data-resource-id="${resource.id}"
-               download>
+            <button class="btn btn-sm btn-primary download-resource-btn" 
+                    data-resource-id="${resource.id}"
+                    type="button">
               <i class="fas fa-download me-1"></i>Download
-            </a>
+            </button>
           </div>
         </div>
       `;
@@ -2179,13 +2178,18 @@ document.addEventListener('click', function(e) {
 
   const downloadBtn = e.target.closest('.download-resource-btn');
   if (downloadBtn) {
+    e.preventDefault();
     const resourceId = parseInt(downloadBtn.getAttribute('data-resource-id'));
-    if (window.trackResourceDownload) {
-      window.trackResourceDownload(resourceId);
-    }
+    downloadStudentResource(resourceId);
     return;
   }
 });
+
+// Download function for student resources
+function downloadStudentResource(id) {
+  const baseUrl = window.BASE_URL || '/';
+  window.location.href = baseUrl + 'student/resources/download/' + id;
+}
 
 // Load resources on page load
 loadResources();

@@ -586,29 +586,27 @@ class _ResourcesAccordionState extends State<ResourcesAccordion> {
                       Row(
                         children: [
                           if (resource.isFile) ...[
-                            if (resource.isPdf || resource.isImage) ...[
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _showPreview(resource),
-                                  icon: const Icon(Icons.visibility, size: 16),
-                                  label: Text(
-                                    'Preview',
-                                    style: TextStyle(fontSize: isMobile ? 12 : 14),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showPreview(resource),
+                                icon: const Icon(Icons.visibility, size: 16),
+                                label: Text(
+                                  'Preview',
+                                  style: TextStyle(fontSize: isMobile ? 12 : 14),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isMobile ? 8 : 10,
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF10B981),
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isMobile ? 8 : 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                            ],
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: () => _handleResourceTap(resource),
