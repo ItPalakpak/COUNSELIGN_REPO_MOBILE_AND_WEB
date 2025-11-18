@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'state/counselor_dashboard_viewmodel.dart';
+import 'state/quote_viewmodel.dart';
+import 'models/quote.dart';
 import 'widgets/counselor_screen_wrapper.dart';
 import 'widgets/notifications_dropdown.dart';
+import 'widgets/counselor_resources_accordion.dart';
+import 'widgets/my_quotes_modal.dart';
+import 'widgets/quote_submission_modal.dart';
 import '../routes.dart';
 import '../utils/online_status.dart';
 
@@ -16,12 +21,14 @@ class CounselorDashboardScreen extends StatefulWidget {
 
 class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
   late CounselorDashboardViewModel _viewModel;
+  late QuoteViewModel _quoteViewModel;
 
   @override
   void initState() {
     super.initState();
     _viewModel = CounselorDashboardViewModel();
     _viewModel.initialize();
+    _quoteViewModel = QuoteViewModel();
   }
 
   @override
@@ -32,8 +39,11 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _viewModel,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _viewModel),
+        ChangeNotifierProvider.value(value: _quoteViewModel),
+      ],
       child: Consumer<CounselorDashboardViewModel>(
         builder: (context, viewModel, child) {
           return CounselorScreenWrapper(
@@ -65,6 +75,8 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
           _buildProfileSection(context),
           SizedBox(height: isMobile ? 20 : 30),
           _buildContentPanel(context),
+          SizedBox(height: isMobile ? 20 : 24),
+          const CounselorResourcesAccordion(),
         ],
       ),
     );
@@ -78,7 +90,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
       builder: (context, viewModel, child) {
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.all(isMobile ? 10 : 20),
+          padding: EdgeInsets.all(isMobile ? 8 : 16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -97,8 +109,8 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                 onTap: () =>
                     Navigator.of(context).pushNamed(AppRoutes.counselorProfile),
                 child: Container(
-                  width: isMobile ? 70 : 90,
-                  height: isMobile ? 70 : 90,
+                  width: isMobile ? 60 : 90,
+                  height: isMobile ? 60 : 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
@@ -115,14 +127,14 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                       : ClipOval(
                           child: Image.network(
                             viewModel.profileImageUrl,
-                            width: isMobile ? 70 : 90,
-                            height: isMobile ? 70 : 90,
+                            width: isMobile ? 60 : 90,
+                            height: isMobile ? 60 : 90,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return SizedBox(
-                                width: isMobile ? 70 : 90,
-                                height: isMobile ? 70 : 90,
+                                width: isMobile ? 60 : 90,
+                                height: isMobile ? 60 : 90,
                                 child: CircularProgressIndicator(
                                   value:
                                       loadingProgress.expectedTotalBytes != null
@@ -141,23 +153,23 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                               );
                               return Image.asset(
                                 'Photos/profile.png',
-                                width: isMobile ? 70 : 90,
-                                height: isMobile ? 70 : 90,
+                                width: isMobile ? 60 : 90,
+                                height: isMobile ? 60 : 90,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   debugPrint(
                                     '🖼️ Dashboard Screen: Image.asset error: $error',
                                   );
                                   return Container(
-                                    width: isMobile ? 70 : 90,
-                                    height: isMobile ? 70 : 90,
+                                    width: isMobile ? 60 : 90,
+                                    height: isMobile ? 60 : 90,
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       Icons.person,
-                                      size: isMobile ? 35 : 45,
+                                      size: isMobile ? 30 : 40,
                                       color: Colors.grey[600],
                                     ),
                                   );
@@ -169,7 +181,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                 ),
               ),
 
-              SizedBox(width: isMobile ? 15 : 20),
+              SizedBox(width: isMobile ? 5 : 10),
 
               // Profile Info
               Expanded(
@@ -205,6 +217,27 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                   ],
                 ),
               ),
+
+              // Quotes Button
+              IconButton(
+                onPressed: () => _showMyQuotesModal(context),
+                icon: const Icon(
+                  Icons.format_quote,
+                  color: Color(0xFF003366),
+                  size: 24,
+                ),
+                tooltip: 'Quotes',
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.all(12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  shadowColor: Colors.black.withAlpha((0.1 * 255).round()),
+                  elevation: 2,
+                ),
+              ),
+              SizedBox(width: isMobile ? 8 : 12),
 
               // Notifications Icon
               Stack(
@@ -956,6 +989,71 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showMyQuotesModal(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      enableDrag: true,
+      isDismissible: true,
+      builder: (sheetContext) => ChangeNotifierProvider.value(
+        value: _quoteViewModel,
+        child: MyQuotesModal(
+          onClose: () {
+            if (Navigator.of(sheetContext).canPop()) {
+              Navigator.of(sheetContext).pop();
+            }
+          },
+          onOpenQuoteForm: (quote) {
+            // Use the ORIGINAL context, not sheetContext
+            // Don't close MyQuotesModal
+            _showFloatingQuoteSubmissionModal(
+              context, // Use dashboard context, not sheetContext
+              quoteToEdit: quote,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showFloatingQuoteSubmissionModal(
+    BuildContext context, {
+    Quote? quoteToEdit,
+  }) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withValues(alpha: 0.5),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return ChangeNotifierProvider.value(
+            value: _quoteViewModel,
+            child: FloatingQuoteSubmissionModal(
+              quoteToEdit: quoteToEdit,
+              onClose: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
+              onSuccess: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+                // Reload quotes
+                _quoteViewModel.loadMyQuotes();
+              },
+              onOpenMyQuotes: () {
+                // Just reload quotes - MyQuotesModal is still open underneath
+                _quoteViewModel.loadMyQuotes();
+              },
+            ),
+          );
+        },
       ),
     );
   }

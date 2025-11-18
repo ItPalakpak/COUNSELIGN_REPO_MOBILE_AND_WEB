@@ -123,6 +123,97 @@ class Session {
     }
   }
 
+  Future<http.Response> put(
+    String url, {
+    Map<String, String>? headers,
+    Map<String, String>? fields,
+  }) async {
+    final client = http.Client();
+
+    try {
+      final requestHeaders = headers ?? {};
+
+      // Add cookies to the request if we have any
+      if (cookies.isNotEmpty) {
+        final cookieString = cookies.entries
+            .map((entry) => '${entry.key}=${entry.value}')
+            .join('; ');
+        requestHeaders['Cookie'] = cookieString;
+        SecureLogger.debug('Sending session cookies');
+      }
+
+      SecureLogger.debug('Making PUT request to: $url');
+
+      // For PUT requests with form data, use URLSearchParams format
+      if (fields != null && fields.isNotEmpty) {
+        final body = fields.entries
+            .map(
+              (e) =>
+                  '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+            )
+            .join('&');
+        requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+
+        final response = await client.put(
+          Uri.parse(url),
+          headers: requestHeaders,
+          body: body,
+        );
+
+        _logResponse(response);
+        _updateCookies(response);
+
+        return response;
+      } else {
+        final response = await client.put(
+          Uri.parse(url),
+          headers: requestHeaders,
+        );
+
+        _logResponse(response);
+        _updateCookies(response);
+
+        return response;
+      }
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<http.Response> delete(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
+    final client = http.Client();
+
+    try {
+      final requestHeaders = headers ?? {};
+
+      // Add cookies to the request if we have any
+      if (cookies.isNotEmpty) {
+        final cookieString = cookies.entries
+            .map((entry) => '${entry.key}=${entry.value}')
+            .join('; ');
+        requestHeaders['Cookie'] = cookieString;
+        SecureLogger.debug('Sending session cookies');
+      }
+
+      SecureLogger.debug('Making DELETE request to: $url');
+
+      final response = await client.delete(
+        Uri.parse(url),
+        headers: requestHeaders,
+      );
+
+      _logResponse(response);
+      _updateCookies(response);
+
+      return response;
+    } finally {
+      client.close();
+    }
+  }
+
   void _updateCookies(http.Response response) {
     final setCookieHeader = response.headers['set-cookie'];
     if (setCookieHeader != null) {
