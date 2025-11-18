@@ -91,11 +91,38 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
             SizedBox(height: isMobile ? 20 : 30),
             _buildPendingAppointmentsSection(context),
             SizedBox(height: isMobile ? 20 : 30),
-            _buildTabBar(context),
-            SizedBox(height: isMobile ? 16 : 20),
-            _buildFilterOptions(context),
-            SizedBox(height: isMobile ? 16 : 20),
-            _buildTabContent(context),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha((0.05 * 255).round()),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  color: const Color(0xFFE5E9F2),
+                  width: 1,
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(isMobile ? 12 : 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTabBar(context),
+                    SizedBox(height: isMobile ? 12 : 16),
+                    _buildFilterOptions(context),
+                    SizedBox(height: isMobile ? 12 : 16),
+                    _buildTabContent(context),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: isMobile ? 24 : 32),
             // Add bottom padding to ensure content doesn't get cut off
             SizedBox(height: isMobile ? 80 : 100),
           ],
@@ -105,41 +132,61 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
   }
 
   Widget _buildPageHeader(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-
     return Container(
-      margin: EdgeInsets.only(bottom: isMobile ? 20 : 30),
-      padding: EdgeInsets.only(bottom: isMobile ? 16 : 20),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE), width: 2)),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.calendar_month,
-            color: const Color(0xFF060E57),
-            size: isMobile ? 24 : 28,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.calendar_month,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
-          SizedBox(width: isMobile ? 8 : 10),
-          Expanded(
+          const SizedBox(width: 12),
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'My Appointments',
                   style: TextStyle(
-                    color: const Color(0xFF060E57),
-                    fontSize: isMobile ? 22 : 28,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: isMobile ? 6 : 10),
+                SizedBox(height: 2),
                 Text(
                   'View and manage your counseling appointments',
                   style: TextStyle(
-                    fontSize: isMobile ? 14 : 16,
-                    color: const Color(0xFF6C757D),
+                    color: Colors.white70,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -373,39 +420,46 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
               ),
             ),
             SizedBox(width: isMobile ? 12 : 16),
-            // Date filter
-            Expanded(
-              flex: 1,
-              child: TextFormField(
-                controller: viewModel.dateFilterController,
-                onChanged: (value) => viewModel.updateDateFilter(value),
-                decoration: InputDecoration(
-                  labelText: 'Filter by month',
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  suffixIcon: viewModel.dateFilter.isNotEmpty
-                      ? IconButton(
-                          tooltip: 'Clear month filter',
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            viewModel.dateFilterController.clear();
-                            viewModel.updateDateFilter('');
-                          },
-                        )
-                      : null,
-                  border: const OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: isMobile ? 8 : 12,
-                  ),
+            // Date filter icon-only button
+            Container(
+              decoration: BoxDecoration(
+                color: viewModel.dateFilter.isNotEmpty
+                    ? const Color(0xFF0D6EFD).withValues(alpha: 0.1)
+                    : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: viewModel.dateFilter.isNotEmpty
+                      ? const Color(0xFF0D6EFD)
+                      : const Color(0xFFE2E8F0),
                 ),
-                readOnly: true,
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
+              ),
+              child: IconButton(
+                tooltip: viewModel.dateFilter.isNotEmpty
+                    ? 'Clear month filter (${viewModel.dateFilter})'
+                    : 'Filter by month',
+                icon: Icon(
+                  viewModel.dateFilter.isNotEmpty
+                      ? Icons.close_rounded
+                      : Icons.calendar_today,
+                  color: viewModel.dateFilter.isNotEmpty
+                      ? const Color(0xFF0D6EFD)
+                      : const Color(0xFF64748B),
+                  size: isMobile ? 20 : 22,
+                ),
+                onPressed: () async {
+                  if (viewModel.dateFilter.isNotEmpty) {
+                    // Clear filter
+                    viewModel.dateFilterController.clear();
+                    viewModel.updateDateFilter('');
+                    return;
+                  }
+
+                  final initial = viewModel.dateFilter.isNotEmpty
+                      ? DateTime.parse('${viewModel.dateFilter}-01')
+                      : DateTime.now();
+
+                  final DateTime? picked =
+                      await _showMonthYearPicker(context, initial);
                   if (picked != null) {
                     final formattedDate =
                         '${picked.year}-${picked.month.toString().padLeft(2, '0')}';
@@ -416,6 +470,74 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<DateTime?> _showMonthYearPicker(
+    BuildContext context,
+    DateTime initialDate,
+  ) async {
+    const monthNames = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return showDialog<DateTime>(
+      context: context,
+      builder: (context) {
+        int year = initialDate.year;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () => setState(() => year--),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Text('$year'),
+                  IconButton(
+                    onPressed: () => setState(() => year++),
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 300,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(12, (index) {
+                    final month = index + 1;
+                    final label = monthNames[index];
+                    return ChoiceChip(
+                      label: Text(label),
+                      selected: year == initialDate.year &&
+                          month == initialDate.month,
+                      onSelected: (_) {
+                        Navigator.of(context)
+                            .pop(DateTime(year, month, 1));
+                      },
+                    );
+                  }),
+                ),
+              ),
+            );
+          },
         );
       },
     );

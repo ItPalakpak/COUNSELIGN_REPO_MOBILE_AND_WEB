@@ -57,36 +57,124 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
 
     return Consumer<CounselorMessagesViewModel>(
       builder: (context, viewModel, child) {
-        return SizedBox(
-          height:
-              MediaQuery.of(context).size.height - 80, // Reduced header space
-          child: Row(
-            children: [
-              // Conversations Sidebar
-              SizedBox(
-                width: isMobile ? MediaQuery.of(context).size.width : 350,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    border: Border(
-                      right: BorderSide(color: Colors.grey[300]!, width: 1),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Page Header
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 20,
+                vertical: isMobile ? 12 : 16,
+              ),
+              child: _buildHeader(context),
+            ),
+            // Messages Content
+            SizedBox(
+              height: MediaQuery.of(context).size.height - 180,
+              child: Row(
+                children: [
+                  // Conversations Sidebar
+                  SizedBox(
+                    width: isMobile ? MediaQuery.of(context).size.width : 350,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF060E57,
+                              ).withValues(alpha: 0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: _buildConversationsSidebar(
+                          context,
+                          viewModel,
+                          isMobile,
+                        ),
+                      ),
                     ),
                   ),
-                  child: _buildConversationsSidebar(
-                    context,
-                    viewModel,
-                    isMobile,
-                  ),
-                ),
-              ),
 
-              // Chat Area
-              if (!isMobile)
-                Expanded(child: _buildChatArea(context, viewModel, isMobile)),
-            ],
-          ),
+                  // Chat Area
+                  if (!isMobile)
+                    Expanded(
+                      child: _buildChatArea(context, viewModel, isMobile),
+                    ),
+                ],
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Messages',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Communicate with students about their appointments',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -96,65 +184,43 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
     bool isMobile,
   ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Sidebar Header
-        Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: const Color(0xFF191970),
-            border: Border(
-              bottom: BorderSide(color: Colors.grey[300]!, width: 1),
-            ),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.white,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Conversations',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              if (isMobile)
-                IconButton(
-                  onPressed: () {
-                    // Close sidebar on mobile
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.close, color: Colors.white),
-                ),
-            ],
-          ),
-        ),
-
         // Search Box
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Material(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF060E57).withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search conversations...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 14,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF191970)),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFF64748B),
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  horizontal: 16,
+                  vertical: 16,
                 ),
               ),
               onChanged: (value) {
@@ -162,7 +228,6 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
               },
               autocorrect: false,
               enableSuggestions: false,
-              // Disable browser/engine spellcheck
               spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
             ),
           ),
@@ -273,8 +338,8 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
             color: isSelected
                 ? const Color(0xFF191970).withValues(alpha: 0.1)
                 : null,
-            border: Border(
-              bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+            border: const Border.symmetric(
+              horizontal: BorderSide(color: Color(0xFFF0F4F8), width: 0.5),
             ),
           ),
           child: ListTile(
@@ -597,10 +662,7 @@ class _CounselorMessagesScreenState extends State<CounselorMessagesScreen> {
       itemCount: viewModel.messages.length,
       itemBuilder: (context, index) {
         final message = viewModel.messages[index];
-        return _MessageBubble(
-          message: message,
-          viewModel: viewModel,
-        );
+        return _MessageBubble(message: message, viewModel: viewModel);
       },
     );
   }
@@ -717,10 +779,7 @@ class _MessageBubble extends StatefulWidget {
   final CounselorMessage message;
   final CounselorMessagesViewModel viewModel;
 
-  const _MessageBubble({
-    required this.message,
-    required this.viewModel,
-  });
+  const _MessageBubble({required this.message, required this.viewModel});
 
   @override
   State<_MessageBubble> createState() => _MessageBubbleState();

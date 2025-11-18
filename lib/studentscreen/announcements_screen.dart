@@ -68,46 +68,75 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               _buildHeader(context),
               SizedBox(height: isMobile ? 16 : 24),
 
-              // Calendar toggle button and refresh button
-              Row(
-                children: [
-                  Expanded(child: _buildCalendarToggleButton(context)),
-                  SizedBox(width: 12),
-                  _buildRefreshButton(context),
-                ],
-              ),
-              SizedBox(height: isMobile ? 16 : 20),
+              // Main content container (buttons + cards / calendar)
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000), // ~0.08 opacity
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                  
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Calendar toggle button and refresh button
+                      Row(
+                        children: [
+                          Expanded(child: _buildCalendarToggleButton(context)),
+                          const SizedBox(width: 12),
+                          _buildRefreshButton(context),
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 16 : 20),
 
-              // Calendar view or two-column layout
-              Consumer<AnnouncementsViewModel>(
-                builder: (context, viewModel, child) {
-                  if (viewModel.showCalendar) {
-                    return _buildCalendarView(context);
-                  } else {
-                    return isMobile
-                        ? Column(
-                            children: [
-                              _buildAnnouncementsSection(context),
-                              SizedBox(height: 20),
-                              _buildEventsSection(context),
-                            ],
-                          )
-                        : Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: _buildAnnouncementsSection(context),
-                              ),
-                              SizedBox(width: isTablet ? 20 : 24),
-                              Expanded(
-                                flex: 1,
-                                child: _buildEventsSection(context),
-                              ),
-                            ],
-                          );
-                  }
-                },
+                      // Calendar view or two-column layout
+                      Consumer<AnnouncementsViewModel>(
+                        builder: (context, viewModel, child) {
+                          if (viewModel.showCalendar) {
+                            return _buildCalendarView(context);
+                          } else {
+                            return isMobile
+                                ? Column(
+                                    children: [
+                                      _buildAnnouncementsSection(context),
+                                      const SizedBox(height: 20),
+                                      _buildEventsSection(context),
+                                    ],
+                                  )
+                                : Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: _buildAnnouncementsSection(
+                                          context,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: isTablet ? 20 : 24,
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: _buildEventsSection(context),
+                                      ),
+                                    ],
+                                  );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -119,27 +148,68 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   // ---------------- HEADER ----------------
   Widget _buildHeader(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-    
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.campaign,
-          color: const Color(0xFF191970),
-          size: isMobile ? 24 : 28,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
         ),
-        SizedBox(width: isMobile ? 8 : 12),
-        Text(
-          'Announcements and Events',
-          style: TextStyle(
-            fontSize: isMobile ? 22 : 24,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF191970),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.campaign,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Announcements and Events',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Stay updated with the latest news and activities',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -349,7 +419,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade200, width: 1),
+        
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -784,27 +854,20 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
     return Consumer<AnnouncementsViewModel>(
       builder: (context, viewModel, child) {
-        return ElevatedButton.icon(
+        return ElevatedButton(
           onPressed: viewModel.refresh,
-          icon: Icon(Icons.refresh, size: isMobile ? 18 : 20),
-          label: Text(
-            'Refresh',
-            style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF198754),
             foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 20,
-              vertical: isMobile ? 12 : 16,
-            ),
+            padding: EdgeInsets.all(isMobile ? 12 : 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
             ),
             elevation: 2,
+          ),
+          child: Icon(
+            Icons.refresh,
+            size: isMobile ? 18 : 20,
           ),
         );
       },

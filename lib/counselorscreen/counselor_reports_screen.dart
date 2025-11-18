@@ -7,7 +7,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'state/counselor_reports_viewmodel.dart';
 import 'models/appointment_report.dart';
 import 'widgets/appointment_report_card.dart';
-import 'widgets/export_filters_dialog.dart';
 import 'widgets/counselor_screen_wrapper.dart';
 
 class CounselorReportsScreen extends StatefulWidget {
@@ -90,11 +89,33 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                 children: [
                   _buildReportHeader(viewModel),
                   const SizedBox(height: 20),
-                  _buildTimeRangeFilter(viewModel),
-                  const SizedBox(height: 20),
-                  _buildStatisticsSummary(viewModel),
-                  const SizedBox(height: 20),
-                  _buildChartsSection(viewModel),
+                  // Report Period Filter, Statistics Summary, and Data Visualization Container
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF060E57,
+                          ).withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildTimeRangeFilter(viewModel),
+                        const SizedBox(height: 20),
+                        _buildStatisticsSummary(viewModel),
+                        const SizedBox(height: 20),
+                        _buildChartsSection(viewModel),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   _buildAppointmentsSection(viewModel),
                 ],
@@ -108,54 +129,61 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
 
   Widget _buildReportHeader(CounselorReportsViewModel viewModel) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Icon(
-                FontAwesomeIcons.chartLine,
-                color: Color(0xFF0d6efd),
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Appointment Reports',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0d6efd),
-                      ),
-                    ),
-                    Text(
-                      'Counselor: ${viewModel.reportData?.counselorName ?? 'Loading...'}',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              FontAwesomeIcons.chartLine,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'View and analyze your appointment statistics',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Appointment Reports',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'View and analyze your appointment statistics',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -163,115 +191,122 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
   }
 
   Widget _buildTimeRangeFilter(CounselorReportsViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            FontAwesomeIcons.calendar,
-            color: Color(0xFF0d6efd),
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<TimeRange>(
-              initialValue: viewModel.selectedTimeRange,
-              decoration: const InputDecoration(
-                labelText: 'Report Period',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              items: TimeRange.values.map((range) {
-                return DropdownMenuItem(
-                  value: range,
-                  child: Text(range.displayName),
-                );
-              }).toList(),
-              onChanged: (TimeRange? value) {
-                if (value != null) {
-                  viewModel.updateTimeRange(value);
-                }
-              },
+    return Row(
+      children: [
+        const Icon(
+          FontAwesomeIcons.calendar,
+          color: Color(0xFF0d6efd),
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: DropdownButtonFormField<TimeRange>(
+            initialValue: viewModel.selectedTimeRange,
+            decoration: const InputDecoration(
+              labelText: 'Report Period',
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
+            items: TimeRange.values.map((range) {
+              return DropdownMenuItem(
+                value: range,
+                child: Text(range.displayName),
+              );
+            }).toList(),
+            onChanged: (TimeRange? value) {
+              if (value != null) {
+                viewModel.updateTimeRange(value);
+              }
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildStatisticsSummary(CounselorReportsViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Statistics Summary',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildModernSectionHeader(
+          title: 'Statistics Summary',
+          icon: FontAwesomeIcons.chartBar,
+          subtitle: 'Overview of appointment metrics',
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _buildStatCard(
+              'Completed',
+              viewModel.totalCompleted,
+              FontAwesomeIcons.circleCheck,
+              const Color(0xFF0d6efd),
             ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            _buildStatCard(
+              'Approved',
+              viewModel.totalApproved,
+              FontAwesomeIcons.thumbsUp,
+              const Color(0xFF198754),
+            ),
+            _buildStatCard(
+              'Rejected',
+              viewModel.totalRejected,
+              FontAwesomeIcons.circleXmark,
+              const Color(0xFFdc3545),
+            ),
+            _buildStatCard(
+              'Pending',
+              viewModel.totalPending,
+              FontAwesomeIcons.clock,
+              const Color(0xFFffc107),
+            ),
+            _buildStatCard(
+              'Cancelled',
+              viewModel.totalCancelled,
+              FontAwesomeIcons.ban,
+              const Color(0xFF6c757d),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, int count, IconData icon, Color color) {
+    return Container(
+      width: (MediaQuery.of(context).size.width - 80) / 2,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildStatCard(
-                'Completed',
-                viewModel.totalCompleted,
-                FontAwesomeIcons.circleCheck,
-                const Color(0xFF0d6efd),
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
-              _buildStatCard(
-                'Approved',
-                viewModel.totalApproved,
-                FontAwesomeIcons.thumbsUp,
-                const Color(0xFF198754),
-              ),
-              _buildStatCard(
-                'Rejected',
-                viewModel.totalRejected,
-                FontAwesomeIcons.circleXmark,
-                const Color(0xFFdc3545),
-              ),
-              _buildStatCard(
-                'Pending',
-                viewModel.totalPending,
-                FontAwesomeIcons.clock,
-                const Color(0xFFffc107),
-              ),
-              _buildStatCard(
-                'Cancelled',
-                viewModel.totalCancelled,
-                FontAwesomeIcons.ban,
-                const Color(0xFF6c757d),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -280,92 +315,57 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
     );
   }
 
-  Widget _buildStatCard(String title, int count, IconData icon, Color color) {
-    return Container(
-      width: (MediaQuery.of(context).size.width - 80) / 2,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            count.toString(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildChartsSection(CounselorReportsViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Data Visualization',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
-            ),
-          ),
-          const SizedBox(height: 20),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final screenWidth = constraints.maxWidth;
-              final isMobile = screenWidth < 600;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildModernSectionHeader(
+          title: 'Data Visualization',
+          icon: FontAwesomeIcons.chartLine,
+          subtitle: 'Trends and distribution analytics',
+        ),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isMobile = screenWidth < 600;
+            final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
-              if (isMobile) {
-                return Column(
-                  children: [
-                    _buildTrendChart(viewModel),
-                    const SizedBox(height: 20),
-                    _buildPieChart(viewModel),
-                  ],
-                );
-              } else {
-                return Row(
-                  children: [
-                    Expanded(flex: 2, child: _buildTrendChart(viewModel)),
-                    const SizedBox(width: 20),
-                    Expanded(flex: 1, child: _buildPieChart(viewModel)),
-                  ],
-                );
-              }
-            },
-          ),
-        ],
-      ),
+            if (isMobile) {
+              return Column(
+                children: [
+                  _buildTrendChart(viewModel),
+                  const SizedBox(height: 20),
+                  _buildPieChart(viewModel),
+                ],
+              );
+            } else if (isTablet) {
+              return Column(
+                children: [
+                  _buildTrendChart(viewModel),
+                  const SizedBox(height: 20),
+                  _buildPieChart(viewModel),
+                ],
+              );
+            } else {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _buildTrendChart(viewModel),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    flex: 2,
+                    child: _buildPieChart(viewModel),
+                  ),
+                ],
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -393,26 +393,71 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
         break;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(
-              FontAwesomeIcons.chartLine,
-              color: Color(0xFF0d6efd),
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Appointment Trends',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE5E9F2),
+          width: 1,
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 400,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0d6efd), Color(0xFF3B82F6)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  FontAwesomeIcons.chartLine,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Appointment Trends',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1e293b),
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Timeline overview',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 320,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
@@ -533,20 +578,21 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        // Legend
-        Wrap(
-          spacing: 16,
-          runSpacing: 8,
-          children: [
-            _buildLegendItem('Completed', const Color(0xFF0d6efd)),
-            _buildLegendItem('Approved', const Color(0xFF198754)),
-            _buildLegendItem('Rejected', const Color(0xFFdc3545)),
-            _buildLegendItem('Pending', const Color(0xFFffc107)),
-            _buildLegendItem('Cancelled', const Color(0xFF6c757d)),
-          ],
-        ),
-      ],
+          const SizedBox(height: 16),
+          // Legend
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _buildLegendItem('Completed', const Color(0xFF0d6efd)),
+              _buildLegendItem('Approved', const Color(0xFF198754)),
+              _buildLegendItem('Rejected', const Color(0xFFdc3545)),
+              _buildLegendItem('Pending', const Color(0xFFffc107)),
+              _buildLegendItem('Cancelled', const Color(0xFF6c757d)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -601,35 +647,80 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       return const Center(child: Text('No data available'));
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = constraints.maxWidth;
-        final isMobile = screenWidth < 600;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE5E9F2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = constraints.maxWidth;
+          final isMobile = screenWidth < 600;
 
-        if (isMobile) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    FontAwesomeIcons.chartPie,
-                    color: Color(0xFF0d6efd),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Status Distribution',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 150,
-                    height: 150,
+          if (isMobile) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        FontAwesomeIcons.chartPie,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Status Distribution',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1e293b),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'By status type',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      height: 150,
                     child: PieChart(
                       PieChartData(
                         sectionsSpace: 2,
@@ -682,32 +773,60 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                           )
                           .toList(),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          );
-        } else {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    FontAwesomeIcons.chartPie,
-                    color: Color(0xFF0d6efd),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Status Distribution',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
+                    ),
+                  ],
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        FontAwesomeIcons.chartPie,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Status Distribution',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1e293b),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'By status type',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 220,
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 2,
@@ -726,10 +845,10 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                       );
                     }).toList(),
                   ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ...pieData.map(
+                const SizedBox(height: 16),
+                ...pieData.map(
                 (data) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Row(
@@ -746,12 +865,13 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
                       Text(data.label, style: const TextStyle(fontSize: 12)),
                     ],
                   ),
+                  ),
                 ),
-              ),
-            ],
-          );
-        }
-      },
+              ],
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -772,34 +892,13 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'List of All Your Appointments',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0d6efd),
-            ),
+          _buildModernSectionHeader(
+            title: 'List of All Your Appointments',
+            icon: FontAwesomeIcons.listCheck,
+            subtitle: 'Complete appointment records',
           ),
           const SizedBox(height: 16),
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: const Color(0xFF0d6efd),
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: const Color(0xFF0d6efd),
-            onTap: (index) {
-              final status = AppointmentStatus.values[index];
-              viewModel.updateStatusFilter(status);
-            },
-            tabs: const [
-              Tab(text: 'All'),
-              Tab(text: 'Follow-up'),
-              Tab(text: 'Approved'),
-              Tab(text: 'Rejected'),
-              Tab(text: 'Completed'),
-              Tab(text: 'Cancelled'),
-            ],
-          ),
+          _buildStatusTabBar(),
           const SizedBox(height: 16),
           _buildSearchAndFilterControls(viewModel),
           const SizedBox(height: 16),
@@ -810,94 +909,156 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
   }
 
   Widget _buildSearchAndFilterControls(CounselorReportsViewModel viewModel) {
-    return Column(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    // Keep the search behavior the same but change the date filter to a month-year picker
+    // consistent with the student "My Appointments" screen.
+    final selectedMonth = viewModel.selectedDate ?? '';
+    _dateController.text = selectedMonth;
+
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search appointments...',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                onChanged: (value) {
-                  _searchTimer?.cancel();
-                  _searchTimer = Timer(const Duration(milliseconds: 300), () {
-                    viewModel.updateSearchQuery(value);
-                  });
-                },
+        Expanded(
+          flex: 2,
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search appointments...',
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: isMobile ? 8 : 10,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: _dateController,
-                decoration: const InputDecoration(
-                  hintText: 'Filter by month',
-                  prefixIcon: Icon(Icons.calendar_month),
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                readOnly: true,
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
-                  );
-                  if (date != null) {
-                    final monthString =
-                        '${date.year}-${date.month.toString().padLeft(2, '0')}';
-                    _dateController.text = monthString;
-                    viewModel.updateDateFilter(monthString);
-                  }
-                },
-              ),
-            ),
-          ],
+            onChanged: (value) {
+              _searchTimer?.cancel();
+              _searchTimer = Timer(const Duration(milliseconds: 300), () {
+                viewModel.updateSearchQuery(value);
+              });
+            },
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _showExportFiltersDialog(viewModel, 'PDF'),
-                icon: const Icon(FontAwesomeIcons.filePdf, size: 16),
-                label: const Text('Export PDF'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0d6efd),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
+        SizedBox(width: isMobile ? 12 : 16),
+        Container(
+          decoration: BoxDecoration(
+            color: selectedMonth.isNotEmpty
+                ? const Color(0xFF0D6EFD).withValues(alpha: 0.1)
+                : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selectedMonth.isNotEmpty
+                  ? const Color(0xFF0D6EFD)
+                  : const Color(0xFFE2E8F0),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _showExportFiltersDialog(viewModel, 'Excel'),
-                icon: const Icon(FontAwesomeIcons.fileExcel, size: 16),
-                label: const Text('Export Excel'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF198754),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
+          ),
+          child: IconButton(
+            tooltip: selectedMonth.isNotEmpty
+                ? 'Clear month filter ($selectedMonth)'
+                : 'Filter by month',
+            icon: Icon(
+              selectedMonth.isNotEmpty ? Icons.close_rounded : Icons.calendar_today,
+              color: selectedMonth.isNotEmpty
+                  ? const Color(0xFF0D6EFD)
+                  : const Color(0xFF64748B),
+              size: isMobile ? 20 : 22,
             ),
-          ],
+            onPressed: () async {
+              // If there is an active month filter, clear it.
+              if (selectedMonth.isNotEmpty) {
+                _dateController.clear();
+                viewModel.updateDateFilter(null);
+                return;
+              }
+
+              // Otherwise, show a month-year picker similar to the student screen.
+              DateTime initial;
+              try {
+                if (selectedMonth.isNotEmpty) {
+                  initial = DateTime.parse('$selectedMonth-01');
+                } else {
+                  initial = DateTime.now();
+                }
+              } catch (_) {
+                initial = DateTime.now();
+              }
+
+              final DateTime? picked = await _showMonthYearPicker(initial);
+              if (picked != null) {
+                final formattedDate =
+                    '${picked.year}-${picked.month.toString().padLeft(2, '0')}';
+                _dateController.text = formattedDate;
+                viewModel.updateDateFilter(formattedDate);
+              }
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  Future<DateTime?> _showMonthYearPicker(DateTime initialDate) async {
+    const monthNames = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return showDialog<DateTime>(
+      context: context,
+      builder: (context) {
+        int year = initialDate.year;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () => setState(() => year--),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Text('$year'),
+                  IconButton(
+                    onPressed: () => setState(() => year++),
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 300,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(12, (index) {
+                    final month = index + 1;
+                    final label = monthNames[index];
+                    return ChoiceChip(
+                      label: Text(label),
+                      selected:
+                          year == initialDate.year && month == initialDate.month,
+                      onSelected: (_) {
+                        Navigator.of(context).pop(DateTime(year, month, 1));
+                      },
+                    );
+                  }),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -933,21 +1094,6 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
           onTap: () => _showAppointmentDetails(appointment),
         );
       },
-    );
-  }
-
-  void _showExportFiltersDialog(
-    CounselorReportsViewModel viewModel,
-    String exportType,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => ExportFiltersDialog(
-        exportType: exportType,
-        onExportPDF: (filters) => viewModel.exportToPDF(filters),
-        onExportExcel: (filters) => viewModel.exportToExcel(filters),
-        isExporting: viewModel.isExporting,
-      ),
     );
   }
 
@@ -1005,6 +1151,229 @@ class _CounselorReportsScreenState extends State<CounselorReportsScreen>
           ),
           Expanded(child: Text(value)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModernSectionHeader({
+    required String title,
+    required IconData icon,
+    required String subtitle,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+            ),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0d6efd).withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1e293b),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusTabBar() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Consumer<CounselorReportsViewModel>(
+        builder: (context, viewModel, child) {
+          return TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            labelColor: const Color(0xFF0d6efd),
+            unselectedLabelColor: const Color(0xFF6c757d),
+            indicatorColor: const Color(0xFF0d6efd),
+            indicatorWeight: 2,
+            indicatorSize: TabBarIndicatorSize.tab,
+            onTap: (index) {
+              final status = AppointmentStatus.values[index];
+              viewModel.updateStatusFilter(status);
+            },
+            tabs: [
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.list_alt,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'All',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.repeat,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Follow-up',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Approved',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cancel,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Rejected',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.task_alt,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Completed',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cancel_outlined,
+                        size: isMobile ? 14 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Cancelled',
+                        style: TextStyle(fontSize: isMobile ? 12 : 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

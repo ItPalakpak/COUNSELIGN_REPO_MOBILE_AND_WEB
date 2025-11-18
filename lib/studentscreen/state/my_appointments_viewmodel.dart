@@ -406,8 +406,14 @@ class MyAppointmentsViewModel extends ChangeNotifier {
   // Extract YYYY-MM from a date string robustly
   String _extractYearMonth(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) return '';
-    final String s = dateStr.trim();
-    // Try ISO parse first
+    var s = dateStr.trim();
+
+    // If there is a time component, keep only the date part first
+    if (s.contains(' ')) {
+      s = s.split(' ').first;
+    }
+
+    // Try ISO parse first (e.g., 2025-11-17 or 2025-11-17T00:00:00Z)
     try {
       final dt = DateTime.parse(s);
       return '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}';
@@ -416,16 +422,29 @@ class MyAppointmentsViewModel extends ChangeNotifier {
       if (s.length >= 7 && RegExp(r'^\d{4}-\d{2}').hasMatch(s)) {
         return s.substring(0, 7);
       }
+
       // Try common MM/DD/YYYY
       final mdY = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$');
-      final m = mdY.firstMatch(s);
-      if (m != null) {
-        final int year = int.tryParse(m.group(3) ?? '') ?? 0;
-        final int month = int.tryParse(m.group(1) ?? '') ?? 0;
+      final m1 = mdY.firstMatch(s);
+      if (m1 != null) {
+        final int year = int.tryParse(m1.group(3) ?? '') ?? 0;
+        final int month = int.tryParse(m1.group(1) ?? '') ?? 0;
         if (year > 0 && month > 0) {
           return '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
         }
       }
+
+      // Try common DD/MM/YYYY (e.g., 17/11/2025)
+      final dMY = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$');
+      final m2 = dMY.firstMatch(s);
+      if (m2 != null) {
+        final int year = int.tryParse(m2.group(3) ?? '') ?? 0;
+        final int month = int.tryParse(m2.group(2) ?? '') ?? 0;
+        if (year > 0 && month > 0) {
+          return '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
+        }
+      }
+
       return '';
     }
   }

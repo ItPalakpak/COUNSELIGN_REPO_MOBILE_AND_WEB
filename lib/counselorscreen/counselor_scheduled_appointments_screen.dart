@@ -22,6 +22,7 @@ class _CounselorScheduledAppointmentsScreenState
   late CounselorScheduledAppointmentsViewModel _viewModel;
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounceTimer;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -36,8 +37,45 @@ class _CounselorScheduledAppointmentsScreenState
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _searchDebounceTimer?.cancel();
+    _removeOverlay();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _insertOverlay() {
+    _removeOverlay();
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    final mediaQuery = MediaQuery.of(context);
+    final paddingTop = mediaQuery.padding.top;
+    final appBarHeight = 40.0; // kAppBarHeight from AppHeader
+
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        top: paddingTop + appBarHeight + 10,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: FloatingActionButton(
+            onPressed: () {
+              _showSchedulesModal(context);
+            },
+            backgroundColor: const Color(0xFF060E57),
+            foregroundColor: Colors.white,
+            tooltip: 'View Schedules',
+            child: const Icon(Icons.calendar_today),
+          ),
+        ),
+      ),
+    );
   }
 
   void _onSearchChanged() {
@@ -51,6 +89,12 @@ class _CounselorScheduledAppointmentsScreenState
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _overlayEntry == null) {
+        _insertOverlay();
+      }
+    });
+
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: CounselorScreenWrapper(
@@ -66,48 +110,84 @@ class _CounselorScheduledAppointmentsScreenState
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
     final isDesktop = screenWidth >= 1024;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile
-            ? 16
-            : isTablet
-            ? 20
-            : 24,
-        vertical: isMobile ? 16 : 20,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile
+              ? 16
+              : isTablet
+              ? 20
+              : 24,
+          vertical: isMobile ? 16 : 20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context),
+            SizedBox(height: isMobile ? 20 : 30),
+            _buildContent(context, isMobile, isTablet, isDesktop),
+          ],
+        ),
       ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              SizedBox(height: isMobile ? 20 : 30),
-              _buildSearchBar(context, isMobile),
-              SizedBox(height: isMobile ? 16 : 20),
-              _buildContent(context, isMobile, isTablet, isDesktop),
-            ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          // Floating toggle button (calendar/schedules) - positioned below header
-          Positioned(
-            top: -5, // 10-20px below header
-            right: 0,
-            child: ElevatedButton(
-              onPressed: () {
-                _showSchedulesModal(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF060E57),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.calendar_today,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Scheduled Consultations',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 2),
+                Text(
+                  'View and manage scheduled consultation appointments',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
                 ),
-                elevation: 4,
-              ),
-              child: const Icon(Icons.calendar_month, size: 16),
+              ],
             ),
           ),
         ],
@@ -115,64 +195,42 @@ class _CounselorScheduledAppointmentsScreenState
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(Icons.calendar_today, color: Color(0xFF060E57), size: 24),
-        const SizedBox(width: 12),
-        const Text(
-          'Consultation Schedule Queries',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF060E57),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context, bool isMobile) {
+  Widget _buildSearchBar(BuildContext context) {
     return Consumer<CounselorScheduledAppointmentsViewModel>(
       builder: (context, viewModel, child) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFCFE1EF)),
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF123B63).withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              return TextField(
+              child: TextField(
                 controller: _searchController,
                 onChanged: (value) {
                   setState(() {});
                 },
                 decoration: InputDecoration(
-                  hintText:
-                      'Search by date, time, student name, consultation type, or any details...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: isMobile ? 13 : 14,
+                  hintText: 'Search appointments...',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 14,
                   ),
                   prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF060E57),
+                    Icons.search_rounded,
+                    color: Color(0xFF64748B),
                     size: 20,
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
-                            Icons.clear,
-                            color: Color(0xFF060E57),
-                          ),
+                          icon: const Icon(Icons.clear),
                           onPressed: () {
                             _searchController.clear();
                             viewModel.setSearchQuery('');
@@ -180,19 +238,18 @@ class _CounselorScheduledAppointmentsScreenState
                           },
                         )
                       : null,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 16 : 20,
-                    vertical: isMobile ? 12 : 16,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
                   ),
                 ),
-                style: TextStyle(
-                  fontSize: isMobile ? 14 : 15,
-                  color: const Color(0xFF123B63),
-                ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -300,14 +357,23 @@ class _CounselorScheduledAppointmentsScreenState
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBFF),
-        border: Border.all(color: const Color(0xFFCFE1EF)),
-        borderRadius: BorderRadius.circular(6),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE5E9F2), width: 1),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSearchBar(context),
+          const SizedBox(height: 24),
           if (appointments.isEmpty)
             _buildEmptyAppointmentsState(viewModel.searchQuery.isNotEmpty)
           else

@@ -61,39 +61,65 @@ class _CounselorAnnouncementsScreenState
         children: [
           _buildHeader(context),
           SizedBox(height: isMobile ? 16 : 24),
-          // Toggle + Refresh
-          Row(
-            children: [
-              Expanded(child: _buildCalendarToggleButton(context)),
-              SizedBox(width: 12),
-              _buildRefreshButton(context),
-            ],
-          ),
-          SizedBox(height: isMobile ? 16 : 20),
-          // Main content
-          Consumer<CounselorAnnouncementsViewModel>(
-            builder: (context, viewModel, child) {
-              if (viewModel.showCalendar) {
-                return _buildCalendarView(context);
-              } else {
-                return isMobile
-                    ? Column(
-                        children: [
-                          _buildAnnouncementsSection(context),
-                          SizedBox(height: 20),
-                          _buildEventsSection(context),
-                        ],
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _buildAnnouncementsSection(context)),
-                          SizedBox(width: isTablet ? 20 : 24),
-                          Expanded(child: _buildEventsSection(context)),
-                        ],
-                      );
-              }
-            },
+          // Content Container wrapping everything except header
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF060E57).withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: const Color(0xFFE5E9F2),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                // Toggle + Refresh
+                Row(
+                  children: [
+                    Expanded(child: _buildCalendarToggleButton(context)),
+                    SizedBox(width: 12),
+                    _buildRefreshButton(context),
+                  ],
+                ),
+                SizedBox(height: isMobile ? 16 : 20),
+                // Main content
+                Consumer<CounselorAnnouncementsViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.showCalendar) {
+                      return _buildCalendarView(context);
+                    } else {
+                      return isMobile
+                          ? Column(
+                              children: [
+                                _buildAnnouncementsSection(context),
+                                SizedBox(height: 20),
+                                _buildEventsSection(context),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: _buildAnnouncementsSection(context),
+                                ),
+                                SizedBox(width: isTablet ? 20 : 24),
+                                Expanded(child: _buildEventsSection(context)),
+                              ],
+                            );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -101,27 +127,68 @@ class _CounselorAnnouncementsScreenState
   }
 
   Widget _buildHeader(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.campaign,
-          color: const Color(0xFF191970),
-          size: isMobile ? 24 : 28,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
         ),
-        SizedBox(width: isMobile ? 8 : 12),
-        Text(
-          'Announcements and Events',
-          style: TextStyle(
-            fontSize: isMobile ? 22 : 24,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF191970),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.campaign,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Announcements and Events',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'View and manage campus announcements and upcoming events',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -220,16 +287,16 @@ class _CounselorAnnouncementsScreenState
       constraints: BoxConstraints(minHeight: isMobile ? 80 : 100),
       margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF060E57).withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF060E57).withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE3EAFC), width: 1),
+        border: Border.all(color: const Color(0xFFE5E9F2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,16 +499,19 @@ class _CounselorAnnouncementsScreenState
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: const Color(0xFF060E57).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.grey, width: 0.5),
+        border: Border.all(
+          color: const Color(0xFFE5E9F2),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
@@ -463,7 +533,7 @@ class _CounselorAnnouncementsScreenState
               Text(
                 title,
                 style: TextStyle(
-                  color: const Color(0xFF003366),
+                  color: const Color(0xFF060E57),
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -512,24 +582,17 @@ class _CounselorAnnouncementsScreenState
     final isMobile = MediaQuery.of(context).size.width < 600;
     return Consumer<CounselorAnnouncementsViewModel>(
       builder: (context, viewModel, child) {
-        return ElevatedButton.icon(
+        return ElevatedButton(
           onPressed: viewModel.refresh,
-          icon: Icon(Icons.refresh, size: isMobile ? 18 : 20),
-          label: Text(
-            'Refresh',
-            style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF198754),
             foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 20,
-              vertical: isMobile ? 12 : 16,
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
+          child: Icon(Icons.refresh, size: isMobile ? 18 : 20),
         );
       },
     );
@@ -544,16 +607,19 @@ class _CounselorAnnouncementsScreenState
           width: double.infinity,
           padding: EdgeInsets.all(isMobile ? 16 : 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF8FAFD),
             borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 12,
-                offset: Offset(0, 4),
+                color: const Color(0xFF060E57).withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
-            border: Border.all(color: Colors.grey.shade200, width: 1),
+            border: Border.all(
+              color: const Color(0xFFE5E9F2),
+              width: 1,
+            ),
           ),
           child: Column(
             children: [
@@ -637,16 +703,16 @@ class _CounselorAnnouncementsScreenState
       width: double.infinity,
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1A060E57),
-            blurRadius: 12,
-            offset: Offset(0, 2),
+            color: const Color(0xFF060E57).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE3EAFC), width: 1),
+        border: Border.all(color: const Color(0xFFE5E9F2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,16 +798,16 @@ class _CounselorAnnouncementsScreenState
       width: double.infinity,
       margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1A060E57),
-            blurRadius: 18,
-            offset: Offset(0, 4),
+            color: const Color(0xFF060E57).withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE3EAFC), width: 1),
+        border: Border.all(color: const Color(0xFFE5E9F2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

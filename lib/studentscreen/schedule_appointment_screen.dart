@@ -73,18 +73,87 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
         horizontal: isMobile
             ? 16
             : isTablet
-            ? 24
-            : 32,
+                ? 24
+                : 32,
         vertical: isMobile ? 20 : 24,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildPageHeader(context),
+          SizedBox(height: isMobile ? 20 : 30),
           // Appointment form
           _buildAppointmentForm(context),
           SizedBox(height: isMobile ? 20 : 40),
 
           const SizedBox(height: 100), // Add bottom padding for navigation bar
           // Footer moved to bottomNavigationBar
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.event_available_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Schedule Appointment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Book a new counseling session with our counselors',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -143,23 +212,7 @@ class _ScheduleAppointmentScreenState extends State<ScheduleAppointmentScreen> {
                 ),
               ),
 
-              SizedBox(height: isMobile ? 20 : 30),
-
-              // Title
-              Text(
-                'Schedule a Consultation',
-                style: TextStyle(
-                  color: const Color(0xFF060E57),
-                  fontSize: isMobile
-                      ? 22
-                      : isTablet
-                      ? 24
-                      : 26,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-
-              SizedBox(height: isMobile ? 20 : 30),
+              SizedBox(height: isMobile ? 10 : 20),
 
               // Message display - prioritize appointment messages over login messages
               if (viewModel.hasPendingAppointment ||

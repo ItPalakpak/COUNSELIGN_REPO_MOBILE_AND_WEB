@@ -23,6 +23,7 @@ class _CounselorFollowUpSessionsScreenState
   late CounselorFollowUpSessionsViewModel _viewModel;
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounceTimer;
+  OverlayEntry? _overlayEntry;
 
   // Loading states for buttons
   bool _isCancelling = false;
@@ -41,11 +42,52 @@ class _CounselorFollowUpSessionsScreenState
     _viewModel.dispose();
     _searchController.dispose();
     _searchDebounceTimer?.cancel();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _insertOverlay() {
+    _removeOverlay();
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    final mediaQuery = MediaQuery.of(context);
+    final paddingTop = mediaQuery.padding.top;
+    final appBarHeight = 40.0; // kAppBarHeight from AppHeader
+
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        top: paddingTop + appBarHeight + 10,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: FloatingActionButton(
+            onPressed: () => _showSchedulesModal(context),
+            backgroundColor: const Color(0xFF060E57),
+            foregroundColor: Colors.white,
+            tooltip: 'View Schedules',
+            child: const Icon(Icons.calendar_today),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _overlayEntry == null) {
+        _insertOverlay();
+      }
+    });
+
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: CounselorScreenWrapper(
@@ -60,48 +102,54 @@ class _CounselorFollowUpSessionsScreenState
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile
-                  ? 16
-                  : isTablet
-                  ? 20
-                  : 24,
-              vertical: isMobile ? 20 : 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                SizedBox(height: isMobile ? 20 : 30),
-                _buildSearchBar(context),
-                SizedBox(height: isMobile ? 16 : 20),
-                _buildCompletedAppointmentsList(context),
-              ],
-            ),
-          ),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile
+              ? 16
+              : isTablet
+              ? 20
+              : 24,
+          vertical: isMobile ? 20 : 24,
         ),
-        Positioned(
-          top: 10,
-          right: 15,
-          child: ElevatedButton(
-            onPressed: () => _showSchedulesModal(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF060E57),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context),
+            SizedBox(height: isMobile ? 20 : 30),
+            // Container wrapping search bar and appointments list
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(color: const Color(0xFFE5E9F2), width: 1),
               ),
-              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchBar(context),
+                    const SizedBox(height: 24),
+                    _buildCompletedAppointmentsList(context),
+                  ],
+                ),
+              ),
             ),
-            child: const Icon(Icons.calendar_month, size: 16),
-          ),
+            const SizedBox(
+              height: 100,
+            ), // Add bottom padding for navigation bar
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -195,48 +243,91 @@ class _CounselorFollowUpSessionsScreenState
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.event_available, color: const Color(0xFF191970), size: 28),
-        const SizedBox(width: 12),
-        const Text(
-          'Follow-up Sessions',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF191970),
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
         ),
-      ],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.event_available,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Follow-up Sessions',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Manage follow-up sessions for completed appointments',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSearchBar(BuildContext context) {
     return Consumer<CounselorFollowUpSessionsViewModel>(
       builder: (context, viewModel, child) {
-        return Row(
-          children: [
-            Expanded(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: TextField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search appointments...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchDebounceTimer?.cancel();
-                            _searchController.clear();
-                            viewModel.loadCompletedAppointments();
-                          },
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
                 onChanged: (value) {
+                  // Trigger rebuild to show/hide clear button
+                  setState(() {});
+
                   // Cancel previous timer
                   _searchDebounceTimer?.cancel();
 
@@ -256,9 +347,42 @@ class _CounselorFollowUpSessionsScreenState
                     );
                   }
                 },
+                decoration: InputDecoration(
+                  hintText: 'Search appointments...',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: Color(0xFF64748B),
+                    size: 20,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchDebounceTimer?.cancel();
+                            _searchController.clear();
+                            viewModel.loadCompletedAppointments();
+                            setState(
+                              () {},
+                            ); // Trigger rebuild to hide clear button
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
               ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -357,7 +481,7 @@ class _CounselorFollowUpSessionsScreenState
                 : MediaQuery.of(context).size.width > 600
                 ? 2
                 : 1,
-            childAspectRatio: 1.1,
+            childAspectRatio: 1.00,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -424,7 +548,7 @@ class _CounselorFollowUpSessionsScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Container(
@@ -498,7 +622,7 @@ class _CounselorFollowUpSessionsScreenState
                 ],
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               appointment.studentName,
               style: const TextStyle(
@@ -506,13 +630,15 @@ class _CounselorFollowUpSessionsScreenState
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF191970),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'ID: ${appointment.studentId}',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(
               children: [
                 Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
@@ -566,7 +692,7 @@ class _CounselorFollowUpSessionsScreenState
                     child: Text(
                       appointment.purpose,
                       style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -585,14 +711,14 @@ class _CounselorFollowUpSessionsScreenState
                     child: Text(
                       appointment.description!,
                       style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ],
-            const SizedBox(height: 8),
+            const Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

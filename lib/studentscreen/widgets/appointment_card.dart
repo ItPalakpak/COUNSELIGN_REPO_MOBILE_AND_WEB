@@ -318,7 +318,8 @@ class AppointmentCard extends StatelessWidget {
       case 'COMPLETED':
         return Colors.blue;
       case 'CANCELLED':
-        return Colors.orange;
+        // Use a neutral gray theme for cancelled appointments
+        return Colors.grey;
       case 'PENDING':
       default:
         return Colors.grey;

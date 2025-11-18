@@ -78,7 +78,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
       builder: (context, viewModel, child) {
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.all(isMobile ? 20 : 24),
+          padding: EdgeInsets.all(isMobile ? 10 : 20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),

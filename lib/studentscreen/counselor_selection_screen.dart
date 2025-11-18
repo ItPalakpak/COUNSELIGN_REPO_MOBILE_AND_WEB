@@ -90,58 +90,139 @@ class _CounselorSelectionContentState
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.people, color: Color(0xFF003366)),
-                            SizedBox(width: 8),
-                            Text(
-                              'Select a Counselor',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF003366),
-                              ),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
                             ),
-                          ],
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF060E57).withValues(alpha: 0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.people,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Select a Counselor',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Find and connect with available counselors',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: _buildSearchField(),
-                      ),
                       Expanded(
-                        child: viewModel.isLoadingCounselors
-                            ? const Center(child: CircularProgressIndicator())
-                            : sorted.isEmpty
-                            ? const _EmptyCounselors()
-                            : ListView.builder(
-                                itemCount: sorted.length,
-                                itemBuilder: (context, index) {
-                                  final counselor = sorted[index];
-                                  final meta =
-                                      latestByCounselor[counselor.counselorId];
-                                  final hasUnread = viewModel.hasUnreadMessages(
-                                    counselor.counselorId,
-                                  );
-                                  return _CounselorListItem(
-                                    counselor: counselor,
-                                    latestText: meta?.text,
-                                    isIncomingLatest: meta?.isIncoming ?? false,
-                                    hasUnreadMessages: hasUnread,
-                                    createdAt: meta?.createdAt,
-                                    onTap: () {
-                                      viewModel.selectCounselor(counselor);
-                                      if (context.mounted) {
-                                        Navigator.of(context).pushNamed(
-                                          '/student/conversation',
-                                          arguments: counselor,
-                                        );
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF060E57).withValues(alpha: 0.06),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                                  child: _buildSearchField(),
+                                ),
+                                Expanded(
+                                  child: viewModel.isLoadingCounselors
+                                      ? const Center(
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : sorted.isEmpty
+                                          ? const _EmptyCounselors()
+                                          : ListView.builder(
+                                              itemCount: sorted.length,
+                                              itemBuilder: (context, index) {
+                                                final counselor = sorted[index];
+                                                final meta = latestByCounselor[
+                                                  counselor.counselorId
+                                                ];
+                                                final hasUnread =
+                                                    viewModel.hasUnreadMessages(
+                                                  counselor.counselorId,
+                                                );
+                                                return _CounselorListItem(
+                                                  counselor: counselor,
+                                                  latestText: meta?.text,
+                                                  isIncomingLatest:
+                                                      meta?.isIncoming ?? false,
+                                                  hasUnreadMessages: hasUnread,
+                                                  createdAt: meta?.createdAt,
+                                                  onTap: () {
+                                                    viewModel.selectCounselor(
+                                                      counselor,
+                                                    );
+                                                    if (context.mounted) {
+                                                      Navigator.of(context)
+                                                          .pushNamed(
+                                                        '/student/conversation',
+                                                        arguments: counselor,
+                                                      );
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -202,35 +283,50 @@ class _CounselorSelectionContentState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEF2F7), width: 1),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search counselor by name, specialization, or email',
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              onChanged: (value) => setState(() => _query = value.trim()),
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          if (_query.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear, size: 18, color: Color(0xFF94A3B8)),
-              onPressed: () {
-                _searchController.clear();
-                setState(() => _query = '');
-              },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
         ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => setState(() => _query = value.trim()),
+        decoration: InputDecoration(
+          hintText: 'Search counselor by name',
+          hintStyle: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 14,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: Color(0xFF64748B),
+            size: 20,
+          ),
+          suffixIcon: _query.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear_rounded,
+                    size: 18,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _query = '');
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
       ),
     );
   }
@@ -329,11 +425,14 @@ class _CounselorListItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFF0F4F8), width: 1),
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Color(0xFFF0F4F8),
+              width: 0.5,
+            ),
           ),
         ),
         child: Row(
@@ -405,12 +504,7 @@ class _CounselorListItem extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF94A3B8),
-              size: 16,
-            ),
+            
           ],
         ),
       ),

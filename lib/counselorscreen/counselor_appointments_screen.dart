@@ -19,6 +19,7 @@ class _CounselorAppointmentsScreenState
     extends State<CounselorAppointmentsScreen> {
   late CounselorAppointmentsViewModel _viewModel;
   final TextEditingController _searchController = TextEditingController();
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -30,12 +31,53 @@ class _CounselorAppointmentsScreenState
   @override
   void dispose() {
     _searchController.dispose();
+    _removeOverlay();
     _viewModel.dispose();
     super.dispose();
   }
 
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _insertOverlay() {
+    _removeOverlay();
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    final mediaQuery = MediaQuery.of(context);
+    final paddingTop = mediaQuery.padding.top;
+    final appBarHeight = 40.0; // kAppBarHeight from AppHeader
+
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        top: paddingTop + appBarHeight + 10,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: FloatingActionButton(
+            onPressed: () => _showSchedulesModal(context),
+            backgroundColor: const Color(0xFF060E57),
+            foregroundColor: Colors.white,
+            tooltip: 'View Schedules',
+            child: const Icon(Icons.calendar_today),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _overlayEntry == null) {
+        _insertOverlay();
+      }
+    });
+
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: CounselorScreenWrapper(
@@ -49,50 +91,67 @@ class _CounselorAppointmentsScreenState
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final isTablet = size.width >= 600 && size.width < 1024;
-    return Stack(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile
-                ? 16
-                : isTablet
-                ? 20
-                : 24,
-            vertical: isMobile ? 16 : 20,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 12),
-              _buildStatusGrid(context),
-              const SizedBox(height: 12),
-              _buildSearchRow(context),
-              const SizedBox(height: 8),
-              _buildFilterRow(context),
-              const SizedBox(height: 16),
-              _buildList(context),
-            ],
-          ),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile
+              ? 16
+              : isTablet
+              ? 20
+              : 24,
+          vertical: isMobile ? 16 : 20,
         ),
-        Positioned(
-          top: 10,
-          right: 15,
-          child: ElevatedButton(
-            onPressed: () => _showSchedulesModal(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF060E57),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(context),
+            const SizedBox(height: 12),
+            // Status Grid Container
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              elevation: 4,
+              child: _buildStatusGrid(context),
             ),
-            child: const Icon(Icons.calendar_month, size: 16),
-          ),
+            const SizedBox(height: 12),
+            // Search, Filter, and Appointments Container
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF060E57).withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildSearchRow(context),
+                  const SizedBox(height: 8),
+                  _buildFilterRow(context),
+                  const SizedBox(height: 16),
+                  _buildList(context),
+                ],
+              ),
+            ),
+            const SizedBox(height: 100), // Bottom padding for navigation
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -186,19 +245,65 @@ class _CounselorAppointmentsScreenState
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: const [
-        Icon(Icons.calendar_today, color: Color(0xFF191970), size: 24),
-        SizedBox(width: 8),
-        Text(
-          'Manage Appointments',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF191970),
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF060E57), Color(0xFF3B82F6)],
         ),
-      ],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF060E57).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.calendar_today,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Manage Appointments',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Review and manage appointment requests from students',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -739,7 +844,6 @@ class _CounselorAppointmentsScreenState
                               );
                             }
 
-                            // Close dialog only after process is finished
                             if (dialogContext.mounted) {
                               Navigator.of(dialogContext).pop();
                             }

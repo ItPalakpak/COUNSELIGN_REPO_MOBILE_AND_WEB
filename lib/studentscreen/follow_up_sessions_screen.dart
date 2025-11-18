@@ -82,9 +82,35 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
                   return const SizedBox.shrink();
                 },
               ),
-              _buildSearchBar(context, viewModel),
-              const SizedBox(height: 24),
-              _buildCompletedAppointmentsList(context, viewModel),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF060E57).withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: const Color(0xFFE5E9F2),
+                    width: 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBar(context, viewModel),
+                      const SizedBox(height: 24),
+                      _buildCompletedAppointmentsList(context, viewModel),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(
                 height: 100,
               ), // Add bottom padding for navigation bar
@@ -98,7 +124,10 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -109,53 +138,49 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF060E57).withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.update_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Follow-up Sessions',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.update_rounded,
-                  color: Colors.white,
-                  size: 28,
+                const SizedBox(height: 2),
+                Text(
+                  'View your completed appointments and their follow-up sessions',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Follow-up Sessions',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'View your completed appointments and their follow-up sessions',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -391,7 +416,10 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => viewModel.openFollowUpSessionsModal(appointment.id),
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            viewModel.openFollowUpSessionsModal(appointment.id);
+          },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -749,26 +777,33 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
   ) {
     return Container(
       color: Colors.black.withValues(alpha: 0.5),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+      child: AnimatedPadding(
+        padding: MediaQuery.of(context).viewInsets + const EdgeInsets.all(16),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.decelerate,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildModalHeader(context, viewModel),
-              _buildModalContent(context, viewModel),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildModalHeader(context, viewModel),
+                  _buildModalContent(context, viewModel),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -838,8 +873,11 @@ class _FollowUpSessionsScreenState extends State<FollowUpSessionsScreen> {
     BuildContext context,
     FollowUpSessionsViewModel viewModel,
   ) {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 500),
+    final mediaQuery = MediaQuery.of(context);
+    final maxHeight = mediaQuery.size.height * 0.65;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
