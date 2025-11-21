@@ -15,10 +15,11 @@
     <link rel="icon" href="<?= base_url('Photos/counselign.ico') ?>" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="<?= base_url('css/landing.css?v=1.2') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/dark_mode.css?v=1.2') ?>">
 </head>
 
 <body>
-    <header class="text-white p-1" style="background-color: #060E57;">
+    <header class="landing-header text-white p-1" style="background-color: #060E57;">
         <div class="container-fluid px-4">
             <div class="row align-items-center">
                 <div class="d-flex align-items-center">
@@ -510,6 +511,7 @@
     ?>
     <script src="<?= base_url('js/landing.js') ?>"></script>
     <script src="<?= base_url('js/utils/secureLogger.js') ?>"></script>
+    <script src="<?= base_url('js/dark_mode.js') ?>"></script>
     <script>
         window.CSRF_TOKEN_NAME = "<?= csrf_token() ?>";
         window.BASE_URL = "<?= base_url() ?>";

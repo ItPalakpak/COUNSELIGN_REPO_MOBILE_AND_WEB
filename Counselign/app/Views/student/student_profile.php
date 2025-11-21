@@ -74,7 +74,7 @@
             <div class="top-bar-left">
                 <h1 class="page-title-header">
                     <i class="fas fa-user-cog me-2"></i>
-                    Account Settings
+                    Profile
                 </h1>
             </div>
 
@@ -98,7 +98,7 @@
                         <div class="profile-dropdown-divider"></div>
                         <a href="<?= base_url('student/profile') ?>" class="profile-dropdown-item">
                             <i class="fas fa-user-cog"></i>
-                            <span>Account Settings</span>
+                            <span>Profile</span>
                         </a>
                         <div class="profile-dropdown-divider"></div>
                         <button class="profile-dropdown-item" onclick="confirmLogout()">

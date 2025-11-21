@@ -12,10 +12,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="<?= base_url('css/services.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/dark_mode.css?v=1.2') ?>">
 </head>
 
 <body>
-    <header class="text-white p-1" style="background-color: #060E57;">
+    <header class="landing-header text-white p-1" style="background-color: #060E57;">
         <div class="container-fluid px-4">
             <div class="row align-items-center">
                 <div class="d-flex align-items-center">
@@ -134,6 +135,7 @@
     </footer>
 
     <script src="<?= base_url('js/services.js') ?>"></script>
+    <script src="<?= base_url('js/dark_mode.js') ?>"></script>
 </body>
 
 </html>

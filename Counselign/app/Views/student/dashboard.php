@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="<?= base_url('css/student/header.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/utils/resources.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/utils/sidebar.css') ?>">
+    
 </head>
 
 <body>
@@ -110,7 +111,7 @@
                         <div class="profile-dropdown-divider"></div>
                         <a href="<?= base_url('student/profile') ?>" class="profile-dropdown-item">
                             <i class="fas fa-user-cog"></i>
-                            <span>Account Settings</span>
+                            <span>Profile</span>
                         </a>
                         <div class="profile-dropdown-divider"></div>
                         <button class="profile-dropdown-item" onclick="confirmLogout()">

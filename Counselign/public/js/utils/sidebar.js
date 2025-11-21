@@ -1,6 +1,7 @@
 /**
  * Universal Sidebar and Profile Dropdown Functionality
  * Works for Admin, Counselor, and Student dashboards
+ * Enhanced with hover functionality for profile dropdown
  */
 
 (function() {
@@ -16,6 +17,8 @@
     // Global state
     let currentUserRole = null;
     let currentUserData = null;
+    let dropdownHideTimer = null;
+    const DROPDOWN_HIDE_DELAY = 5000; // 5 seconds
 
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize role detection and profile loading
@@ -91,18 +94,99 @@
             });
         });
 
-        // Profile dropdown toggle
+        // ===================================
+        // ENHANCED PROFILE DROPDOWN FUNCTIONALITY
+        // ===================================
+
+        /**
+         * Show the dropdown menu
+         */
+        function showDropdown() {
+            if (profileDropdownMenu) {
+                clearTimeout(dropdownHideTimer);
+                profileDropdownMenu.classList.add('show');
+            }
+        }
+
+        /**
+         * Hide the dropdown menu after delay
+         */
+        function hideDropdownWithDelay() {
+            clearTimeout(dropdownHideTimer);
+            dropdownHideTimer = setTimeout(() => {
+                if (profileDropdownMenu) {
+                    profileDropdownMenu.classList.remove('show');
+                }
+            }, DROPDOWN_HIDE_DELAY);
+        }
+
+        /**
+         * Hide the dropdown immediately
+         */
+        function hideDropdownImmediately() {
+            clearTimeout(dropdownHideTimer);
+            if (profileDropdownMenu) {
+                profileDropdownMenu.classList.remove('show');
+            }
+        }
+
+        // Profile dropdown button - hover events
         if (profileDropdownBtn) {
+            // Click event (toggle)
             profileDropdownBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                profileDropdownMenu.classList.toggle('show');
+                const isShown = profileDropdownMenu.classList.contains('show');
+                
+                if (isShown) {
+                    hideDropdownImmediately();
+                } else {
+                    showDropdown();
+                }
+            });
+
+            // Mouse enter - show dropdown
+            profileDropdownBtn.addEventListener('mouseenter', function() {
+                showDropdown();
+            });
+
+            // Mouse leave - start hide timer
+            profileDropdownBtn.addEventListener('mouseleave', function() {
+                hideDropdownWithDelay();
+            });
+        }
+
+        // Profile dropdown menu - hover events
+        if (profileDropdownMenu) {
+            // Mouse enter - cancel hide timer
+            profileDropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownHideTimer);
+            });
+
+            // Mouse leave - start hide timer
+            profileDropdownMenu.addEventListener('mouseleave', function() {
+                hideDropdownWithDelay();
+            });
+
+            // Ensure dropdown items remain functional
+            const dropdownItems = profileDropdownMenu.querySelectorAll('.profile-dropdown-item');
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Allow links to work normally
+                    // Hide dropdown after click if it's not a link
+                    if (!this.hasAttribute('href') || this.getAttribute('href') === '#') {
+                        hideDropdownImmediately();
+                    }
+                });
             });
         }
 
         // Close profile dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            if (profileDropdownMenu && !profileDropdownMenu.contains(e.target) && e.target !== profileDropdownBtn) {
-                profileDropdownMenu.classList.remove('show');
+            if (profileDropdownMenu && 
+                !profileDropdownMenu.contains(e.target) && 
+                e.target !== profileDropdownBtn &&
+                !profileDropdownBtn.contains(e.target)) {
+                hideDropdownImmediately();
             }
         });
 
@@ -110,7 +194,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 if (profileDropdownMenu) {
-                    profileDropdownMenu.classList.remove('show');
+                    hideDropdownImmediately();
                 }
                 if (window.innerWidth < 992 && sidebar.classList.contains('active')) {
                     sidebar.classList.remove('active');

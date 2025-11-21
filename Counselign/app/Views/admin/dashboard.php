@@ -105,7 +105,7 @@
                         <div class="profile-dropdown-divider"></div>
                         <a href="<?= base_url('admin/account-settings') ?>" class="profile-dropdown-item">
                             <i class="fas fa-user-cog"></i>
-                            <span>Account Settings</span>
+                            <span>Profile</span>
                         </a>
                         <div class="profile-dropdown-divider"></div>
                         <button class="profile-dropdown-item" onclick="confirmLogout()">

@@ -59,6 +59,11 @@
   - **Interactions**: Resource JS now provides loading spinners on save/delete, keeps edit modal open on validation errors, and refreshes list with interim spinners.
   - **Files Updated**: `app/Controllers/Admin/Resources.php`, `app/Views/admin/resources.php`, `public/js/modals/student_dashboard_modals.js`, `public/js/admin/resources_management.js`, `memory-bank/activeContext.md`
 
+- **COMPLETED**: Dark mode primary button contrast fix
+  - **Issue**: Action buttons in dark theme used gradients that blended into the background and changed colors on hover.
+  - **Resolution**: `public/css/dark_mode.css` now enforces white backgrounds with black text for key action buttons and limits hover feedback to an upward lift animation.
+  - **Result**: Consistent contrast and predictable hover behavior that aligns with the dark-mode design brief.
+
 - **COMPLETED**: Counselor Personal Info Default Values and INSERT Function
   - **Feature**: Fixed counselor personal info default values and INSERT functionality for first-time users
   - **Functionality**: Set default "N/A" values for personal info inputs on first-time adding

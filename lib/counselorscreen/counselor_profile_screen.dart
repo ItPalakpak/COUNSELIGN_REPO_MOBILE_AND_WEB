@@ -234,7 +234,7 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => _showChangePasswordDialog(context),
-                    icon: const Icon(Icons.key, size: 18),
+                    icon: const Icon(Icons.key_sharp, size: 18),
                     label: const Text('Change Password'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),

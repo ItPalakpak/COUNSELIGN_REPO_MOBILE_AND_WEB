@@ -1,11 +1,10 @@
 /**
  * PDS Preview PDF Generation
- * Handles direct PDF generation and download functionality
+ * Handles direct PDF generation and download functionality with improved quality
  */
 
 /**
- * Generate and download PDF directly without using window.print()
- * This ensures proper formatting and footer positioning
+ * Generate and download PDF directly with MAXIMUM QUALITY
  */
 async function downloadPDF() {
     try {
@@ -19,7 +18,7 @@ async function downloadPDF() {
         const originalText = downloadBtn ? downloadBtn.innerHTML : '';
         if (downloadBtn) {
             downloadBtn.disabled = true;
-            downloadBtn.innerHTML = '⏳ Generating PDF...';
+            downloadBtn.innerHTML = '⏳ Generating High-Quality PDF...';
         }
 
         // Get both pages
@@ -74,7 +73,7 @@ async function downloadPDF() {
                     const timeout = setTimeout(() => {
                         console.warn('Image load timeout:', img.src);
                         resolve();
-                    }, 5000);
+                    }, 10000); // Increased timeout
                     
                     img.onload = () => {
                         clearTimeout(timeout);
@@ -93,35 +92,34 @@ async function downloadPDF() {
         console.log('Waiting for images to load...');
         await waitForImages(page1);
         await waitForImages(page2);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Extra wait for rendering
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Extra wait for rendering
 
-        console.log('Images loaded, generating Page 1 canvas...');
+        console.log('Images loaded, generating Page 1 canvas with HIGH QUALITY...');
 
-        // Generate canvas for page 1 (directly from original element)
+        // IMPROVED: Generate canvas for page 1 with MAXIMUM QUALITY
         const canvas1 = await html2canvas(page1, {
-            scale: 2,
+            scale: 3, // INCREASED from 2 to 3 for higher quality
             useCORS: true,
             allowTaint: false,
             logging: false,
             letterRendering: true,
             backgroundColor: '#ffffff',
+            imageTimeout: 15000,
+            removeContainer: false,
+            foreignObjectRendering: false, // More reliable rendering
             ignoreElements: (element) => {
-                // Ignore print controls and any iframes
                 return element.classList.contains('print-controls') || 
                        element.tagName === 'IFRAME' ||
                        element.tagName === 'SCRIPT';
             },
             onclone: (clonedDoc) => {
-                // Clean up cloned document
                 const clonedPage1 = clonedDoc.querySelector('.page-1');
                 if (clonedPage1) {
-                    // Remove print controls from clone
                     const printControls = clonedPage1.querySelector('.print-controls');
                     if (printControls) {
                         printControls.remove();
                     }
                     
-                    // Fix footer positioning in clone
                     const footer = clonedPage1.querySelector('.page-footer');
                     if (footer) {
                         footer.style.position = 'absolute';
@@ -129,37 +127,44 @@ async function downloadPDF() {
                         footer.style.left = '40px';
                         footer.style.right = '40px';
                     }
+                    
+                    // Ensure fonts are fully loaded
+                    const allText = clonedPage1.querySelectorAll('*');
+                    allText.forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        el.style.fontFamily = style.fontFamily;
+                        el.style.fontSize = style.fontSize;
+                    });
                 }
             }
         });
 
-        console.log('Page 1 canvas generated, generating Page 2 canvas...');
+        console.log('Page 1 canvas generated, generating Page 2 canvas with HIGH QUALITY...');
 
-        // Generate canvas for page 2 (directly from original element)
+        // IMPROVED: Generate canvas for page 2 with MAXIMUM QUALITY
         const canvas2 = await html2canvas(page2, {
-            scale: 2,
+            scale: 3, // INCREASED from 2 to 3 for higher quality
             useCORS: true,
             allowTaint: false,
             logging: false,
             letterRendering: true,
             backgroundColor: '#ffffff',
+            imageTimeout: 15000,
+            removeContainer: false,
+            foreignObjectRendering: false,
             ignoreElements: (element) => {
-                // Ignore print controls and any iframes
                 return element.classList.contains('print-controls') || 
                        element.tagName === 'IFRAME' ||
                        element.tagName === 'SCRIPT';
             },
             onclone: (clonedDoc) => {
-                // Clean up cloned document
                 const clonedPage2 = clonedDoc.querySelector('.page-2');
                 if (clonedPage2) {
-                    // Remove print controls from clone
                     const printControls = clonedPage2.querySelector('.print-controls');
                     if (printControls) {
                         printControls.remove();
                     }
                     
-                    // Fix footer positioning in clone
                     const footer = clonedPage2.querySelector('.page-footer');
                     if (footer) {
                         footer.style.position = 'absolute';
@@ -167,19 +172,27 @@ async function downloadPDF() {
                         footer.style.left = '40px';
                         footer.style.right = '40px';
                     }
+                    
+                    // Ensure fonts are fully loaded
+                    const allText = clonedPage2.querySelectorAll('*');
+                    allText.forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        el.style.fontFamily = style.fontFamily;
+                        el.style.fontSize = style.fontSize;
+                    });
                 }
             }
         });
 
-        console.log('Page 2 canvas generated, converting to images...');
+        console.log('Page 2 canvas generated, converting to high-quality images...');
 
-        // Convert canvases to images
-        const imgData1 = canvas1.toDataURL('image/jpeg', 0.98);
-        const imgData2 = canvas2.toDataURL('image/jpeg', 0.98);
+        // IMPROVED: Convert canvases to PNG for better quality, then compress slightly
+        const imgData1 = canvas1.toDataURL('image/png', 1.0);
+        const imgData2 = canvas2.toDataURL('image/png', 1.0);
 
-        console.log('Creating PDF document...');
+        console.log('Creating PDF document with optimal settings...');
 
-        // Access jsPDF - try multiple ways to find it
+        // Access jsPDF
         let jsPDF;
         if (window.jspdf && window.jspdf.jsPDF) {
             jsPDF = window.jspdf.jsPDF;
@@ -189,31 +202,32 @@ async function downloadPDF() {
             throw new Error('jsPDF library is not available. Please refresh the page and try again.');
         }
 
-        // Create new PDF document (8.5 x 11 inches at 96 DPI = 816 x 1056 pixels)
+        // IMPROVED: Create PDF with higher resolution settings
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'px',
             format: [816, 1056],
-            compress: true
+            compress: false, // CHANGED: Disable compression for maximum quality
+            precision: 16, // Higher precision
+            userUnit: 1.0
         });
 
         console.log('Adding page 1 to PDF...');
         
-        // Add page 1
-        pdf.addImage(imgData1, 'JPEG', 0, 0, 816, 1056, undefined, 'FAST');
+        // IMPROVED: Add images with PNG format and no additional compression
+        pdf.addImage(imgData1, 'PNG', 0, 0, 816, 1056, undefined, 'NONE');
 
         console.log('Adding page 2 to PDF...');
         
-        // Add page 2
         pdf.addPage([816, 1056], 'portrait');
-        pdf.addImage(imgData2, 'JPEG', 0, 0, 816, 1056, undefined, 'FAST');
+        pdf.addImage(imgData2, 'PNG', 0, 0, 816, 1056, undefined, 'NONE');
 
         console.log('Saving PDF...');
 
         // Save the PDF
         pdf.save(`PDS_${studentName}.pdf`);
 
-        console.log('PDF generated successfully!');
+        console.log('High-quality PDF generated successfully!');
         
         // Restore button state
         if (downloadBtn) {
@@ -227,16 +241,14 @@ async function downloadPDF() {
         
         let errorMessage = 'Error generating PDF: ' + error.message;
         
-        // Provide more helpful error messages
         if (error.message.includes('library is not')) {
             errorMessage += '\n\nPlease refresh the page and try again.';
         } else if (error.message.includes('cloned iframe')) {
-            errorMessage = 'Error generating PDF: Problem with page elements.\n\nPlease try again or use the Print button instead.';
+            errorMessage = 'Error generating PDF: Problem with page elements.\n\nPlease try again.';
         }
         
         alert(errorMessage);
         
-        // Restore button state
         const downloadBtn = document.querySelector('.btn-download');
         if (downloadBtn) {
             downloadBtn.disabled = false;
@@ -244,3 +256,40 @@ async function downloadPDF() {
         }
     }
 }
+
+/**
+ * Library verification - Check if required libraries are loaded
+ */
+window.addEventListener('load', function() {
+    console.log('=== Checking Required Libraries ===');
+
+    if (typeof html2canvas !== 'undefined') {
+        console.log('✓ html2canvas is loaded');
+    } else {
+        console.error('✗ html2canvas failed to load');
+    }
+
+    let jsPDFFound = false;
+    if (window.jspdf && window.jspdf.jsPDF) {
+        console.log('✓ jsPDF is loaded (window.jspdf.jsPDF)');
+        jsPDFFound = true;
+    } else if (window.jsPDF) {
+        console.log('✓ jsPDF is loaded (window.jsPDF)');
+        jsPDFFound = true;
+    }
+
+    if (!jsPDFFound) {
+        console.error('✗ jsPDF failed to load');
+    }
+
+    const page1 = document.querySelector('.page-1');
+    const page2 = document.querySelector('.page-2');
+
+    if (page1 && page2) {
+        console.log('✓ Both PDS pages found');
+    } else {
+        console.error('✗ PDS pages not found');
+    }
+
+    console.log('=== Library Check Complete ===');
+});

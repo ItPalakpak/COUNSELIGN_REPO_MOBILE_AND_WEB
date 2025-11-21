@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Account Settings - Counselign</title>
+    <title>Profile - Counselign</title>
     <link rel="icon" href="<?= base_url('Photos/counselign.ico') ?>" sizes="16x16 32x32" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -70,7 +70,7 @@
             <div class="top-bar-left">
                 <h1 class="page-title-header">
                     <i class="fas fa-user-cog me-2"></i>
-                    Account Settings
+                    Profile
                 </h1>
             </div>
 
@@ -94,7 +94,7 @@
                         <div class="profile-dropdown-divider"></div>
                         <a href="<?= base_url('admin/account-settings') ?>" class="profile-dropdown-item">
                             <i class="fas fa-user-cog"></i>
-                            <span>Account Settings</span>
+                            <span>Profile</span>
                         </a>
                         <div class="profile-dropdown-divider"></div>
                         <button class="profile-dropdown-item" onclick="confirmLogout()">

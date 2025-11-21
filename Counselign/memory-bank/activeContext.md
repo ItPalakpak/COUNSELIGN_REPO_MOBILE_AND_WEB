@@ -14,6 +14,7 @@
 - Frontend:
   - `public/js/landing.js`: Updated student signup validation to `^\d{1,10}$`, updated resend reset code validator to accept 1–10 digit numeric IDs, and updated placeholders/titles accordingly.
   - `app/Views/landing.php`: Signup input `pattern` set to `[0-9]{1,10}` and updated title to “1 to 10 digits.”
+  - `public/css/dark_mode.css`: Standardized dark-mode primary action buttons to use white backgrounds with black text and hover lift-only interaction (no color shifts).
 - Backend:
   - `app/Controllers/Auth.php`: 
     - Signup (student): regex from exactly 10 digits to 1–10 digits.

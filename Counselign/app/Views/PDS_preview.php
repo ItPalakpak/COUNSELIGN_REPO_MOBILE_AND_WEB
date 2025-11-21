@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>PDS Preview - <?= esc($user_info['user_id']) ?></title>
     <link rel="icon" href="<?= base_url('Photos/counselign.ico') ?>" sizes="16x16 32x32" type="image/x-icon">
     <link rel="stylesheet" href="<?= base_url('css/pds_preview.css') . '?v=' . @filemtime(FCPATH . 'css/pds_preview.css') ?>">
@@ -196,489 +196,494 @@
 
     <!-- Print Controls -->
     <div class="print-controls">
-        <button onclick="window.print()" class="btn-print">🖨️ Print PDS</button>
         <button onclick="downloadPDF()" class="btn-download">📥 Download as PDF</button>
     </div>
 
-    <!-- Page 1 -->
-    <div class="pds-page page-1">
-        <!-- Document Code Table (Top Right) -->
-        <div class="document-stamp">
-            <table class="stamp-table">
-                <tr>
-                    <td colspan="3" class="stamp-header">Document Code No.</td>
-                </tr>
-                <tr>
-                    <td colspan="3" class="stamp-code">FM-USTP-GCS-02</td>
-                </tr>
-                <tr>
-                    <td class="stamp-label">Rev. No.</td>
-                    <td class="stamp-label">Effective Date</td>
-                    <td class="stamp-label">Page No.</td>
-                </tr>
-                <tr>
-                    <td class="stamp-value">00</td>
-                    <td class="stamp-value">03.17.25</td>
-                    <td class="stamp-value">1 of 2</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- University Header -->
-        <div class="university-header">
-            <div class="ustp-logo-container">
-                <img src="<?= base_url('Photos/USTP.png') ?>" alt="USTP Logo" class="ustp-logo-image">
-            </div>
-            <div class="university-name">UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES</div>
-            <div class="campuses">Alubijid | Balubal | Cagayan de Oro | Claveria | Jasaan | Oroquieta | Panaon | Villanueva</div>
-            <div class="department-name">GUIDANCE AND COUNSELING SERVICES</div>
-            <div class="form-title">STUDENT'S PERSONAL DATA SHEET</div>
-        </div>
-
-        <!-- Photo Box -->
-        <div class="photo-box">
-            <img src="<?= getProfilePictureUrl($user_info['profile_picture']) ?>" alt="Student Photo" class="student-photo">
-        </div>
-
-        <!-- Confidentiality Notice -->
-        <div class="confidentiality-notice">
-            <p>The Guidance and Counseling Services (GCS) observes <strong>STRICT CONFIDENTIALITY</strong> on the personal information shared in this form according to the ethical principles of privacy and in compliance with the Data Privacy Act. However, please take note that the information will be disclosed in the following circumstances:</p>
-            <ol>
-                <li>Threat or risk of life (of the client, his/her immediate family, victim of abuse)</li>
-                <li>The client can cause danger to the lives and health of other people.</li>
-            </ol>
-            <p>Moreover, information may also be given to agencies (e.g. DSWD, Police, Women and Children Protection Unit, Rehabilitation Unit Hospitals and other health providers) that can facilitate or address client's need and situation.</p>
-            <p class="instruction"><strong>Instruction:</strong> Please provide honest response to the information needed. Rest assured that data gathered will be treated with utmost confidentiality in accordance with Data Privacy Act.</p>
-        </div>
-
-        <!-- Personal Background Section -->
-        <div class="section personal-background">
-            <h3 class="section-title">PERSONAL BACKGROUND</h3>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Course/Track:</label>
-                    <span class="field-value"><?= formatValue($academic['course'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Major/Strand:</label>
-                    <span class="field-value"><?= formatValue($academic['major_or_strand'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Grade/Year Level:</label>
-                    <span class="field-value"><?= formatValue($academic['year_level'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>First Name:</label>
-                    <span class="field-value"><?= formatValue($personal['first_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Gender:</label>
-                    <span class="field-value"><?= formatValue($personal['sex'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Date of Birth:</label>
-                    <span class="field-value"><?= formatDateShort($personal['date_of_birth'] ?? '') ?></span>
-                </div>
-                <div class="form-field" style="max-width: 60px;">
-                    <label>Age:</label>
-                    <span class="field-value"><?= $age ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Last Name:</label>
-                    <span class="field-value"><?= formatValue($personal['last_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Place of Birth:</label>
-                    <span class="field-value"><?= formatValue($personal['place_of_birth'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Middle Name:</label>
-                    <span class="field-value"><?= formatValue($personal['middle_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Civil Status: </label>
-                    <span class="field-value"><?= formatValue($personal['civil_status'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Religion:</label>
-                    <span class="field-value"><?= formatValue($personal['religion'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Contact Number:</label>
-                    <span class="field-value"><?= formatValue($personal['contact_number'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>E-mail Address:</label>
-                    <span class="field-value"><?= formatValue($personal['email_address'] ?? $user_info['email'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>Permanent Address:</label>
-                    <span class="field-value"><?= formatValue($address['permanent_zone'] ?? '') ?><?= !empty($address['permanent_zone']) ? ', ' : '' ?><?= formatValue($address['permanent_barangay'] ?? '') ?><?= !empty($address['permanent_barangay']) ? ', ' : '' ?><?= formatValue($address['permanent_city'] ?? '') ?><?= !empty($address['permanent_city']) ? ', ' : '' ?><?= formatValue($address['permanent_province'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>Present Address:</label>
-                    <span class="field-value"><?= formatValue($address['present_zone'] ?? '') ?><?= !empty($address['present_zone']) ? ', ' : '' ?><?= formatValue($address['present_barangay'] ?? '') ?><?= !empty($address['present_barangay']) ? ', ' : '' ?><?= formatValue($address['present_city'] ?? '') ?><?= !empty($address['present_city']) ? ', ' : '' ?><?= formatValue($address['present_province'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>School Last Attended:</label>
-                    <span class="field-value"><?= formatValue($academic['school_last_attended'] ?? '') ?></span>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Location of School:</label>
-                    <span class="field-value"><?= formatValue($academic['location_of_school'] ?? '') ?></span>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Previous Course/Grade:</label>
-                    <span class="field-value"><?= formatValue($academic['previous_course_grade'] ?? '') ?></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Family Background Section -->
-        <div class="section family-background">
-            <h3 class="section-title">FAMILY BACKGROUND</h3>
-
-            <div class="form-row">
-                <div class="form-field" style="flex: 2;">
-                    <label>Name of Father:</label>
-                    <span class="field-value"><?= formatValue($family['father_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field" style="max-width: 60px;">
-                    <label>Age:</label>
-                    <span class="field-value"><?= formatValue($family['father_age'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Contact No:</label>
-                    <span class="field-value"><?= formatValue($family['father_contact_number'] ?? '') ?></span>
-                </div>
-                
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Occupation:</label>
-                    <span class="field-value"><?= formatValue($family['father_occupation'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Educational Attainment:</label>
-                    <span class="field-value"><?= formatValue($family['father_educational_attainment'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field" style="flex: 2;">
-                    <label>Name of Mother:</label>
-                    <span class="field-value"><?= formatValue($family['mother_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field" style="max-width: 60px;">
-                    <label>Age:</label>
-                    <span class="field-value"><?= formatValue($family['mother_age'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Contact No:</label>
-                    <span class="field-value"><?= formatValue($family['mother_contact_number'] ?? '') ?></span>
-                </div>
-                
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Occupation:</label>
-                    <span class="field-value"><?= formatValue($family['mother_occupation'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Educational Attainment:</label>
-                    <span class="field-value"><?= formatValue($family['mother_educational_attainment'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>Parents' Permanent Address:</label>
-                    <span class="field-value"><?= formatValue($family['parents_permanent_address'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field" style="flex: 2;">
-                    <label>Husband/Wife (If Married):</label>
-                    <span class="field-value"><?= formatValue($family['spouse'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Contact No:</label>
-                    <span class="field-value"><?= formatValue($family['spouse_contact_number'] ?? '') ?></span>
-                </div>
-                
-            </div>
-
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Occupation:</label>
-                    <span class="field-value"><?= formatValue($family['spouse_occupation'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Educational Attainment:</label>
-                    <span class="field-value"><?= formatValue($family['spouse_educational_attainment'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field" style="flex: 2;">
-                    <label>Name of Guardian (if applicable):</label>
-                    <span class="field-value"><?= formatValue($family['guardian_name'] ?? '') ?></span>
-                </div>
-                <div class="form-field" style="max-width: 60px;">
-                    <label>Age:</label>
-                    <span class="field-value"><?= formatValue($family['guardian_age'] ?? '') ?></span>
-                </div>
-                <div class="form-field">
-                    <label>Contact No:</label>
-                    <span class="field-value"><?= formatValue($family['guardian_contact_number'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>Occupation:</label>
-                    <span class="field-value"><?= formatValue($family['guardian_occupation'] ?? '') ?></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-content-wrapper">
-                <div class="footer-text">
-                    <p class="continue-note">Pls. continue on the back page →</p>
-                    <p class="footer-address">C.M. Recto Avenue, Lapasan, Cagayan De Oro City 9000 Philippines</p>
-                    <p class="footer-contact">Tel Nos. +63 (88) 856 1738; Telefax +63 (88) 856 4696 | http://www.ustp.edu.ph</p>
-                </div>
-                <div class="footer-stamp">
-                    <img src="<?= base_url('Misc/PDS/SOCOTECH_stamp.jpg') ?>" alt="SOCOTEC Stamp" class="socotech-stamp-image">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Page 2 -->
-    <div class="pds-page page-2">
-        <!-- Document Code Table (Top Right) -->
-        <div class="document-stamp">
-            <table class="stamp-table">
-                <tr>
-                    <td colspan="3" class="stamp-header">Document Code No.</td>
-                </tr>
-                <tr>
-                    <td colspan="3" class="stamp-code">FM-USTP-GCS-02</td>
-                </tr>
-                <tr>
-                    <td class="stamp-label">Rev. No.</td>
-                    <td class="stamp-label">Effective Date</td>
-                    <td class="stamp-label">Page No.</td>
-                </tr>
-                <tr>
-                    <td class="stamp-value">00</td>
-                    <td class="stamp-value">03.17.25</td>
-                    <td class="stamp-value">2 of 2</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- University Header (Page 2) -->
-        <div class="university-header">
-            <div class="ustp-logo-container">
-                <img src="<?= base_url('Photos/USTP.png') ?>" alt="USTP Logo" class="ustp-logo-image">
-            </div>
-            <div class="university-name">UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES</div>
-            <div class="campuses">Alubijid | Balubal | Cagayan de Oro | Claveria | Jasaan | Oroquieta | Panaon | Villanueva</div>
-            <div class="department-name">GUIDANCE AND COUNSELING SERVICES</div>
-        </div>
-
-        <!-- Other Information Section -->
-        <div class="section other-information">
-            <h3 class="section-title">OTHER INFORMATION</h3>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>1. Why did you choose this course/program?</label>
-                    <span class="field-value"><?= formatValue($other['course_choice_reason'] ?? '') ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>2. How would you describe your family?</label>
-
-                    <span class="field-value"><?= $familyDesc ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>3. Where do you live right now?</label>
-
-                    <span class="field-value"><?= $residenceType ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>4. Describe your living condition.</label>
-
-                    <span class="field-value"><?= $livingCondition ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>5. Do you have any physical/health condition/s?</label>
-
-                    <span class="field-value"><?= $healthCondition ?></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-field full-width">
-                    <label>6. Have you undergone intervention/treatment with a psychologist/psychiatrist?</label>
-
-                    <span class="field-value"><?= $psychTreatment ?></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- GCS Activities Section -->
-        <div class="section gcs-activities">
-            <h3 class="section-title">SEMINARS/ACTIVITIES YOU WANT TO AVAIL FROM THE GUIDANCE SERVICES UNIT</h3>
-
-            <?php if (!empty($gcsActivitiesList)): ?>
-                <div style="margin-top: 10px; font-size: 8px; font-weight: bold;">
-                    <div style="text-decoration: underline; margin-bottom: 5px;">Selected Activities:</div>
-                    <?php foreach ($gcsActivitiesList as $activity): ?>
-                        <div style="margin-bottom: 3px;">• <?= esc($activity) ?></div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Awards Section -->
-        <div class="section awards-section">
-            <h3 class="section-title">AWARDS AND RECOGNITION</h3>
-            <table class="awards-table">
-                <thead>
+    <!-- ADDED: Responsive Container Wrapper -->
+    <div class="pds-container">
+        <!-- Page 1 -->
+        <div class="pds-page page-1">
+            <!-- Document Code Table (Top Right) -->
+            <div class="document-stamp">
+                <table class="stamp-table">
                     <tr>
-                        <th>AWARDS/RECOGNITION RECEIVED</th>
-                        <th>NAME OF SCHOOL/ORGANIZATION</th>
-                        <th>YEAR</th>
+                        <td colspan="3" class="stamp-header">Document Code No.</td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($awards)): ?>
-                        <?php foreach ($awards as $award): ?>
-                            <tr>
-                                <td><?= formatValue($award['award_name'] ?? '') ?></td>
-                                <td><?= formatValue($award['school_organization'] ?? '') ?></td>
-                                <td><?= formatValue($award['year_received'] ?? '') ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php
-                        $emptyRows = max(0, 4 - count($awards));
-                        for ($i = 0; $i < $emptyRows; $i++):
-                        ?>
-                            <tr>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                            </tr>
-                        <?php endfor; ?>
-                    <?php else: ?>
-                        <?php for ($i = 0; $i < 4; $i++): ?>
-                            <tr>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                            </tr>
-                        <?php endfor; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    <tr>
+                        <td colspan="3" class="stamp-code">FM-USTP-GCS-02</td>
+                    </tr>
+                    <tr>
+                        <td class="stamp-label">Rev. No.</td>
+                        <td class="stamp-label">Effective Date</td>
+                        <td class="stamp-label">Page No.</td>
+                    </tr>
+                    <tr>
+                        <td class="stamp-value">00</td>
+                        <td class="stamp-value">03.17.25</td>
+                        <td class="stamp-value">1 of 2</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- University Header -->
+            <div class="university-header">
+                <div class="ustp-logo-container">
+                    <img src="<?= base_url('Photos/USTP.png') ?>" alt="USTP Logo" class="ustp-logo-image">
+                    <img src="<?= base_url('Photos/new_ustp_logo.png') ?>" alt="USTP Logo" class="ustp-logo-image">
+                </div>
+                <div class="university-name">UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES</div>
+                <div class="campuses">Alubijid | Balubal | Cagayan de Oro | Claveria | Jasaan | Oroquieta | Panaon | Villanueva</div>
+                <div class="department-name">GUIDANCE AND COUNSELING SERVICES</div>
+                <div class="form-title">STUDENT'S PERSONAL DATA SHEET</div>
+            </div>
+
+            <!-- Photo Box -->
+            <div class="photo-box">
+                <img src="<?= getProfilePictureUrl($user_info['profile_picture']) ?>" alt="Student Photo" class="student-photo">
+            </div>
+
+            <!-- Confidentiality Notice -->
+            <div class="confidentiality-notice">
+                <p>The Guidance and Counseling Services (GCS) observes <strong>STRICT CONFIDENTIALITY</strong> on the personal information shared in this form according to the ethical principles of privacy and in compliance with the Data Privacy Act. However, please take note that the information will be disclosed in the following circumstances:</p>
+                <ol>
+                    <li>Threat or risk of life (of the client, his/her immediate family, victim of abuse)</li>
+                    <li>The client can cause danger to the lives and health of other people.</li>
+                </ol>
+                <p>Moreover, information may also be given to agencies (e.g. DSWD, Police, Women and Children Protection Unit, Rehabilitation Unit Hospitals and other health providers) that can facilitate or address client's need and situation.</p>
+                <p class="instruction"><strong>Instruction:</strong> Please provide honest response to the information needed. Rest assured that data gathered will be treated with utmost confidentiality in accordance with Data Privacy Act.</p>
+            </div>
+
+            <!-- Personal Background Section -->
+            <div class="section personal-background">
+                <h3 class="section-title">PERSONAL BACKGROUND</h3>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Course/Track:</label>
+                        <span class="field-value"><?= formatValue($academic['course'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Major/Strand:</label>
+                        <span class="field-value"><?= formatValue($academic['major_or_strand'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Grade/Year Level:</label>
+                        <span class="field-value"><?= formatValue($academic['year_level'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>First Name:</label>
+                        <span class="field-value"><?= formatValue($personal['first_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Gender:</label>
+                        <span class="field-value"><?= formatValue($personal['sex'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Date of Birth:</label>
+                        <span class="field-value"><?= formatDateShort($personal['date_of_birth'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field" style="max-width: 60px;">
+                        <label>Age:</label>
+                        <span class="field-value"><?= $age ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Last Name:</label>
+                        <span class="field-value"><?= formatValue($personal['last_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Place of Birth:</label>
+                        <span class="field-value"><?= formatValue($personal['place_of_birth'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Middle Name:</label>
+                        <span class="field-value"><?= formatValue($personal['middle_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Civil Status: </label>
+                        <span class="field-value"><?= formatValue($personal['civil_status'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Religion:</label>
+                        <span class="field-value"><?= formatValue($personal['religion'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Contact Number:</label>
+                        <span class="field-value"><?= formatValue($personal['contact_number'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>E-mail Address:</label>
+                        <span class="field-value"><?= formatValue($personal['email_address'] ?? $user_info['email'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>Permanent Address:</label>
+                        <span class="field-value"><?= formatValue($address['permanent_zone'] ?? '') ?><?= !empty($address['permanent_zone']) ? ', ' : '' ?><?= formatValue($address['permanent_barangay'] ?? '') ?><?= !empty($address['permanent_barangay']) ? ', ' : '' ?><?= formatValue($address['permanent_city'] ?? '') ?><?= !empty($address['permanent_city']) ? ', ' : '' ?><?= formatValue($address['permanent_province'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>Present Address:</label>
+                        <span class="field-value"><?= formatValue($address['present_zone'] ?? '') ?><?= !empty($address['present_zone']) ? ', ' : '' ?><?= formatValue($address['present_barangay'] ?? '') ?><?= !empty($address['present_barangay']) ? ', ' : '' ?><?= formatValue($address['present_city'] ?? '') ?><?= !empty($address['present_city']) ? ', ' : '' ?><?= formatValue($address['present_province'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>School Last Attended:</label>
+                        <span class="field-value"><?= formatValue($academic['school_last_attended'] ?? '') ?></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Location of School:</label>
+                        <span class="field-value"><?= formatValue($academic['location_of_school'] ?? '') ?></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Previous Course/Grade:</label>
+                        <span class="field-value"><?= formatValue($academic['previous_course_grade'] ?? '') ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Background Section -->
+            <div class="section family-background">
+                <h3 class="section-title">FAMILY BACKGROUND</h3>
+
+                <div class="form-row">
+                    <div class="form-field" style="flex: 2;">
+                        <label>Name of Father:</label>
+                        <span class="field-value"><?= formatValue($family['father_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field" style="max-width: 60px;">
+                        <label>Age:</label>
+                        <span class="field-value"><?= formatValue($family['father_age'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Contact No:</label>
+                        <span class="field-value"><?= formatValue($family['father_contact_number'] ?? '') ?></span>
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Occupation:</label>
+                        <span class="field-value"><?= formatValue($family['father_occupation'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Educational Attainment:</label>
+                        <span class="field-value"><?= formatValue($family['father_educational_attainment'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" style="flex: 2;">
+                        <label>Name of Mother:</label>
+                        <span class="field-value"><?= formatValue($family['mother_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field" style="max-width: 60px;">
+                        <label>Age:</label>
+                        <span class="field-value"><?= formatValue($family['mother_age'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Contact No:</label>
+                        <span class="field-value"><?= formatValue($family['mother_contact_number'] ?? '') ?></span>
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Occupation:</label>
+                        <span class="field-value"><?= formatValue($family['mother_occupation'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Educational Attainment:</label>
+                        <span class="field-value"><?= formatValue($family['mother_educational_attainment'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>Parents' Permanent Address:</label>
+                        <span class="field-value"><?= formatValue($family['parents_permanent_address'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" style="flex: 2;">
+                        <label>Husband/Wife (If Married):</label>
+                        <span class="field-value"><?= formatValue($family['spouse'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Contact No:</label>
+                        <span class="field-value"><?= formatValue($family['spouse_contact_number'] ?? '') ?></span>
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Occupation:</label>
+                        <span class="field-value"><?= formatValue($family['spouse_occupation'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Educational Attainment:</label>
+                        <span class="field-value"><?= formatValue($family['spouse_educational_attainment'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" style="flex: 2;">
+                        <label>Name of Guardian (if applicable):</label>
+                        <span class="field-value"><?= formatValue($family['guardian_name'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field" style="max-width: 60px;">
+                        <label>Age:</label>
+                        <span class="field-value"><?= formatValue($family['guardian_age'] ?? '') ?></span>
+                    </div>
+                    <div class="form-field">
+                        <label>Contact No:</label>
+                        <span class="field-value"><?= formatValue($family['guardian_contact_number'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>Occupation:</label>
+                        <span class="field-value"><?= formatValue($family['guardian_occupation'] ?? '') ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="page-footer">
+                <div class="footer-content-wrapper">
+                    <div class="footer-text">
+                        <p class="continue-note">Pls. continue on the back page →</p>
+                        <p class="footer-address">C.M. Recto Avenue, Lapasan, Cagayan De Oro City 9000 Philippines</p>
+                        <p class="footer-contact">Tel Nos. +63 (88) 856 1738; Telefax +63 (88) 856 4696 | http://www.ustp.edu.ph</p>
+                    </div>
+                    <div class="footer-stamp">
+                        <img src="<?= base_url('Misc/PDS/SOCOTECH_stamp.jpg') ?>" alt="SOCOTEC Stamp" class="socotech-stamp-image">
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Certification -->
-        <div class="certification-section">
-            <p class="certification-text">I hereby certify that all entries on the form are true and correct. I also agree to allow GCS to use the information/data for research purposes.</p>
-            <div class="signature-date-row">
-                <div class="signature-field">
-                    <label>SIGNATURE OVER PRINTED NAME</label>
-                    <div class="signature-line">
-                        <?php
-                        $lastName = formatValue($personal['last_name'] ?? '');
-                        $firstName = formatValue($personal['first_name'] ?? '');
-                        $middleName = formatValue($personal['middle_name'] ?? '');
-                        $fullName = '';
-                        if ($lastName) {
-                            $fullName = $lastName;
-                            if ($firstName) {
-                                $fullName .= ', ' . $firstName;
-                                if ($middleName) {
-                                    $fullName .= ' ' . $middleName;
+        <!-- Page 2 -->
+        <div class="pds-page page-2">
+            <!-- Document Code Table (Top Right) -->
+            <div class="document-stamp">
+                <table class="stamp-table">
+                    <tr>
+                        <td colspan="3" class="stamp-header">Document Code No.</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="stamp-code">FM-USTP-GCS-02</td>
+                    </tr>
+                    <tr>
+                        <td class="stamp-label">Rev. No.</td>
+                        <td class="stamp-label">Effective Date</td>
+                        <td class="stamp-label">Page No.</td>
+                    </tr>
+                    <tr>
+                        <td class="stamp-value">00</td>
+                        <td class="stamp-value">03.17.25</td>
+                        <td class="stamp-value">2 of 2</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- University Header (Page 2) -->
+            <div class="university-header">
+                <div class="ustp-logo-container">
+                    <img src="<?= base_url('Photos/USTP.png') ?>" alt="USTP Logo" class="ustp-logo-image">
+                    <img src="<?= base_url('Photos/new_ustp_logo.png') ?>" alt="USTP Logo" class="ustp-logo-image">
+                </div>
+                <div class="university-name">UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES</div>
+                <div class="campuses">Alubijid | Balubal | Cagayan de Oro | Claveria | Jasaan | Oroquieta | Panaon | Villanueva</div>
+                <div class="department-name">GUIDANCE AND COUNSELING SERVICES</div>
+            </div>
+
+            <!-- Other Information Section -->
+            <div class="section other-information">
+                <h3 class="section-title">OTHER INFORMATION</h3>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>1. Why did you choose this course/program?</label>
+                        <span class="field-value"><?= formatValue($other['course_choice_reason'] ?? '') ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>2. How would you describe your family?</label>
+
+                        <span class="field-value"><?= $familyDesc ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>3. Where do you live right now?</label>
+
+                        <span class="field-value"><?= $residenceType ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>4. Describe your living condition.</label>
+
+                        <span class="field-value"><?= $livingCondition ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>5. Do you have any physical/health condition/s?</label>
+
+                        <span class="field-value"><?= $healthCondition ?></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field full-width">
+                        <label>6. Have you undergone intervention/treatment with a psychologist/psychiatrist?</label>
+
+                        <span class="field-value"><?= $psychTreatment ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GCS Activities Section -->
+            <div class="section gcs-activities">
+                <h3 class="section-title">SEMINARS/ACTIVITIES YOU WANT TO AVAIL FROM THE GUIDANCE SERVICES UNIT</h3>
+
+                <?php if (!empty($gcsActivitiesList)): ?>
+                    <div style="margin-top: 10px; font-size: 13px; ">
+                        <div style="text-decoration: underline; margin-bottom: 5px;">Selected Activities:</div>
+                        <?php foreach ($gcsActivitiesList as $activity): ?>
+                            <div style="margin-bottom: 3px; font-weight: bold;">• <?= esc($activity) ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Awards Section -->
+            <div class="section awards-section">
+                <h3 class="section-title">AWARDS AND RECOGNITION</h3>
+                <table class="awards-table">
+                    <thead>
+                        <tr>
+                            <th>AWARDS/RECOGNITION RECEIVED</th>
+                            <th>NAME OF SCHOOL/ORGANIZATION</th>
+                            <th>YEAR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($awards)): ?>
+                            <?php foreach ($awards as $award): ?>
+                                <tr>
+                                    <td><?= formatValue($award['award_name'] ?? '') ?></td>
+                                    <td><?= formatValue($award['school_organization'] ?? '') ?></td>
+                                    <td><?= formatValue($award['year_received'] ?? '') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php
+                            $emptyRows = max(0, 4 - count($awards));
+                            for ($i = 0; $i < $emptyRows; $i++):
+                            ?>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                            <?php endfor; ?>
+                        <?php else: ?>
+                            <?php for ($i = 0; $i < 4; $i++): ?>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                            <?php endfor; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Certification -->
+            <div class="certification-section">
+                <p class="certification-text">I hereby certify that all entries on the form are true and correct. I also agree to allow GCS to use the information/data for research purposes.</p>
+                <div class="signature-date-row">
+                    <div class="signature-field">
+                        <label>SIGNATURE OVER PRINTED NAME</label>
+                        <div class="signature-line">
+                            <?php
+                            $lastName = formatValue($personal['last_name'] ?? '');
+                            $firstName = formatValue($personal['first_name'] ?? '');
+                            $middleName = formatValue($personal['middle_name'] ?? '');
+                            $fullName = '';
+                            if ($lastName) {
+                                $fullName = $lastName;
+                                if ($firstName) {
+                                    $fullName .= ', ' . $firstName;
+                                    if ($middleName) {
+                                        $fullName .= ' ' . $middleName;
+                                    }
                                 }
                             }
-                        }
-                        echo esc($fullName);
-                        ?>
+                            echo esc($fullName);
+                            ?>
+                        </div>
                     </div>
-                </div>
-                <div class="date-field">
-                    <label>DATE</label>
-                    <div class="date-line">
-                        <?php
-                        $currentDate = new DateTime();
-                        echo esc($currentDate->format('F d, Y'));
-                        ?>
+                    <div class="date-field">
+                        <label>DATE</label>
+                        <div class="date-line">
+                            <?php
+                            $currentDate = new DateTime();
+                            echo esc($currentDate->format('F d, Y'));
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-content-wrapper">
-                <div class="footer-text">
-                    <p class="footer-address">C.M. Recto Avenue, Lapasan, Cagayan De Oro City 9000 Philippines</p>
-                    <p class="footer-contact">Tel Nos. +63 (88) 856 1738; Telefax +63 (88) 856 4696 | http://www.ustp.edu.ph</p>
-                </div>
-                <div class="footer-stamp">
-                    <img src="<?= base_url('Misc/PDS/SOCOTECH_stamp.jpg') ?>" alt="SOCOTEC Stamp" class="socotech-stamp-image">
+            <!-- Footer -->
+            <div class="page-footer">
+                <div class="footer-content-wrapper">
+                    <div class="footer-text">
+                        <p class="footer-address">C.M. Recto Avenue, Lapasan, Cagayan De Oro City 9000 Philippines</p>
+                        <p class="footer-contact">Tel Nos. +63 (88) 856 1738; Telefax +63 (88) 856 4696 | http://www.ustp.edu.ph</p>
+                    </div>
+                    <div class="footer-stamp">
+                        <img src="<?= base_url('Misc/PDS/SOCOTECH_stamp.jpg') ?>" alt="SOCOTEC Stamp" class="socotech-stamp-image">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- END: Responsive Container Wrapper -->
 
     <!-- Load jsPDF library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
@@ -694,46 +699,6 @@
 
     <!-- PDS Preview PDF Generation Script -->
     <script src="<?= base_url('js/pds_preview.js') . '?v=' . time() ?>"></script>
-
-    <!-- Library verification script -->
-    <script>
-        window.addEventListener('load', function() {
-            console.log('=== Checking Required Libraries ===');
-
-            // Check html2canvas
-            if (typeof html2canvas !== 'undefined') {
-                console.log('✓ html2canvas is loaded');
-            } else {
-                console.error('✗ html2canvas failed to load');
-            }
-
-            // Check jsPDF - it can be in different places
-            let jsPDFFound = false;
-            if (window.jspdf && window.jspdf.jsPDF) {
-                console.log('✓ jsPDF is loaded (window.jspdf.jsPDF)');
-                jsPDFFound = true;
-            } else if (window.jsPDF) {
-                console.log('✓ jsPDF is loaded (window.jsPDF)');
-                jsPDFFound = true;
-            }
-
-            if (!jsPDFFound) {
-                console.error('✗ jsPDF failed to load');
-            }
-
-            // Check if pages exist
-            const page1 = document.querySelector('.page-1');
-            const page2 = document.querySelector('.page-2');
-
-            if (page1 && page2) {
-                console.log('✓ Both PDS pages found');
-            } else {
-                console.error('✗ PDS pages not found');
-            }
-
-            console.log('=== Library Check Complete ===');
-        });
-    </script>
 </body>
 
 </html>
