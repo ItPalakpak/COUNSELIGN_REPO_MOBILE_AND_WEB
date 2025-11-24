@@ -1,3 +1,12 @@
+## Nov 24, 2025
+- Authored `docs/software_implementation_testing.md`, capturing a concise explanation of how the Flutter mobile build and CodeIgniter web portal operate together, the shared hardware/software requirements (with asset reference), and the fixes that stabilized multipart form posts, dropdown reactivity, and enum validation. Document also summarizes current testing status across mobile and web journeys for stakeholders.
+- Enabled swipe gestures on student dashboard event and quote carousels so students can drag left/right to switch cards in addition to auto-rotation and arrow buttons. Each widget now normalizes drag distance/velocity, restarts its timer after manual navigation, and preserves the existing fade/slide animations for continuity. Analyzer remains clean.
+- Split student profile “Update Profile” modal into two entry points: tapping the avatar edit icon now opens a picture-only dialog, while the main “Update Profile” button exposes username/email fields without photo inputs. Both variants share the existing update logic and keep controller data synchronized with the view model.
+- Counselor profile card now mirrors the student layout: the Account Settings header displays `Account ID: {user_id}` beneath the title, and the Change Password/Update Profile buttons render side-by-side with matching colors, padding, and rounded corners for consistent UX.
+- Counselor profile avatar gained its own edit affordance that launches a photo-only dialog, while the Update Profile button now opens a username/email-only dialog. Both flows reuse the existing updateProfile/uploadProfilePicture calls so counselors can independently change their picture or credentials without extra inputs.
+- Student profile picture-only modal now mirrors the counselor design with a circular preview (current or newly selected photo) and a single upload button inside a framed container so students get visual confirmation before saving.
+- Added a Preview button next to “Save” in the Student PDS header that launches `student/pds/preview` in the browser using `url_launcher`, matching the CodeIgniter flow for viewing/downloading the generated PDS.
+
 ## Nov 7, 2025
 - Added env-driven API base URL (`API_BASE_URL`) and HTTPS production placeholder in `lib/api/config.dart`.
 - Updated Android Gradle to Java 17 (`compileOptions`, `kotlinOptions`, Kotlin `jvmToolchain`).

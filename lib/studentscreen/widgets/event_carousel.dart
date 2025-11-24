@@ -17,6 +17,7 @@ class _EventCarouselState extends State<EventCarousel> {
   int _currentIndex = 0;
   bool _isForward = true;
   Timer? _autoScrollTimer;
+  double _dragDistance = 0;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _EventCarouselState extends State<EventCarousel> {
           _events = events;
           _isLoading = false;
         });
-        
+
         if (_events.isNotEmpty) {
           _startAutoScroll();
         }
@@ -81,6 +82,45 @@ class _EventCarouselState extends State<EventCarousel> {
     });
   }
 
+  void _handleManualEventNavigation(bool moveForward) {
+    if (_events.length <= 1) {
+      return;
+    }
+    if (moveForward) {
+      _goToNextEvent();
+    } else {
+      _goToPreviousEvent();
+    }
+    _startAutoScroll();
+  }
+
+  void _onEventDragUpdate(DragUpdateDetails details) {
+    _dragDistance += details.delta.dx;
+  }
+
+  void _onEventDragEnd(DragEndDetails details) {
+    if (_events.length <= 1) {
+      _dragDistance = 0;
+      return;
+    }
+    const distanceThreshold = 30;
+    const velocityThreshold = 300;
+    bool? moveForward;
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() > velocityThreshold) {
+      moveForward = velocity < 0;
+    } else if (_dragDistance.abs() > distanceThreshold) {
+      moveForward = _dragDistance < 0;
+    }
+    _dragDistance = 0;
+    if (moveForward == null) return;
+    _handleManualEventNavigation(moveForward);
+  }
+
+  void _resetEventDrag() {
+    _dragDistance = 0;
+  }
+
   String _formatEventDate(DateTime? date) {
     if (date == null) return '';
     return DateFormat('EEEE, MMM d, yyyy').format(date);
@@ -116,9 +156,7 @@ class _EventCarouselState extends State<EventCarousel> {
             ),
           ],
         ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -214,30 +252,33 @@ class _EventCarouselState extends State<EventCarousel> {
           SizedBox(height: isMobile ? 8 : 12),
 
           // Carousel (single card with dynamic height + slide/fade animation)
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 350),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, animation) {
-                final isForward = _isForward;
-                final offsetTween = Tween<Offset>(
-                  begin: Offset(isForward ? 0.15 : -0.15, 0),
-                  end: Offset.zero,
-                );
-                return SlideTransition(
-                  position: animation.drive(offsetTween),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
-                );
-              },
-              child: KeyedSubtree(
-                key: ValueKey<int>(_currentIndex),
-                child: _buildEventCard(_events[_currentIndex], isMobile),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: _onEventDragUpdate,
+            onHorizontalDragEnd: _onEventDragEnd,
+            onHorizontalDragCancel: _resetEventDrag,
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 350),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  final isForward = _isForward;
+                  final offsetTween = Tween<Offset>(
+                    begin: Offset(isForward ? 0.15 : -0.15, 0),
+                    end: Offset.zero,
+                  );
+                  return SlideTransition(
+                    position: animation.drive(offsetTween),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_currentIndex),
+                  child: _buildEventCard(_events[_currentIndex], isMobile),
+                ),
               ),
             ),
           ),
@@ -251,10 +292,7 @@ class _EventCarouselState extends State<EventCarousel> {
               // Previous button
               IconButton(
                 onPressed: _events.length > 1
-                    ? () {
-                        _goToPreviousEvent();
-                        _startAutoScroll();
-                      }
+                    ? () => _handleManualEventNavigation(false)
                     : null,
                 icon: const Icon(Icons.chevron_left),
                 color: const Color(0xFF060E57),
@@ -282,10 +320,7 @@ class _EventCarouselState extends State<EventCarousel> {
               // Next button
               IconButton(
                 onPressed: _events.length > 1
-                    ? () {
-                        _goToNextEvent();
-                        _startAutoScroll();
-                      }
+                    ? () => _handleManualEventNavigation(true)
                     : null,
                 icon: const Icon(Icons.chevron_right),
                 color: const Color(0xFF060E57),
@@ -320,7 +355,10 @@ class _EventCarouselState extends State<EventCarousel> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF3B82F6),
                   borderRadius: BorderRadius.circular(12),
@@ -360,7 +398,11 @@ class _EventCarouselState extends State<EventCarousel> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calendar_today, size: 14, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -377,7 +419,11 @@ class _EventCarouselState extends State<EventCarousel> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.access_time, size: 14, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.access_time,
+                      size: 14,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       _formatEventTime(event.time),
@@ -392,7 +438,11 @@ class _EventCarouselState extends State<EventCarousel> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(

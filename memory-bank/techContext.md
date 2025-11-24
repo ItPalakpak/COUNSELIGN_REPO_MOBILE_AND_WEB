@@ -5,6 +5,9 @@
 - Packages: animations, lottie, simple_animations, http, shared_preferences, provider, logger, cupertino_icons, fl_chart, open_file, font_awesome_flutter, intl
 - Dev: flutter_test, flutter_lints
 
+## Documentation Reference (Nov 24, 2025)
+- `docs/software_implementation_testing.md` captures environment requirements (Flutter SDK, CodeIgniter stack, hardware targets) plus the integration fixes for multipart posts, dropdown syncing, and enum validation. Point stakeholders here for a concise deployment/testing summary.
+
 ## Build/Run
 - Targets: Android, iOS, Web, Desktop
 - Assets: `Photos/`, `Photos/MISC/` declared in `pubspec.yaml`

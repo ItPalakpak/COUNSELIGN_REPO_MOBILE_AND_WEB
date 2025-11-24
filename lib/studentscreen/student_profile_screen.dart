@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'state/student_profile_viewmodel.dart';
 import 'state/pds_viewmodel.dart';
 import 'models/student_profile.dart';
@@ -11,6 +12,8 @@ import '../api/config.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'widgets/navigation_drawer.dart';
+
+enum UpdateProfileDialogMode { pictureOnly, infoOnly }
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -51,6 +54,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
     setState(() {
       _isDrawerOpen = !_isDrawerOpen;
     });
+  }
+
+  Future<void> _openPdsPreview() async {
+    final previewUrl = '${ApiConfig.currentBaseUrl}/student/pds/preview';
+    final uri = Uri.parse(previewUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open PDS preview.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _closeDrawer() {
@@ -112,16 +129,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
               // Handle navigation based on index
               switch (index) {
                 case 0: // Home
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/student/dashboard',
-                  );
+                  Navigator.pushReplacementNamed(context, '/student/dashboard');
                   break;
                 case 1: // Schedule Appointment
-                  Navigator.pushNamed(
-                    context,
-                    '/student/schedule-appointment',
-                  );
+                  Navigator.pushNamed(context, '/student/schedule-appointment');
                   break;
                 case 2: // My Appointments
                   Navigator.pushNamed(context, '/student/my-appointments');
@@ -149,8 +160,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
           onNavigateToAnnouncements: () => _navigateToAnnouncements(context),
           onNavigateToScheduleAppointment: () =>
               _navigateToScheduleAppointment(context),
-          onNavigateToMyAppointments: () =>
-              _navigateToMyAppointments(context),
+          onNavigateToMyAppointments: () => _navigateToMyAppointments(context),
           onNavigateToProfile: () => _navigateToProfile(context),
           onLogout: () => _logout(context),
         ),
@@ -233,7 +243,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
                 top: 2,
                 right: 2,
                 child: GestureDetector(
-                  onTap: () => _showUpdateProfileDialog(viewModel),
+                  onTap: () => _showUpdateProfileDialog(
+                    viewModel,
+                    UpdateProfileDialogMode.pictureOnly,
+                  ),
                   child: Container(
                     width: 28,
                     height: 28,
@@ -267,7 +280,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
 
   Widget _buildAccountInfo(StudentProfileViewModel viewModel) {
     return Padding(
-      padding: const EdgeInsets.all(30),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           _buildAccountField('Username', viewModel.username),
@@ -310,14 +323,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
 
   Widget _buildActionButtons(StudentProfileViewModel viewModel) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _showChangePasswordDialog(viewModel),
               icon: const Icon(Icons.key_sharp, size: 18),
-              label: const Text('Password'),
+              label: const Text('Change Password'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
@@ -328,10 +341,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
               ),
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _showUpdateProfileDialog(viewModel),
+              onPressed: () => _showUpdateProfileDialog(
+                viewModel,
+                UpdateProfileDialogMode.infoOnly,
+              ),
               icon: const Icon(Icons.edit, size: 18),
               label: const Text('Update Profile'),
               style: ElevatedButton.styleFrom(
@@ -451,6 +467,22 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
                 label: const Text('Save', style: TextStyle(fontSize: 12)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _openPdsPreview,
+                icon: const Icon(Icons.visibility, size: 20),
+                label: const Text('Preview', style: TextStyle(fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E3A8A),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -2622,10 +2654,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
     }
   }
 
-  void _showUpdateProfileDialog(StudentProfileViewModel viewModel) {
+  void _showUpdateProfileDialog(
+    StudentProfileViewModel viewModel,
+    UpdateProfileDialogMode mode,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => _UpdateProfileDialog(viewModel: viewModel),
+      builder: (context) =>
+          _UpdateProfileDialog(viewModel: viewModel, mode: mode),
     );
   }
 
@@ -2639,8 +2675,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
 
 class _UpdateProfileDialog extends StatefulWidget {
   final StudentProfileViewModel viewModel;
+  final UpdateProfileDialogMode mode;
 
-  const _UpdateProfileDialog({required this.viewModel});
+  const _UpdateProfileDialog({required this.viewModel, required this.mode});
 
   @override
   State<_UpdateProfileDialog> createState() => _UpdateProfileDialogState();
@@ -2661,51 +2698,78 @@ class _UpdateProfileDialogState extends State<_UpdateProfileDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Update Profile Information'),
+      title: Text(
+        widget.mode == UpdateProfileDialogMode.pictureOnly
+            ? 'Update Profile Picture'
+            : 'Update Profile Information',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            const Text('Profile Picture'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.image, size: 16),
-                    label: const Text('Choose Image'),
-                  ),
+            if (widget.mode == UpdateProfileDialogMode.infoOnly) ...[
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  border: OutlineInputBorder(),
                 ),
-                if (_selectedImage != null) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      height: 60,
-                      fit: BoxFit.cover,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+            if (widget.mode == UpdateProfileDialogMode.pictureOnly) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Profile Picture',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 2),
+                      ),
+                      child: ClipOval(
+                        child: _selectedImage != null
+                            ? Image.file(
+                                File(_selectedImage!.path),
+                                fit: BoxFit.cover,
+                              )
+                            : _buildCurrentProfileImage(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image, size: 16),
+                      label: const Text('Choose Image'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -2726,6 +2790,22 @@ class _UpdateProfileDialogState extends State<_UpdateProfileDialog> {
         ),
       ],
     );
+  }
+
+  Widget _buildCurrentProfileImage() {
+    final profile = widget.viewModel.profile;
+    final picturePath = profile?.profilePicture;
+    final hasProfilePicture = picturePath != null && picturePath.isNotEmpty;
+    if (hasProfilePicture) {
+      return Image.network(
+        profile!.buildImageUrl(ApiConfig.currentBaseUrl),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset('Photos/profile.png', fit: BoxFit.cover);
+        },
+      );
+    }
+    return Image.asset('Photos/profile.png', fit: BoxFit.cover);
   }
 
   Future<void> _pickImage() async {

@@ -433,7 +433,7 @@ class _StudentDashboardContentState extends State<_StudentDashboardContent> {
             children: [
               // Profile Avatar
               GestureDetector(
-                onTap: () => viewModel.navigateToProfile(context),
+                //onTap: () => viewModel.navigateToProfile(context),
                 child: Container(
                   width: isMobile ? 60 : 70,
                   height: isMobile ? 60 : 70,

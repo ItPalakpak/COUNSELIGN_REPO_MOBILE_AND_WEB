@@ -6,6 +6,8 @@ import 'state/counselor_profile_viewmodel.dart';
 import 'widgets/counselor_screen_wrapper.dart';
 import 'models/counselor_availability.dart';
 
+enum CounselorUpdateDialogMode { infoOnly, pictureOnly }
+
 class CounselorProfileScreen extends StatefulWidget {
   const CounselorProfileScreen({super.key});
 
@@ -168,44 +170,81 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
             child: Column(
               children: [
                 // Profile Avatar
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.network(
-                      viewModel.buildImageUrl(),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.white,
+                      child: ClipOval(
+                        child: Image.network(
+                          viewModel.buildImageUrl(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.white,
+                              child: const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Color(0xFF060E57),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: () => _showUpdateProfileDialog(
+                          context,
+                          CounselorUpdateDialogMode.pictureOnly,
+                        ),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
                           child: const Icon(
-                            Icons.person,
-                            size: 50,
+                            Icons.edit,
+                            size: 14,
                             color: Color(0xFF060E57),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Account Settings',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Account ID: ${viewModel.profile?.userId ?? "N/A"}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -213,15 +252,11 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
           ),
           // Account Details
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAccountField(
-                  'Account ID',
-                  viewModel.profile?.userId ?? 'N/A',
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 1),
                 _buildAccountField(
                   'Username',
                   viewModel.profile?.username ?? 'N/A',
@@ -230,38 +265,43 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
                 _buildAccountField('Email', viewModel.profile?.email ?? 'N/A'),
                 const SizedBox(height: 24),
                 // Action Buttons
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showChangePasswordDialog(context),
-                    icon: const Icon(Icons.key_sharp, size: 18),
-                    label: const Text('Change Password'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showChangePasswordDialog(context),
+                        icon: const Icon(Icons.key_sharp, size: 18),
+                        label: const Text('Change Password'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showUpdateProfileDialog(context),
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Update Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF060E57),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showUpdateProfileDialog(
+                          context,
+                          CounselorUpdateDialogMode.infoOnly,
+                        ),
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Update Profile'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF060E57),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -590,7 +630,10 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
   }
 
   // Dialog Methods
-  void _showUpdateProfileDialog(BuildContext context) {
+  void _showUpdateProfileDialog(
+    BuildContext context, [
+    CounselorUpdateDialogMode mode = CounselorUpdateDialogMode.infoOnly,
+  ]) {
     // Debug current profile data
     debugPrint('🔍 Current profile data:');
     debugPrint('🔍 Username: "${_viewModel.profile?.username}"');
@@ -609,114 +652,119 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Update Profile Information'),
+          title: Text(
+            mode == CounselorUpdateDialogMode.pictureOnly
+                ? 'Update Profile Picture'
+                : 'Update Profile Information',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(),
+                if (mode == CounselorUpdateDialogMode.infoOnly) ...[
+                  TextField(
+                    controller: usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                // Profile Picture Preview Section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Profile Picture',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Current/Preview Image
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.grey[300]!,
-                            width: 2,
+                  const SizedBox(height: 16),
+                ],
+                if (mode == CounselorUpdateDialogMode.pictureOnly) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Profile Picture',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
                           ),
                         ),
-                        child: ClipOval(
-                          child: selectedImageFile != null
-                              ? Image.file(
-                                  selectedImageFile!,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.network(
-                                  _viewModel.buildImageUrl(),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey[200],
-                                      child: const Icon(
-                                        Icons.person,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  },
-                                ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: selectedImageFile != null
+                                ? Image.file(
+                                    selectedImageFile!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.network(
+                                    _viewModel.buildImageUrl(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: const Icon(
+                                          Icons.person,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          try {
-                            final ImagePicker picker = ImagePicker();
-                            final XFile? image = await picker.pickImage(
-                              source: ImageSource.gallery,
-                            );
-
-                            if (image != null) {
-                              setState(() {
-                                selectedImageFile = File(image.path);
-                              });
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error picking image: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final ImagePicker picker = ImagePicker();
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery,
                               );
+                              if (image != null) {
+                                setState(() {
+                                  selectedImageFile = File(image.path);
+                                });
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error picking image: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             }
-                          }
-                        },
-                        icon: const Icon(Icons.upload, size: 18),
-                        label: const Text('Choose Image'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF060E57),
-                          foregroundColor: Colors.white,
+                          },
+                          icon: const Icon(Icons.upload, size: 18),
+                          label: const Text('Choose Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF060E57),
+                            foregroundColor: Colors.white,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -751,49 +799,55 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
                       );
 
                       // Validate inputs like backend does
-                      if (usernameController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Username is required'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
+                      if (mode == CounselorUpdateDialogMode.infoOnly) {
+                        if (usernameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Username is required'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        if (emailController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Email is required'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(emailController.text.trim())) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please enter a valid email address',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
                       }
 
-                      if (emailController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Email is required'),
-                            backgroundColor: Colors.red,
-                          ),
+                      bool success = true;
+
+                      if (mode == CounselorUpdateDialogMode.infoOnly) {
+                        success = await _viewModel.updateProfile(
+                          username: usernameController.text.trim(),
+                          email: emailController.text.trim(),
                         );
-                        return;
                       }
 
-                      // Validate email format
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(emailController.text.trim())) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please enter a valid email address'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
+                      final shouldUploadPicture =
+                          selectedImageFile != null &&
+                          success &&
+                          mode == CounselorUpdateDialogMode.pictureOnly;
 
-                      bool success = false;
-
-                      // Update profile information
-                      success = await _viewModel.updateProfile(
-                        username: usernameController.text.trim(),
-                        email: emailController.text.trim(),
-                      );
-
-                      // Upload profile picture if selected
-                      if (selectedImageFile != null && success) {
+                      if (shouldUploadPicture) {
                         final pictureSuccess = await _viewModel
                             .uploadProfilePicture(selectedImageFile!);
                         if (!pictureSuccess) {

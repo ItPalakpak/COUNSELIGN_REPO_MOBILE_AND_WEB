@@ -106,8 +106,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
             children: [
               // Profile Avatar
               GestureDetector(
-                onTap: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.counselorProfile),
+                // onTap: () => Navigator.of(context).pushNamed(AppRoutes.counselorProfile),
                 child: Container(
                   width: isMobile ? 60 : 90,
                   height: isMobile ? 60 : 90,

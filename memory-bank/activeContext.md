@@ -1,4 +1,16 @@
 # Active Context
+## Nov 24, 2025
+### Documentation Snapshot
+- Added `docs/software_implementation_testing.md`, a student-friendly summary of how the Flutter mobile client and CodeIgniter web portal are deployed together, what hardware/software are needed, and which integration issues (multipart posts, dropdown sync, enum validation) were resolved. Includes references for both platforms plus testing status.
+
+### Current focus
+- Student dashboard quote and event carousels now react to horizontal swipe gestures in addition to auto-rotation and arrow controls. Both widgets normalize drag distance/velocity to determine direction, restart their timers after manual navigation, and keep existing fade/slide animations intact.
+- Student profile screen update dialog now supports role-specific triggers: avatar edit icon opens a picture-only modal while the “Update Profile” button shows username/email editors without photo inputs. Both flows reuse the existing update logic, keeping controllers in sync with view model state.
+- Counselor profile header now surfaces the account ID immediately under “Account Settings,” and the action row mirrors the student profile layout with side-by-side “Change Password” and “Update Profile” buttons for consistent UX.
+- Counselor profile avatar includes an inline edit icon that opens a picture-only dialog, while the Update Profile button now opens a username/email-only dialog; both reuse the existing backend calls so counselors can edit photo or credentials independently.
+- Student profile picture-only dialog now mirrors the counselor UI with a circular preview (existing photo or the newly selected file) and a single choose-image button inside a framed container, giving consistent feedback before upload.
+- Student PDS header includes a Preview button that opens `student/pds/preview` in the browser via `url_launcher`, letting students view or download their generated PDS directly from the Flutter client.
+
 ## Nov 6, 2025
 ### Current focus
 - **CRITICAL BUG FIX**: Fixed Session class not sending form fields when files parameter is null

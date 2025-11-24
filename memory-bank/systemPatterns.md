@@ -1,5 +1,8 @@
 # System Patterns
 
+## Documentation Assets (Nov 24, 2025)
+- `docs/software_implementation_testing.md` explains to non-technical stakeholders how the Flutter mobile client and CodeIgniter web portal share APIs, what hardware/software are required, and the stabilization fixes (multipart posts, dropdown sync, enum validation) that keep both fronts aligned. Use this file as the quick reference when preparing reports or presentations.
+
 ## Admin Dashboard Structure (Updated Oct 27, 2025)
 
 The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure:
@@ -81,7 +84,7 @@ The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure
 - `lib/landingscreen` → entry/marketing+dialogs with modern drawer navigation.
   - Modern drawer: `frontend/drawer.dart` with gradient background, animated navigation items, responsive design.
 - `lib/studentscreen` → student dashboards, appointments, profile, announcements.
-  - Dashboard: `student_dashboard.dart` with PDS reminder modal (`pds_reminder_modal.dart`) that shows 20-second auto-close timer with dismiss/update buttons on initial login.
+  - Dashboard: `student_dashboard.dart` with PDS reminder modal (`pds_reminder_modal.dart`) that shows 20-second auto-close timer with dismiss/update buttons on initial login. Event and quote carousels accept horizontal swipe gestures (drag distance or fling velocity) in addition to auto-rotation and controls, keeping animations and timers in sync for a smoother mobile experience.
   - Announcements: `announcements_screen.dart` shares copy with counselor view; calendar markers now derive exclusively from event data while announcements stay in list sections.
   - Schedule Appointment: `schedule_appointment_screen.dart` with consent accordion (`consent_accordion.dart`) and acknowledgment section (`acknowledgment_section.dart`) for legal consent requirements.
   - Appointments: `my_appointments_screen.dart` with card-based UI using `AppointmentCard` widget.
