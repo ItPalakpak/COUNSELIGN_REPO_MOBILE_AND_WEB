@@ -24,6 +24,10 @@ import 'frontend/body.dart';
 // State management
 import 'state/landing_screen_viewmodel.dart';
 
+// Session validation
+import '../utils/session_validator.dart';
+import '../routes.dart';
+
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -40,6 +44,54 @@ class _LandingScreenState extends State<LandingScreen> {
     _viewModel = LandingScreenViewModel();
     _viewModel.initialize();
     _viewModel.addListener(_onViewModelChanged);
+    // Check session on mobile platforms, otherwise show login dialog
+    _checkSessionAndNavigate();
+  }
+
+  /// Check session validity on mobile platforms and navigate to dashboard if valid
+  Future<void> _checkSessionAndNavigate() async {
+    // Only check session on mobile platforms
+    if (!SessionValidator.isMobile) {
+      // On web/desktop, show login dialog as normal
+      _viewModel.setShowLoginDialog(true);
+      return;
+    }
+
+    try {
+      // Validate session with backend
+      final sessionResult = await SessionValidator.validateSession();
+
+      // Check if widget is still mounted before using context
+      if (!mounted) {
+        return;
+      }
+
+      if (sessionResult['valid'] == true) {
+        final role = sessionResult['role'] as String?;
+        if (role != null) {
+          // Navigate to appropriate dashboard based on role
+          if (role.toLowerCase() == 'student') {
+            AppRoutes.navigateToDashboard(context);
+          } else if (role.toLowerCase() == 'counselor') {
+            AppRoutes.navigateToCounselorDashboard(context);
+          } else if (role.toLowerCase() == 'admin') {
+            AppRoutes.navigateToAdminDashboard(context);
+          } else {
+            // Unknown role, show login dialog
+            _viewModel.setShowLoginDialog(true);
+          }
+          return;
+        }
+      }
+
+      // Session invalid or expired, show login dialog
+      _viewModel.setShowLoginDialog(true);
+    } catch (e) {
+      // Error during session check, show login dialog
+      if (mounted) {
+        _viewModel.setShowLoginDialog(true);
+      }
+    }
   }
 
   @override

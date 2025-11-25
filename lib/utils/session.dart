@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'dart:convert';
 import 'secure_logger.dart';
 import 'secure_storage.dart';
 
@@ -17,8 +18,21 @@ class Session {
   );
 
   Map<String, String> cookies = {};
+  bool _initialized = false;
+
+  /// Initialize session by restoring cookies from secure storage
+  Future<void> initialize() async {
+    if (_initialized) {
+      return;
+    }
+    await _restoreCookies();
+    _initialized = true;
+  }
 
   Future<http.Response> get(String url, {Map<String, String>? headers}) async {
+    // Ensure session is initialized
+    await initialize();
+
     final client = http.Client();
 
     try {
@@ -57,6 +71,9 @@ class Session {
     Map<String, String>? fields,
     Map<String, List<int>>? files,
   }) async {
+    // Ensure session is initialized
+    await initialize();
+
     final client = http.Client();
 
     try {
@@ -128,6 +145,9 @@ class Session {
     Map<String, String>? headers,
     Map<String, String>? fields,
   }) async {
+    // Ensure session is initialized
+    await initialize();
+
     final client = http.Client();
 
     try {
@@ -184,6 +204,9 @@ class Session {
     String url, {
     Map<String, String>? headers,
   }) async {
+    // Ensure session is initialized
+    await initialize();
+
     final client = http.Client();
 
     try {
@@ -240,14 +263,52 @@ class Session {
           }
         }
       }
+
+      // Persist all cookies to secure storage for mobile persistence
+      _persistCookies();
     }
 
     SecureLogger.debug('Total cookies stored: ${cookies.length}');
   }
 
+  /// Persist all cookies to secure storage
+  Future<void> _persistCookies() async {
+    try {
+      if (cookies.isNotEmpty) {
+        final cookiesJson = jsonEncode(cookies);
+        await SecureStorage.storeSecure('session_cookies', cookiesJson);
+        SecureLogger.debug(
+          'Persisted ${cookies.length} cookies to secure storage',
+        );
+      }
+    } catch (e) {
+      SecureLogger.error('Failed to persist cookies', e);
+    }
+  }
+
+  /// Restore cookies from secure storage
+  Future<void> _restoreCookies() async {
+    try {
+      final cookiesJson = await SecureStorage.getSecure('session_cookies');
+      if (cookiesJson != null && cookiesJson.isNotEmpty) {
+        final restoredCookies = jsonDecode(cookiesJson) as Map<String, dynamic>;
+        cookies = restoredCookies.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+        SecureLogger.debug(
+          'Restored ${cookies.length} cookies from secure storage',
+        );
+      }
+    } catch (e) {
+      SecureLogger.error('Failed to restore cookies', e);
+      cookies.clear();
+    }
+  }
+
   void clearCookies() {
     cookies.clear();
     SecureStorage.clearSession();
+    SecureStorage.deleteSecure('session_cookies');
     SecureLogger.debug('Cleared all session cookies and secure storage');
   }
 
