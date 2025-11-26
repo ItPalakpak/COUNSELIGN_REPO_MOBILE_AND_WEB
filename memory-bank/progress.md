@@ -1,3 +1,7 @@
+## Nov 26, 2025
+- Authored a comprehensive update to `guide.md` covering sample group members, end-to-end system description (Flutter app + CodeIgniter 4 API), test/build procedures for both stacks (URL configuration, clean builds, Android Studio and terminal commands), and the primary toolchains used on each side. Ready for stakeholders to customize names as needed.
+- Converted the System Description in `guide.md` into a detailed paragraph that explains the Flutter client and CodeIgniter backend flow in language approachable for high school students, and highlighted the key features available to students, counselors, and admins.
+
 ## Nov 24, 2025
 - Authored `docs/software_implementation_testing.md`, capturing a concise explanation of how the Flutter mobile build and CodeIgniter web portal operate together, the shared hardware/software requirements (with asset reference), and the fixes that stabilized multipart form posts, dropdown reactivity, and enum validation. Document also summarizes current testing status across mobile and web journeys for stakeholders.
 - Enabled swipe gestures on student dashboard event and quote carousels so students can drag left/right to switch cards in addition to auto-rotation and arrow buttons. Each widget now normalizes drag distance/velocity, restarts its timer after manual navigation, and preserves the existing fade/slide animations for continuity. Analyzer remains clean.

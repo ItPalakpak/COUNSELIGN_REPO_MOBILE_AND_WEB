@@ -1,4 +1,12 @@
 # Active Context
+## Nov 26, 2025
+### Documentation Update
+- Expanded `guide.md` with sample group members, a high-level system description (Flutter client + CodeIgniter 4 backend), detailed testing/build instructions for both stacks (including API base URL configuration, clean builds, Android Studio/terminal flows), and toolchain references for Flutter and PHP sides.
+- Set expectation that the user can replace placeholder group names later; no code changes required.
+- Next steps: keep the guide synchronized with future process/tooling updates and reflect any backend version bumps when they occur.
+- Rewrote the System Description in `guide.md` as a single narrative paragraph so non-technical or high school readers can understand how the Flutter client and CodeIgniter backend interact, and expanded it with the core features the system offers (announcements, scheduling, PDS, chat, reporting).
+- Updated counselor personal information dialog in `counselor_profile_screen.dart` so the email field is now read-only and shows a snackbar message when tapped, matching backend rules that email changes are admin-managed while preserving existing update logic.
+
 ## Nov 24, 2025
 ### Documentation Snapshot
 - Added `docs/software_implementation_testing.md`, a student-friendly summary of how the Flutter mobile client and CodeIgniter web portal are deployed together, what hardware/software are needed, and which integration issues (multipart posts, dropdown sync, enum validation) were resolved. Includes references for both platforms plus testing status.

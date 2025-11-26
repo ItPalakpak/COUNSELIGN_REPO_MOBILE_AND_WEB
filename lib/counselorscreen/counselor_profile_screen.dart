@@ -1380,11 +1380,12 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: emailController,
+                  readOnly: true,
                   decoration: const InputDecoration(
                     labelText: 'Email',
-                    hintText: 'Enter your email address',
                     border: OutlineInputBorder(),
                   ),
+                  
                 ),
                 const SizedBox(height: 16),
                 TextField(

@@ -160,7 +160,7 @@ class _ContactDialogState extends State<ContactDialog>
                         const SizedBox(height: 8),
 
                         Text(
-                          'Have questions or need assistance? We\'re here to help!',
+                          'Have questions about the system or need assistance with technical issues? We\'re here to help!',
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(color: const Color(0xFF64748B)),
                         ),
