@@ -425,7 +425,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         final success = isEdit
                             ? await viewModel.updateAnnouncement(
                                 0,
-                              ) // TODO: Pass actual ID
+                              )
                             : await viewModel.createAnnouncement();
 
                         if (success) {

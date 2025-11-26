@@ -699,8 +699,8 @@ class _CounselorProfileScreenState extends State<CounselorProfileScreen> {
                         ),
                         const SizedBox(height: 12),
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 100,
+                          height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(

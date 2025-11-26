@@ -88,6 +88,7 @@ The AdminDashboardScreen now exactly mirrors the backend dashboard.php structure
   - Announcements: `announcements_screen.dart` shares copy with counselor view; calendar markers now derive exclusively from event data while announcements stay in list sections.
   - Schedule Appointment: `schedule_appointment_screen.dart` with consent accordion (`consent_accordion.dart`) and acknowledgment section (`acknowledgment_section.dart`) for legal consent requirements.
   - Appointments: `my_appointments_screen.dart` with card-based UI using `AppointmentCard` widget.
+  - PDS Preview: `pds_preview_screen.dart` loads the authenticated HTML returned by `/student/pds/preview` inside a WebView so CSS/JS assets render correctly without triggering `/index.php/auth` redirects.
   - Models: `counselor_schedule.dart` for counselor schedule data with weekday organization.
 - `lib/adminscreen` → admin dashboard and widgets.
 - `lib/counselorscreen` → counselor dashboard with messages/appointments cards, announcements, appointments, follow-up sessions, profile, messages screen with conversation list and chat interface, reports screen with comprehensive appointment analytics.

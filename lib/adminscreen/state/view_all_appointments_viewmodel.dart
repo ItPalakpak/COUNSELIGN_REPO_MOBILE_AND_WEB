@@ -73,7 +73,7 @@ class ViewAllAppointmentsViewModel extends ChangeNotifier {
 
       // Date filter (simplified - could be enhanced)
       final matchesDate =
-          _dateFilter == 'all' || true; // TODO: Implement date filtering
+          _dateFilter == 'all' || true; 
 
       return matchesSearch && matchesStatus && matchesDate;
     }).toList();

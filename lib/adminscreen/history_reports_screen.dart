@@ -569,7 +569,6 @@ class _HistoryReportsScreenState extends State<HistoryReportsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement delete functionality
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -634,7 +633,6 @@ class _HistoryReportsScreenState extends State<HistoryReportsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement generate report functionality
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

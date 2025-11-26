@@ -9,9 +9,11 @@ import 'state/student_profile_viewmodel.dart';
 import 'state/pds_viewmodel.dart';
 import 'models/student_profile.dart';
 import '../api/config.dart';
+import '../utils/session.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'widgets/navigation_drawer.dart';
+import 'pds_preview_screen.dart';
 
 enum UpdateProfileDialogMode { pictureOnly, infoOnly }
 
@@ -57,13 +59,42 @@ class _StudentProfileScreenState extends State<StudentProfileScreen>
   }
 
   Future<void> _openPdsPreview() async {
-    final previewUrl = '${ApiConfig.currentBaseUrl}/student/pds/preview';
-    final uri = Uri.parse(previewUrl);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    try {
+      final session = Session();
+      await session.initialize();
+
+      if (!session.hasSession) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please log in again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      String cleanBaseUrl = ApiConfig.currentBaseUrl;
+      if (cleanBaseUrl.endsWith('/index.php')) {
+        cleanBaseUrl = cleanBaseUrl.replaceAll('/index.php', '');
+      }
+      cleanBaseUrl = cleanBaseUrl.replaceAll(RegExp(r'/$'), '');
+
+      final previewUrl = '$cleanBaseUrl/student/pds/preview';
+
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              PdsPreviewScreen(previewUrl: previewUrl, baseUrl: cleanBaseUrl),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error opening PDS preview: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open PDS preview.'),
+        SnackBar(
+          content: Text('Error opening PDS preview: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -2745,8 +2776,8 @@ class _UpdateProfileDialogState extends State<_UpdateProfileDialog> {
                     ),
                     const SizedBox(height: 12),
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey[300]!, width: 2),
@@ -2765,6 +2796,52 @@ class _UpdateProfileDialogState extends State<_UpdateProfileDialog> {
                       onPressed: _pickImage,
                       icon: const Icon(Icons.image, size: 16),
                       label: const Text('Choose Image'),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.orange.shade300,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.orange.shade900,
+                                  height: 1.4,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Important: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        'Please use PDS-friendly formats like 2x2 or 1x1 passport-style photos with a plain white or light background for official documentation.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

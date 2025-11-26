@@ -9,7 +9,7 @@
 - Counselor profile header now surfaces the account ID immediately under “Account Settings,” and the action row mirrors the student profile layout with side-by-side “Change Password” and “Update Profile” buttons for consistent UX.
 - Counselor profile avatar includes an inline edit icon that opens a picture-only dialog, while the Update Profile button now opens a username/email-only dialog; both reuse the existing backend calls so counselors can edit photo or credentials independently.
 - Student profile picture-only dialog now mirrors the counselor UI with a circular preview (existing photo or the newly selected file) and a single choose-image button inside a framed container, giving consistent feedback before upload.
-- Student PDS header includes a Preview button that opens `student/pds/preview` in the browser via `url_launcher`, letting students view or download their generated PDS directly from the Flutter client.
+- Student PDS header Preview button now navigates to an in-app WebView (`PdsPreviewScreen`) that loads the authenticated HTML response, ensuring the generated document renders with full CSS/JS and avoids backend redirects to `/index.php/auth`.
 
 ## Nov 6, 2025
 ### Current focus

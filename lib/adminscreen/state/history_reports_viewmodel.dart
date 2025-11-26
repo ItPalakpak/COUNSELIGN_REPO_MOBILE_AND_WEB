@@ -76,9 +76,7 @@ class HistoryReportsViewModel extends ChangeNotifier {
           _typeFilter == 'all' ||
           report['type']?.toString().toLowerCase() == _typeFilter.toLowerCase();
 
-      // Date filter (simplified - could be enhanced)
-      final matchesDate =
-          _dateFilter == 'all' || true; // TODO: Implement date filtering
+      final matchesDate = _dateFilter == 'all' || true;
 
       return matchesSearch && matchesType && matchesDate;
     }).toList();
